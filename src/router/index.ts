@@ -1,22 +1,31 @@
+// src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import AboutView from '@/views/AboutView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-    },
-    {
       path: '/about',
       name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      component: AboutView,
+      // 💡 配置驅動 UI：回歸直覺、輕鬆的個人與系統分類，拒絕過度工程
+      meta: {
+        tag: 'About Me',
+        title: 'Jerry Yeh',
+        subtitle: 'Full-Stack Developer / Artifact Sandbox',
+      },
     },
+    // {
+    //   path: '/projects',
+    //   name: 'projects',
+    //   component: () => import('@/views/ProjectsView.vue'),
+    //   meta: {
+    //     tag: 'Dashboard & Tools',
+    //     title: 'Production Artifacts',
+    //     subtitle: '工程履約管理、ISBN 掃描器與 GAS 自動化工作流整合紀錄',
+    //   },
+    // },
   ],
 })
 
