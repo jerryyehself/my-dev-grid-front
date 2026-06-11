@@ -1,0 +1,75 @@
+/* ==========================================================================
+   📚 1. 預設主題：現代木質圖書館風 (Modern Library)
+   ========================================================================== */
+:root,
+.theme-library {
+    --bg-paper-light: #fcfaf2;
+    /* 中間主內容宣紙白 */
+    --bg-paper-dark: #f4f0e1;
+    /* 中間主內容藏書黃 */
+
+    /* 🪵 方案 A：頭尾加深專用色 (深胡桃木色) */
+    --bg-nav-footer: #291205;
+    /* 極致深沉、接近黑色的胡桃木褐 */
+    --text-nav-footer: #f4f0e1;
+    /* 在深色背景下的淺色羊皮紙字 */
+    --text-nav-hover: #fcd34d;
+    /* 游標滑過的黃銅高亮色 (Amber-300) */
+
+    /* 原本的墨色與線條維持不變 */
+    --text-ink-main: #451a03;
+    --text-ink-body: #78350f;
+    --text-ink-muted: #b45309;
+    --text-accent: #b45309;
+    --border-shelf: rgba(146, 64, 14, 0.1);
+    --bg-folder: rgba(146, 64, 14, 0.04);
+}
+
+.theme-cyber {
+    --bg-paper-light: #f8fafc;
+    /* Cyber 模式主內容底色 */
+    --bg-paper-dark: #f1f5f9;
+
+    /* 💻 Cyber 模式頭尾加深專用色 (極深藍灰沙盒) */
+    --bg-nav-footer: #0f172a;
+    /* Slate-900 */
+    --text-nav-footer: #94a3b8;
+    /* Slate-400 */
+    --text-nav-hover: #38bdf8;
+    /* Sky-400 霓虹藍 */
+
+    /* 原本的 Cyber 變數維持不變 */
+    --text-ink-main: #0f172a;
+    --text-ink-body: #475569;
+    --text-ink-muted: #94a3b8;
+    --text-accent: #6366f1;
+    --border-shelf: rgba(226, 232, 240, 0.6);
+    --bg-folder: rgba(15, 23, 42, 0.05);
+}
+
+/* ==========================================================================
+   🌐 2. 備用主題：原本的藍白科技極客風 (Cyber Sandbox)
+   ========================================================================== */
+.theme-cyber {
+    /* 📄 畫布與紙張色 (原本清爽的 Slate 漸層) */
+    --bg-paper-light: #f8fafc;
+    /* Slate-50 */
+    --bg-paper-dark: #f1f5f9;
+    /* Slate-100 */
+
+    /* 💻 科技極客墨色 */
+    --text-ink-main: #0f172a;
+    /* Slate-900: 極深藍灰 */
+    --text-ink-body: #475569;
+    /* Slate-700: 標準閱讀藍灰 */
+    --text-ink-muted: #94a3b8;
+    /* Slate-400: 淡字體灰 */
+    --text-accent: #6366f1;
+    /* 亮點色：原本經典的 Indigo-500 雷射藍 */
+
+    /* 📌 系統結構線條 */
+    --border-shelf: rgba(226, 232, 240, 0.6);
+    /* Slate-200/60 */
+    --bg-folder: rgba(15, 23, 42, 0.05);
+    /* Slate-900/5 淡灰區塊 */
+}

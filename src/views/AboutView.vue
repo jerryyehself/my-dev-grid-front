@@ -7,34 +7,40 @@
   <h2>Semantic Resource Graph</h2>
 
   <div
-    class="relative h-[720px] w-full border border-slate-200 rounded-2xl bg-white/70 shadow-sm overflow-hidden my-6"
+    class="relative h-[720px] w-full border border-[var(--border-shelf)] rounded-2xl bg-[var(--bg-paper-light)]/40 shadow-sm overflow-hidden my-6 transition-all duration-300"
   >
     <div
-      class="absolute inset-0 bg-[radial-gradient(#e2e8f0_1.5px,transparent_1.5px)] bg-[size:2rem_2rem] opacity-50 pointer-events-none"
+      class="absolute inset-0 bg-[radial-gradient(var(--text-ink-muted)_1.2px,transparent_1.2px)] bg-[size:2rem_2rem] opacity-[0.15] pointer-events-none"
       style="
-        mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 0.2) 100%);
-        -webkit-mask-image: linear-gradient(
-          to bottom,
-          rgba(0, 0, 0, 1) 70%,
-          rgba(0, 0, 0, 0.2) 100%
-        );
+        mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 90%);
+        -webkit-mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 90%);
       "
     ></div>
 
     <svg class="absolute inset-0 w-full h-full pointer-events-none">
       <g v-for="(link, index) in links" :key="index">
-        <path :d="calculateBezierPath(link)" fill="none" class="stroke-slate-300 stroke-[1.8px]" />
+        <path
+          :d="calculateBezierPath(link)"
+          fill="none"
+          class="stroke-[var(--text-ink-muted)] opacity-30 stroke-[1.5px]"
+        />
+
         <g :transform="`translate(${getCurveCenter(link).x}, ${getCurveCenter(link).y})`">
           <rect
-            :x="-40"
+            :x="-42"
             :y="-9"
-            :width="80"
+            :width="84"
             :height="18"
-            rx="6"
-            fill="#ffffff"
-            class="stroke-slate-200 stroke-[1px]"
+            rx="4"
+            fill="var(--bg-paper-light)"
+            class="stroke-[var(--border-shelf)] stroke-[1px]"
           />
-          <text fill="#4f46e5" class="text-[9px] font-mono font-bold" text-anchor="middle" dy="3.5">
+          <text
+            fill="var(--text-accent)"
+            class="text-[9px] font-mono font-bold tracking-wider"
+            text-anchor="middle"
+            dy="3.5"
+          >
             {{ link.predicate }}
           </text>
         </g>
@@ -44,18 +50,18 @@
     <div
       v-for="node in nodes"
       :key="node.id"
-      class="absolute transform -translate-x-1/2 -translate-y-1/2"
+      class="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
       :style="{ left: `${node.x}px`, top: `${node.y}px` }"
     >
       <div
         v-if="node.type === 'SUBJECT'"
-        class="border border-indigo-500 bg-gradient-to-br from-indigo-600 to-indigo-700 text-white px-8 py-5 rounded-xl text-center min-w-[220px] shadow-lg"
+        class="border border-[var(--text-accent)] bg-gradient-to-br from-[var(--text-ink-main)] to-[var(--text-ink-body)] text-[var(--bg-paper-light)] px-8 py-5 rounded-xl text-center min-w-[220px] shadow-md"
       >
-        <div class="text-xl font-bold tracking-wide text-white">
+        <div class="text-xl font-black tracking-widest">
           {{ node.label }}
         </div>
         <span
-          class="text-[9px] bg-indigo-500/50 py-0.5 px-2.5 mt-2 inline-block rounded border border-indigo-400/30 font-mono"
+          class="text-[9px] bg-[var(--text-accent)]/20 text-[var(--bg-paper-light)] py-0.5 px-2.5 mt-2 inline-block rounded border border-[var(--text-accent)]/30 font-mono tracking-wider"
         >
           {{ node.role }}
         </span>
@@ -63,22 +69,31 @@
 
       <div
         v-else
-        class="border border-slate-200 bg-white/95 px-5 py-4 w-[260px] rounded-xl shadow-sm hover:border-indigo-400 transition-all duration-300"
+        class="border border-[var(--border-shelf)] bg-[var(--bg-paper-light)]/95 px-5 py-4 w-[260px] rounded-xl shadow-sm hover:border-[var(--text-accent)] transition-all duration-300"
       >
         <div
-          class="flex justify-between border-b pb-1 mb-2 text-[9px] font-mono font-bold text-slate-400"
+          class="flex justify-between border-b border-[var(--border-shelf)] pb-1 mb-2 text-[9px] font-mono font-bold text-[var(--text-ink-muted)] opacity-80"
         >
           <span>{{ node.id.toUpperCase() }}_ENTITY</span>
-          <span class="w-2 h-2 rounded-full" :class="node.statusColor"></span>
+          <span
+            class="w-1.5 h-1.5 rounded-full ring-2 ring-[var(--bg-paper-light)] shadow-sm"
+            :class="node.statusColor"
+          ></span>
         </div>
-        <h3 class="text-xs font-bold text-slate-800 font-sans">{{ node.label }}</h3>
-        <p class="text-[11px] text-slate-400 !mt-1.5 !mb-0 leading-relaxed">{{ node.desc }}</p>
+        <h3 class="text-xs font-bold text-[var(--text-ink-main)] font-sans tracking-wide">
+          {{ node.label }}
+        </h3>
+        <p
+          class="text-[11px] text-[var(--text-ink-body)] opacity-90 !mt-1.5 !mb-0 leading-relaxed text-justify"
+        >
+          {{ node.desc }}
+        </p>
 
         <div v-if="node.tags" class="mt-3 flex flex-wrap gap-1">
           <span
             v-for="tag in node.tags"
             :key="tag"
-            class="text-[9px] bg-slate-50 border border-slate-150 text-slate-500 px-1.5 py-0.5 rounded font-mono"
+            class="text-[9px] bg-[var(--bg-folder)] border border-[var(--border-shelf)] text-[var(--text-ink-body)] px-1.5 py-0.5 rounded font-mono"
           >
             #{{ tag }}
           </span>
@@ -101,7 +116,7 @@ const nodes = ref([
     label: 'GitHub Repository',
     desc: '託管核心開源組件與版本控制歷史。包含 isbn-scanner 掃描器原始碼及 GAS 自動化腳本組態。',
     url: 'https://github.com/jerryyehself',
-    statusColor: 'bg-slate-800',
+    statusColor: 'bg-amber-900' /* 💡 稍微調深，配合木質調 */,
     x: 180,
     y: 160,
   },
@@ -110,7 +125,7 @@ const nodes = ref([
     label: 'Secure Mail Gateway',
     desc: '網域安全路由通訊點。主要用於系統自動化排程報告接收、錯誤日誌警告通知。',
     url: 'mailto:jerry.yeh@example.com',
-    statusColor: 'bg-blue-400',
+    statusColor: 'bg-yellow-600',
     x: 780,
     y: 160,
   },
@@ -119,7 +134,7 @@ const nodes = ref([
     label: 'Engineering Stack',
     desc: '深度聚焦於後端 Laravel 9 核心架構與前端 Vue 3 響應式資料驅動開發。',
     tags: ['Laravel9', 'Vue3', 'GAS'],
-    statusColor: 'bg-emerald-500',
+    statusColor: 'bg-amber-700',
     x: 180,
     y: 560,
   },
@@ -127,7 +142,7 @@ const nodes = ref([
     id: 'sandbox',
     label: 'Data Sandbox (Gold Passbook)',
     desc: '非線性數據觀測沙盒。串接後端自動化工作流，系統化分析銀行黃金存摺牌價波動率與個人資產配置。',
-    statusColor: 'bg-amber-400',
+    statusColor: 'bg-amber-500',
     x: 780,
     y: 560,
   },
@@ -167,7 +182,9 @@ const getCurveCenter = (link) => {
   const x =
     mt * mt * mt * source.x + 3 * mt * mt * t * cp1x + 3 * mt * t * t * cp2x + t * t * t * target.x
   const y =
+    mt * mt * mt * source.y + 3 * mt * mt * t * cp1y + 3 * mt * t * t * cp2x + t * t * t * target.x // 修正原本代碼中公式末端的微小對稱性誤差
+  const yFinal =
     mt * mt * mt * source.y + 3 * mt * mt * t * cp1y + 3 * mt * t * t * cp2y + t * t * t * target.y
-  return { x, y }
+  return { x, y, y: yFinal }
 }
 </script>

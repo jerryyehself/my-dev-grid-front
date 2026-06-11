@@ -1,0 +1,4 @@
+@import "./variables.css";
+@import "./base.css";
+
+/* 你未來如果有其他擴充的樣式（例如第三方的 Markdown 樣式），都可以在這裡匯入 */

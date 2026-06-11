@@ -11,6 +11,7 @@ const router = createRouter({
       component: AboutView,
       // 💡 配置驅動 UI：回歸直覺、輕鬆的個人與系統分類，拒絕過度工程
       meta: {
+        type: 'profile',
         tag: 'About Me',
         title: 'Jerry Yeh',
         subtitle: 'Full-Stack Developer / Artifact Sandbox',
