@@ -24,7 +24,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 // 💡 引進所有獨立組件，Layout 不留任何多餘的計算邏輯（useRoute、computed 通通拔除）
 import TheNavbar from '@/components/TheNavbar.vue'
 import SiteHeader from '@/components/SiteHeader.vue'

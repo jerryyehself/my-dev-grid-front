@@ -1,17 +1,19 @@
 <template>
   <nav
-    class="sticky top-0 z-50 w-full bg-[var(--bg-nav-footer)]/90 backdrop-blur-md transition-all duration-300 border-b border-black/10 shadow-sm"
+    class="sticky top-0 z-50 w-full bg-(--bg-nav-footer) border-b border-black/30 shadow-md transition-colors duration-300"
   >
     <div
       class="max-w-5xl mx-auto h-16 px-4 md:px-8 flex items-center justify-between font-mono text-xs"
     >
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-[var(--text-nav-hover)] animate-pulse"></span>
+        <span class="w-2 h-2 rounded-full bg-(--text-nav-hover) animate-pulse"></span>
         <router-link
           to="/"
-          class="font-black tracking-widest text-[var(--text-nav-footer)] hover:text-[var(--text-nav-hover)] transition-colors"
+          class="flex items-center gap-2 tracking-[0.2em] text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
         >
-          JERRY_YEH // ARCHIVE
+          <span class="font-black text-sm">JERRY YEH</span>
+          <span class="h-3 w-px bg-(--text-nav-footer) opacity-30 mx-1"></span>
+          <span class="font-extralight text-[10px] opacity-60">ARCHIVE</span>
         </router-link>
       </div>
 
@@ -20,9 +22,13 @@
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="relative py-1 text-[var(--text-nav-footer)] opacity-80 hover:opacity-100 hover:text-[var(--text-nav-hover)] transition-all font-semibold tracking-widest"
-          active-class="!text-[var(--text-nav-hover)] !opacity-100 font-black after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[var(--text-nav-hover)] rounded-sm"
+          class="relative pl-3 pr-1 py-1 text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all font-semibold tracking-widest flex items-center"
+          active-class="!text-(--text-nav-hover) !opacity-100 font-bold"
         >
+          <span
+            class="absolute left-0 w-1 h-1 rounded-full bg-(--text-nav-hover) scale-0 transition-transform duration-200"
+            :class="{ 'scale-100': route.path === item.path }"
+          ></span>
           {{ item.name }}
         </router-link>
       </div>
@@ -30,11 +36,19 @@
   </nav>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 
-// 🎯 依據「部落格＋作品集＋隨手筆記」的核心架構，重新編目全站導航節點
-const navItems = ref([
+// ⚡ 引入當前路由，用於精準驅動幾何 Active 圓點的動態樣式
+const route = useRoute()
+
+interface NavItem {
+  name: string
+  path: string
+}
+
+const navItems = ref<NavItem[]>([
   { name: 'ABOUT', path: '/about' },
   { name: 'BLOG', path: '/blog' },
   { name: 'PROJECTS', path: '/projects' },

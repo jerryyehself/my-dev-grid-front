@@ -19,15 +19,6 @@ body {
     align-items: center;
 }
 
-/* 💡 書頁索引符號前綴 */
-.global-page-wrapper h2::before {
-    content: '// ';
-    color: var(--text-ink-muted);
-    font-family: var(--font-mono);
-    font-weight: 700;
-    margin-right: 0.5rem;
-}
-
 /* 📖 仿實體書籍印刷的內文段落 */
 .global-page-wrapper p {
     font-size: 0.9375rem;
