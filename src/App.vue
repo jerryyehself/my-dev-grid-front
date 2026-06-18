@@ -18,9 +18,7 @@ const pageSubtitle = computed(
 <template>
   <MainLayout>
     <template #tag>
-      <span
-        class="text-[10px] bg-indigo-50 text-indigo-600 font-semibold tracking-wider px-2 py-0.5 rounded-full border border-indigo-100 uppercase font-mono"
-      >
+      <span>
         {{ pageTag }}
       </span>
     </template>
