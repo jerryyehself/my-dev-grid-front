@@ -1,0 +1,40 @@
+/* 覆蓋全站 Body 基礎外觀 */
+body {
+    background-image: linear-gradient(to bottom, var(--bg-paper-light), var(--bg-paper-dark));
+    color: var(--text-ink-main);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* 🎯 數位檔案索引排版（全站通用） */
+.global-page-wrapper h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--text-ink-main);
+    margin-top: 2.5rem;
+    margin-bottom: 1.125rem;
+    display: flex;
+    align-items: center;
+}
+
+/* 📖 仿實體書籍印刷的內文段落 */
+.global-page-wrapper p {
+    font-size: 0.9375rem;
+    color: var(--text-ink-body);
+    line-height: 1.8;
+    margin-bottom: 1.25rem;
+    text-align: justify;
+    /* 讓段落左右對齊，像實體書一樣工整 */
+}
+
+/* 💻 筆記區的程式碼片段微調 */
+.global-page-wrapper code {
+    font-family: var(--font-mono);
+    background-color: var(--bg-folder);
+    color: var(--text-ink-main);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.125rem;
+    font-size: 0.875rem;
+}
