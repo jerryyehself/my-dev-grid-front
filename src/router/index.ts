@@ -1,6 +1,7 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
 import AboutView from '@/views/AboutView.vue'
+import ArticlesView from '@/views/ArticlesView.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
 
 const router = createRouter({
@@ -26,6 +27,16 @@ const router = createRouter({
         tag: 'Dashboard & Tools',
         title: 'Production Artifacts',
         subtitle: '工程履約管理、ISBN 掃描器與 GAS 自動化工作流整合紀錄',
+      },
+    },
+    {
+      path: '/articles',
+      name: 'articles',
+      component: () => ArticlesView,
+      meta: {
+        tag: 'Articles',
+        title: 'My Articles',
+        subtitle: '自己記錄',
       },
     },
   ],

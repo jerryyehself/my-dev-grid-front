@@ -50,7 +50,7 @@ interface NavItem {
 
 const navItems = ref<NavItem[]>([
   { name: 'ABOUT', path: '/about' },
-  { name: 'BLOG', path: '/blog' },
+  { name: 'ARTICLES', path: '/articles' },
   { name: 'PROJECTS', path: '/projects' },
   { name: 'NOTES', path: '/notes' },
 ])
