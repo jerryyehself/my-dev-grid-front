@@ -1,140 +1,125 @@
 <template>
-  <!-- 🏛️ 篩選區：實心重音壓陣，完全融入 #F8F6F2 紙張底色 -->
-  <div class="flex flex-col sm:flex-row sm:items-center gap-y-3 gap-x-6 text-xs mb-10">
-    <span
-      class="font-mono text-[11px] text-stone-400 dark:text-stone-500 uppercase tracking-widest"
-    >
-      Filter Archive //
-    </span>
+  <div class="w-full">
+    <div class="flex mb-[-1px] relative z-10">
+      <div class="flex flex-wrap gap-x-1 items-end">
+        <button
+          @click="currentTag = ''"
+          :class="[
+            !currentTag
+              ? 'text-[var(--text-ink-main)] border-[var(--text-ink-main)]/10 border-b-transparent font-semibold pt-2.5 pb-2'
+              : 'bg-[var(--text-ink-main)]/[0.04] text-[var(--text-ink-body)]/60 border-transparent hover:text-[var(--text-ink-main)] pt-2 pb-2 hover:bg-[var(--text-ink-main)]/[0.08]',
+          ]"
+          style="background-color: !currentTag ? 'var(--bg-paper-light)' : ''"
+          class="transition-colors duration-150 font-mono uppercase tracking-wider text-[10px] px-4 rounded-t border cursor-pointer flex items-center h-[34px]"
+        >
+          All_Essays
+        </button>
 
-    <div class="flex flex-wrap gap-1 bg-stone-200/50 dark:bg-stone-800/50 p-1 rounded-lg max-w-max">
-      <button
-        @click="currentTag = ''"
-        :class="[
-          !currentTag
-            ? 'bg-stone-900 text-white font-bold shadow-sm'
-            : 'text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200',
-        ]"
-        class="transition-all font-mono uppercase tracking-wider text-[11px] px-3 py-1.5 rounded-md"
-      >
-        All_Essays
-      </button>
-
-      <button
-        v-for="tag in allTags"
-        :key="tag"
-        @click="currentTag = currentTag === tag ? '' : tag"
-        :class="[
-          currentTag === tag
-            ? 'bg-stone-900 text-white font-bold shadow-sm'
-            : 'text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200',
-        ]"
-        class="transition-all font-mono uppercase tracking-wider text-[11px] px-3 py-1.5 rounded-md"
-      >
-        {{ tag }}
-      </button>
+        <button
+          v-for="tag in allTags"
+          :key="tag"
+          @click="currentTag = currentTag === tag ? '' : tag"
+          :class="[
+            currentTag === tag
+              ? 'text-[var(--text-ink-main)] border-[var(--text-ink-main)]/10 border-b-transparent font-semibold pt-2.5 pb-2'
+              : 'bg-[var(--text-ink-main)]/[0.04] text-[var(--text-ink-body)]/60 border-transparent hover:text-[var(--text-ink-main)] pt-2 pb-2 hover:bg-[var(--text-ink-main)]/[0.08]',
+          ]"
+          style="background-color: currentTag === tag ? 'var(--bg-paper-light)' : ''"
+          class="transition-colors duration-150 font-mono uppercase tracking-wider text-[10px] px-4 rounded-t border cursor-pointer flex items-center h-[34px]"
+        >
+          {{ tag }}
+        </button>
+      </div>
     </div>
-  </div>
 
-  <!-- 📖 緊湊且完美融入紙張底色的「文獻卡片清單」 -->
-  <div class="space-y-3">
-    <article
-      v-for="article in filteredArticles"
-      :key="article.id"
-      class="group bg-stone-100/40 dark:bg-stone-900/20 hover:bg-[#F2EFE9] dark:hover:bg-stone-900/60 p-5 rounded-lg border border-stone-200/40 dark:border-stone-800/40 hover:border-stone-300/80 dark:hover:border-stone-700/80 shadow-[0_1px_4px_rgba(0,0,0,0.01)] transition-all duration-200"
+    <div
+      class="border rounded-b shadow-[0_4px_24px_rgba(27,25,24,0.01)] overflow-hidden"
+      style="background-color: var(--bg-paper-light); border-color: rgba(var(--text-ink-main), 0.1)"
     >
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-y-2 gap-x-6">
-        <!-- 📅 左側：時間與標籤 -->
-        <div class="space-y-1 md:pt-0.5">
-          <time
-            class="font-mono text-[12px] font-medium text-stone-400 dark:text-stone-500 block tracking-wider group-hover:text-stone-800 dark:group-hover:text-stone-200 transition-colors"
-          >
-            {{ article.date }}
-          </time>
-          <div class="flex flex-wrap gap-1">
-            <span
-              v-for="tag in article.tags"
-              :key="tag"
-              class="font-mono text-[9px] text-stone-500 bg-stone-200/60 dark:bg-stone-800/60 px-1.5 py-0.5 rounded uppercase tracking-wide"
+      <div v-if="filteredArticles.length > 0" class="divide-y divide-[var(--text-ink-main)]/10">
+        <article
+          v-for="article in filteredArticles"
+          :key="article.id"
+          class="group bg-transparent p-6 rounded-none hover:bg-[var(--text-ink-main)]/[0.02] transition-colors duration-150 ease-out cursor-pointer"
+        >
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-[10px] font-mono tracking-wider text-[var(--text-ink-body)]/50"
+              >2026-07-09</span
             >
-              {{ tag }}
-            </span>
+            <span
+              class="text-[10px] text-amber-800 dark:text-amber-600 font-mono uppercase font-semibold"
+              >// INTERNALS</span
+            >
           </div>
-        </div>
 
-        <!-- 📄 右側：主體內容 -->
-        <div class="md:col-span-3 space-y-2.5">
-          <!-- 標題 -->
           <h3
-            class="text-sm font-semibold tracking-tight text-stone-800 dark:text-stone-200 group-hover:text-(--text-accent) transition-colors duration-150"
+            class="text-base font-bold text-[var(--text-ink-main)] mb-2 group-hover:text-amber-800 dark:group-hover:text-amber-600 transition-colors duration-150 ease-out"
           >
-            <router-link :to="`/articles/${article.id}`" class="block">
-              {{ article.title }}
-            </router-link>
+            {{ article.title }}
           </h3>
 
-          <!-- 內文簡介 -->
-          <p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed text-justify m-0">
-            {{ article.summary }}
+          <p class="text-[var(--text-ink-body)] text-[0.9375rem] leading-relaxed mb-4 text-justify">
+            {{ article.description }}
           </p>
 
-          <!-- 🔗 引用標籤（關聯專案） -->
-          <div
-            v-if="article.relatedProjects && article.relatedProjects.length"
-            class="pt-1 flex items-center gap-1.5"
-          >
-            <span class="font-mono text-[10px] text-stone-400 dark:text-stone-500">Ref_</span>
+          <div class="flex items-center gap-2 text-xs font-mono text-[var(--text-ink-body)]/50">
+            <span>INDEX: #{{ article.id }}</span>
+            <span class="text-[var(--text-ink-main)]/20">•</span>
             <span
-              v-for="projId in article.relatedProjects"
-              :key="projId"
-              class="font-mono text-[9px] text-stone-600 dark:text-stone-400 bg-stone-200/40 dark:bg-stone-800/40 px-1.5 py-0.5 rounded border border-stone-200/20 shadow-2xs"
+              >STATUS:
+              <code
+                class="text-[var(--text-ink-main)] bg-[var(--bg-folder)] px-1.5 py-0.5 rounded border border-[var(--text-ink-main)]/5"
+                >STABLE</code
+              ></span
             >
-              {{ projId }}
-            </span>
           </div>
-        </div>
+        </article>
       </div>
-    </article>
-  </div>
 
-  <!-- 🕳️ 空狀態 -->
-  <div
-    v-if="filteredArticles.length === 0"
-    class="py-12 text-center text-xs font-mono text-stone-400"
-  >
-    NO_DOCUMENTS_FOUND
-  </div>
+      <div
+        v-if="filteredArticles.length === 0"
+        class="py-24 text-center text-[11px] font-mono text-[var(--text-ink-body)]/40 tracking-widest"
+      >
+        // NO_DOCUMENTS_FOUND
+      </div>
 
-  <!-- 📖 乾乾淨淨、回歸直覺的一般分頁按鈕 -->
-  <div v-if="filteredArticles.length > 0" class="flex items-center justify-center gap-2 pt-8 mt-6">
-    <button
-      class="px-3 py-1.5 text-xs font-medium rounded border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-800 text-stone-400 cursor-not-allowed"
-      disabled
-    >
-      上一頁
-    </button>
+      <div
+        v-if="filteredArticles.length > 0"
+        class="flex items-center justify-center gap-1.5 py-6 border-t border-[var(--text-ink-main)]/5 bg-[var(--text-ink-main)]/[0.01]"
+      >
+        <button
+          class="px-2.5 py-1.5 text-[11px] font-mono text-[var(--text-ink-body)]/30 cursor-not-allowed"
+          disabled
+        >
+          &lt;&lt; PREV
+        </button>
 
-    <button class="px-3 py-1.5 text-xs font-semibold rounded bg-stone-900 text-white shadow-sm">
-      1
-    </button>
+        <button
+          class="px-2.5 py-1 text-[11px] font-mono font-bold rounded-xs text-[var(--bg-paper-light)]"
+          style="background-color: var(--text-ink-main)"
+        >
+          01
+        </button>
 
-    <button
-      class="px-3 py-1.5 text-xs font-medium rounded border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-    >
-      2
-    </button>
+        <button
+          class="px-2.5 py-1 text-[11px] font-mono text-[var(--text-ink-body)]/60 hover:bg-[var(--text-ink-main)]/[0.04] rounded-xs transition-colors"
+        >
+          02
+        </button>
 
-    <button
-      class="px-3 py-1.5 text-xs font-medium rounded border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-    >
-      3
-    </button>
+        <button
+          class="px-2.5 py-1 text-[11px] font-mono text-[var(--text-ink-body)]/60 hover:bg-[var(--text-ink-main)]/[0.04] rounded-xs transition-colors"
+        >
+          03
+        </button>
 
-    <button
-      class="px-3 py-1.5 text-xs font-medium rounded border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
-    >
-      下一頁
-    </button>
+        <button
+          class="px-2.5 py-1.5 text-[11px] font-mono text-[var(--text-ink-body)]/60 hover:bg-[var(--text-ink-main)]/[0.04] rounded-xs transition-colors"
+        >
+          NEXT &gt;&gt;
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
