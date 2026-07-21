@@ -2,6 +2,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AboutView from '@/views/AboutView.vue'
 import ArticlesView from '@/views/ArticlesView.vue'
+import ArticleDetailView from '@/views/ArticleDetailView.vue'
 import ProjectsView from '@/views/ProjectsView.vue'
 
 const router = createRouter({
@@ -37,6 +38,16 @@ const router = createRouter({
         tag: 'Articles',
         title: 'My Articles',
         subtitle: '自己記錄',
+      },
+    },
+    {
+      path: '/articles/:id',
+      name: 'article-detail',
+      component: () => ArticleDetailView,
+      meta: {
+        tag: 'Article Detail',
+        title: 'Article Detail',
+        subtitle: '深入閱讀',
       },
     },
   ],

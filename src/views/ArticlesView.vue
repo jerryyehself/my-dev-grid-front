@@ -41,6 +41,7 @@
           v-for="article in filteredArticles"
           :key="article.id"
           class="group bg-transparent p-6 rounded-none hover:bg-[var(--text-ink-main)]/[0.02] transition-colors duration-150 ease-out cursor-pointer"
+          @click="router.push({ name: 'article-detail', params: { id: article.id } })"
         >
           <div class="flex items-center gap-3 mb-3">
             <span class="text-[10px] font-mono tracking-wider text-[var(--text-ink-body)]/50"
@@ -59,7 +60,7 @@
           </h3>
 
           <p class="text-[var(--text-ink-body)] text-[0.9375rem] leading-relaxed mb-4 text-justify">
-            {{ article.description }}
+            {{ article.summary }}
           </p>
 
           <div class="flex items-center gap-2 text-xs font-mono text-[var(--text-ink-body)]/50">
@@ -125,53 +126,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { articles as articleList } from '@/data/articles'
 
-interface Article {
-  id: string
-  title: string
-  summary: string
-  date: string
-  tags: string[]
-  relatedProjects?: string[]
-}
-
-const articles = ref<Article[]>([
-  {
-    id: 'vue3-large-architecture',
-    title: 'Vue3 大型專案架構優化：從元件臃腫到極致純粹 View 的思維演進',
-    summary:
-      '本文探討在面臨中大型前端專案時，如何透過大一統 Layout 控制與事件驅動機制，將業務邏輯完全封閉在單一 View 中。拒絕過度封裝所帶來的通訊成本與黑盒子效能損耗。',
-    date: '2026.07.02',
-    tags: ['Vue3', 'Arch'],
-    relatedProjects: ['my-dev-grid'],
-  },
-  {
-    id: 'tailwind-v4-fluid-design',
-    title: 'Tailwind v4 動態光學流體排版與 CSS 變數主題系統實踐',
-    summary:
-      '深入探討新版 Tailwind v4 的架構特徵，如何利用純粹的 CSS 原生變數調配出具有「紙質物理收藏感」與「精裝書印刷感」的暗黑與明亮雙主題，並完美避開文字飄移感。',
-    date: '2026.06.18',
-    tags: ['Tailwind', 'CSS'],
-    relatedProjects: ['portfolio-v4'],
-  },
-  {
-    id: 'event-driven-dom-scrolling',
-    title: '為什麼在富文本與關係圖譜中，集中式事件驅動優於元件化封裝？',
-    summary:
-      '解析跨層級、非父子關係 DOM 尋找與閃爍滾動的底層邏輯。結合 Vue 的 emit 監聽器與原生 DOM 副作用，達成如學術論文腳註（Footnotes）般的流暢檢索跳轉體驗。',
-    date: '2026.05.24',
-    tags: ['Vue3', 'DOM'],
-    relatedProjects: ['my-dev-grid'],
-  },
-  {
-    id: 'swiss-style-typography',
-    title: '瑞士國際主義排版在數位索引介面中的光學微幾何特徵應用',
-    summary:
-      '當我們拋棄粗暴的粗線與 Alert Box 俗套，如何透過右端句點壓陣、微亮藍色絲織書籤 Tag 等手法，在畫面上精準分配視覺預算，打造冷冽、克制且高階的軟體工程師數位美學。',
-    date: '2026.04.12',
-    tags: ['Design', 'Type'],
-  },
-])
+const router = useRouter()
+const articles = ref(articleList)
 
 const currentTag = ref('')
 

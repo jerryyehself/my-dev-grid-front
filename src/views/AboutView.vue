@@ -381,7 +381,13 @@ onBeforeUnmount(() => {
   }
 })
 
-const calculateBezierPath = (link: any) => {
+interface GraphLink {
+  sourceId: string
+  targetId: string
+  curveDirection: number
+}
+
+const calculateBezierPath = (link: GraphLink) => {
   const source = computedNodes.value.find((n) => n.id === link.sourceId)
   const target = computedNodes.value.find((n) => n.id === link.targetId)
   if (!source || !target) return ''
@@ -393,7 +399,7 @@ const calculateBezierPath = (link: any) => {
   return `M ${source.x} ${source.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${target.x} ${target.y}`
 }
 
-const getCurveCenter = (link: any) => {
+const getCurveCenter = (link: GraphLink) => {
   const source = computedNodes.value.find((n) => n.id === link.sourceId)
   const target = computedNodes.value.find((n) => n.id === link.targetId)
   if (!source || !target) return { x: 0, y: 0 }
