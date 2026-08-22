@@ -32,6 +32,8 @@
           {{ item.name }}
         </router-link>
       </div>
+
+      <ThemeToggle />
     </div>
   </nav>
 </template>
@@ -39,6 +41,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 // ⚡ 引入當前路由，用於精準驅動幾何 Active 圓點的動態樣式
 const route = useRoute()
