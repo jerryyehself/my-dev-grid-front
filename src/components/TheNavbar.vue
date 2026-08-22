@@ -6,7 +6,7 @@
       class="max-w-5xl mx-auto h-16 px-4 md:px-8 flex items-center justify-between font-mono text-xs"
     >
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-(--text-nav-hover) animate-pulse"></span>
+        <span class="beacon-dot w-2 h-2 rounded-full bg-(--text-nav-hover) text-(--text-nav-hover)"></span>
         <router-link
           to="/"
           class="flex items-center gap-2 tracking-[0.2em] text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"

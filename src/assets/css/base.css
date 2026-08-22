@@ -7,6 +7,50 @@ body {
     margin: 0;
 }
 
+/* EXPLORE ONLY - 藍圖主題的工程圖紙格線,尚未定案 */
+.theme-blueprint body {
+    background-image:
+        linear-gradient(to bottom, var(--bg-paper-light), var(--bg-paper-dark)),
+        linear-gradient(rgba(14, 116, 144, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 116, 144, 0.08) 1px, transparent 1px);
+    background-size:
+        auto,
+        24px 24px,
+        24px 24px;
+}
+
+/* EXPLORE ONLY - 夜間書庫終端機的質感:掃描線壓得很淡,加暗角營造「暗室裡的一盞螢幕」而非機房 */
+.theme-terminal body {
+    background-image:
+        radial-gradient(ellipse at center, var(--bg-paper-dark) 0%, var(--bg-paper-light) 75%),
+        repeating-linear-gradient(
+            to bottom,
+            rgba(255, 184, 77, 0.025) 0px,
+            rgba(255, 184, 77, 0.025) 1px,
+            transparent 1px,
+            transparent 3px
+        );
+    font-family: var(--font-mono);
+}
+
+/* EXPLORE ONLY - 發光指示燈:取代泛用的 Tailwind animate-pulse,
+   用 currentColor 讓任何主題的強調色都能直接套用同一顆「呼吸中的燈」,
+   之後知識圖譜的高權重節點呼吸效果也打算沿用同一套視覺語言 */
+.beacon-dot {
+    animation: beacon-breathe 2.6s ease-in-out infinite;
+}
+@keyframes beacon-breathe {
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 4px 1px currentColor;
+    }
+    50% {
+        opacity: 0.55;
+        box-shadow: 0 0 1px 0 currentColor;
+    }
+}
+
 /* 🎯 數位檔案索引排版（全站通用） */
 .global-page-wrapper h2 {
     font-size: 1.25rem;

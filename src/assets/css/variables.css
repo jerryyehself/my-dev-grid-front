@@ -72,3 +72,49 @@
     --bg-folder: rgba(15, 23, 42, 0.05);
     /* Slate-900/5 淡灰區塊 */
 }
+
+/* ==========================================================================
+   🧭 EXPLORE ONLY - 藍圖/工程圖紙風 (Blueprint) - 尚未定案,僅供預覽比較
+   ========================================================================== */
+.theme-blueprint {
+    --bg-paper-light: #eef5fa;
+    --bg-paper-dark: #e2eef7;
+
+    --bg-nav-footer: #0a2a43;
+    --text-nav-footer: #a8d4ec;
+    --text-nav-hover: #22d3ee;
+
+    --nav-bg-opacity: 0.85;
+    --nav-blur: 6px;
+
+    --text-ink-main: #0c2340;
+    --text-ink-body: #1e3a5f;
+    --text-ink-muted: #5b7a9a;
+    --text-accent: #0891b2;
+    --border-shelf: rgba(14, 116, 144, 0.25);
+    --bg-folder: rgba(14, 116, 144, 0.06);
+}
+
+/* ==========================================================================
+   🕯️ EXPLORE ONLY - 夜間書庫終端機 (Archive Terminal) - 尚未定案,僅供預覽比較
+   由「終端機/CRT」迭代而來:保留深色+等寬字+發光強調的骨架,
+   但把冷綠換成暖磷光琥珀、純黑換成焦木炭黑,呼應圖書館主題的木質/黃銅基因
+   ========================================================================== */
+.theme-terminal {
+    --bg-paper-light: #170f08;
+    --bg-paper-dark: #1f140a;
+
+    --bg-nav-footer: #0d0904;
+    --text-nav-footer: #c9a876;
+    --text-nav-hover: #ffb84d;
+
+    --nav-bg-opacity: 0.95;
+    --nav-blur: 0px;
+
+    --text-ink-main: #f4e4c1;
+    --text-ink-body: #d4a76a;
+    --text-ink-muted: #8a6d3f;
+    --text-accent: #ffb84d;
+    --border-shelf: rgba(255, 184, 77, 0.18);
+    --bg-folder: rgba(255, 184, 77, 0.07);
+}

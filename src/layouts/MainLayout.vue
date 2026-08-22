@@ -8,7 +8,7 @@
       :class="[
         'sticky top-16 z-40 w-full transform-gpu transition-all duration-300 ease-in-out',
         isScrolled
-          ? 'py-2 bg-[#f4f0e1]/90 backdrop-blur-md border-b border-stone-300 shadow-sm'
+          ? 'py-2 bg-(--bg-paper-dark)/90 backdrop-blur-md border-b border-(--border-shelf) shadow-sm'
           : 'py-6 bg-transparent border-b border-transparent',
       ]"
     >
@@ -38,7 +38,7 @@
           <!-- ⚠️ 強制加上 !font-extrabold 蓋掉 CSS root 的 normal 限制，找回粗體的精緻質感 -->
           <h1
             :class="[
-              '!font-extrabold tracking-tight text-stone-950 transition-all duration-300 truncate',
+              '!font-extrabold tracking-tight text-(--text-ink-main) transition-all duration-300 truncate',
               isScrolled ? 'text-base !font-bold' : 'text-2xl sm:text-3xl',
             ]"
           >
@@ -47,7 +47,7 @@
 
           <span
             v-if="isScrolled && $slots.description"
-            class="text-stone-300 font-light select-none mx-0.5"
+            class="text-(--text-ink-muted) font-light select-none mx-0.5"
           >
             |
           </span>
@@ -55,7 +55,7 @@
           <p
             v-if="$slots.description"
             :class="[
-              'text-stone-500 transition-all duration-300 truncate !font-normal',
+              'text-(--text-ink-muted) transition-all duration-300 truncate !font-normal',
               isScrolled ? 'text-xs' : 'text-sm mt-1',
             ]"
           >
@@ -73,7 +73,7 @@
     </main>
 
     <footer
-      class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 border-t border-stone-200 mt-auto text-center text-xs text-stone-400 font-mono"
+      class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
     >
       © 2026 Jerry Yeh. All Rights Reserved.
     </footer>
