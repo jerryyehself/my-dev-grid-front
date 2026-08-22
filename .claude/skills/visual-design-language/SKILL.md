@@ -96,6 +96,24 @@ project's theme toggle — it would never fire from clicking 晝間/夜讀). All
 three are the kind of bug that consolidating into a shared component makes
 visible and cheap to fix once, instead of silently repeated at every call site.
 
+**Concrete example — `BaseCard.vue` / `BaseTag.vue`**: `ProjectsView.vue`'s
+project cards had the same class of bug — `bg-emerald-50 text-emerald-700` /
+`bg-amber-50 text-amber-700` for the active/archived status badge, plus
+`text-amber-950` throughout the card, all hardcoded and all unreadable once a
+dark-paper theme exists. Resolved *without* adding a new "semantic status
+color" token category: `BaseTag`'s `accent` / `muted` tones just reuse
+`--text-accent` and `--text-ink-muted` at different emphasis, so "active" vs
+"archived" reads through weight/contrast rather than a new hue. Reach for a
+real new semantic color (success/warning/error) only if a genuine tri-state or
+alert-level distinction shows up — two states that are really just
+"current" vs "past" don't need one.
+
+**What didn't get built yet, on purpose**: a shared list-panel component for
+the blog-list layout. It exists once, in `ArticlesView.vue` — `HomeView.vue`
+is currently empty, so there's no second real usage to extract a shared shape
+from yet. Building it now would mean guessing what the homepage's idea list
+needs before that view exists. Wait for the second real usage.
+
 ## Extending the token set
 
 New tokens are sometimes genuinely needed (e.g. a color for the knowledge
