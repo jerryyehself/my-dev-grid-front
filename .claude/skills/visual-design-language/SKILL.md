@@ -56,14 +56,45 @@ happen to have light paper backgrounds, so it never showed — until a dark-pape
 theme candidate made the title unreadable (near-black text on near-black
 background). Fixed by routing all of it through `--text-ink-main` /
 `--bg-paper-dark` / `--border-shelf`. When evaluating a new theme candidate,
-re-check `MainLayout.vue`, `TheNavbar.vue`, and `SiteFooter.vue` render
-correctly — a theme that only works on paper-colored content is validating an
-incomplete design.
+re-check `MainLayout.vue` and `TheNavbar.vue` render correctly — a theme that
+only works on paper-colored content is validating an incomplete design.
 
-**Also found, not yet fixed**: `SiteFooter.vue` is a real component but isn't
-imported anywhere — `MainLayout.vue` has its own inline `<footer>` with
-different copy. One of them should go; note it here rather than silently
-picking one next time this file gets touched.
+**Resolved**: `SiteHeader.vue` and `SiteFooter.vue` were dead components —
+neither was imported anywhere; `MainLayout.vue` had its own inline
+header/footer instead. `SiteHeader.vue` wasn't simple dead code either: it was
+a more developed, abandoned design (three header variants switched by
+`route.meta.type` — profile/essay/snippet) that never got wired up, and it had
+its own hardcoded `bg-white`. Deleted both rather than reviving them — a
+half-finished alternate architecture sitting unused is worse than no
+architecture, and reviving it would have meant reconciling two different
+header systems, not just a rename.
+
+## Component naming
+
+Vue's own style guide defines two prefixes, and this project should stick to
+exactly those two — don't invent a third:
+- **`Base*`** — presentational components with no business logic, meant to be
+  reused anywhere (`BaseButton.vue`). This is where a style decision from the
+  chain above turns into something concrete and shared, instead of getting
+  re-implemented per view (see the button variants below).
+- **`The*`** — components that exist exactly once per page (`TheNavbar.vue`).
+
+`SiteHeader.vue` / `SiteFooter.vue` used a `Site*` prefix that isn't part of
+Vue's convention — one more reason (beyond being dead code, above) they didn't
+just get renamed and kept.
+
+**Concrete example — `BaseButton.vue`**: built with three variants
+(`primary`, `tab`, `page`) instead of inventing a fourth kind whenever a new
+button-like element showed up. Refactoring `ArticlesView.vue` to use it
+surfaced real bugs that had been sitting in that file: a `:style` binding
+missing its `:` (so the active filter tab's background was silently a dead
+static string, never actually reactive), `rgba(var(--text-ink-main), 0.1)`
+(invalid CSS — `rgba()` needs numeric R/G/B, not a hex-string token), and
+`text-amber-800 dark:text-amber-600` (hardcoded color, and `dark:` is
+Tailwind's own OS-preference dark mode, which has nothing to do with this
+project's theme toggle — it would never fire from clicking 晝間/夜讀). All
+three are the kind of bug that consolidating into a shared component makes
+visible and cheap to fix once, instead of silently repeated at every call site.
 
 ## Extending the token set
 
