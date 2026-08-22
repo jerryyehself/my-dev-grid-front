@@ -6,6 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vite App</title>
     <script>
+      // 在畫面畫出來之前就決定主題 class,避免先閃預設主題、再跳成使用者選的主題(FOUC)。
+      try {
+        if (localStorage.getItem('theme') === 'cyber') {
+          document.documentElement.classList.add('theme-cyber')
+        }
+      } catch (e) {
+        // 私密瀏覽模式擋 storage 時,就用預設主題,不影響網頁能不能用。
+      }
       // EXPLORE ONLY - 用 ?theme= 快速預覽候選主題,不是正式機制
       var m = location.search.match(/theme=([\w-]+)/)
       if (m) document.documentElement.classList.add('theme-' + m[1])

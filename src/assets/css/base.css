@@ -33,9 +33,10 @@ body {
     font-family: var(--font-mono);
 }
 
-/* EXPLORE ONLY - 發光指示燈:取代泛用的 Tailwind animate-pulse,
-   用 currentColor 讓任何主題的強調色都能直接套用同一顆「呼吸中的燈」,
-   之後知識圖譜的高權重節點呼吸效果也打算沿用同一套視覺語言 */
+/* 發光呼吸動畫:保留給「真的代表狀態」的地方用,例如知識圖譜的高權重節點。
+   曾經拿來裝飾導覽列的 logo 圓點,後來拿掉了——那裡的圓點不代表任何真實狀態,
+   讓它呼吸發光等於是個會說謊的 signifier(使用者容易誤讀成上線/有新內容之類的狀態燈)。
+   用 currentColor 是為了讓任何主題的強調色都能直接套用同一顆「呼吸中的燈」。 */
 .beacon-dot {
     animation: beacon-breathe 2.6s ease-in-out infinite;
 }
