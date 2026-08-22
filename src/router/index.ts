@@ -64,6 +64,16 @@ const router = createRouter({
         hideHeader: true,
       },
     },
+    {
+      path: '/poc/graph',
+      name: 'graph-poc',
+      component: () => import('@/views/GraphPocView.vue'),
+      meta: {
+        tag: 'POC',
+        title: '知識圖譜技術驗證',
+        subtitle: '2D d3-force vs 3D 3d-force-graph,假資料',
+      },
+    },
   ],
 })
 
