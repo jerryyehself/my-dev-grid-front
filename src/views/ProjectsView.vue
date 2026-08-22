@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import BaseCard from '@/components/BaseCard.vue'
+import BaseTag from '@/components/BaseTag.vue'
 
 // 💡 純粹的數據驅動
 const projects = ref([
@@ -40,40 +42,29 @@ const projects = ref([
 
 <template>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div
-      v-for="proj in projects"
-      :key="proj.id"
-      class="flex flex-col p-6 bg-(--bg-paper-light) border border-(--border-shelf) rounded-xl shadow-xs hover:border-amber-900/30 transition-all group"
-    >
-      <div class="flex items-center justify-between mb-4 font-mono text-xs text-amber-950/60">
+    <BaseCard v-for="proj in projects" :key="proj.id">
+      <div class="flex items-center justify-between mb-4 font-mono text-xs text-(--text-ink-muted)">
         <span>{{ proj.id }}</span>
-        <span
-          :class="[
-            'px-2 py-0.5 rounded-full font-semibold tracking-wider uppercase scale-90 border',
-            proj.statusType === 'active'
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-              : 'bg-amber-50 text-amber-700 border-amber-100',
-          ]"
-        >
+        <BaseTag :tone="proj.statusType === 'active' ? 'accent' : 'muted'">
           {{ proj.status }}
-        </span>
+        </BaseTag>
       </div>
 
-      <h2 class="text-xl font-bold text-amber-950 group-hover:text-amber-900 transition-colors">
+      <h2
+        class="text-xl font-bold text-(--text-ink-main) group-hover:text-(--text-accent) transition-colors"
+      >
         {{ proj.title }}
       </h2>
 
-      <p class="text-sm text-amber-950/80 my-3 leading-relaxed text-justify">
+      <p class="text-sm text-(--text-ink-body) my-3 leading-relaxed text-justify">
         {{ proj.desc }}
       </p>
 
       <div
-        class="mt-auto pt-4 border-t border-(--border-shelf)/40 flex flex-wrap gap-2 font-mono text-[11px] text-amber-950/70"
+        class="mt-auto pt-4 border-t border-(--border-shelf) flex flex-wrap gap-2 font-mono text-[11px]"
       >
-        <span v-for="tag in proj.tags" :key="tag" class="bg-(--bg-folder) px-2 py-0.5 rounded">
-          {{ tag }}
-        </span>
+        <BaseTag v-for="tag in proj.tags" :key="tag">{{ tag }}</BaseTag>
       </div>
-    </div>
+    </BaseCard>
   </div>
 </template>
