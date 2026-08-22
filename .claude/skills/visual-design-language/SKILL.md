@@ -10,6 +10,15 @@ management and idea incubation. That framing is why visual decisions here get
 checked against more than taste: a choice that looks fine but doesn't mean
 anything (see the nav dot example below) is a bug, not a style preference.
 
+**Current themes**: `.theme-library` (default) is the shipped "現代木質圖書館風".
+`.theme-terminal` is the shipped "夜讀" theme, toggled via `useTheme.ts` /
+`ThemeToggle.vue` — currently filled with a Gruvbox-sourced palette (see
+"Generating a color palette" below for why). Three other fully-worked,
+WCAG-checked candidate palettes for that same `.theme-terminal` slot are kept
+ready to paste in at `references/alternate-palettes.md` — swapping the theme
+later means replacing the values inside `.theme-terminal`, not renaming
+anything or touching the toggle logic.
+
 ## The chain: tokens → component rule → architecture → whole site
 
 Every visual decision should be traceable through four layers. Skipping a

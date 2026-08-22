@@ -37,84 +37,35 @@
 }
 
 /* ==========================================================================
-   🌐 2. 備用主題：藍白科技極客風 (Cyber Sandbox)
-   ========================================================================== */
-.theme-cyber {
-    /* 📄 畫布與紙張色 (原本清爽的 Slate 漸層) */
-    --bg-paper-light: #f8fafc;
-    /* Slate-50 */
-    --bg-paper-dark: #f1f5f9;
-    /* Slate-100 */
-
-    /* 💻 Cyber 模式頭尾加深專用色 (極深藍灰沙盒) */
-    --bg-nav-footer: #0f172a;
-    /* Slate-900 */
-    --text-nav-footer: #94a3b8;
-    /* Slate-400 */
-    --text-nav-hover: #38bdf8;
-    /* Sky-400 霓虹藍 */
-
-    /* 🎛️ Cyber 模式的預設光學參數 */
-    --nav-bg-opacity: 0.75;
-    --nav-blur: 16px;
-
-    /* 💻 科技極客墨色與結構線條 */
-    --text-ink-main: #0f172a;
-    /* Slate-900: 極深藍灰 */
-    --text-ink-body: #475569;
-    /* Slate-700: 標準閱讀藍灰 */
-    --text-ink-muted: #94a3b8;
-    /* Slate-400: 淡字體灰 */
-    --text-accent: #6366f1;
-    /* 亮點色：原本經典的 Indigo-500 雷射藍 */
-    --border-shelf: rgba(226, 232, 240, 0.6);
-    /* Slate-200/60 */
-    --bg-folder: rgba(15, 23, 42, 0.05);
-    /* Slate-900/5 淡灰區塊 */
-}
-
-/* ==========================================================================
-   🧭 EXPLORE ONLY - 藍圖/工程圖紙風 (Blueprint) - 尚未定案,僅供預覽比較
-   ========================================================================== */
-.theme-blueprint {
-    --bg-paper-light: #eef5fa;
-    --bg-paper-dark: #e2eef7;
-
-    --bg-nav-footer: #0a2a43;
-    --text-nav-footer: #a8d4ec;
-    --text-nav-hover: #22d3ee;
-
-    --nav-bg-opacity: 0.85;
-    --nav-blur: 6px;
-
-    --text-ink-main: #0c2340;
-    --text-ink-body: #1e3a5f;
-    --text-ink-muted: #5b7a9a;
-    --text-accent: #0891b2;
-    --border-shelf: rgba(14, 116, 144, 0.25);
-    --bg-folder: rgba(14, 116, 144, 0.06);
-}
-
-/* ==========================================================================
-   🕯️ EXPLORE ONLY - 夜間書庫終端機 (Archive Terminal) - 尚未定案,僅供預覽比較
-   由「終端機/CRT」迭代而來:保留深色+等寬字+發光強調的骨架,
-   但把冷綠換成暖磷光琥珀、純黑換成焦木炭黑,呼應圖書館主題的木質/黃銅基因
+   🕯️ 2. 夜讀主題：夜間書庫終端機 (Archive Terminal)
+   色票來源:Gruvbox (base16 標準格式,tinted-theming/base16-schemes),
+   不是憑空調的 —— 這是被大量終端機/編輯器主題長期驗證過易讀性的暖色調色盤。
+   對比度已用 WCAG 公式驗證過,見 .claude/skills/visual-design-language/SKILL.md。
    ========================================================================== */
 .theme-terminal {
-    --bg-paper-light: #170f08;
-    --bg-paper-dark: #1f140a;
+    --bg-paper-light: #282828;
+    /* Gruvbox base01 */
+    --bg-paper-dark: #1d2021;
+    /* Gruvbox base00,最暗 */
 
-    --bg-nav-footer: #0d0904;
-    --text-nav-footer: #c9a876;
-    --text-nav-hover: #ffb84d;
+    --bg-nav-footer: #1d2021;
+    /* Gruvbox base00 */
+    --text-nav-footer: #bdae93;
+    /* Gruvbox base04 */
+    --text-nav-hover: #fabd2f;
+    /* Gruvbox base0A(黃),延續圖書館主題的黃銅高亮基因 */
 
     --nav-bg-opacity: 0.95;
     --nav-blur: 0px;
 
-    --text-ink-main: #f4e4c1;
-    --text-ink-body: #d4a76a;
-    --text-ink-muted: #8a6d3f;
-    --text-accent: #ffb84d;
-    --border-shelf: rgba(255, 184, 77, 0.18);
-    --bg-folder: rgba(255, 184, 77, 0.07);
+    --text-ink-main: #fbf1c7;
+    /* Gruvbox base07 */
+    --text-ink-body: #ebdbb2;
+    /* Gruvbox base06 */
+    --text-ink-muted: #bdae93;
+    /* Gruvbox base04 */
+    --text-accent: #fabd2f;
+    /* Gruvbox base0A(黃) */
+    --border-shelf: rgba(250, 189, 47, 0.18);
+    --bg-folder: rgba(250, 189, 47, 0.07);
 }

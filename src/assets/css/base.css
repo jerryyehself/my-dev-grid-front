@@ -7,19 +7,7 @@ body {
     margin: 0;
 }
 
-/* EXPLORE ONLY - 藍圖主題的工程圖紙格線,尚未定案 */
-.theme-blueprint body {
-    background-image:
-        linear-gradient(to bottom, var(--bg-paper-light), var(--bg-paper-dark)),
-        linear-gradient(rgba(14, 116, 144, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(14, 116, 144, 0.08) 1px, transparent 1px);
-    background-size:
-        auto,
-        24px 24px,
-        24px 24px;
-}
-
-/* EXPLORE ONLY - 夜間書庫終端機的質感:掃描線壓得很淡,加暗角營造「暗室裡的一盞螢幕」而非機房 */
+/* 夜讀主題的質感:掃描線壓得很淡,加暗角營造「暗室裡的一盞螢幕」而非機房 */
 .theme-terminal body {
     background-image:
         radial-gradient(ellipse at center, var(--bg-paper-dark) 0%, var(--bg-paper-light) 75%),
