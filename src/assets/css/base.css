@@ -7,6 +7,39 @@ body {
     margin: 0;
 }
 
+/* 夜讀主題的質感:掃描線壓得很淡,加暗角營造「暗室裡的一盞螢幕」而非機房 */
+.theme-terminal body {
+    background-image:
+        radial-gradient(ellipse at center, var(--bg-paper-dark) 0%, var(--bg-paper-light) 75%),
+        repeating-linear-gradient(
+            to bottom,
+            rgba(255, 184, 77, 0.025) 0px,
+            rgba(255, 184, 77, 0.025) 1px,
+            transparent 1px,
+            transparent 3px
+        );
+    font-family: var(--font-mono);
+}
+
+/* 發光呼吸動畫:保留給「真的代表狀態」的地方用,例如知識圖譜的高權重節點。
+   曾經拿來裝飾導覽列的 logo 圓點,後來拿掉了——那裡的圓點不代表任何真實狀態,
+   讓它呼吸發光等於是個會說謊的 signifier(使用者容易誤讀成上線/有新內容之類的狀態燈)。
+   用 currentColor 是為了讓任何主題的強調色都能直接套用同一顆「呼吸中的燈」。 */
+.beacon-dot {
+    animation: beacon-breathe 2.6s ease-in-out infinite;
+}
+@keyframes beacon-breathe {
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 4px 1px currentColor;
+    }
+    50% {
+        opacity: 0.55;
+        box-shadow: 0 0 1px 0 currentColor;
+    }
+}
+
 /* 🎯 數位檔案索引排版（全站通用） */
 .global-page-wrapper h2 {
     font-size: 1.25rem;

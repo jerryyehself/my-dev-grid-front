@@ -6,7 +6,6 @@
       class="max-w-5xl mx-auto h-16 px-4 md:px-8 flex items-center justify-between font-mono text-xs"
     >
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-(--text-nav-hover) animate-pulse"></span>
         <router-link
           to="/"
           class="flex items-center gap-2 tracking-[0.2em] text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
@@ -32,6 +31,8 @@
           {{ item.name }}
         </router-link>
       </div>
+
+      <ThemeToggle />
     </div>
   </nav>
 </template>
@@ -39,6 +40,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 // ⚡ 引入當前路由，用於精準驅動幾何 Active 圓點的動態樣式
 const route = useRoute()
