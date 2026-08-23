@@ -29,7 +29,7 @@
     </div>
 
     <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走 -->
-    <header class="w-full py-6 sm:py-8">
+    <header class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
       <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
         <div v-if="$slots.tag" class="flex-shrink-0">
           <slot name="tag"></slot>
@@ -46,7 +46,7 @@
     </header>
 
     <!-- 📖 主內容區 -->
-    <main class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 py-8" :style="widthStyle">
+    <main class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 pt-3 sm:pt-4 pb-8" :style="widthStyle">
       <article class="global-page-wrapper">
         <slot name="content"></slot>
       </article>

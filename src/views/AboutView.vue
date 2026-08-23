@@ -1,7 +1,7 @@
 <template>
   <div class="w-full space-y-16">
     <!-- 🎬 橫幅：用知識圖譜節點連線圖代替真實照片，呼應站主真正在做的事 -->
-    <div class="relative -mt-8 sm:-mt-10 h-[340px] sm:h-[400px] overflow-hidden bg-(--bg-nav-footer) rounded-2xl">
+    <div class="relative h-[340px] sm:h-[400px] overflow-hidden bg-(--bg-nav-footer) rounded-2xl">
       <svg viewBox="0 0 900 420" preserveAspectRatio="xMidYMid slice" class="absolute inset-0 w-full h-full text-(--text-accent) opacity-50">
         <g stroke="currentColor" stroke-width="1" fill="none" opacity="0.6">
           <line x1="80" y1="90" x2="220" y2="150" />
