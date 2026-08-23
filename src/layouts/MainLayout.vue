@@ -18,11 +18,8 @@
         v-if="isScrolled"
         class="sticky top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm"
       >
-        <div
-          class="w-full max-w-5xl mx-auto px-4 sm:px-6 h-11 flex items-center gap-2.5 overflow-hidden"
-          :style="widthStyle"
-        >
-          <span class="w-[3px] h-3.5 rounded-full bg-(--text-accent) shrink-0"></span>
+        <div class="w-full h-11 px-4 md:px-8 flex items-center gap-2.5 overflow-hidden">
+          <span class="w-[3px] h-4 rounded-[2px] bg-(--text-accent) shrink-0"></span>
           <span
             v-if="$slots.tag"
             class="shrink-0 text-[10px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
