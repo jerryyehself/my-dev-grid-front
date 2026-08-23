@@ -20,7 +20,12 @@
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-10 items-start">
       <div>
         <section class="space-y-7">
-          <article v-for="section in article.sections" :key="section.heading" class="space-y-2.5">
+          <article
+            v-for="(section, index) in article.sections"
+            :id="`section-${index}`"
+            :key="section.heading"
+            class="space-y-2.5 scroll-mt-24"
+          >
             <h3 class="text-base font-bold text-(--text-ink-main) flex items-center gap-2">
               <span class="text-(--text-accent)">//</span>
               <span>{{ section.heading }}</span>
@@ -61,18 +66,36 @@
       </div>
 
       <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
-      <div v-if="article.relatedProjects?.length" class="lg:sticky lg:top-24">
-        <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
-          Related Projects
+      <div class="lg:sticky lg:top-24 flex flex-col gap-8">
+        <div>
+          <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+            本文結構
+          </div>
+          <ol class="flex flex-col gap-2 border-l border-(--border-shelf) pl-3.5">
+            <li v-for="(section, index) in article.sections" :key="section.heading">
+              <a
+                :href="`#section-${index}`"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+              >
+                {{ section.heading }}
+              </a>
+            </li>
+          </ol>
         </div>
-        <div class="flex flex-col gap-2">
-          <span
-            v-for="project in article.relatedProjects"
-            :key="project"
-            class="inline-block rounded-full border border-(--border-shelf) px-3 py-1.5 text-sm text-(--text-ink-body) w-fit"
-          >
-            {{ project }}
-          </span>
+
+        <div v-if="article.relatedProjects?.length">
+          <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+            Related Projects
+          </div>
+          <div class="flex flex-col gap-2">
+            <span
+              v-for="project in article.relatedProjects"
+              :key="project"
+              class="inline-block rounded-full border border-(--border-shelf) px-3 py-1.5 text-sm text-(--text-ink-body) w-fit"
+            >
+              {{ project }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
