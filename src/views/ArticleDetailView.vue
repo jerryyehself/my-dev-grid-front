@@ -107,13 +107,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { articles, getArticleById } from '@/data/articles'
 import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
 
 const route = useRoute()
 const article = computed(() => getArticleById(route.params.id as string))
+
+// route.meta 的 tag/title 只是掛載前的靜態佔位，這裡掛載後改寫成真正的文章標題，
+// 讓捲動追蹤列（MainLayout）顯示的內容跟頁面上真正的文章標題一致，不是寫死的「Article Detail」
+watchEffect(() => {
+  if (article.value) {
+    route.meta.tag = 'ARTICLES'
+    route.meta.title = article.value.title
+  }
+})
 
 const currentIndex = computed(() => {
   if (!article.value) return -1

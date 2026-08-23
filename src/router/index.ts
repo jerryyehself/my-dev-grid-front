@@ -56,9 +56,12 @@ const router = createRouter({
       name: 'article-detail',
       component: () => import('@/views/ArticleDetailView.vue'),
       meta: {
+        // tag/title 只是導航到頁面前的預設佔位，掛載後由 ArticleDetailView 覆寫成真正的文章標題，
+        // 不然通用表頭跟捲動追蹤列會一直顯示這行字面上的「Article Detail」，跟下面真正的文章標題重複又對不上
         tag: 'Article Detail',
         title: 'Article Detail',
         subtitle: '深入閱讀',
+        hideHeader: true,
       },
     },
   ],
