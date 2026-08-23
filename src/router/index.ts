@@ -34,6 +34,8 @@ const router = createRouter({
         tag: 'Dashboard & Tools',
         title: 'Production Artifacts',
         subtitle: '工程履約管理、ISBN 掃描器與 GAS 自動化工作流整合紀錄',
+        // mockup 設計是 1120px，比全站預設的 1024px 寬，主從式版面才有足夠的呼吸空間
+        contentWidth: '1120px',
       },
     },
     {

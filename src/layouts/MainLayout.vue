@@ -10,7 +10,10 @@
       class="sticky top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm transition-[opacity,transform] duration-200 ease-out"
       :class="isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'"
     >
-      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 h-11 flex items-center gap-2.5 overflow-hidden">
+      <div
+        class="w-full max-w-5xl mx-auto px-4 sm:px-6 h-11 flex items-center gap-2.5 overflow-hidden"
+        :style="widthStyle"
+      >
         <span class="w-[3px] h-3.5 rounded-full bg-(--text-accent) shrink-0"></span>
         <span
           v-if="$slots.tag"
@@ -27,7 +30,7 @@
 
     <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走 -->
     <header class="w-full py-6 sm:py-8">
-      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2">
+      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
         <div v-if="$slots.tag" class="flex-shrink-0">
           <slot name="tag"></slot>
         </div>
@@ -43,7 +46,7 @@
     </header>
 
     <!-- 📖 主內容區 -->
-    <main class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <main class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 py-8" :style="widthStyle">
       <article class="global-page-wrapper">
         <slot name="content"></slot>
       </article>
@@ -51,6 +54,7 @@
 
     <footer
       class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
+      :style="widthStyle"
     >
       © 2026 Jerry Yeh. All Rights Reserved.
     </footer>
@@ -58,8 +62,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TheNavbar from '@/components/TheNavbar.vue'
+
+// 大部分頁面共用 max-w-5xl（1024px）；個別頁面如果設計稿要更寬/更窄，
+// 透過 route.meta.contentWidth 覆蓋，不用整站改寬度。
+const props = defineProps<{ contentWidth?: string }>()
+const widthStyle = computed(() => (props.contentWidth ? { maxWidth: props.contentWidth } : undefined))
 
 const isScrolled = ref(false)
 

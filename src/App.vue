@@ -13,10 +13,11 @@ const pageTitle = computed(() => (route.meta.title as string) || 'Jerry.DevLog')
 const pageSubtitle = computed(
   () => (route.meta.subtitle as string) || 'Continuous Learning & Artifact Registry',
 )
+const contentWidth = computed(() => route.meta.contentWidth as string | undefined)
 </script>
 
 <template>
-  <MainLayout>
+  <MainLayout :content-width="contentWidth">
     <template #tag>
       <span>
         {{ pageTag }}
