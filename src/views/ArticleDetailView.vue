@@ -1,5 +1,5 @@
 <template>
-  <div v-if="article">
+  <div v-if="article" class="max-w-[980px] mx-auto">
     <BackToArticlesLink class="mb-7 inline-flex" />
 
     <div class="border-b border-(--border-shelf) pb-6 mb-8">

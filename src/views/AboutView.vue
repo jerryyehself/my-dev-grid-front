@@ -36,7 +36,7 @@
     </div>
 
     <!-- 導言：沿用原本的哲學段落，這是真的想法，不是套版文案 -->
-    <p class="max-w-2xl mx-auto text-lg sm:text-xl font-semibold leading-[1.7] text-center text-(--text-ink-main)">
+    <p class="max-w-[760px] mx-auto text-lg sm:text-xl font-semibold leading-[1.7] text-center text-(--text-ink-main)">
       對我而言，漫步於圖書館的實木書架間，與在終端機前梳理複雜的資料庫模型，在本質上是完全同構的體驗。兩者皆是在龐雜、無序的實體宇宙中，利用<span class="text-(--text-accent) italic">受控詞表</span>與結構化架構，為人類的意圖尋找最精準的定位。
     </p>
 
@@ -60,7 +60,7 @@
 
     <!-- 真實可查核的數字：不放「幾年資歷」這種需要自報的數字，只放算得出來的 -->
     <div class="bg-(--bg-folder) border-y border-(--border-shelf) py-8 -mx-4 sm:-mx-6 px-4 sm:px-6">
-      <div class="grid grid-cols-3 max-w-2xl mx-auto">
+      <div class="grid grid-cols-3 max-w-[1040px] mx-auto">
         <div v-for="stat in stats" :key="stat.label" class="text-center border-l border-(--border-shelf) first:border-l-0 px-2">
           <div class="font-mono text-2xl sm:text-3xl font-bold text-(--text-accent) mb-1">{{ stat.value }}</div>
           <div class="text-xs text-(--text-ink-muted)">{{ stat.label }}</div>
@@ -68,7 +68,7 @@
       </div>
     </div>
 
-    <blockquote class="max-w-2xl mx-auto border-l-2 border-(--text-accent) pl-5 py-1">
+    <blockquote class="max-w-[760px] mx-auto border-l-2 border-(--text-accent) pl-5 py-1">
       <p class="font-serif italic text-[15px] text-(--text-ink-main) leading-relaxed">
         「凡是具有邏輯規則的重複性工作，皆應被程式化自動清理；凡是存在波動的外部數據，皆能編目為觀測沙盒。」
       </p>

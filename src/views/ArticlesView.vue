@@ -50,7 +50,7 @@ const goToArticle = (id: string) => {
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full max-w-[820px] mx-auto">
     <div class="flex items-center justify-end mb-6">
       <div class="inline-flex rounded-full border border-(--border-shelf) p-0.5 gap-0.5">
         <button
@@ -82,12 +82,12 @@ const goToArticle = (id: string) => {
 
     <!-- 時間軸：依日期線性掃視 -->
     <div v-if="viewMode === 'timeline'" class="relative pl-7">
-      <div class="absolute left-[5px] top-1.5 bottom-1.5 w-px bg-(--border-shelf)"></div>
+      <div class="absolute left-[5px] top-1.5 bottom-1.5 w-0.5 bg-(--border-shelf)"></div>
 
       <template v-for="group in timelineGroups" :key="group.month">
         <div class="relative my-6 first:mt-0">
           <div
-            class="absolute -left-[29px] top-0.5 w-3 h-3 rounded-full bg-(--text-accent) ring-4 ring-(--bg-paper-light)"
+            class="absolute -left-7 top-0.5 w-3 h-3 rounded-full bg-(--text-accent) ring-[3px] ring-(--bg-paper-light)"
           ></div>
           <div class="font-mono text-xs tracking-wider font-bold text-(--text-accent)">
             {{ group.month }}
@@ -101,7 +101,7 @@ const goToArticle = (id: string) => {
           @click="goToArticle(article.id)"
         >
           <div
-            class="absolute -left-[27px] top-1.5 w-1.5 h-1.5 rounded-full bg-(--text-ink-muted)"
+            class="absolute -left-[24.5px] top-[7px] w-[7px] h-[7px] rounded-full bg-(--text-ink-muted)"
           ></div>
           <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ article.date }}</span>
@@ -112,7 +112,7 @@ const goToArticle = (id: string) => {
           >
             {{ article.title }}
           </h3>
-          <p class="text-(--text-ink-body) text-sm leading-relaxed text-justify max-w-2xl">
+          <p class="text-(--text-ink-body) text-sm leading-relaxed text-justify max-w-[620px]">
             {{ article.summary }}
           </p>
         </article>
