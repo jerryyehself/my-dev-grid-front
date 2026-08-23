@@ -41,11 +41,14 @@
          hideHeader 的頁面（例如 About）自己畫了滿版橫幅當標題，這裡就不重複畫一次 -->
     <header v-if="!props.hideHeader" class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
       <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
-        <div v-if="$slots.tag" class="flex-shrink-0">
+        <div
+          v-if="$slots.tag"
+          class="flex-shrink-0 font-mono text-[11px] tracking-[0.2em] uppercase font-bold text-(--text-accent)"
+        >
           <slot name="tag"></slot>
         </div>
 
-        <h1 class="!font-extrabold tracking-tight text-(--text-ink-main) text-2xl sm:text-3xl">
+        <h1 class="!font-extrabold tracking-tight text-(--text-ink-main) text-[28px] sm:text-[34px]">
           <slot name="title"></slot>
         </h1>
 
