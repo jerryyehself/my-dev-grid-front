@@ -1,6 +1,7 @@
 <template>
   <nav
     class="sticky top-0 z-50 w-full bg-(--bg-nav-footer) border-b border-black/30 shadow-md transition-colors duration-300"
+    style="background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 7px)"
   >
     <div
       class="w-full h-16 px-4 md:px-8 flex items-center justify-between font-mono text-xs"
