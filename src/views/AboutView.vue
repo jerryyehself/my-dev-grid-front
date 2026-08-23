@@ -1,7 +1,8 @@
 <template>
   <div class="w-full space-y-16">
-    <!-- 🎬 橫幅：用知識圖譜節點連線圖代替真實照片，呼應站主真正在做的事 -->
-    <div class="relative h-[340px] sm:h-[400px] overflow-hidden bg-(--bg-nav-footer) rounded-2xl">
+    <!-- 🎬 橫幅：用知識圖譜節點連線圖代替真實照片，呼應站主真正在做的事
+         照設計稿是滿版到瀏覽器邊緣的橫幅，不是站內容欄寬度，所以用這個 trick 跳出 MainLayout 的 max-w-5xl/px 容器 -->
+    <div class="relative left-1/2 right-1/2 -mx-[50vw] w-screen h-[340px] sm:h-[400px] overflow-hidden bg-(--bg-nav-footer)">
       <svg viewBox="0 0 900 420" preserveAspectRatio="xMidYMid slice" class="absolute inset-0 w-full h-full text-(--text-accent) opacity-50">
         <g stroke="currentColor" stroke-width="1" fill="none" opacity="0.6">
           <line x1="80" y1="90" x2="220" y2="150" />

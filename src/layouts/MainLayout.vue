@@ -37,8 +37,9 @@
       </div>
     </Transition>
 
-    <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走 -->
-    <header class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
+    <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走
+         hideHeader 的頁面（例如 About）自己畫了滿版橫幅當標題，這裡就不重複畫一次 -->
+    <header v-if="!props.hideHeader" class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
       <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
         <div v-if="$slots.tag" class="flex-shrink-0">
           <slot name="tag"></slot>
@@ -54,8 +55,12 @@
       </div>
     </header>
 
-    <!-- 📖 主內容區 -->
-    <main class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 pt-3 sm:pt-4 pb-8" :style="widthStyle">
+    <!-- 📖 主內容區：hideHeader 時上面沒有 header 佔位，這段留白就不需要了，讓橫幅直接貼齊導覽列 -->
+    <main
+      class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 pb-8"
+      :class="props.hideHeader ? 'pt-0' : 'pt-3 sm:pt-4'"
+      :style="widthStyle"
+    >
       <article class="global-page-wrapper">
         <slot name="content"></slot>
       </article>
@@ -76,7 +81,7 @@ import TheNavbar from '@/components/TheNavbar.vue'
 
 // 大部分頁面共用 max-w-5xl（1024px）；個別頁面如果設計稿要更寬/更窄，
 // 透過 route.meta.contentWidth 覆蓋，不用整站改寬度。
-const props = defineProps<{ contentWidth?: string }>()
+const props = defineProps<{ contentWidth?: string; hideHeader?: boolean }>()
 const widthStyle = computed(() => (props.contentWidth ? { maxWidth: props.contentWidth } : undefined))
 
 const isScrolled = ref(false)
