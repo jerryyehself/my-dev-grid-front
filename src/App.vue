@@ -13,10 +13,12 @@ const pageTitle = computed(() => (route.meta.title as string) || 'Jerry.DevLog')
 const pageSubtitle = computed(
   () => (route.meta.subtitle as string) || 'Continuous Learning & Artifact Registry',
 )
+const contentWidth = computed(() => route.meta.contentWidth as string | undefined)
+const hideHeader = computed(() => Boolean(route.meta.hideHeader))
 </script>
 
 <template>
-  <MainLayout>
+  <MainLayout :content-width="contentWidth" :hide-header="hideHeader">
     <template #tag>
       <span>
         {{ pageTag }}

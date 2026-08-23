@@ -3,70 +3,64 @@
   <div class="min-h-screen flex flex-col font-sans antialiased">
     <TheNavbar />
 
-    <!-- 🌐 外層：永遠滿版，使用 transform-gpu 強制走顯示卡獨立圖層，隔離 body 的 transition 影響 -->
-    <header
-      :class="[
-        'sticky top-16 z-40 w-full transform-gpu transition-all duration-300 ease-in-out',
-        isScrolled
-          ? 'py-2 bg-(--bg-paper-dark)/90 backdrop-blur-md border-b border-(--border-shelf) shadow-sm'
-          : 'py-6 bg-transparent border-b border-transparent',
-      ]"
+    <!-- 🧭 捲動追蹤列：修正 issue #3 的縮放閃爍。
+         跟下面的大標題是兩個獨立節點，只用 opacity/位移進場，
+         不對同一個節點同時做字級縮放＋flex-direction 切換（那才是閃爍的根源）。
+         v-if（不是純 opacity 切換）是刻意的：sticky 元素即使透明，沒拿掉還是會佔版面高度，
+         之前就是這樣在每一頁頁首上方留了一段看不見的空白，怎麼調 header/main 的 padding 都調不掉。 -->
+    <Transition
+      enter-active-class="transition-[opacity,transform] duration-200 ease-out"
+      leave-active-class="transition-[opacity,transform] duration-200 ease-out"
+      enter-from-class="opacity-0 -translate-y-1"
+      leave-to-class="opacity-0 -translate-y-1"
     >
-      <!-- 🏛️ 內層：px-4 sm:px-6 完美對齊 main 的內文線 -->
       <div
-        :class="[
-          'w-full max-w-5xl mx-auto px-4 sm:px-6 flex transition-all duration-300 ease-in-out',
-          isScrolled ? 'flex-row items-center gap-3' : 'flex-col gap-2',
-        ]"
+        v-if="isScrolled"
+        class="sticky top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm"
       >
-        <!-- 🏷️ Tag 區：恢復你原本乾淨的結構與縮放 -->
         <div
-          v-if="$slots.tag"
-          class="flex-shrink-0 transition-transform duration-300 origin-left"
-          :class="{ 'scale-90': isScrolled }"
+          class="w-full max-w-5xl mx-auto px-4 sm:px-6 h-11 flex items-center gap-2.5 overflow-hidden"
+          :style="widthStyle"
         >
+          <span class="w-[3px] h-3.5 rounded-full bg-(--text-accent) shrink-0"></span>
+          <span
+            v-if="$slots.tag"
+            class="shrink-0 text-[10px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
+          >
+            <slot name="tag"></slot>
+          </span>
+          <span v-if="$slots.tag" class="text-(--text-ink-muted)/50 shrink-0">›</span>
+          <h2 class="text-[13px] font-bold text-(--text-ink-main) truncate">
+            <slot name="title"></slot>
+          </h2>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走
+         hideHeader 的頁面（例如 About）自己畫了滿版橫幅當標題，這裡就不重複畫一次 -->
+    <header v-if="!props.hideHeader" class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
+      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
+        <div v-if="$slots.tag" class="flex-shrink-0">
           <slot name="tag"></slot>
         </div>
 
-        <!-- 文字區：回歸最初的 Col 變 Row 精緻並排比例 -->
-        <div
-          :class="[
-            'flex transition-all duration-300 ease-in-out grow items-baseline',
-            isScrolled ? 'flex-row gap-2 overflow-hidden' : 'flex-col',
-          ]"
-        >
-          <!-- ⚠️ 強制加上 !font-extrabold 蓋掉 CSS root 的 normal 限制，找回粗體的精緻質感 -->
-          <h1
-            :class="[
-              '!font-extrabold tracking-tight text-(--text-ink-main) transition-all duration-300 truncate',
-              isScrolled ? 'text-base !font-bold' : 'text-2xl sm:text-3xl',
-            ]"
-          >
-            <slot name="title"></slot>
-          </h1>
+        <h1 class="!font-extrabold tracking-tight text-(--text-ink-main) text-2xl sm:text-3xl">
+          <slot name="title"></slot>
+        </h1>
 
-          <span
-            v-if="isScrolled && $slots.description"
-            class="text-(--text-ink-muted) font-light select-none mx-0.5"
-          >
-            |
-          </span>
-
-          <p
-            v-if="$slots.description"
-            :class="[
-              'text-(--text-ink-muted) transition-all duration-300 truncate !font-normal',
-              isScrolled ? 'text-xs' : 'text-sm mt-1',
-            ]"
-          >
-            <slot name="description"></slot>
-          </p>
-        </div>
+        <p v-if="$slots.description" class="text-(--text-ink-muted) text-sm mt-1 !font-normal">
+          <slot name="description"></slot>
+        </p>
       </div>
     </header>
 
-    <!-- 📖 主內容區 -->
-    <main class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <!-- 📖 主內容區：hideHeader 時上面沒有 header 佔位，這段留白就不需要了，讓橫幅直接貼齊導覽列 -->
+    <main
+      class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 pb-8"
+      :class="props.hideHeader ? 'pt-0' : 'pt-3 sm:pt-4'"
+      :style="widthStyle"
+    >
       <article class="global-page-wrapper">
         <slot name="content"></slot>
       </article>
@@ -74,6 +68,7 @@
 
     <footer
       class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
+      :style="widthStyle"
     >
       © 2026 Jerry Yeh. All Rights Reserved.
     </footer>
@@ -81,8 +76,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TheNavbar from '@/components/TheNavbar.vue'
+
+// 大部分頁面共用 max-w-5xl（1024px）；個別頁面如果設計稿要更寬/更窄，
+// 透過 route.meta.contentWidth 覆蓋，不用整站改寬度。
+const props = defineProps<{ contentWidth?: string; hideHeader?: boolean }>()
+const widthStyle = computed(() => (props.contentWidth ? { maxWidth: props.contentWidth } : undefined))
 
 const isScrolled = ref(false)
 

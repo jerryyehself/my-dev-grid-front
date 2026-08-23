@@ -1,47 +1,55 @@
 # my-dev-grid-frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+用 Vue 3 + Vite 開發的個人網站。
 
-## Recommended IDE Setup
+## 視覺設計稿
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+目前實作照著這份 Claude Design 畫布走(五個頁面的版面結構重新設計,主題色票沿用既有 token):
 
-## Recommended Browser Setup
+**[My Dev Grid Site Redesign](https://claude.ai/code/artifact/41b6b24a-8dbd-4f19-a366-ed14221f202b)**
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
+改版面/字體/共用元件前,先跟這份對一下,確認是刻意偏離(例如某段文案改用真實內容取代設計稿的示範文案)還是單純沒對齊。
+
+## 建議的 IDE 設定
+
+[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar)(記得停用 Vetur)。
+
+## 建議的瀏覽器設定
+
+- Chromium 系瀏覽器(Chrome、Edge、Brave 等):
   - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
+  - [開啟 Chrome DevTools 的 Custom Object Formatter](http://bit.ly/object-formatters)
 - Firefox:
   - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+  - [開啟 Firefox DevTools 的 Custom Object Formatter](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
 
-## Type Support for `.vue` Imports in TS
+## `.vue` 檔案在 TS 裡的型別支援
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+TypeScript 預設無法處理 `.vue` 檔案的型別資訊,所以改用 `vue-tsc` 取代 `tsc` CLI 做型別檢查。編輯器裡則需要 [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) 讓 TypeScript language service 認得 `.vue` 型別。
 
-## Customize configuration
+## 自訂設定
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+參考 [Vite 設定文件](https://vite.dev/config/)。
 
-## Project Setup
+## 專案設置
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### 開發模式(Compile + Hot-Reload)
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### 型別檢查、編譯並壓縮成正式版
 
 ```sh
 npm run build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### 用 [ESLint](https://eslint.org/) 檢查
 
 ```sh
 npm run lint
