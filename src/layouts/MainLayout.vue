@@ -18,11 +18,8 @@
         v-if="isScrolled"
         class="sticky top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm"
       >
-        <div
-          class="w-full max-w-5xl mx-auto px-4 sm:px-6 h-11 flex items-center gap-2.5 overflow-hidden"
-          :style="widthStyle"
-        >
-          <span class="w-[3px] h-3.5 rounded-full bg-(--text-accent) shrink-0"></span>
+        <div class="w-full h-11 px-4 md:px-8 flex items-center gap-2.5 overflow-hidden">
+          <span class="w-[3px] h-4 rounded-[2px] bg-(--text-accent) shrink-0"></span>
           <span
             v-if="$slots.tag"
             class="shrink-0 text-[10px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
@@ -41,11 +38,14 @@
          hideHeader 的頁面（例如 About）自己畫了滿版橫幅當標題，這裡就不重複畫一次 -->
     <header v-if="!props.hideHeader" class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
       <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
-        <div v-if="$slots.tag" class="flex-shrink-0">
+        <div
+          v-if="$slots.tag"
+          class="flex-shrink-0 font-mono text-[11px] tracking-[0.2em] uppercase font-bold text-(--text-accent)"
+        >
           <slot name="tag"></slot>
         </div>
 
-        <h1 class="!font-extrabold tracking-tight text-(--text-ink-main) text-2xl sm:text-3xl">
+        <h1 class="!font-extrabold tracking-tight text-(--text-ink-main) text-[28px] sm:text-[34px]">
           <slot name="title"></slot>
         </h1>
 
