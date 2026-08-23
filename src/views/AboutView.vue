@@ -86,7 +86,44 @@
         </p>
       </div>
 
+      <!-- 手機寬度容不下絕對定位的節點卡片（卡片本身就有 230px 寬，會被裁切/溢出），改成單欄堆疊 -->
+      <div v-if="isMobileViewport" class="flex flex-col gap-3">
+        <div
+          class="border border-(--text-accent) bg-gradient-to-br from-(--text-ink-main) to-(--text-ink-body) text-(--bg-paper-light) px-6 py-4 rounded-xl text-center shadow-md"
+        >
+          <div class="text-base font-black tracking-widest font-serif">Jerry Yeh</div>
+          <span class="text-[8px] bg-(--text-accent)/20 text-(--bg-paper-light) py-0.5 px-2 mt-1.5 inline-block rounded border border-(--text-accent)/30 font-mono tracking-wider">
+            System Archivist &amp; Dev
+          </span>
+        </div>
+        <div
+          v-for="node in peripheralNodes"
+          :key="node.id"
+          class="border border-(--border-shelf) bg-(--bg-paper-light)/95 px-4 py-3.5 rounded-xl shadow-xs"
+        >
+          <div class="flex items-center justify-between border-b border-(--border-shelf) pb-1 mb-1.5 text-[8px] font-mono font-bold text-(--text-ink-muted) opacity-70">
+            <span>{{ node.id.toUpperCase() }}_INDEX</span>
+            <span class="w-1.5 h-1.5 rounded-full ring-2 ring-(--bg-paper-light) shadow-xs" :class="node.statusColor"></span>
+          </div>
+          <h3 class="text-xs font-bold text-(--text-ink-main) font-serif tracking-wide">
+            <a v-if="node.url" :href="node.url" target="_blank" class="hover:underline inline-flex items-center gap-0.5">
+              {{ node.label }} <span class="text-[9px] opacity-60">↗</span>
+            </a>
+            <span v-else>{{ node.label }}</span>
+          </h3>
+          <p class="text-[11px] text-(--text-ink-body) opacity-85 !mt-1 !mb-0 leading-normal text-justify">
+            {{ node.desc }}
+          </p>
+          <div v-if="node.tags" class="mt-2 flex flex-wrap gap-1">
+            <span v-for="tag in node.tags" :key="tag" class="text-[8px] bg-(--bg-folder) border border-(--border-shelf) text-(--text-ink-body) px-1.5 py-0.5 rounded font-mono">
+              #{{ tag }}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div
+        v-else
         ref="canvasRef"
         class="relative h-[600px] w-full border border-(--border-shelf) rounded-xl bg-(--bg-paper-light)/40 shadow-inner overflow-hidden"
       >
@@ -184,7 +221,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
 import { articles } from '@/data/articles'
 import { projects } from '@/data/projects'
 
@@ -215,6 +252,12 @@ const stats = computed(() => [
 const canvasRef = ref<HTMLElement | null>(null)
 const canvasWidth = ref(1000)
 const canvasHeight = ref(600)
+
+// 節點卡片本身就有 230px 寬，絕對定位的圖譜版面在窄螢幕下放不下，改走下面的單欄堆疊版本
+const isMobileViewport = ref(window.innerWidth < 640)
+const updateViewportCheck = () => {
+  isMobileViewport.value = window.innerWidth < 640
+}
 
 const nodes = ref([
   {
@@ -269,21 +312,16 @@ const links = ref([
   { sourceId: 'me', targetId: 'sandbox', predicate: 'schema:interest', curveDirection: -1 },
 ])
 
+// 圖譜版面現在只在 isMobileViewport 為 false 時才會掛載，不用再處理窄螢幕的節點擠壓
 const computedNodes = computed(() => {
-  return nodes.value.map((node) => {
-    const isMobile = canvasWidth.value < 640
-    let adjustedXRatio = node.xRatio
-    if (isMobile) {
-      if (node.xRatio < 0.3) adjustedXRatio = 0.12
-      if (node.xRatio > 0.7) adjustedXRatio = 0.88
-    }
-    return {
-      ...node,
-      x: adjustedXRatio * canvasWidth.value,
-      y: node.yRatio * canvasHeight.value,
-    }
-  })
+  return nodes.value.map((node) => ({
+    ...node,
+    x: node.xRatio * canvasWidth.value,
+    y: node.yRatio * canvasHeight.value,
+  }))
 })
+
+const peripheralNodes = computed(() => nodes.value.filter((node) => node.type !== 'SUBJECT'))
 
 let resizeObserver: ResizeObserver | null = null
 const updateCanvasSize = () => {
@@ -301,12 +339,17 @@ onMounted(() => {
     })
     resizeObserver.observe(canvasRef.value)
   }
+  window.addEventListener('resize', updateViewportCheck)
 })
 
 onBeforeUnmount(() => {
   if (resizeObserver && canvasRef.value) {
     resizeObserver.unobserve(canvasRef.value)
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateViewportCheck)
 })
 
 interface GraphLink {
