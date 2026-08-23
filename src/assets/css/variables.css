@@ -14,8 +14,8 @@
     /* 極致深沉、接近黑色的胡桃木褐 */
     --text-nav-footer: #f4f0e1;
     /* 在深色背景下的淺色羊皮紙字 */
-    --text-nav-hover: #fcd34d;
-    /* 游標滑過的黃銅高亮色 (Amber-300) */
+    --text-nav-hover: #b45309;
+    /* 跟 --text-accent 對齊，設計稿裡 Nav 的 active/hover 用的就是 accent 色，不是另一個更亮的黃 */
 
     /* 🎛️ 物理光學後台控制接口 (預設：開啟深色毛玻璃煙霧鏡) */
     --nav-bg-opacity: 0.65;
