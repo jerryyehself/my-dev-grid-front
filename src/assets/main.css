@@ -1,1 +1,6 @@
 @import 'tailwindcss';
+
+/* Fraunces 取代預設無襯線 fallback，給標題/引言更多個性；字體本身在 index.html 載入 */
+@theme {
+  --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+}

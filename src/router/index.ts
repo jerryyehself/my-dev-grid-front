@@ -1,17 +1,23 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
-import AboutView from '@/views/AboutView.vue'
-import ArticlesView from '@/views/ArticlesView.vue'
-import ArticleDetailView from '@/views/ArticleDetailView.vue'
-import ProjectsView from '@/views/ProjectsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/',
+      name: 'home',
+      component: () => import('@/views/HomeView.vue'),
+      meta: {
+        tag: 'Home',
+        title: 'Jerry in Archive',
+        subtitle: '正在孵化的想法，以及最近的輸入與輸出動態。',
+      },
+    },
+    {
       path: '/about',
       name: 'about',
-      component: AboutView,
+      component: () => import('@/views/AboutView.vue'),
       // 💡 配置驅動 UI：回歸直覺、輕鬆的個人與系統分類，拒絕過度工程
       meta: {
         type: 'profile',
@@ -23,7 +29,7 @@ const router = createRouter({
     {
       path: '/projects',
       name: 'projects',
-      component: () => ProjectsView,
+      component: () => import('@/views/ProjectsView.vue'),
       meta: {
         tag: 'Dashboard & Tools',
         title: 'Production Artifacts',
@@ -33,7 +39,7 @@ const router = createRouter({
     {
       path: '/articles',
       name: 'articles',
-      component: () => ArticlesView,
+      component: () => import('@/views/ArticlesView.vue'),
       meta: {
         tag: 'Articles',
         title: 'My Articles',
@@ -43,7 +49,7 @@ const router = createRouter({
     {
       path: '/articles/:id',
       name: 'article-detail',
-      component: () => ArticleDetailView,
+      component: () => import('@/views/ArticleDetailView.vue'),
       meta: {
         tag: 'Article Detail',
         title: 'Article Detail',

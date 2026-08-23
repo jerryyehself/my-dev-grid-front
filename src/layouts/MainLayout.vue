@@ -3,65 +3,42 @@
   <div class="min-h-screen flex flex-col font-sans antialiased">
     <TheNavbar />
 
-    <!-- 🌐 外層：永遠滿版，使用 transform-gpu 強制走顯示卡獨立圖層，隔離 body 的 transition 影響 -->
-    <header
-      :class="[
-        'sticky top-16 z-40 w-full transform-gpu transition-all duration-300 ease-in-out',
-        isScrolled
-          ? 'py-2 bg-(--bg-paper-dark)/90 backdrop-blur-md border-b border-(--border-shelf) shadow-sm'
-          : 'py-6 bg-transparent border-b border-transparent',
-      ]"
+    <!-- 🧭 捲動追蹤列：修正 issue #3 的縮放閃爍。
+         跟下面的大標題是兩個獨立節點，只用 opacity/位移進場，
+         不對同一個節點同時做字級縮放＋flex-direction 切換（那才是閃爍的根源）。 -->
+    <div
+      class="sticky top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm transition-[opacity,transform] duration-200 ease-out"
+      :class="isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'"
     >
-      <!-- 🏛️ 內層：px-4 sm:px-6 完美對齊 main 的內文線 -->
-      <div
-        :class="[
-          'w-full max-w-5xl mx-auto px-4 sm:px-6 flex transition-all duration-300 ease-in-out',
-          isScrolled ? 'flex-row items-center gap-3' : 'flex-col gap-2',
-        ]"
-      >
-        <!-- 🏷️ Tag 區：恢復你原本乾淨的結構與縮放 -->
-        <div
+      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 h-11 flex items-center gap-2.5 overflow-hidden">
+        <span class="w-[3px] h-3.5 rounded-full bg-(--text-accent) shrink-0"></span>
+        <span
           v-if="$slots.tag"
-          class="flex-shrink-0 transition-transform duration-300 origin-left"
-          :class="{ 'scale-90': isScrolled }"
+          class="shrink-0 text-[10px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
         >
+          <slot name="tag"></slot>
+        </span>
+        <span v-if="$slots.tag" class="text-(--text-ink-muted)/50 shrink-0">›</span>
+        <h2 class="text-[13px] font-bold text-(--text-ink-main) truncate">
+          <slot name="title"></slot>
+        </h2>
+      </div>
+    </div>
+
+    <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走 -->
+    <header class="w-full py-6 sm:py-8">
+      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2">
+        <div v-if="$slots.tag" class="flex-shrink-0">
           <slot name="tag"></slot>
         </div>
 
-        <!-- 文字區：回歸最初的 Col 變 Row 精緻並排比例 -->
-        <div
-          :class="[
-            'flex transition-all duration-300 ease-in-out grow items-baseline',
-            isScrolled ? 'flex-row gap-2 overflow-hidden' : 'flex-col',
-          ]"
-        >
-          <!-- ⚠️ 強制加上 !font-extrabold 蓋掉 CSS root 的 normal 限制，找回粗體的精緻質感 -->
-          <h1
-            :class="[
-              '!font-extrabold tracking-tight text-(--text-ink-main) transition-all duration-300 truncate',
-              isScrolled ? 'text-base !font-bold' : 'text-2xl sm:text-3xl',
-            ]"
-          >
-            <slot name="title"></slot>
-          </h1>
+        <h1 class="!font-extrabold tracking-tight text-(--text-ink-main) text-2xl sm:text-3xl">
+          <slot name="title"></slot>
+        </h1>
 
-          <span
-            v-if="isScrolled && $slots.description"
-            class="text-(--text-ink-muted) font-light select-none mx-0.5"
-          >
-            |
-          </span>
-
-          <p
-            v-if="$slots.description"
-            :class="[
-              'text-(--text-ink-muted) transition-all duration-300 truncate !font-normal',
-              isScrolled ? 'text-xs' : 'text-sm mt-1',
-            ]"
-          >
-            <slot name="description"></slot>
-          </p>
-        </div>
+        <p v-if="$slots.description" class="text-(--text-ink-muted) text-sm mt-1 !font-normal">
+          <slot name="description"></slot>
+        </p>
       </div>
     </header>
 

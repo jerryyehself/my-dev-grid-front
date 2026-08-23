@@ -1,84 +1,84 @@
 <template>
-  <div v-if="article" class="space-y-8">
-    <header class="space-y-4 border-b border-stone-200 pb-6">
-      <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-[0.24em] text-stone-500">
-        <span>{{ article.date }}</span>
-        <span>•</span>
-        <span>{{ article.tags.join(' / ') }}</span>
+  <div v-if="article">
+    <BackToArticlesLink class="mb-7 inline-flex" />
+
+    <div class="border-b border-(--border-shelf) pb-6 mb-8">
+      <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-accent) font-bold mb-3">
+        <span>// {{ article.tags.join(' / ') }}</span>
+        <span class="text-(--text-ink-muted) font-normal opacity-60">{{ article.date }}</span>
       </div>
 
-      <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-stone-900">
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-(--text-ink-main) leading-tight">
         {{ article.title }}
-      </h2>
+      </h1>
 
-      <p class="max-w-3xl text-base leading-8 text-stone-600">
+      <p class="max-w-2xl text-base leading-8 text-(--text-ink-body) mt-4">
         {{ article.intro }}
       </p>
-    </header>
+    </div>
 
-    <section class="space-y-6">
-      <article v-for="(section, index) in article.sections" :key="section.heading" class="space-y-3">
-        <div class="flex items-center gap-3">
-          <span class="text-[11px] font-mono uppercase tracking-[0.24em] text-stone-400">
-            0{{ index + 1 }}
-          </span>
-          <h3 class="text-lg font-semibold text-stone-900">
-            {{ section.heading }}
-          </h3>
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-10 items-start">
+      <div>
+        <section class="space-y-7">
+          <article v-for="section in article.sections" :key="section.heading" class="space-y-2.5">
+            <h3 class="text-base font-bold text-(--text-ink-main) flex items-center gap-2">
+              <span class="text-(--text-accent)">//</span>
+              <span>{{ section.heading }}</span>
+            </h3>
+            <p class="text-[15px] leading-8 text-(--text-ink-body) text-justify">
+              {{ section.body }}
+            </p>
+          </article>
+        </section>
+
+        <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
+          <router-link
+            v-if="previousArticle"
+            :to="{ name: 'article-detail', params: { id: previousArticle.id } }"
+            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors hover:border-(--text-accent)/40"
+          >
+            <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+              &lt;&lt; PREV
+            </div>
+            <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
+              {{ previousArticle.title }}
+            </div>
+          </router-link>
+
+          <router-link
+            v-if="nextArticle"
+            :to="{ name: 'article-detail', params: { id: nextArticle.id } }"
+            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors hover:border-(--text-accent)/40"
+          >
+            <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+              NEXT &gt;&gt;
+            </div>
+            <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
+              {{ nextArticle.title }}
+            </div>
+          </router-link>
         </div>
-        <p class="text-[15px] leading-8 text-stone-600">
-          {{ section.body }}
-        </p>
-      </article>
-    </section>
-
-    <section v-if="article.relatedProjects?.length" class="border-t border-stone-200 pt-6">
-      <h3 class="text-sm font-mono uppercase tracking-[0.24em] text-stone-500">
-        Related Projects
-      </h3>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <span
-          v-for="project in article.relatedProjects"
-          :key="project"
-          class="rounded-full border border-stone-300 px-3 py-1 text-sm text-stone-700"
-        >
-          {{ project }}
-        </span>
       </div>
-    </section>
 
-    <section class="border-t border-stone-200 pt-6">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-        <router-link
-          v-if="previousArticle"
-          :to="{ name: 'article-detail', params: { id: previousArticle.id } }"
-          class="w-full rounded border border-stone-200 px-4 py-3 text-left transition-colors hover:border-stone-400 hover:bg-stone-50 sm:w-[calc(50%-0.375rem)]"
-        >
-          <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-stone-400">
-            ← Previous
-          </div>
-          <div class="mt-1 text-sm font-medium text-stone-800">
-            {{ previousArticle.title }}
-          </div>
-        </router-link>
-
-        <router-link
-          v-if="nextArticle"
-          :to="{ name: 'article-detail', params: { id: nextArticle.id } }"
-          class="w-full rounded border border-stone-200 px-4 py-3 text-right transition-colors hover:border-stone-400 hover:bg-stone-50 sm:w-[calc(50%-0.375rem)] sm:ml-auto"
-        >
-          <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-stone-400">
-            Next →
-          </div>
-          <div class="mt-1 text-sm font-medium text-stone-800">
-            {{ nextArticle.title }}
-          </div>
-        </router-link>
+      <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
+      <div v-if="article.relatedProjects?.length" class="lg:sticky lg:top-24">
+        <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+          Related Projects
+        </div>
+        <div class="flex flex-col gap-2">
+          <span
+            v-for="project in article.relatedProjects"
+            :key="project"
+            class="inline-block rounded-full border border-(--border-shelf) px-3 py-1.5 text-sm text-(--text-ink-body) w-fit"
+          >
+            {{ project }}
+          </span>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 
-  <div v-else class="rounded border border-stone-200 bg-stone-50 p-8 text-sm text-stone-600">
+  <div v-else class="rounded border border-(--border-shelf) bg-(--bg-paper-light) p-8 text-sm text-(--text-ink-body)">
     找不到這篇文章。
   </div>
 </template>
@@ -87,6 +87,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { articles, getArticleById } from '@/data/articles'
+import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
 
 const route = useRoute()
 const article = computed(() => getArticleById(route.params.id as string))

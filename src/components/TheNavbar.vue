@@ -8,11 +8,10 @@
       <div class="flex items-center gap-2">
         <router-link
           to="/"
-          class="flex items-center gap-2 tracking-[0.2em] text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
+          class="flex items-baseline gap-2 text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
         >
-          <span class="font-black text-sm">JERRY YEH</span>
-          <span class="h-3 w-px bg-(--text-nav-footer) opacity-30 mx-1"></span>
-          <span class="font-extralight text-[10px] opacity-60">ARCHIVE</span>
+          <span class="font-serif italic font-bold text-[19px] tracking-normal">Jerry</span>
+          <span class="font-light text-[11px] tracking-[0.15em] opacity-65">in Archive</span>
         </router-link>
       </div>
 
