@@ -50,7 +50,7 @@ const goToArticle = (id: string) => {
 </script>
 
 <template>
-  <div class="w-full max-w-[820px] mx-auto">
+  <div class="w-full">
     <div class="flex items-center justify-end mb-6">
       <div class="inline-flex rounded-full border border-(--border-shelf) p-0.5 gap-0.5">
         <button
@@ -158,7 +158,7 @@ const goToArticle = (id: string) => {
             <span class="text-(--text-accent) font-bold">// {{ article.tags.join(' / ') }}</span>
           </div>
           <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">{{ article.title }}</h3>
-          <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-justify">
+          <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-justify max-w-[700px]">
             {{ article.summary }}
           </p>
         </article>
