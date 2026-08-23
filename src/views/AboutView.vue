@@ -26,7 +26,7 @@
       <div class="absolute inset-0 bg-gradient-to-b from-transparent to-(--bg-nav-footer) [background-position:0_92%]" style="background-image: linear-gradient(180deg, transparent 0%, var(--bg-nav-footer) 92%)"></div>
       <div class="absolute inset-x-0 bottom-0 px-6 sm:px-10 pb-8">
         <div class="font-mono text-[11px] tracking-[0.3em] uppercase text-(--text-accent) font-bold mb-3">About</div>
-        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight leading-none text-(--text-nav-footer)">
+        <h1 class="text-4xl sm:text-[56px] font-extrabold tracking-tight leading-none text-(--text-nav-footer)">
           Jerry Yeh
         </h1>
         <p class="font-mono text-[13px] tracking-wider text-(--text-nav-footer) opacity-75 mt-2">

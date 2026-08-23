@@ -5,28 +5,37 @@
 
     <!-- 🧭 捲動追蹤列：修正 issue #3 的縮放閃爍。
          跟下面的大標題是兩個獨立節點，只用 opacity/位移進場，
-         不對同一個節點同時做字級縮放＋flex-direction 切換（那才是閃爍的根源）。 -->
-    <div
-      class="sticky top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm transition-[opacity,transform] duration-200 ease-out"
-      :class="isScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'"
+         不對同一個節點同時做字級縮放＋flex-direction 切換（那才是閃爍的根源）。
+         v-if（不是純 opacity 切換）是刻意的：sticky 元素即使透明，沒拿掉還是會佔版面高度，
+         之前就是這樣在每一頁頁首上方留了一段看不見的空白，怎麼調 header/main 的 padding 都調不掉。 -->
+    <Transition
+      enter-active-class="transition-[opacity,transform] duration-200 ease-out"
+      leave-active-class="transition-[opacity,transform] duration-200 ease-out"
+      enter-from-class="opacity-0 -translate-y-1"
+      leave-to-class="opacity-0 -translate-y-1"
     >
       <div
-        class="w-full max-w-5xl mx-auto px-4 sm:px-6 h-11 flex items-center gap-2.5 overflow-hidden"
-        :style="widthStyle"
+        v-if="isScrolled"
+        class="sticky top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm"
       >
-        <span class="w-[3px] h-3.5 rounded-full bg-(--text-accent) shrink-0"></span>
-        <span
-          v-if="$slots.tag"
-          class="shrink-0 text-[10px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
+        <div
+          class="w-full max-w-5xl mx-auto px-4 sm:px-6 h-11 flex items-center gap-2.5 overflow-hidden"
+          :style="widthStyle"
         >
-          <slot name="tag"></slot>
-        </span>
-        <span v-if="$slots.tag" class="text-(--text-ink-muted)/50 shrink-0">›</span>
-        <h2 class="text-[13px] font-bold text-(--text-ink-main) truncate">
-          <slot name="title"></slot>
-        </h2>
+          <span class="w-[3px] h-3.5 rounded-full bg-(--text-accent) shrink-0"></span>
+          <span
+            v-if="$slots.tag"
+            class="shrink-0 text-[10px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
+          >
+            <slot name="tag"></slot>
+          </span>
+          <span v-if="$slots.tag" class="text-(--text-ink-muted)/50 shrink-0">›</span>
+          <h2 class="text-[13px] font-bold text-(--text-ink-main) truncate">
+            <slot name="title"></slot>
+          </h2>
+        </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走 -->
     <header class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
