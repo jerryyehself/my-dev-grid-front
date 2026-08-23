@@ -15,19 +15,19 @@
       </router-link>
 
       <!-- 手機寬度放不下四個導覽項目＋主題切換鈕，中大螢幕才用橫排 -->
-      <div class="hidden md:flex gap-6">
+      <div class="hidden md:flex gap-6 h-full">
         <router-link
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="relative pl-3 pr-1 py-1 text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all font-semibold tracking-widest flex items-center"
-          active-class="!text-(--text-nav-hover) !opacity-100 font-bold"
+          class="flex flex-col items-center justify-center gap-1.5 h-full text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all font-semibold tracking-widest"
+          active-class="!text-(--text-nav-hover) !opacity-100"
         >
+          <span>{{ item.name }}</span>
           <span
-            class="absolute left-0 w-1 h-1 rounded-full bg-(--text-nav-hover) scale-0 transition-transform duration-200"
-            :class="{ 'scale-100': route.path === item.path }"
+            class="w-[18px] h-[3px] rounded-t-[2px] bg-(--text-nav-hover) scale-x-0 transition-transform duration-200"
+            :class="{ 'scale-x-100': route.path === item.path }"
           ></span>
-          {{ item.name }}
         </router-link>
       </div>
 
@@ -68,7 +68,7 @@
         :key="item.path"
         :to="item.path"
         class="py-2.5 text-(--text-nav-footer) opacity-70 font-semibold tracking-widest"
-        active-class="!text-(--text-nav-hover) !opacity-100 font-bold"
+        active-class="!text-(--text-nav-hover) !opacity-100"
         @click="isMenuOpen = false"
       >
         {{ item.name }}
@@ -85,7 +85,7 @@ import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 
-// ⚡ 引入當前路由，用於精準驅動幾何 Active 圓點的動態樣式
+// ⚡ 引入當前路由，用於精準驅動 Active 色條的動態樣式
 const route = useRoute()
 
 interface NavItem {
