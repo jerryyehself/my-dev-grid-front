@@ -45,6 +45,19 @@ layer is usually how inconsistency creeps in.
    editing in `MainLayout.vue` — if a view starts overriding chrome styling
    directly, that's the architecture layer breaking down.
 
+   **Concrete example — `MainLayout.vue`'s `hideHeader`**: `AboutView.vue` and
+   `ArticleDetailView.vue` each draw their own full replacement for the
+   generic chrome header (a hero banner; a real tag/date/title/intro block).
+   Left as-is, the generic header rendered too — both a real value and a
+   meaningless placeholder stacked on top of each other (`ArticleDetailView`'s
+   case was worse: the placeholder was the literal string "Article Detail",
+   contradicting the real title right below it). The fix is a `hideHeader`
+   route-meta flag `MainLayout.vue` checks before rendering its own header —
+   *not* letting each view reach into chrome to hide it itself. A page that
+   owns its own full header replacement should say so declaratively through
+   the same `route.meta` channel every other chrome decision already goes
+   through, not add a one-off override.
+
 4. **Whole site.** A decision isn't done until it's checked in *both* themes.
    A hardcoded color that happens to look fine against one theme's paper color
    is exactly how bugs like the one below happen.
@@ -113,6 +126,61 @@ the blog-list layout. It exists once, in `ArticlesView.vue` — `HomeView.vue`
 is currently empty, so there's no second real usage to extract a shared shape
 from yet. Building it now would mean guessing what the homepage's idea list
 needs before that view exists. Wait for the second real usage.
+
+**Concrete example — `TheNavbar.vue`**: several bugs surfaced only once
+real users/devices/data hit the nav, not from looking at it on a desktop
+screenshot:
+- Its content (logo, links, theme toggle) was capped to the same
+  `max-w-5xl` content column every page uses. Nav chrome reads correctly
+  full-bleed to the viewport edge instead — a different rule than page
+  *content*, which does want the shared column. Chrome-width and
+  content-width are not the same decision just because they share a number
+  by default.
+- The active-link indicator was a 4px dot to the left of the label, with the
+  label also switching to bold. Neither matched the intended design: an
+  underline-style ribbon below the label, color-only (no weight change) —
+  active state should be exactly one signal, not two competing ones (color
+  *and* boldness) that can drift out of sync.
+- `--text-nav-hover` (the active/hover color) was `#fcd34d` in the light
+  theme — a different value from `--text-accent` (`#b45309`), even though
+  the dark theme already keeps the two identical. A token can be internally
+  self-consistent (still a valid-looking hex, still used correctly by name)
+  and still be *wrong* relative to a sibling token it should track — check a
+  token's resolved value against the tokens it's conceptually tied to, not
+  just that components reference it.
+- No mobile breakpoint at all: four nav items plus the theme toggle simply
+  overflowed the viewport below `md:`, forcing horizontal scroll to reach
+  "NOTES" or the theme toggle. Fixed with a hamburger menu below `md:`,
+  the horizontal layout preserved at and above it. Chrome needs its own
+  responsive check independent of whatever breakpoint testing a page's
+  content got — nav renders on every page, so a gap here is a sitewide gap.
+
+**Concrete example — responsive fallback for canvas-style visualizations**:
+`AboutView.vue`'s knowledge-graph section absolutely-positions node cards by
+percentage of container width. That math holds at desktop widths but breaks
+under ~640px — a 230px-wide card centered near a container edge extends
+past the viewport and gets clipped, unreadable. Nudging the position ratios
+for narrow viewports (the first fix tried) still doesn't work: the cards
+themselves don't fit side-by-side at that width, full stop. The real fix
+was a **second, distinct render path** below the breakpoint — the same node
+data rendered as a plain stacked list, no absolute positioning, no SVG
+connector lines. Any component whose layout depends on absolute
+positioning/canvas math relative to a container's pixel width needs a real
+alternate render for narrow viewports, not a tuned version of the same math.
+
+**Concrete example — grouped tag filter (`ProjectsView.vue`)**: filtering by
+raw GitHub topics (`vue3`, `laravel`, `appscript`, …) is unusable past a
+handful of tags — 25 flat pills with no structure. Grouped into labeled rows
+(語言／套件／環境／其他) with a fixed-width label column (`w-16`) and a
+wrapping pill row per group, each pill showing its real match count. Two
+things worth carrying to the next tag-heavy list: topics/tags from an
+external source (GitHub, npm, …) carry no inherent category — the grouping
+is a hand-maintained lookup table, not something inferred from the tag
+string itself, and it will drift as new tags appear unless someone revisits
+it; and filter selection state should survive a list narrowing as long as
+the current selection is still a valid match (only reset to the first result
+when the selected item actually drops out) — jumping the selection on every
+filter change reads as broken, not helpful.
 
 ## Extending the token set
 
@@ -213,9 +281,17 @@ outside it. Don't burn turns retrying them. Use this instead:
 
 ## Setup and process notes
 
-- This project has no `CLAUDE.md` yet; when one exists, cross-link it here
-  rather than duplicating the tech-stack/architecture description.
+- This project's `CLAUDE.md` (repo root) carries the language convention
+  (commit messages/comments/replies default to Traditional Chinese) —
+  cross-linked here rather than duplicated.
 - Exploratory visual work (new theme candidates, unproven directions) follows
   the general engineering principle recorded in the `my-dev-grid-skills`
   marketplace repo (`docs/engineering-principles.md`): open a branch before
   writing any code, not after.
+- Implementing *from* a design mockup (this project's Claude Design canvas,
+  or any other visual spec with concrete style values) follows the
+  `mockup-fidelity` skill in the `my-dev-grid-skills` marketplace repo:
+  extract exact values instead of eyeballing the nearest Tailwind default,
+  and verify with `getComputedStyle` rather than a screenshot alone —
+  screenshots only catch structural problems (duplication, misalignment),
+  not small numeric drift in the values documented in this file.
