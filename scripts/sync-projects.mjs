@@ -15,7 +15,7 @@ import { dirname, join } from 'node:path'
 const GITHUB_USER = process.env.GITHUB_USER || 'jerryyehself'
 const OUT_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'data', 'projects.ts')
 
-async function fetchAllPublicRepos(username) {
+export async function fetchAllPublicRepos(username) {
   const repos = []
   let page = 1
   for (;;) {
@@ -35,11 +35,11 @@ async function fetchAllPublicRepos(username) {
   return repos.filter((r) => !r.private && !r.fork)
 }
 
-function esc(s) {
+export function esc(s) {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 }
 
-function toTsSource(repos) {
+export function toTsSource(repos) {
   const yearCounters = {}
   const entries = repos.map((r) => {
     const year = r.created_at.slice(0, 4)
@@ -83,7 +83,10 @@ ${entries.join('\n')}
 `
 }
 
-const repos = await fetchAllPublicRepos(GITHUB_USER)
-repos.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
-writeFileSync(OUT_PATH, toTsSource(repos))
-console.log(`寫入 ${repos.length} 個公開專案到 ${OUT_PATH}`)
+// 只有直接執行這支腳本時才真的打 API、寫檔；被測試 import 時不要跟著跑。
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const repos = await fetchAllPublicRepos(GITHUB_USER)
+  repos.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+  writeFileSync(OUT_PATH, toTsSource(repos))
+  console.log(`寫入 ${repos.length} 個公開專案到 ${OUT_PATH}`)
+}
