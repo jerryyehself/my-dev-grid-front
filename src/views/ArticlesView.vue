@@ -119,11 +119,15 @@ const goToArticle = (id: string) => {
       </template>
     </div>
 
-    <!-- 分類夾：依標籤切換，鬆散紙疊 -->
+    <!-- 分類夾：依標籤切換，鬆散紙疊
+         手機寬度放不下全部標籤時改成橫向捲動、不換行，避免頁籤換成兩行後
+         啟用中的頁籤跟下面卡片的邊框接不起來（換行後只有最後一行貼得到卡片） -->
     <div v-else>
-      <div class="flex mb-[-1px] relative z-10">
-        <div class="flex flex-wrap gap-x-1 items-end">
-          <BaseButton variant="tab" :active="!currentTag" @click="currentTag = ''">
+      <div
+        class="flex mb-[-1px] relative z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <div class="flex flex-nowrap gap-x-1 items-end">
+          <BaseButton variant="tab" class="shrink-0" :active="!currentTag" @click="currentTag = ''">
             All_Essays
           </BaseButton>
 
@@ -131,6 +135,7 @@ const goToArticle = (id: string) => {
             v-for="tag in allTags"
             :key="tag"
             variant="tab"
+            class="shrink-0"
             :active="currentTag === tag"
             @click="currentTag = currentTag === tag ? '' : tag"
           >

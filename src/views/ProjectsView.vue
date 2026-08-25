@@ -60,7 +60,9 @@ watch(
     </div>
 
   <div class="grid grid-cols-1 md:grid-cols-[280px_minmax(0,1fr)] border border-(--border-shelf) rounded-xl overflow-hidden bg-(--bg-paper-light)">
-    <div class="border-b md:border-b-0 md:border-r border-(--border-shelf)">
+    <!-- 手機上清單跟詳情面板上下堆疊，清單一長就把詳情面板擠到很下面才看得到，
+         所以窄螢幕限制清單高度、超出用內部捲動，md 以上並排顯示才還原成自然高度 -->
+    <div class="max-h-80 overflow-y-auto md:max-h-none md:overflow-visible border-b md:border-b-0 md:border-r border-(--border-shelf)">
       <button
         v-for="proj in filteredProjects"
         :key="proj.id"
