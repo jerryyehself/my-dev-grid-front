@@ -1,5 +1,5 @@
-import { ref, computed } from 'vue'
-import type { Project } from '@/data/projects'
+import { ref, computed, type Ref } from 'vue'
+import type { Project } from '@/api/projects'
 
 // tag → 分類對照表：GitHub topics 本身不帶語意，這份分類是手動維護的，
 // 不是自動推斷——新增專案帶新 tag 時要記得回來補一筆，不然會落到「其他」。
@@ -32,10 +32,12 @@ const TAG_CATEGORY: Record<string, string> = {
 }
 const CATEGORY_ORDER = ['語言', '套件', '環境', '其他']
 
-export function useProjectsFilter(projects: Project[]) {
+// projects 收 Ref 而不是純陣列：專案清單現在是非同步從 API 載入，
+// 用 Ref 才能在資料到達後讓底下這些 computed 自動重新計算。
+export function useProjectsFilter(projects: Ref<Project[]>) {
   const tagCounts = computed(() => {
     const counts: Record<string, number> = {}
-    for (const p of projects) {
+    for (const p of projects.value) {
       for (const tag of p.tags) {
         counts[tag] = (counts[tag] ?? 0) + 1
       }
@@ -73,8 +75,8 @@ export function useProjectsFilter(projects: Project[]) {
 
   // 篩選是 OR 邏輯：命中任一個選取的標籤就算，不要求同時符合所有分類
   const filteredProjects = computed(() => {
-    if (selectedTags.value.size === 0) return projects
-    return projects.filter((p) => p.tags.some((tag) => selectedTags.value.has(tag)))
+    if (selectedTags.value.size === 0) return projects.value
+    return projects.value.filter((p) => p.tags.some((tag) => selectedTags.value.has(tag)))
   })
 
   return { selectedTags, filterGroups, toggleTag, clearFilter, filteredProjects }

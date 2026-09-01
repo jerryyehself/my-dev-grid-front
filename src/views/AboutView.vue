@@ -223,7 +223,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
 import { articles } from '@/data/articles'
-import { projects } from '@/data/projects'
+import { fetchProjects } from '@/api/projects'
 
 const focusAreas = [
   {
@@ -243,9 +243,19 @@ const focusAreas = [
   },
 ]
 
+// 專案數改打後端 API，載入完成前先用 '—' 佔位，避免顯示會誤導的 0
+const projectCount = ref<string>('—')
+fetchProjects()
+  .then((projects) => {
+    projectCount.value = String(projects.length)
+  })
+  .catch(() => {
+    // 這個數字只是統計展示，載入失敗就維持佔位符號，不用另外顯示錯誤訊息干擾整頁
+  })
+
 const stats = computed(() => [
   { value: String(articles.length), label: '篇文章' },
-  { value: String(projects.length), label: '個專案' },
+  { value: projectCount.value, label: '個專案' },
   { value: '2026.01', label: '全端資歷起點' },
 ])
 
