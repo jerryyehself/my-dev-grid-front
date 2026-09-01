@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { ref } from 'vue'
 import { useProjectsFilter } from './useProjectsFilter'
-import type { Project } from '@/data/projects'
+import type { Project } from '@/api/projects'
 
 function fakeProject(overrides: Partial<Project> = {}): Project {
   return {
@@ -19,7 +20,7 @@ function fakeProject(overrides: Partial<Project> = {}): Project {
 describe('useProjectsFilter', () => {
   it('沒有選任何 tag 時，filteredProjects 回傳全部專案', () => {
     const projects = [fakeProject({ id: 'a' }), fakeProject({ id: 'b' })]
-    const { filteredProjects } = useProjectsFilter(projects)
+    const { filteredProjects } = useProjectsFilter(ref(projects))
 
     expect(filteredProjects.value).toEqual(projects)
   })
@@ -30,7 +31,7 @@ describe('useProjectsFilter', () => {
       fakeProject({ id: 'b', tags: ['python'] }),
       fakeProject({ id: 'c', tags: ['Vue', 'python'] }),
     ]
-    const { toggleTag, filteredProjects } = useProjectsFilter(projects)
+    const { toggleTag, filteredProjects } = useProjectsFilter(ref(projects))
 
     toggleTag('Vue')
 
@@ -43,7 +44,7 @@ describe('useProjectsFilter', () => {
       fakeProject({ id: 'b', tags: ['python'] }),
       fakeProject({ id: 'c', tags: ['php'] }),
     ]
-    const { toggleTag, filteredProjects } = useProjectsFilter(projects)
+    const { toggleTag, filteredProjects } = useProjectsFilter(ref(projects))
 
     toggleTag('Vue')
     toggleTag('python')
@@ -53,7 +54,7 @@ describe('useProjectsFilter', () => {
 
   it('再次 toggleTag 同一個 tag 會取消選取', () => {
     const projects = [fakeProject({ id: 'a', tags: ['Vue'] }), fakeProject({ id: 'b', tags: [] })]
-    const { toggleTag, filteredProjects } = useProjectsFilter(projects)
+    const { toggleTag, filteredProjects } = useProjectsFilter(ref(projects))
 
     toggleTag('Vue')
     toggleTag('Vue')
@@ -63,7 +64,7 @@ describe('useProjectsFilter', () => {
 
   it('clearFilter 清空所有已選取的 tag', () => {
     const projects = [fakeProject({ id: 'a', tags: ['Vue'] }), fakeProject({ id: 'b', tags: [] })]
-    const { toggleTag, clearFilter, selectedTags, filteredProjects } = useProjectsFilter(projects)
+    const { toggleTag, clearFilter, selectedTags, filteredProjects } = useProjectsFilter(ref(projects))
 
     toggleTag('Vue')
     clearFilter()
@@ -74,7 +75,7 @@ describe('useProjectsFilter', () => {
 
   it('已知分類的 tag 會被分進對應的 filterGroups', () => {
     const projects = [fakeProject({ tags: ['Vue', 'laravel', 'appscript'] })]
-    const { filterGroups } = useProjectsFilter(projects)
+    const { filterGroups } = useProjectsFilter(ref(projects))
 
     const byLabel = Object.fromEntries(filterGroups.value.map((g) => [g.label, g.tags.map((t) => t.label)]))
     expect(byLabel['語言']).toEqual(['Vue'])
@@ -84,7 +85,7 @@ describe('useProjectsFilter', () => {
 
   it('沒有出現在對照表裡的 tag 落到「其他」分類', () => {
     const projects = [fakeProject({ tags: ['some-unmapped-tag'] })]
-    const { filterGroups } = useProjectsFilter(projects)
+    const { filterGroups } = useProjectsFilter(ref(projects))
 
     const other = filterGroups.value.find((g) => g.label === '其他')
     expect(other?.tags.map((t) => t.label)).toEqual(['some-unmapped-tag'])
@@ -96,7 +97,7 @@ describe('useProjectsFilter', () => {
       fakeProject({ id: 'b', tags: ['Vue'] }),
       fakeProject({ id: 'c', tags: ['python'] }),
     ]
-    const { filterGroups } = useProjectsFilter(projects)
+    const { filterGroups } = useProjectsFilter(ref(projects))
 
     const lang = filterGroups.value.find((g) => g.label === '語言')
     const vueTag = lang?.tags.find((t) => t.label === 'Vue')
@@ -107,7 +108,7 @@ describe('useProjectsFilter', () => {
 
   it('toggleTag 之後，filterGroups 裡對應 tag 的 selected 會變成 true', () => {
     const projects = [fakeProject({ tags: ['Vue'] })]
-    const { toggleTag, filterGroups } = useProjectsFilter(projects)
+    const { toggleTag, filterGroups } = useProjectsFilter(ref(projects))
 
     toggleTag('Vue')
 
@@ -118,7 +119,7 @@ describe('useProjectsFilter', () => {
 
   it('沒有任何專案掛某個分類的 tag 時，filterGroups 不會出現空分類', () => {
     const projects = [fakeProject({ tags: ['Vue'] })]
-    const { filterGroups } = useProjectsFilter(projects)
+    const { filterGroups } = useProjectsFilter(ref(projects))
 
     expect(filterGroups.value.map((g) => g.label)).toEqual(['語言'])
   })
