@@ -97,6 +97,7 @@ const navItems = ref<NavItem[]>([
   { name: 'ABOUT', path: '/about' },
   { name: 'ARTICLES', path: '/articles' },
   { name: 'PROJECTS', path: '/projects' },
+  { name: 'GRAPH', path: '/graph' },
   { name: 'NOTES', path: '/notes' },
 ])
 

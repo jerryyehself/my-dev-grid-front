@@ -64,6 +64,16 @@ const router = createRouter({
         hideHeader: true,
       },
     },
+    {
+      path: '/graph',
+      name: 'graph',
+      component: () => import('@/views/GraphPocView.vue'),
+      meta: {
+        tag: 'Knowledge Graph',
+        title: '知識圖譜',
+        subtitle: '文件、技巧與實作之間的連結,2D 與 3D 兩種檢視',
+      },
+    },
   ],
 })
 
