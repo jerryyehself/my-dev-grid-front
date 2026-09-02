@@ -65,13 +65,13 @@ const router = createRouter({
       },
     },
     {
-      path: '/poc/graph',
-      name: 'graph-poc',
+      path: '/graph',
+      name: 'graph',
       component: () => import('@/views/GraphPocView.vue'),
       meta: {
-        tag: 'POC',
-        title: '知識圖譜技術驗證',
-        subtitle: '2D d3-force vs 3D 3d-force-graph,假資料',
+        tag: 'Knowledge Graph',
+        title: '知識圖譜',
+        subtitle: '文件、技巧與實作之間的連結,2D 與 3D 兩種檢視',
       },
     },
   ],
