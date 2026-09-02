@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { forceSimulation, forceManyBody, forceLink, forceCenter, forceCollide } from 'd3-force'
-import { graphPocNodes, graphPocLinks, type GraphPocNode } from '@/data/graphPocData'
+import { fetchGraphPocData, type GraphPocNode, type GraphPocLink } from '@/data/graphPocData'
 
 // 2D 版本刻意不加 d3-selection / d3-drag，用最原生的方式拖曳，
 // 這樣才看得出「不靠額外套件，純用已經裝好的 d3-force 能做到什麼程度」。
@@ -12,8 +12,10 @@ const height = 520
 type SimNode = GraphPocNode & { x: number; y: number; fx?: number | null; fy?: number | null }
 type SimLink = { source: SimNode; target: SimNode; kind: 'related' | 'inspiration' }
 
-const nodes = ref<SimNode[]>(graphPocNodes.map((n) => ({ ...n, x: width / 2, y: height / 2 })))
+const nodes = ref<SimNode[]>([])
 const links = ref<SimLink[]>([])
+const loading = ref(true)
+const error = ref<string | null>(null)
 
 let simulation: ReturnType<typeof forceSimulation<SimNode>>
 let draggingNode: SimNode | null = null
@@ -41,7 +43,20 @@ function onPointerUp() {
   draggingNode = null
 }
 
-onMounted(() => {
+onMounted(async () => {
+  let graphPocNodes: GraphPocNode[]
+  let graphPocLinks: GraphPocLink[]
+  try {
+    ;({ nodes: graphPocNodes, links: graphPocLinks } = await fetchGraphPocData())
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '載入知識圖譜資料失敗'
+    loading.value = false
+    return
+  }
+  loading.value = false
+
+  nodes.value = graphPocNodes.map((n) => ({ ...n, x: width / 2, y: height / 2 }))
+
   simulation = forceSimulation(nodes.value)
     .force(
       'link',
@@ -64,10 +79,17 @@ onUnmounted(() => simulation?.stop())
 </script>
 
 <template>
+  <div v-if="loading" class="w-full h-[520px] flex items-center justify-center rounded border border-stone-200 bg-white text-xs text-stone-400">
+    載入知識圖譜資料中...
+  </div>
+  <div v-else-if="error" class="w-full h-[520px] flex items-center justify-center rounded border border-stone-200 bg-white text-xs text-red-600">
+    {{ error }}
+  </div>
   <svg
+    v-else
     :viewBox="`0 0 ${width} ${height}`"
     class="w-full h-auto touch-none select-none rounded border border-stone-200 bg-white"
-    @pointermove="(e) => onPointerMove(e, $event.currentTarget as SVGSVGElement)"
+    @pointermove="(e) => onPointerMove(e, e.currentTarget as SVGSVGElement)"
     @pointerup="onPointerUp"
     @pointerleave="onPointerUp"
   >
