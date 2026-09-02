@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import ForceGraph3D, { type ForceGraph3DInstance } from '3d-force-graph'
 import { fetchGraphPocData } from '@/data/graphPocData'
+
+// 800×520 只是行動裝置量不到容器寬度前的保底值，見 GraphPoc2D.vue 同樣的說明。
+const FALLBACK_WIDTH = 800
+const FALLBACK_HEIGHT = 520
 
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
 const error = ref<string | null>(null)
 let graph: ForceGraph3DInstance | undefined
+let resizeObserver: ResizeObserver | undefined
 
 onMounted(async () => {
   let graphPocNodes: Awaited<ReturnType<typeof fetchGraphPocData>>['nodes']
@@ -19,16 +24,22 @@ onMounted(async () => {
     return
   }
   loading.value = false
+  // v-show 從 display:none 切回可見要等 nextTick 才會真的 flush 到 DOM，見 GraphPoc2D.vue
+  // 同樣的說明——不等就量 clientWidth 會量到 0。
+  await nextTick()
 
   if (!container.value) return
+
+  // 量測容器實際寬度（高度維持固定，見 GraphPoc2D.vue 同樣的說明）
+  const width = container.value.clientWidth || FALLBACK_WIDTH
 
   // Z 軸縱深分層：fz 直接固定 z 座標,越久沒讀的筆記退到後面(數值越負離鏡頭越遠)
   const nodes = graphPocNodes.map((n) => ({ ...n, fz: -n.daysSinceAccessed * 1.5 }))
   const links = graphPocLinks.map((l) => ({ ...l }))
 
   graph = new ForceGraph3D(container.value)
-    .width(800)
-    .height(520)
+    .width(width)
+    .height(FALLBACK_HEIGHT)
     .backgroundColor('#ffffff')
     .graphData({ nodes, links })
     .nodeId('id')
@@ -40,9 +51,17 @@ onMounted(async () => {
     // 3d-force-graph 沒有原生「虛線」材質,用沿線飄動的粒子近似「靈感對撞機」的動態感
     .linkDirectionalParticles((l) => ((l as { kind: string }).kind === 'inspiration' ? 3 : 0))
     .linkDirectionalParticleSpeed(0.004)
+
+  // 容器寬度改變時同步更新畫布寬度，見 GraphPoc2D.vue 同樣的說明。
+  resizeObserver = new ResizeObserver((entries) => {
+    const newWidth = entries[0]?.contentRect.width
+    if (newWidth && graph) graph.width(newWidth)
+  })
+  resizeObserver.observe(container.value)
 })
 
 onUnmounted(() => {
+  resizeObserver?.disconnect()
   graph?._destructor?.()
 })
 </script>

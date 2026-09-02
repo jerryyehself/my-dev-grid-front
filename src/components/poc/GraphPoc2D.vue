@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
 import { forceCollide } from 'd3-force'
 import { fetchGraphPocData, type GraphPocNode, type GraphPocLink } from '@/data/graphPocData'
@@ -8,8 +8,13 @@ import { fetchGraphPocData, type GraphPocNode, type GraphPocLink } from '@/data/
 // 手刻的 d3-force + SVG 渲染 + tick loop + pointer 拖曳：tick loop、渲染、拖曳互動全部
 // 交給套件內建處理，元件只剩下「把資料整理好、宣告怎麼畫」。
 
-const width = 800
-const height = 520
+// 800×520 只是行動裝置量不到容器寬度前的保底值：實際尺寸在 onMounted 量測
+// container.clientWidth 決定（高度維持固定，只有寬度需要跟著容器縮放），
+// 避免原本寫死 800×520 在窄螢幕容器裡被 overflow-hidden 裁到整個畫布消失。
+const FALLBACK_WIDTH = 800
+const FALLBACK_HEIGHT = 520
+let width = FALLBACK_WIDTH
+let height = FALLBACK_HEIGHT
 
 type SimNode = GraphPocNode & NodeObject
 type SimLink = GraphPocLink & LinkObject<SimNode>
@@ -18,6 +23,7 @@ const container = ref<HTMLDivElement>()
 const loading = ref(true)
 const error = ref<string | null>(null)
 let graph: ForceGraph<SimNode, SimLink> | undefined
+let resizeObserver: ResizeObserver | undefined
 
 const radiusFor = (n: GraphPocNode) => 4 + n.weight * 16
 const colorFor = (n: GraphPocNode) => (n.weight > 0.6 ? '#b45309' : '#94a3b8')
@@ -80,8 +86,17 @@ onMounted(async () => {
     return
   }
   loading.value = false
+  // v-show 從 display:none 切回可見是 Vue 的非同步 DOM 更新，這裡的 loading.value = false
+  // 只是排入更新，還沒真的 flush 到 DOM——不等 nextTick 就量 clientWidth 會量到還沒
+  // flush 前的 0，退回 FALLBACK_WIDTH，之後 ResizeObserver 才把畫布修正回真實寬度，
+  // 但這時 cluster 中心座標已經用錯的寬度算好了，節點初始位置就落在畫布外面。
+  await nextTick()
 
   if (!container.value) return
+
+  // 量測容器實際寬度（高度維持固定 520，容器本身沒有明確高度可量）
+  width = container.value.clientWidth || FALLBACK_WIDTH
+  height = FALLBACK_HEIGHT
 
   const clusterCenters = computeClusterCenters(graphPocNodes)
   const nodes: SimNode[] = graphPocNodes.map((n) => {
@@ -143,9 +158,23 @@ onMounted(async () => {
   graph.d3Force('center')?.x(width / 2).y(height / 2)
   graph.d3Force('charge')?.strength(-90)
   graph.d3Force('link')?.distance(70)
+
+  // 容器寬度之後改變（例如旋轉螢幕、視窗縮放）時同步更新畫布寬度，避免又回到
+  // 寫死尺寸的老問題。高度維持不變，只跟著寬度縮放。
+  resizeObserver = new ResizeObserver((entries) => {
+    const newWidth = entries[0]?.contentRect.width
+    if (newWidth && graph && Math.abs(newWidth - width) > 1) {
+      width = newWidth
+      graph.width(newWidth)
+    }
+  })
+  resizeObserver.observe(container.value)
 })
 
-onUnmounted(() => graph?._destructor?.())
+onUnmounted(() => {
+  resizeObserver?.disconnect()
+  graph?._destructor?.()
+})
 </script>
 
 <template>
