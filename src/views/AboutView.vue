@@ -37,7 +37,7 @@
     </div>
 
     <!-- 導言：照設計稿用這句，跟原本保留的哲學段落不衝突，只是搶同一個版位，選這句 -->
-    <p class="max-w-[760px] mx-auto text-lg sm:text-xl font-semibold leading-[1.7] text-center text-(--text-ink-main)">
+    <p class="max-w-[760px] mx-auto text-lg sm:text-[22px] font-semibold leading-[1.7] text-center text-(--text-ink-main)">
       這個網站不是履歷，是外部化的第二個大腦——用來收留還沒想清楚的點子、記錄踩過的坑，把散落的知識重新編目成看得懂的結構。
     </p>
 
@@ -50,7 +50,7 @@
         <div
           v-for="area in focusAreas"
           :key="area.title"
-          class="border border-(--border-shelf) rounded-xl p-6 bg-(--bg-paper-light)"
+          class="border border-(--border-shelf) rounded-[10px] p-6 bg-(--bg-paper-light)"
         >
           <div class="font-mono text-xs font-bold text-(--text-accent) mb-3">{{ area.index }}</div>
           <h3 class="text-base font-bold text-(--text-ink-main) mb-2">{{ area.title }}</h3>

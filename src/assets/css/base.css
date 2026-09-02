@@ -40,34 +40,44 @@ body {
     }
 }
 
-/* 🎯 數位檔案索引排版（全站通用） */
-.global-page-wrapper h2 {
-    font-size: 1.25rem;
-    font-weight: 800;
-    letter-spacing: -0.025em;
-    color: var(--text-ink-main);
-    margin-top: 2.5rem;
-    margin-bottom: 1.125rem;
-    display: flex;
-    align-items: center;
-}
+/* 🎯 數位檔案索引排版（全站通用）
+   包進 Tailwind 的 @layer base：這三條原本是不在任何 layer 裡的一般規則，
+   `.global-page-wrapper h2/p/code` 這種「class + 後代元素」選擇器的 specificity
+   (0,1,1) 高於元件內單一 utility class (0,1,0)，而未分層的規則又永遠贏過任何分層
+   規則——結果是頁面上幾乎每個 <p>/<h2> 元素自己的 Tailwind 字級/顏色 utility
+   （例如 About 頁引言的 sm:text-[22px]、邊注文字的 text-[12.5px] text-(--text-ink-muted)）
+   全部被這裡的預設值蓋掉，卻因為視覺上「看起來還算合理」很難肉眼抓到。包進
+   @layer base 後，交給 Tailwind 自己的 layer 順序（utilities 最高）決定優先權，
+   讓各元件真正能覆蓋這裡的預設印刷排版，而不是被無條件蓋掉。 */
+@layer base {
+    .global-page-wrapper h2 {
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        color: var(--text-ink-main);
+        margin-top: 2.5rem;
+        margin-bottom: 1.125rem;
+        display: flex;
+        align-items: center;
+    }
 
-/* 📖 仿實體書籍印刷的內文段落 */
-.global-page-wrapper p {
-    font-size: 0.9375rem;
-    color: var(--text-ink-body);
-    line-height: 1.8;
-    margin-bottom: 1.25rem;
-    text-align: justify;
-    /* 讓段落左右對齊，像實體書一樣工整 */
-}
+    /* 📖 仿實體書籍印刷的內文段落 */
+    .global-page-wrapper p {
+        font-size: 0.9375rem;
+        color: var(--text-ink-body);
+        line-height: 1.8;
+        margin-bottom: 1.25rem;
+        text-align: justify;
+        /* 讓段落左右對齊，像實體書一樣工整 */
+    }
 
-/* 💻 筆記區的程式碼片段微調 */
-.global-page-wrapper code {
-    font-family: var(--font-mono);
-    background-color: var(--bg-folder);
-    color: var(--text-ink-main);
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.125rem;
-    font-size: 0.875rem;
+    /* 💻 筆記區的程式碼片段微調 */
+    .global-page-wrapper code {
+        font-family: var(--font-mono);
+        background-color: var(--bg-folder);
+        color: var(--text-ink-main);
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.125rem;
+        font-size: 0.875rem;
+    }
 }

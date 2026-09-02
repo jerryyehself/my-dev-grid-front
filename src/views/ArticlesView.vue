@@ -152,7 +152,7 @@ const goToArticle = (id: string) => {
           :style="{
             marginTop: index === 0 ? '0' : '-10px',
             transform: `rotate(${index % 2 === 0 ? -0.8 : 1.1}deg)`,
-            boxShadow: index === 0 ? '0 6px 18px rgba(0,0,0,0.06)' : '0 10px 22px rgba(0,0,0,0.09)',
+            boxShadow: index === 0 ? '0 6px 18px rgba(0,0,0,0.1)' : '0 10px 22px rgba(0,0,0,0.14)',
             position: 'relative',
             zIndex: index + 1,
           }"

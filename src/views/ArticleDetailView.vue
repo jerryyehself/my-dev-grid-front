@@ -83,6 +83,25 @@
           </ol>
         </div>
 
+        <div v-if="article.margins?.length" class="flex flex-col gap-5">
+          <div
+            v-for="note in article.margins"
+            :key="note.kind + note.text"
+            class="pl-3.5"
+            :class="note.color === 'accent' ? 'border-l-2 border-(--text-accent)' : 'border-l-2 border-(--text-ink-muted)'"
+          >
+            <div
+              class="text-[9px] font-mono uppercase tracking-[0.15em] font-bold mb-1.5"
+              :class="note.color === 'accent' ? 'text-(--text-accent)' : 'text-(--text-ink-muted)'"
+            >
+              {{ note.kind }}
+            </div>
+            <p class="text-[12.5px] leading-relaxed text-(--text-ink-muted)">
+              {{ note.text }}
+            </p>
+          </div>
+        </div>
+
         <div v-if="article.relatedProjects?.length">
           <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
             Related Projects

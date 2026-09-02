@@ -19,8 +19,8 @@ withDefaults(
       variant === 'tab' && [
         'h-[34px] flex items-center px-4 rounded-t border text-[10px] uppercase tracking-wider cursor-pointer',
         active
-          ? 'text-(--text-ink-main) border-(--border-shelf) border-b-transparent font-semibold bg-(--bg-paper-light) pt-2.5 pb-2'
-          : 'text-(--text-ink-body)/60 border-transparent bg-(--text-ink-main)/[0.04] hover:text-(--text-ink-main) hover:bg-(--text-ink-main)/[0.08] pt-2 pb-2',
+          ? 'text-(--text-accent) border-(--border-shelf) border-b-transparent font-bold bg-(--bg-paper-light) pt-2.5 pb-2'
+          : 'text-(--text-ink-muted) font-medium border-transparent bg-(--bg-folder) hover:text-(--text-ink-main) hover:bg-(--bg-folder)/70 pt-2 pb-2',
       ],
       variant === 'page' && [
         'rounded-xs px-2.5 py-1 text-[11px]',

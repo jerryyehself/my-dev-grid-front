@@ -105,16 +105,20 @@ watch(
             class="w-full text-left px-4.5 py-4 border-b border-(--border-shelf) last:border-b-0 transition-colors cursor-pointer"
             :class="
               selectedId === proj.id
-                ? 'bg-(--bg-folder) border-l-[3px] border-l-(--text-accent)'
+                ? 'bg-(--bg-active-row) border-l-[3px] border-l-(--text-accent)'
                 : 'border-l-[3px] border-l-transparent hover:bg-(--bg-folder)/60'
             "
             @click="selectedId = proj.id"
           >
             <div class="flex items-center justify-between mb-1.5 font-mono text-[10px] text-(--text-ink-muted)">
               <span>{{ proj.id }}</span>
-              <BaseTag v-if="proj.statusType" :tone="proj.statusType === 'active' ? 'accent' : 'muted'">
+              <span
+                v-if="proj.statusType"
+                class="font-mono text-[9px] tracking-[0.05em] uppercase font-bold"
+                :class="proj.statusType === 'active' ? 'text-(--text-accent)' : 'text-(--text-ink-muted)'"
+              >
                 {{ proj.status }}
-              </BaseTag>
+              </span>
             </div>
             <div class="text-sm font-bold text-(--text-ink-main) leading-snug">
               {{ proj.title }}
