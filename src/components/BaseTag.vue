@@ -8,7 +8,7 @@ withDefaults(defineProps<{ tone?: 'neutral' | 'accent' | 'muted' }>(), { tone: '
       'inline-flex items-center px-2 py-0.5 rounded font-mono text-[11px] tracking-wide',
       tone === 'neutral' && 'bg-(--bg-folder) text-(--text-ink-body)',
       tone === 'accent' &&
-        'border border-(--text-accent)/30 text-(--text-accent) font-semibold uppercase tracking-wider',
+        'border border-(--text-accent) text-(--text-accent) font-semibold uppercase tracking-wider',
       tone === 'muted' &&
         'border border-(--border-shelf) text-(--text-ink-muted) uppercase tracking-wider',
     ]"

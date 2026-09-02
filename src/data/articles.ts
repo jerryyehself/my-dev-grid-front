@@ -3,6 +3,12 @@ export interface ArticleSection {
   body: string
 }
 
+export interface ArticleMarginNote {
+  kind: string
+  text: string
+  color: 'accent' | 'muted'
+}
+
 export interface Article {
   id: string
   title: string
@@ -12,6 +18,7 @@ export interface Article {
   relatedProjects?: string[]
   intro: string
   sections: ArticleSection[]
+  margins?: ArticleMarginNote[]
 }
 
 export const articles: Article[] = [
@@ -42,6 +49,13 @@ export const articles: Article[] = [
           '這種做法讓後續的改動不再牽一髮動全身，且在多頁面共用的設計系統下，能維持穩定的交互節奏與更清楚的責任分界。',
       },
     ],
+    margins: [
+      {
+        kind: '延伸想法',
+        text: '這篇談的「收斂到 View」在 my-dev-grid 專案的 Scope / Relation / Documentation 資料模型上就是同一套原則的延伸——事件驅動邏輯統一收在對應 View，不拆進各自的子元件。',
+        color: 'accent',
+      },
+    ],
   },
   {
     id: 'tailwind-v4-fluid-design',
@@ -63,6 +77,13 @@ export const articles: Article[] = [
         heading: '暗黑與明亮雙主題',
         body:
           '雙主題並不是簡單翻轉色彩，而是重新調整對比與材質層級，讓視覺密度在不同情境下仍然舒適。',
+      },
+    ],
+    margins: [
+      {
+        kind: '已知限制',
+        text: '這裡討論的雙主題 CSS 變數系統本身沒有型別檢查——元件實際引用到哪個 token、用多大透明度，寫錯了編譯期也不會報錯，只能用 getComputedStyle 逐項核對抓出來（見 issue #32 修的那幾處落差）。',
+        color: 'muted',
       },
     ],
   },
@@ -88,6 +109,13 @@ export const articles: Article[] = [
           '像腳註跳轉、關係圖高亮及局部滾動這種體驗，都需要一套穩定的事件總線來協調，而不是讓每個元件各自猜測。',
       },
     ],
+    margins: [
+      {
+        kind: '延伸想法',
+        text: '跨層級事件驅動這套作法，在 my-dev-grid 的知識圖譜（/graph，2D/3D 力導向圖）節點高亮與局部捲動定位上，是同一套模式的實際延伸應用。',
+        color: 'accent',
+      },
+    ],
   },
   {
     id: 'swiss-style-typography',
@@ -108,6 +136,13 @@ export const articles: Article[] = [
         heading: '數位介面的應用',
         body:
           '在索引與資訊密度高的介面中，精準的排版節奏能讓注意力自然被引導到最重要的內容。',
+      },
+    ],
+    margins: [
+      {
+        kind: '已知限制',
+        text: '這篇談的是精準排版節奏，但站內實作一度只挑框架最接近的預設級距（例如 About 頁的圓角、引言字級），跟稿件字面值有落差，直到這次逐項核對（issue #32）才修正。',
+        color: 'muted',
       },
     ],
   },
