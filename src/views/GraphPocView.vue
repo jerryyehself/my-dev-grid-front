@@ -16,7 +16,7 @@ const mode = ref<'2d' | '3d'>(route.query.mode === '3d' ? '3d' : '2d')
         :class="mode === '2d' ? 'bg-stone-900 text-white' : 'border-stone-300 text-stone-600'"
         @click="mode = '2d'"
       >
-        2D · d3-force
+        2D · force-graph
       </button>
       <button
         class="rounded-full border px-3 py-1 text-xs font-mono uppercase tracking-wider"
