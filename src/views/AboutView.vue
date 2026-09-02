@@ -75,119 +75,18 @@
       </p>
     </blockquote>
 
-    <!-- 知識圖譜：保留原本真的在運作的視覺化，只是拿掉了假掃描的資料庫記錄框架 -->
+    <!-- 原本這裡是一個手刻的靜態 bezier 連結圖，跟真正的知識圖譜功能（/graph，接真實
+         Scope/Relation 資料）語意撞名、內容也重複，issue #25 拿掉了。先留白當佔位符，
+         之後可能會放一小部分真實知識圖譜的範例節點進來 -->
     <section>
       <div class="mb-6">
         <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-1.5">
-          // Knowledge Graph
+          // Network
         </div>
         <p class="text-[11px] font-mono text-(--text-ink-muted) max-w-2xl leading-normal">
-          基於 W3C RDF/OWL 標準本體論設計的職涯關係圖譜，將實體卡片、自動化工作流與數據沙盒有機聯結。
+          籌備中——完整互動版知識圖譜見
+          <router-link to="/graph" class="underline hover:text-(--text-accent)">/graph</router-link>。
         </p>
-      </div>
-
-      <!-- 手機寬度容不下絕對定位的節點卡片（卡片本身就有 230px 寬，會被裁切/溢出），改成單欄堆疊 -->
-      <div v-if="isMobileViewport" class="flex flex-col gap-3">
-        <div
-          class="border border-(--text-accent) bg-gradient-to-br from-(--text-ink-main) to-(--text-ink-body) text-(--bg-paper-light) px-6 py-4 rounded-xl text-center shadow-md"
-        >
-          <div class="text-base font-black tracking-widest font-serif">Jerry Yeh</div>
-          <span class="text-[8px] bg-(--text-accent)/20 text-(--bg-paper-light) py-0.5 px-2 mt-1.5 inline-block rounded border border-(--text-accent)/30 font-mono tracking-wider">
-            System Archivist &amp; Dev
-          </span>
-        </div>
-        <div
-          v-for="node in peripheralNodes"
-          :key="node.id"
-          class="border border-(--border-shelf) bg-(--bg-paper-light)/95 px-4 py-3.5 rounded-xl shadow-xs"
-        >
-          <div class="flex items-center justify-between border-b border-(--border-shelf) pb-1 mb-1.5 text-[8px] font-mono font-bold text-(--text-ink-muted) opacity-70">
-            <span>{{ node.id.toUpperCase() }}_INDEX</span>
-            <span class="w-1.5 h-1.5 rounded-full ring-2 ring-(--bg-paper-light) shadow-xs" :class="node.statusColor"></span>
-          </div>
-          <h3 class="text-xs font-bold text-(--text-ink-main) font-serif tracking-wide">
-            <a v-if="node.url" :href="node.url" target="_blank" class="hover:underline inline-flex items-center gap-0.5">
-              {{ node.label }} <span class="text-[9px] opacity-60">↗</span>
-            </a>
-            <span v-else>{{ node.label }}</span>
-          </h3>
-          <p class="text-[11px] text-(--text-ink-body) opacity-85 !mt-1 !mb-0 leading-normal text-justify">
-            {{ node.desc }}
-          </p>
-          <div v-if="node.tags" class="mt-2 flex flex-wrap gap-1">
-            <span v-for="tag in node.tags" :key="tag" class="text-[8px] bg-(--bg-folder) border border-(--border-shelf) text-(--text-ink-body) px-1.5 py-0.5 rounded font-mono">
-              #{{ tag }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div
-        v-else
-        ref="canvasRef"
-        class="relative h-[600px] w-full border border-(--border-shelf) rounded-xl bg-(--bg-paper-light)/40 shadow-inner overflow-hidden"
-      >
-        <div
-          class="absolute inset-0 bg-[radial-gradient(var(--text-ink-muted)_1.2px,transparent_1.2px)] bg-[size:1.5rem_1.5rem] opacity-[0.1] pointer-events-none"
-          style="
-            mask-image: radial-gradient(circle at 50% 50%, black 50%, transparent 95%);
-            -webkit-mask-image: radial-gradient(circle at 50% 50%, black 50%, transparent 95%);
-          "
-        ></div>
-        <svg class="absolute inset-0 w-full h-full pointer-events-none">
-          <g v-for="(link, index) in links" :key="index">
-            <path
-              :d="calculateBezierPath(link)"
-              fill="none"
-              class="stroke-(--text-ink-muted) opacity-25 stroke-[1.2px] transition-all duration-300"
-            />
-            <g :transform="`translate(${getCurveCenter(link).x}, ${getCurveCenter(link).y})`">
-              <rect :x="-38" :y="-8" :width="76" :height="16" rx="3" fill="var(--bg-paper-light)" class="stroke-(--border-shelf) stroke-[1px]" />
-              <text fill="var(--text-accent)" class="text-[8px] font-mono font-bold tracking-wider" text-anchor="middle" dy="3">
-                {{ link.predicate }}
-              </text>
-            </g>
-          </g>
-        </svg>
-        <div
-          v-for="node in computedNodes"
-          :key="node.id"
-          class="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-          :style="{ left: `${node.x}px`, top: `${node.y}px` }"
-        >
-          <div
-            v-if="node.type === 'SUBJECT'"
-            class="border border-(--text-accent) bg-gradient-to-br from-(--text-ink-main) to-(--text-ink-body) text-(--bg-paper-light) px-8 py-4 rounded-xl text-center min-w-[200px] shadow-md relative z-10"
-          >
-            <div class="text-base font-black tracking-widest font-serif">{{ node.label }}</div>
-            <span class="text-[8px] bg-(--text-accent)/20 text-(--bg-paper-light) py-0.5 px-2 mt-1.5 inline-block rounded border border-(--text-accent)/30 font-mono tracking-wider">
-              {{ node.role }}
-            </span>
-          </div>
-          <div
-            v-else
-            class="border border-(--border-shelf) bg-(--bg-paper-light)/95 backdrop-blur-md px-4 py-3.5 w-[230px] sm:w-[250px] rounded-xl shadow-xs hover:border-(--text-accent) hover:shadow-md transition-all duration-300"
-          >
-            <div class="flex items-center justify-between border-b border-(--border-shelf) pb-1 mb-1.5 text-[8px] font-mono font-bold text-(--text-ink-muted) opacity-70">
-              <span>{{ node.id.toUpperCase() }}_INDEX</span>
-              <span class="w-1.5 h-1.5 rounded-full ring-2 ring-(--bg-paper-light) shadow-xs" :class="node.statusColor"></span>
-            </div>
-            <h3 class="text-xs font-bold text-(--text-ink-main) font-serif tracking-wide">
-              <a v-if="node.url" :href="node.url" target="_blank" class="hover:underline inline-flex items-center gap-0.5">
-                {{ node.label }} <span class="text-[9px] opacity-60">↗</span>
-              </a>
-              <span v-else>{{ node.label }}</span>
-            </h3>
-            <p class="text-[11px] text-(--text-ink-body) opacity-85 !mt-1 !mb-0 leading-normal text-justify">
-              {{ node.desc }}
-            </p>
-            <div v-if="node.tags" class="mt-2 flex flex-wrap gap-1">
-              <span v-for="tag in node.tags" :key="tag" class="text-[8px] bg-(--bg-folder) border border-(--border-shelf) text-(--text-ink-body) px-1.5 py-0.5 rounded font-mono">
-                #{{ tag }}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -221,7 +120,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { articles } from '@/data/articles'
 import { fetchProjects } from '@/api/projects'
 
@@ -259,142 +158,4 @@ const stats = computed(() => [
   { value: '2026.01', label: '全端資歷起點' },
 ])
 
-const canvasRef = ref<HTMLElement | null>(null)
-const canvasWidth = ref(1000)
-const canvasHeight = ref(600)
-
-// 節點卡片本身就有 230px 寬，絕對定位的圖譜版面在窄螢幕下放不下，改走下面的單欄堆疊版本
-const isMobileViewport = ref(window.innerWidth < 640)
-const updateViewportCheck = () => {
-  isMobileViewport.value = window.innerWidth < 640
-}
-
-const nodes = ref([
-  {
-    id: 'me',
-    label: 'Jerry Yeh',
-    type: 'SUBJECT',
-    role: 'System Archivist & Dev',
-    xRatio: 0.5,
-    yRatio: 0.5,
-  },
-  {
-    id: 'github',
-    label: 'GitHub Repository',
-    desc: '託管核心開源組件與編目版本。包含 isbn-scanner 原始碼及 GAS 自動化腳本組態。',
-    url: 'https://github.com/jerryyehself',
-    statusColor: 'bg-amber-950',
-    xRatio: 0.18,
-    yRatio: 0.22,
-  },
-  {
-    id: 'email',
-    label: 'Secure Mail Gateway',
-    desc: '網域安全路由通訊點。主要用於系統自動化排程報告接收、錯誤日誌警告通知與外部合作對接。',
-    url: 'mailto:jerry.yeh@example.com',
-    statusColor: 'bg-yellow-700',
-    xRatio: 0.82,
-    yRatio: 0.22,
-  },
-  {
-    id: 'skills',
-    label: 'Engineering Stack',
-    desc: '深度聚焦於後端 Laravel 核心架構（任務排程與優化）與前端 Vue 3 響應式資料驅動開發。',
-    tags: ['Laravel9', 'Vue3', 'GAS'],
-    statusColor: 'bg-amber-800',
-    xRatio: 0.18,
-    yRatio: 0.78,
-  },
-  {
-    id: 'sandbox',
-    label: 'Data Sandbox (Gold Passbook)',
-    desc: '非線性數據觀測沙盒。串接後端自動化工作流，系統化編目並分析黃金存摺牌價波動率與個人資產配置。',
-    statusColor: 'bg-amber-600',
-    xRatio: 0.82,
-    yRatio: 0.78,
-  },
-])
-
-const links = ref([
-  { sourceId: 'me', targetId: 'github', predicate: 'owl:sameAs', curveDirection: -1 },
-  { sourceId: 'me', targetId: 'email', predicate: 'schema:email', curveDirection: 1 },
-  { sourceId: 'me', targetId: 'skills', predicate: 'schema:knowsAbout', curveDirection: 1 },
-  { sourceId: 'me', targetId: 'sandbox', predicate: 'schema:interest', curveDirection: -1 },
-])
-
-// 圖譜版面現在只在 isMobileViewport 為 false 時才會掛載，不用再處理窄螢幕的節點擠壓
-const computedNodes = computed(() => {
-  return nodes.value.map((node) => ({
-    ...node,
-    x: node.xRatio * canvasWidth.value,
-    y: node.yRatio * canvasHeight.value,
-  }))
-})
-
-const peripheralNodes = computed(() => nodes.value.filter((node) => node.type !== 'SUBJECT'))
-
-let resizeObserver: ResizeObserver | null = null
-const updateCanvasSize = () => {
-  if (canvasRef.value) {
-    canvasWidth.value = canvasRef.value.clientWidth
-    canvasHeight.value = canvasRef.value.clientHeight
-  }
-}
-
-onMounted(() => {
-  updateCanvasSize()
-  if (canvasRef.value) {
-    resizeObserver = new ResizeObserver(() => {
-      updateCanvasSize()
-    })
-    resizeObserver.observe(canvasRef.value)
-  }
-  window.addEventListener('resize', updateViewportCheck)
-})
-
-onBeforeUnmount(() => {
-  if (resizeObserver && canvasRef.value) {
-    resizeObserver.unobserve(canvasRef.value)
-  }
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateViewportCheck)
-})
-
-interface GraphLink {
-  sourceId: string
-  targetId: string
-  curveDirection: number
-}
-
-const calculateBezierPath = (link: GraphLink) => {
-  const source = computedNodes.value.find((n) => n.id === link.sourceId)
-  const target = computedNodes.value.find((n) => n.id === link.targetId)
-  if (!source || !target) return ''
-  const dx = target.x - source.x
-  const cp1x = source.x + dx * 0.4
-  const cp1y = source.y + link.curveDirection * 40
-  const cp2x = source.x + dx * 0.6
-  const cp2y = target.y - link.curveDirection * 40
-  return `M ${source.x} ${source.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${target.x} ${target.y}`
-}
-
-const getCurveCenter = (link: GraphLink) => {
-  const source = computedNodes.value.find((n) => n.id === link.sourceId)
-  const target = computedNodes.value.find((n) => n.id === link.targetId)
-  if (!source || !target) return { x: 0, y: 0 }
-  const dx = target.x - source.x
-  const cp1x = source.x + dx * 0.4
-  const cp1y = source.y + link.curveDirection * 40
-  const cp2x = source.x + dx * 0.6
-  const cp2y = target.y - link.curveDirection * 40
-  const t = 0.5
-  const mt = 1 - t
-  const x =
-    mt * mt * mt * source.x + 3 * mt * mt * t * cp1x + 3 * mt * t * t * cp2x + t * t * t * target.x
-  const y =
-    mt * mt * mt * source.y + 3 * mt * mt * t * cp1y + 3 * mt * t * t * cp2y + t * t * t * target.y
-  return { x, y }
-}
 </script>
