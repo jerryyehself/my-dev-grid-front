@@ -10,7 +10,7 @@ const router = createRouter({
       component: () => import('@/views/HomeView.vue'),
       meta: {
         tag: 'Home',
-        title: 'Jerry in Archive',
+        title: 'IN ARCHIVE',
         subtitle: '正在孵化的想法，以及最近的輸入與輸出動態。',
       },
     },

@@ -10,8 +10,8 @@
         to="/"
         class="flex items-baseline gap-2 text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
       >
-        <span class="font-serif italic font-bold text-[19px] tracking-normal">Jerry</span>
-        <span class="hidden sm:inline font-light text-[11px] tracking-[0.15em] opacity-65">in Archive</span>
+        <span class="font-serif italic font-bold text-[19px] tracking-normal">IN</span>
+        <span class="hidden sm:inline font-light text-[11px] tracking-[0.15em] opacity-65">ARCHIVE</span>
       </router-link>
 
       <!-- 手機寬度放不下四個導覽項目＋主題切換鈕，中大螢幕才用橫排 -->
