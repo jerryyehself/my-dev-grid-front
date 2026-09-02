@@ -28,7 +28,7 @@
       <div class="absolute inset-x-0 bottom-0 px-6 sm:px-10 pb-8">
         <div class="font-mono text-[11px] tracking-[0.3em] uppercase text-(--text-accent) font-bold mb-3">About</div>
         <h1 class="text-4xl sm:text-[56px] font-extrabold tracking-tight leading-none text-(--text-nav-footer)">
-          Jerry Yeh
+          IN
         </h1>
         <p class="font-mono text-[13px] tracking-wider text-(--text-nav-footer) opacity-75 mt-2">
           FULL-STACK DEVELOPER &nbsp;·&nbsp; SYSTEM ARCHITECTURE &nbsp;·&nbsp; KNOWLEDGE SYSTEMS

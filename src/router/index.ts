@@ -22,7 +22,7 @@ const router = createRouter({
       meta: {
         type: 'profile',
         tag: 'About Me',
-        title: 'Jerry Yeh',
+        title: 'IN',
         subtitle: 'Full-Stack Developer / Artifact Sandbox',
         // About 頁自己畫了一個滿版橫幅當作大標題，跟 MainLayout 的通用表頭是同一件事，
         // 兩個都顯示會重複兩次姓名/職稱，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
