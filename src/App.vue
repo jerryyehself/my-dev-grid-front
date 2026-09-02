@@ -9,7 +9,7 @@ const route = useRoute()
    透過計算屬性捕捉當前路由 meta 的設定值，若該路由沒設定則顯示預設字串。
 */
 const pageTag = computed(() => (route.meta.tag as string) || 'DEV_LOG')
-const pageTitle = computed(() => (route.meta.title as string) || 'Jerry.DevLog')
+const pageTitle = computed(() => (route.meta.title as string) || 'IN.DevLog')
 const pageSubtitle = computed(
   () => (route.meta.subtitle as string) || 'Continuous Learning & Artifact Registry',
 )

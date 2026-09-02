@@ -70,7 +70,7 @@
       class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
       :style="widthStyle"
     >
-      © 2026 Jerry Yeh. All Rights Reserved.
+      © 2026 IN. All Rights Reserved.
     </footer>
   </div>
 </template>
