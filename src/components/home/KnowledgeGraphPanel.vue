@@ -3,7 +3,7 @@ import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
 import { forceCollide } from 'd3-force'
-import { fetchGraph, type GraphNodeDto, type GraphEdgeDto, type GraphNodeType } from '@/api/graph'
+import { fetchGraphOrDemo, type GraphNodeType } from '@/api/graph'
 import { useTheme } from '@/composables/useTheme'
 
 // 首頁知識網路小工具：只看、不深挖（拖曳/篩選留給 /graph 頁），用真實
@@ -27,7 +27,7 @@ interface SimLink extends LinkObject<SimNode> {
 
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
-const error = ref<string | null>(null)
+const isDemoData = ref(false)
 const stats = reactive({ doc: 0, tech: 0, impl: 0, edges: 0 })
 
 const { theme } = useTheme()
@@ -271,14 +271,10 @@ watch(theme, () => forceRedraw())
 watch(colorMode, () => forceRedraw())
 
 async function boot() {
-  let dto: { nodes: GraphNodeDto[]; edges: GraphEdgeDto[] }
-  try {
-    dto = await fetchGraph()
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : '載入知識網路資料失敗'
-    loading.value = false
-    return
-  }
+  // fetchGraphOrDemo() 正常打真的 API；連不上時（單機展示沒開後端）才退回存好的
+  // 資料快照，並且誠實回報 isDemo，畫面上要清楚標示這不是即時資料。
+  const { dto, isDemo } = await fetchGraphOrDemo()
+  isDemoData.value = isDemo
   loading.value = false
   await nextTick()
   if (!container.value) return
@@ -428,7 +424,7 @@ onUnmounted(() => {
       </h2>
     </div>
 
-    <p v-if="!loading && !error" class="text-sm text-(--text-ink-body) mb-3">
+    <p v-if="!loading" class="text-sm text-(--text-ink-body) mb-3">
       <b class="text-(--text-ink-main) tabular-nums">{{ stats.doc }}</b> 份文件、<b
         class="text-(--text-ink-main) tabular-nums"
         >{{ stats.tech }}</b
@@ -437,7 +433,11 @@ onUnmounted(() => {
       <b class="text-(--text-ink-main) tabular-nums">{{ stats.edges }}</b> 條已實現的關聯串成的知識網路。
     </p>
 
-    <div v-if="!loading && !error" class="flex items-center gap-2 mb-2.5">
+    <p v-if="!loading && isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-2">
+      // DEMO_DATA（連不上後端，顯示的是存好的資料快照，不是即時資料）
+    </p>
+
+    <div v-if="!loading" class="flex items-center gap-2 mb-2.5">
       <span class="font-mono text-[11px] uppercase tracking-[0.08em] text-(--text-ink-muted)">節點顏色</span>
       <button
         type="button"
@@ -459,7 +459,7 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <div v-if="!loading && !error && colorMode === 'type'" class="flex flex-wrap items-center gap-4 text-[12px] text-(--text-ink-muted) mb-3">
+    <div v-if="!loading && colorMode === 'type'" class="flex flex-wrap items-center gap-4 text-[12px] text-(--text-ink-muted) mb-3">
       <span class="flex items-center gap-1.5"
         ><span class="w-2 h-2 rounded-full" :style="{ background: 'var(--node-doc)' }"></span>Documentation</span
       >
@@ -471,7 +471,7 @@ onUnmounted(() => {
       >
       <span class="ml-auto">點節點看內容・點連線看關聯定義</span>
     </div>
-    <div v-else-if="!loading && !error" class="flex flex-wrap items-center gap-2.5 text-[11.5px] font-mono text-(--text-ink-muted) mb-3">
+    <div v-else-if="!loading" class="flex flex-wrap items-center gap-2.5 text-[11.5px] font-mono text-(--text-ink-muted) mb-3">
       <span>較舊</span>
       <span
         class="w-[120px] h-2 rounded"
@@ -487,13 +487,9 @@ onUnmounted(() => {
     <div v-if="loading" class="h-[460px] flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
       // LOADING_GRAPH...
     </div>
-    <div v-else-if="error" class="h-[460px] flex flex-col items-center justify-center gap-2 rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-center px-6">
-      <p class="text-[11px] font-mono text-(--text-accent) tracking-widest">// FAILED_TO_LOAD</p>
-      <p class="text-sm text-(--text-ink-body)">{{ error }}</p>
-    </div>
 
     <div
-      v-show="!loading && !error"
+      v-show="!loading"
       class="kg-stage relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_rgba(41,18,5,0.14)] overflow-hidden h-[460px]"
       :style="{
         background: 'var(--canvas-bg)',
