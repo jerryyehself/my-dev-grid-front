@@ -18,6 +18,9 @@ export interface GraphNodeDto {
   id: string
   type: GraphNodeType
   label: string
+  // 只有 implementation 節點會有值（git_repo_created_at，來自 GitHub API）；
+  // documentation/technique 完全沒有對應的時間欄位，後端一律回傳 null，不是漏傳。
+  created_at: string | null
 }
 
 export interface GraphEdgeDto {
