@@ -1,0 +1,254 @@
+{
+  "nodes": [
+    {
+      "id": "documentation-1",
+      "type": "documentation",
+      "label": "PHP 官方文件",
+      "created_at": null
+    },
+    {
+      "id": "documentation-2",
+      "type": "documentation",
+      "label": "JavaScript 官方文件",
+      "created_at": null
+    },
+    {
+      "id": "documentation-3",
+      "type": "documentation",
+      "label": "laravel 官方文件",
+      "created_at": null
+    },
+    {
+      "id": "documentation-4",
+      "type": "documentation",
+      "label": "TypeScript 官方文件",
+      "created_at": null
+    },
+    {
+      "id": "technique-1",
+      "type": "technique",
+      "label": "PHP",
+      "created_at": null
+    },
+    {
+      "id": "technique-2",
+      "type": "technique",
+      "label": "Vue",
+      "created_at": null
+    },
+    {
+      "id": "technique-3",
+      "type": "technique",
+      "label": "JavaScript",
+      "created_at": null
+    },
+    {
+      "id": "technique-4",
+      "type": "technique",
+      "label": "Dockerfile",
+      "created_at": null
+    },
+    {
+      "id": "technique-5",
+      "type": "technique",
+      "label": "Blade",
+      "created_at": null
+    },
+    {
+      "id": "technique-6",
+      "type": "technique",
+      "label": "Shell",
+      "created_at": null
+    },
+    {
+      "id": "technique-7",
+      "type": "technique",
+      "label": "CSS",
+      "created_at": null
+    },
+    {
+      "id": "technique-8",
+      "type": "technique",
+      "label": "laravel",
+      "created_at": null
+    },
+    {
+      "id": "technique-9",
+      "type": "technique",
+      "label": "tailwind",
+      "created_at": null
+    },
+    {
+      "id": "technique-10",
+      "type": "technique",
+      "label": "vue3",
+      "created_at": null
+    },
+    {
+      "id": "technique-11",
+      "type": "technique",
+      "label": "TypeScript",
+      "created_at": null
+    },
+    {
+      "id": "technique-12",
+      "type": "technique",
+      "label": "HTML",
+      "created_at": null
+    },
+    {
+      "id": "implementation-1",
+      "type": "implementation",
+      "label": "my-dev-grid",
+      "created_at": "2025-06-11"
+    },
+    {
+      "id": "implementation-2",
+      "type": "implementation",
+      "label": "my-dev-grid-front",
+      "created_at": "2026-06-09"
+    }
+  ],
+  "edges": [
+    {
+      "source": "documentation-1",
+      "target": "technique-1",
+      "predicate": "specs",
+      "label": "specs",
+      "relation_id": 1
+    },
+    {
+      "source": "documentation-2",
+      "target": "technique-3",
+      "predicate": "specs",
+      "label": "specs",
+      "relation_id": 1
+    },
+    {
+      "source": "documentation-3",
+      "target": "technique-8",
+      "predicate": "specs",
+      "label": "specs",
+      "relation_id": 1
+    },
+    {
+      "source": "documentation-4",
+      "target": "technique-11",
+      "predicate": "specs",
+      "label": "specs",
+      "relation_id": 1
+    },
+    {
+      "source": "technique-1",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-2",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-3",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-4",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-5",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-6",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-7",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-8",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-9",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-10",
+      "target": "implementation-1",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-2",
+      "target": "implementation-2",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-11",
+      "target": "implementation-2",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-7",
+      "target": "implementation-2",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-12",
+      "target": "implementation-2",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-6",
+      "target": "implementation-2",
+      "predicate": "uses",
+      "label": "uses",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-8",
+      "target": "technique-1",
+      "predicate": "requires",
+      "label": "requires",
+      "relation_id": 9
+    }
+  ]
+}
