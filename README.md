@@ -10,6 +10,8 @@
 
 改版面/字體/共用元件前,先跟這份對一下,確認是刻意偏離(例如某段文案改用真實內容取代設計稿的示範文案)還是單純沒對齊。
 
+其他相關設計稿(較早期草稿、Home 頁參考等)、每一份的現況/是否還算數,見 `my-dev-grid-skills` 的 [`docs/design-artifacts.md`](https://github.com/jerryyehself/my-dev-grid-skills/blob/main/docs/design-artifacts.md)——那份是持續維護的活索引,這裡不重複列。
+
 ## 建議的 IDE 設定
 
 [VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar)(記得停用 Vetur)。
