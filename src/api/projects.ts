@@ -91,3 +91,17 @@ export async function fetchProjects(): Promise<Project[]> {
     return toProject(raw, id)
   })
 }
+
+// 2026-09-04 從真實資料庫的 fetchProjects() 存下來的快照（2 個真實專案，透過本檔案同一套
+// 轉換邏輯手動跑出來的結果，不是編的），只給 StatusBoardPanel 在「單機展示、後端沒起來」
+// 時當保底填充用——跟 graph.ts 的 graphDemoFixture.json 同一套作法，不是常態資料來源。
+import projectsDemoFixture from '@/data/projectsDemoFixture.json'
+
+export async function fetchProjectsOrDemo(): Promise<{ projects: Project[]; isDemo: boolean }> {
+  try {
+    return { projects: await fetchProjects(), isDemo: false }
+  } catch (e) {
+    console.warn('[projects] 連不上後端，改用示範資料快照（僅供單機展示）', e)
+    return { projects: projectsDemoFixture as Project[], isDemo: true }
+  }
+}
