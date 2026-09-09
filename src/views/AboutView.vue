@@ -109,7 +109,7 @@
           Archive ↗
         </a>
         <a
-          href="mailto:jerry.yeh@example.com"
+          href="mailto:jerry40522@gmail.com"
           class="flex-1 text-center px-4 py-2.5 bg-(--text-accent) hover:bg-(--text-accent)/90 text-(--bg-nav-footer) font-bold rounded-lg text-xs font-mono transition-all"
         >
           Dispatch Mail ✉
