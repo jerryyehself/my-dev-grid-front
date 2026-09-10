@@ -27,6 +27,12 @@ interface SimLink extends LinkObject<SimNode> {
 
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
+// loading 蓋「API 資料還沒回來」這段（畫布連掛都還沒掛上去）；settling 另外蓋
+// 「畫布已經掛上去、力導向模擬還在跑」這段——力學收斂到位（onEngineStop 第一次
+// 觸發）前，節點會經過一段跟設計排版對不上的中間過程（真實跑起來實測：92 條邊、
+// 16+35+5 個節點時要跑約 10 幾秒才收斂），直接曝露會被誤認成排版壞了。用霧面
+// 遮罩蓋住這段而不是整個藏起來，讓使用者看得出「畫面正在動、還沒定」而不是空白。
+const settling = ref(true)
 const isDemoData = ref(false)
 const stats = reactive({ doc: 0, tech: 0, impl: 0, edges: 0 })
 
@@ -378,6 +384,7 @@ async function boot() {
       remapToSectors()
       clampAllNodes()
       graph?.zoomToFit(0, framePadding())
+      settling.value = false
     })
   graph.d3Force('charge')?.strength(-130)
   graph.d3Force('link')?.distance(58)
@@ -498,6 +505,15 @@ onUnmounted(() => {
       }"
     >
       <div ref="container" class="w-full h-full" />
+
+      <div
+        class="absolute inset-0 z-[5] flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
+        :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+      >
+        <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">
+          // 節點排列中...
+        </span>
+      </div>
 
       <div
         class="popover absolute min-w-[220px] max-w-[280px] rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_rgba(41,18,5,0.14)] transition-[opacity,transform] duration-150 z-10"
