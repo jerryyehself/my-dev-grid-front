@@ -371,6 +371,11 @@ async function boot() {
     .linkDirectionalArrowRelPos(0.96)
     .linkDirectionalArrowColor(() => css('--edge-real'))
     .enableNodeDrag(false)
+    // 首頁只看不操作(拖曳/縮放整個畫布留給 /graph 頁深挖,見下方說明文字)——
+    // enableNodeDrag(false) 只擋得住拖單一節點,畫布本身的縮放/平移預設是開的,
+    // 沒鎖住的話滑鼠滾輪、拖曳背景都還是能動鏡頭,跟文案講的不一致。
+    .enableZoomInteraction(false)
+    .enablePanInteraction(false)
     .onNodeClick((n, ev) => openPopover('node', n, ev))
     .onLinkClick((l, ev) => openPopover('link', l, ev))
     .d3Force('cluster', clusterForce(clusterCenters, 0.1))
