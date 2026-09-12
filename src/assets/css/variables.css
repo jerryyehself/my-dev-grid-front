@@ -44,7 +44,11 @@
     --node-doc: #b45309;
     --node-tech: #0e8a72;
     --node-impl: #8a3aa8;
-    --edge-real: #a8998a;
+    /* 2026-09-12 使用者反應邊看不清楚，實測 #a8998a 對 --canvas-bg 只有 2.42:1
+       （WCAG 圖形物件建議 3:1 都不到）；同色相/飽和度往深壓到 L=0.45，
+       升到 3.99:1，明顯更清楚但還是比節點本身的顏色淡，維持「邊是輔助資訊」
+       的視覺位階。 */
+    --edge-real: #847362;
     --overlay-nodata: #c4b8a8;
     --canvas-bg: #f4f0e1;
     --canvas-dot: rgba(146, 64, 14, 0.1);
@@ -90,7 +94,9 @@
     --node-doc: #b8791a;
     --node-tech: #279c7d;
     --node-impl: #b356a8;
-    --edge-real: #665c4f;
+    /* 同一次對比修正（見淺色主題註解）：#665c4f 對 --canvas-bg 只有 2.51:1，
+       同色相/飽和度往淺拉到 L=0.50，升到 4.44:1。 */
+    --edge-real: #918371;
     --overlay-nodata: #665c4f;
     --canvas-bg: #1d2021;
     --canvas-dot: rgba(250, 189, 47, 0.09);
