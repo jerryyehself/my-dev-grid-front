@@ -21,31 +21,33 @@ describe('ThemeToggle', () => {
     localStorage.clear()
   })
 
-  it('預設顯示「晝間」文字（目前是 library 主題，按下去會切成晝間）', async () => {
+  it('預設顯示「☀ 淺色」（目前是 library 主題）', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
-    expect(wrapper.text()).toContain('晝間')
+    expect(wrapper.text()).toContain('☀')
+    expect(wrapper.text()).toContain('淺色')
   })
 
-  it('點擊後切換主題，按鈕文字跟著變成「夜讀」', async () => {
+  it('點擊後切換主題，圖示與文字跟著變成「☽ 深色」', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
     await wrapper.find('button').trigger('click')
 
-    expect(wrapper.text()).toContain('夜讀')
+    expect(wrapper.text()).toContain('☽')
+    expect(wrapper.text()).toContain('深色')
     expect(document.documentElement.classList.contains('theme-terminal')).toBe(true)
   })
 
-  it('aria-label 會隨主題切換更新', async () => {
+  it('aria-pressed 會隨主題切換更新（深色主題＝pressed）', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
-    expect(wrapper.find('button').attributes('aria-label')).toBe('切換成夜讀主題')
+    expect(wrapper.find('button').attributes('aria-pressed')).toBe('false')
 
     await wrapper.find('button').trigger('click')
 
-    expect(wrapper.find('button').attributes('aria-label')).toBe('切換成晝間主題')
+    expect(wrapper.find('button').attributes('aria-pressed')).toBe('true')
   })
 })
