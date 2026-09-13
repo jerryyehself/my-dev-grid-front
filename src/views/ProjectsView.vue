@@ -65,13 +65,14 @@ watch(
         </button>
       </div>
 
-      <!-- 標籤篩選器：依語言／套件／環境／其他分組，跟下面的主從式列表共用同一份專案資料 -->
-      <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 flex flex-col gap-3">
-        <!-- items-start（不是 items-center）：標籤多到換行時，分類名稱要對齊第一行標籤的
-             頂端，不是垂直置中對齊整塊換行後的標籤——後者會讓分類名稱看起來浮在標籤中間，
-             跟哪一行都對不上。pt-1 補的是標籤 py-1 的上邊距，讓兩邊文字基線對齊。 -->
-        <div v-for="group in filterGroups" :key="group.label" class="flex items-start gap-3.5 flex-wrap">
-          <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted) w-16 shrink-0 pt-1">
+      <!-- 標籤篩選器：依語言／套件／環境／其他分組，跟下面的主從式列表共用同一份專案資料。
+           分類名稱獨立一行放在標籤上方（不是跟標籤同一行左右並排）：inline 並排在標籤多到
+           換行時，怎麼調 padding 都是在猜「名稱該對齊哪一行」；名稱自己佔一行、標籤另起一行，
+           對齊問題不存在，因為兩者本來就不是同一條基線上的東西。2 欄式排列（sm 以上）也把
+           四組類別從縱向堆疊變兩兩並排，展開高度砍半。 -->
+      <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+        <div v-for="group in filterGroups" :key="group.label">
+          <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted) mb-1.5">
             {{ group.label }}
           </div>
           <div class="flex flex-wrap gap-1.5">
