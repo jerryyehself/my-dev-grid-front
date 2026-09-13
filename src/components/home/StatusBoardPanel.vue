@@ -65,7 +65,10 @@ const recentArticles = computed(() =>
           // LOADING_PROJECTS...
         </div>
 
-        <div v-else class="rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) overflow-hidden">
+        <!-- 固定高度＋內部捲動：清單一長「近況板」本身就會被撐得很長，跟 /projects
+             行動版清單（同樣 max-h-80）用同一個高度慣例，讓全站「清單裝在固定高度
+             盒子裡」的視覺語言一致，不是這裡另外發明一個數字 -->
+        <div v-else class="max-h-80 overflow-y-auto overflow-x-hidden rounded-xl border border-(--border-shelf) bg-(--bg-paper-light)">
           <RouterLink
             v-for="p in projects"
             :key="p.id"
@@ -103,7 +106,8 @@ const recentArticles = computed(() =>
           <span>近期文章</span>
         </h3>
 
-        <div class="rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) overflow-hidden">
+        <!-- 跟左欄近期專案用同一個 max-h-80，兩欄高度上限一致 -->
+        <div class="max-h-80 overflow-y-auto overflow-x-hidden rounded-xl border border-(--border-shelf) bg-(--bg-paper-light)">
           <RouterLink
             v-for="a in recentArticles"
             :key="a.id"

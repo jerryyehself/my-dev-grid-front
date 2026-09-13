@@ -95,9 +95,11 @@ watch(
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-[280px_minmax(0,1fr)] border border-(--border-shelf) rounded-xl overflow-hidden bg-(--bg-paper-light)">
-        <!-- 手機上清單跟詳情面板上下堆疊，清單一長就把詳情面板擠到很下面才看得到，
-             所以窄螢幕限制清單高度、超出用內部捲動，md 以上並排顯示才還原成自然高度 -->
-        <div class="max-h-80 overflow-y-auto md:max-h-none md:overflow-visible border-b md:border-b-0 md:border-r border-(--border-shelf)">
+        <!-- 清單固定 max-h-80＋內部捲動：手機版是因為跟詳情面板上下堆疊，清單一長會把
+             詳情面板擠到很下面；桌面版原本 md:max-h-none 讓清單自然展開，但跟首頁近況板
+             改成固定高度後不一致，改成兩種寬度都套同一個高度上限，全站「清單裝在固定
+             高度盒子裡」的慣例統一 -->
+        <div class="max-h-80 overflow-y-auto border-b md:border-b-0 md:border-r border-(--border-shelf)">
           <button
             v-for="proj in filteredProjects"
             :key="proj.id"
