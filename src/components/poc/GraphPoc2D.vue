@@ -23,8 +23,13 @@ type SimLink = GraphPocLink & LinkObject<SimNode>
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
 const error = ref<string | null>(null)
+// settling 蓋住「畫布已經掛上去、力模擬還在跑、鏡頭還沒對焦」這段過程，跟首頁
+// KnowledgeGraphPanel.vue 同樣的理由：直接曝露節點亂飄、鏡頭突然跳到置中位置的
+// 過程，會被誤認成排版壞了。
+const settling = ref(true)
 let graph: ForceGraph<SimNode, SimLink> | undefined
 let resizeObserver: ResizeObserver | undefined
+let hasZoomedToFit = false
 
 const { theme } = useTheme()
 
@@ -160,6 +165,23 @@ onMounted(async () => {
       'collide',
       forceCollide<SimNode>((n) => radiusFor(n) + 4),
     )
+    // 沒設的話套件預設無限跑到真正物理收斂，實測含 cluster/collide 自訂力的
+    // 情況要跑到 28 秒左右才觸發 onEngineStop——跟首頁 KnowledgeGraphPanel.vue
+    // 同樣的 300 ticks 上限，視覺上已經收斂到穩定分群，不需要真的等到力學
+    // 完全歸零，換來鏡頭幾秒內就能對焦，不是讓使用者對著擠在角落的節點等半分鐘。
+    .cooldownTicks(300)
+    // 力模擬收斂後鏡頭自動置中/縮放到剛好框住所有節點：沒有這行，節點最終停在
+    // 畫布哪裡完全看運氣（charge/link 力學過程中可能整團往任一方向飄），實測
+    // 常常整團擠在角落、大片留白。onEngineStop 不只在初始收斂時觸發——拖曳節點
+    // 放開後 fx/fy 清空會重新 reheat 模擬，again 觸發 onEngineStop，用
+    // hasZoomedToFit 只在第一次收斂時校正鏡頭，拖完節點不會被強制拉回置中，
+    // 也不會又蓋一次 settling 遮罩。
+    .onEngineStop(() => {
+      if (hasZoomedToFit) return
+      hasZoomedToFit = true
+      graph?.zoomToFit(400, 40)
+      settling.value = false
+    })
 
   // force-graph 內建就有一個 'center' force，但預設目標是座標原點 (0,0)，跟畫布中心
   // (width/2, height/2) 對不起來——會跟 clusterForce（目標在畫布中心附近）互相拉扯，
@@ -175,6 +197,7 @@ onMounted(async () => {
     if (newWidth && graph && Math.abs(newWidth - width) > 1) {
       width = newWidth
       graph.width(newWidth)
+      if (hasZoomedToFit) graph.zoomToFit(0, 40)
     }
   })
   resizeObserver.observe(container.value)
@@ -202,5 +225,14 @@ onUnmounted(() => {
   </div>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->
-  <div v-show="!loading && !error" ref="container" class="w-full overflow-hidden rounded border border-(--border-shelf)" />
+  <div v-show="!loading && !error" class="relative">
+    <div ref="container" class="w-full overflow-hidden rounded border border-(--border-shelf)" />
+    <div
+      v-if="!loading && !error"
+      class="absolute inset-0 flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
+      :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+    >
+      <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">// 節點排列中...</span>
+    </div>
+  </div>
 </template>
