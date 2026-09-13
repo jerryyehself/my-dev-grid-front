@@ -177,24 +177,6 @@ function nodeColorFor(n: SimNode): string {
 
 const radiusFor = (n: SimNode) => 4.5 + Math.min(n.degree, 8) * 1.1
 
-// 高權重節點的呼吸發光：套用 base.css .beacon-dot/beacon-breathe 同一套視覺節奏
-// （2.6 秒、opacity 1 ↔ 0.55、ease-in-out），但這裡是畫在 canvas 上的節點，不是
-// DOM 元素，沒辦法直接套用那個 CSS class/@keyframes，改成在 nodeCanvasObject 裡
-// 用時間算出目前的透明度，數值刻意跟 CSS 版本對齊，讓兩處視覺上是同一顆「呼吸中
-// 的燈」。用餘弦函數模擬 ease-in-out：t=0(週期起點)值最大、t=0.5(半週期)值最小。
-const BEACON_BREATHE_PERIOD_MS = 2600
-function beaconBreatheOpacity(): number {
-  const t = (Date.now() % BEACON_BREATHE_PERIOD_MS) / BEACON_BREATHE_PERIOD_MS
-  return 0.775 + 0.225 * Math.cos(2 * Math.PI * t)
-}
-// 「高權重」＝真實關聯數(degree)相對於這張圖裡最高 degree 的比例達到門檻——
-// 跟 /graph 頁 GraphPoc2D.vue 的 weight > 0.6「core 節點」用同一個 0.6 門檻，
-// 只是我們沒有預先正規化好的 weight 欄位，改用 degree/maxDegree 現算。
-let maxDegree = 0
-function isHighWeightNode(n: SimNode): boolean {
-  return maxDegree > 0 && n.degree / maxDegree >= 0.6
-}
-
 // hover 高亮鄰居：拖曳／縮放留給 /graph 頁深挖，但「看清楚一個節點跟誰有關聯」
 // 不需要那麼重的互動——hover 就能問「這個節點連到哪裡」，是靜態圖跟完整拖曳
 // 探索之間的中間地帶。用 module 層級的一般變數（不是 ref）存目前 hover 的
@@ -202,6 +184,16 @@ function isHighWeightNode(n: SimNode): boolean {
 // 用 forceRedraw() 手動觸發重畫就夠。
 let hoveredNodeId: string | null = null
 let neighborIds = new Map<string, Set<string>>()
+
+// 雷達跳動：原本高權重節點常駐呼吸發光的效果拿掉了（不管有沒有互動都在閃，
+// 意義不大），改成只在滑鼠真的 hover 到節點時，從節點邊緣往外擴散一圈淡出的
+// 圓環，像雷達／聲納的回波——是互動回饋，不是背景裝飾。hoverPingStartTime
+// 記錄這次 hover 開始的時間，供畫圈時算目前擴散到第幾輪、進度多少；
+// onNodeHover 換人時（含離開時設回 null）才重設，同一個節點持續 hover 時
+// 圈圈會不斷循環擴散，不會只跳一次就停。
+const RADAR_PING_PERIOD_MS = 1400
+const RADAR_PING_MAX_EXPAND = 16
+let hoverPingStartTime: number | null = null
 
 function endpointId(x: string | number | SimNode | undefined): string {
   if (x == null) return ''
@@ -577,7 +569,6 @@ async function boot() {
     degree.set(e.source, (degree.get(e.source) ?? 0) + 1)
     degree.set(e.target, (degree.get(e.target) ?? 0) + 1)
   }
-  maxDegree = degree.size ? Math.max(...degree.values()) : 0
 
   width = container.value.clientWidth || width
   height = container.value.clientHeight || height
@@ -681,21 +672,13 @@ async function boot() {
       const y = n.y ?? 0
       const r = radiusFor(n)
       const dim = isDimmedNode(n.id) || isTypeFilterDimmed(n.domainType)
-      // hover 淡化／顯示層篩選中都暫停呼吸：被 dim 掉的節點不該還在那邊呼吸
-      // 搶注意力；篩選器啟用時，被選中維持清晰的那層也暫停呼吸——不然同一層
-      // 裡有呼吸、有不呼吸的節點，明暗週期不同時看起來會像「選中的顏色深淺
-      // 不一」，跟篩選器想傳達的「這層很明確」互相矛盾。
-      const breathing = !dim && !isAnyTypeFilterActive() && isHighWeightNode(n)
-      const breathePhase = breathing ? beaconBreatheOpacity() : 1
       ctx.save()
       // hover 到別的節點時，跟它沒有直接關聯的節點淡化（globalAlpha 統一蓋掉
       // 底下所有畫法，不用個別改 fillStyle/strokeStyle 的透明度）。
-      ctx.globalAlpha = dim ? 0.22 : breathePhase
+      ctx.globalAlpha = dim ? 0.22 : 1
       ctx.save()
       ctx.shadowColor = css('--node-shadow')
-      // 呼吸發光的節點額外疊加隨呼吸節奏起伏的强度(仿 .beacon-dot 的
-      // box-shadow 0 0 4px 1px currentColor ↔ 0 0 1px 0，用同一個相位算)。
-      ctx.shadowBlur = breathing ? 7 + 6 * ((breathePhase - 0.55) / 0.45) : 7
+      ctx.shadowBlur = 7
       ctx.shadowOffsetY = 2
       ctx.beginPath()
       ctx.arc(x, y, r, 0, 2 * Math.PI)
@@ -712,6 +695,20 @@ async function boot() {
             ? 'rgba(255,255,255,0.16)'
             : 'rgba(255,255,255,0.38)'
       ctx.stroke()
+      // 雷達跳動：只有目前真的被 hover 的節點才畫，從節點邊緣往外擴散、邊擴邊
+      // 淡出的圓環——兩圈相位錯開半個週期，隨時都有一圈在視野裡，看起來才像
+      // 連續的雷達回波，不是單一圈跳一下就停格等下一輪。
+      if (n.id === hoveredNodeId && hoverPingStartTime != null) {
+        const elapsed = Date.now() - hoverPingStartTime
+        for (const phaseOffset of [0, 0.5]) {
+          const t = (((elapsed / RADAR_PING_PERIOD_MS) % 1) + phaseOffset) % 1
+          ctx.beginPath()
+          ctx.arc(x, y, r + t * RADAR_PING_MAX_EXPAND, 0, 2 * Math.PI)
+          ctx.lineWidth = 1.5
+          ctx.strokeStyle = withAlpha(css('--text-accent'), (1 - t) * 0.5)
+          ctx.stroke()
+        }
+      }
       if (shouldRenderLabel(n)) {
         const fontPx = 10.5
         ctx.font = `500 ${fontPx / globalScale}px system-ui, sans-serif`
@@ -736,16 +733,6 @@ async function boot() {
     // 推導邊(bipartite projection)用虛線跟真實邊區分開來——這是唯一負責
     // 「這條線是不是資料庫真實關聯」這件事的視覺線索，顏色/寬度只負責亮不亮。
     .linkLineDash((l) => (l.derived ? [4, 3] : null))
-    // 同型別的真實邊(不管是 Technique 的 requires/isRequiredBy 還是
-    // Implementation 的 descendantOf/accompanies/precedes)彎曲方向跟跨型別
-    // 邊分開，才看得出「這條線是同一層內部的關聯」——用 domainType 比對，
-    // 不是寫死比對 predicate 名稱，之後本體論加新的同型別關聯不用回來改這裡。
-    .linkCurvature((l) => {
-      if (l.derived) return 0.22
-      const st = typeof l.source === 'object' ? l.source.domainType : undefined
-      const tt = typeof l.target === 'object' ? l.target.domainType : undefined
-      return st && tt && st === tt ? -0.3 : 0.22
-    })
     .linkLabel((l) => {
       const s = typeof l.source === 'object' ? l.source.label : l.source
       const t = typeof l.target === 'object' ? l.target.label : l.target
@@ -755,9 +742,12 @@ async function boot() {
       }
       return `${l.predicate ?? '關聯'}：${s} → ${t}`
     })
-    // 推導邊沒有方向性(誰用了同一項技術不分先後)，不畫箭頭，跟真實邊的
-    // 「A → B」語意分開。
-    .linkDirectionalArrowLength((l) => (l.derived ? 0 : 5))
+    // 箭頭只在 hover 到端點節點時才畫：平常畫面線本來就密，箭頭常駐反而是
+    // 雜訊；「這條線有沒有方向」是 hover 想細看某個節點關聯時才需要的資訊，
+    // 跟 linkTouchesHovered() 判斷用同一套 hover 邏輯，不是另外的互動規則。
+    // 推導邊沒有方向性(誰用了同一項技術不分先後)，就算 hover 也不畫箭頭，
+    // 跟真實邊的「A → B」語意分開。
+    .linkDirectionalArrowLength((l) => (!l.derived && linkTouchesHovered(l) ? 5 : 0))
     .linkDirectionalArrowRelPos(0.96)
     .linkDirectionalArrowColor((l) => linkDisplayColor(l))
     .enableNodeDrag(false)
@@ -774,6 +764,9 @@ async function boot() {
       const nextId = n?.id ?? null
       if (nextId === hoveredNodeId) return
       hoveredNodeId = nextId
+      // 換了 hover 目標（含離開時變成 null）都重新起算，同一個節點持續 hover 時
+      // 圈圈從頭開始循環擴散，不會沿用上一個節點停在哪個階段的進度。
+      hoverPingStartTime = nextId != null ? Date.now() : null
       if (container.value) container.value.style.cursor = n ? 'pointer' : 'default'
       forceRedraw()
     })
@@ -789,9 +782,8 @@ async function boot() {
       forceCollide<SimNode>((n) => radiusFor(n) + (shouldLabelNode(n) ? 26 : 3)).iterations(2),
     )
     .cooldownTicks(300)
-    // 呼吸發光動畫要每一幀重繪：模擬穩定、engine 停止 tick 之後 canvas 預設就不會
-    // 再重畫（省效能），關掉這個機制才能讓高權重節點持續呼吸，跟 /graph 頁
-    // GraphPoc2D.vue 的 breatheOpacity() 用同一招。
+    // hover 雷達跳動要每一幀重繪：模擬穩定、engine 停止 tick 之後 canvas 預設就不會
+    // 再重畫（省效能），關掉這個機制才能讓 hover 中的節點持續播放擴散圈動畫。
     .autoPauseRedraw(false)
     .onEngineStop(() => {
       clampAllNodes()
