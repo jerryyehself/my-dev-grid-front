@@ -67,8 +67,11 @@ watch(
 
       <!-- 標籤篩選器：依語言／套件／環境／其他分組，跟下面的主從式列表共用同一份專案資料 -->
       <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 flex flex-col gap-3">
-        <div v-for="group in filterGroups" :key="group.label" class="flex items-center gap-3.5 flex-wrap">
-          <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted) w-16 shrink-0">
+        <!-- items-start（不是 items-center）：標籤多到換行時，分類名稱要對齊第一行標籤的
+             頂端，不是垂直置中對齊整塊換行後的標籤——後者會讓分類名稱看起來浮在標籤中間，
+             跟哪一行都對不上。pt-1 補的是標籤 py-1 的上邊距，讓兩邊文字基線對齊。 -->
+        <div v-for="group in filterGroups" :key="group.label" class="flex items-start gap-3.5 flex-wrap">
+          <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted) w-16 shrink-0 pt-1">
             {{ group.label }}
           </div>
           <div class="flex flex-wrap gap-1.5">
