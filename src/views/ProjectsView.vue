@@ -66,16 +66,19 @@ watch(
       </div>
 
       <!-- 標籤篩選器：依語言／套件／環境／其他分組，跟下面的主從式列表共用同一份專案資料。
-           分類名稱獨立一行放在標籤上方（不是跟標籤同一行左右並排）：inline 並排在標籤多到
-           換行時，怎麼調 padding 都是在猜「名稱該對齊哪一行」；名稱自己佔一行、標籤另起一行，
-           對齊問題不存在，因為兩者本來就不是同一條基線上的東西。2 欄式排列（sm 以上）也把
-           四組類別從縱向堆疊變兩兩並排，展開高度砍半。 -->
-      <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-        <div v-for="group in filterGroups" :key="group.label">
-          <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted) mb-1.5">
+           分類名稱、標籤區塊是同一個 grid row 的兩個 cell，items-baseline 讓名稱文字的基線
+           對齊「標籤區塊第一行」文字的基線——這是瀏覽器內建的基線對齊計算，不是用 padding
+           猜出來的數字，換幾行都準（之前 items-start + pt-1 那版本是用猜的，實測還是有落差）。
+           min-w-0 是必要的：沒有它，標籤 cell 的 flex-wrap 會被瀏覽器預設的
+           min-width:auto 撐開成內容原始寬度，標籤不會在格線寬度內換行、直接溢出。
+           2026-09-13 用 Claude Design 畫布先確認過真實標籤內容換行後的對齊效果，見
+           https://claude.ai/code/artifact/17ede728-b7b3-4b2d-9f0c-7bdd3a1e0490。 -->
+      <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 grid grid-cols-[64px_1fr] gap-x-3.5 gap-y-4 items-baseline">
+        <template v-for="group in filterGroups" :key="group.label">
+          <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted)">
             {{ group.label }}
           </div>
-          <div class="flex flex-wrap gap-1.5">
+          <div class="flex flex-wrap gap-1.5 min-w-0">
             <button
               v-for="tag in group.tags"
               :key="tag.label"
@@ -91,7 +94,7 @@ watch(
               {{ tag.label }} <span class="opacity-55">{{ tag.count }}</span>
             </button>
           </div>
-        </div>
+        </template>
       </div>
 
       <div v-if="filteredProjects.length === 0" class="py-16 text-center text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
