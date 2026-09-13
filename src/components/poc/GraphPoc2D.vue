@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
 import { forceCollide } from 'd3-force'
 import { fetchGraphPocData, type GraphPocNode, type GraphPocLink } from '@/data/graphPocData'
+import { useTheme } from '@/composables/useTheme'
 
 // force-graph（vasturiano，3d-force-graph 的 2D 姊妹套件，一樣的宣告式鏈式 API）取代原本
 // 手刻的 d3-force + SVG 渲染 + tick loop + pointer 拖曳：tick loop、渲染、拖曳互動全部
@@ -25,8 +26,16 @@ const error = ref<string | null>(null)
 let graph: ForceGraph<SimNode, SimLink> | undefined
 let resizeObserver: ResizeObserver | undefined
 
+const { theme } = useTheme()
+
+// 顏色改讀 CSS token（跟首頁 KnowledgeGraphPanel.vue 同一套 --text-accent/--overlay-nodata
+// 語言）而不是寫死 hex，深色模式切換才會跟著換色，不用另外維護一份深色調色盤。
+function css(varName: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+}
+
 const radiusFor = (n: GraphPocNode) => 4 + n.weight * 16
-const colorFor = (n: GraphPocNode) => (n.weight > 0.6 ? '#b45309' : '#94a3b8')
+const colorFor = (n: GraphPocNode) => (n.weight > 0.6 ? css('--text-accent') : css('--overlay-nodata'))
 
 // 2.4 秒一個週期的 ease-in-out 呼吸動畫，opacity 在 1 ↔ 0.55 之間——對應原本 SVG 版本
 // 的 `@keyframes breathe`。force-graph 的 canvas 渲染沒有 CSS 動畫可用，改成在
@@ -110,7 +119,7 @@ onMounted(async () => {
   graph = new ForceGraph<SimNode, SimLink>(container.value)
     .width(width)
     .height(height)
-    .backgroundColor('#ffffff')
+    .backgroundColor(css('--canvas-bg'))
     .graphData({ nodes, links })
     .nodeId('id')
     .nodeLabel('label')
@@ -130,12 +139,12 @@ onMounted(async () => {
       if (isCore) {
         ctx.font = '11px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillStyle = '#57534e'
+        ctx.fillStyle = css('--text-ink-body')
         ctx.fillText(n.label, x, y - r - 6)
       }
       ctx.restore()
     })
-    .linkColor((l) => (l.kind === 'inspiration' ? '#b45309' : '#cbd5e1'))
+    .linkColor((l) => (l.kind === 'inspiration' ? css('--text-accent') : css('--edge-real')))
     .linkLineDash((l) => (l.kind === 'inspiration' ? [4, 3] : null))
     .linkWidth(1.2)
     .enableNodeDrag(true)
@@ -171,6 +180,13 @@ onMounted(async () => {
   resizeObserver.observe(container.value)
 })
 
+// nodeCanvasObject/linkColor 是每次渲染都重新呼叫的 callback，主題切換後配合
+// autoPauseRedraw(false) 自動跟著換色；但 backgroundColor() 是一次性設定值，
+// 不會自動重讀，theme 變動時要手動重新指定一次。
+watch(theme, () => {
+  graph?.backgroundColor(css('--canvas-bg'))
+})
+
 onUnmounted(() => {
   resizeObserver?.disconnect()
   graph?._destructor?.()
@@ -178,13 +194,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="w-full h-[520px] flex items-center justify-center rounded border border-stone-200 bg-white text-xs text-stone-400">
+  <div v-if="loading" class="w-full h-[520px] flex items-center justify-center rounded border border-(--border-shelf) bg-(--bg-paper-light) text-xs text-(--text-ink-body)/40">
     載入知識圖譜資料中...
   </div>
-  <div v-else-if="error" class="w-full h-[520px] flex items-center justify-center rounded border border-stone-200 bg-white text-xs text-red-600">
+  <div v-else-if="error" class="w-full h-[520px] flex items-center justify-center rounded border border-(--border-shelf) bg-(--bg-paper-light) text-xs text-(--text-accent)">
     {{ error }}
   </div>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->
-  <div v-show="!loading && !error" ref="container" class="w-full overflow-hidden rounded border border-stone-200" />
+  <div v-show="!loading && !error" ref="container" class="w-full overflow-hidden rounded border border-(--border-shelf)" />
 </template>

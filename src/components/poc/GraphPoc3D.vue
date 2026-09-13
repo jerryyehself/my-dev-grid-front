@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import ForceGraph3D, { type ForceGraph3DInstance } from '3d-force-graph'
 import { fetchGraphPocData } from '@/data/graphPocData'
+import { useTheme } from '@/composables/useTheme'
 
 // 800×520 只是行動裝置量不到容器寬度前的保底值，見 GraphPoc2D.vue 同樣的說明。
 const FALLBACK_WIDTH = 800
@@ -12,6 +13,13 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 let graph: ForceGraph3DInstance | undefined
 let resizeObserver: ResizeObserver | undefined
+
+const { theme } = useTheme()
+
+// 顏色改讀 CSS token，見 GraphPoc2D.vue 同樣的說明。
+function css(varName: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+}
 
 onMounted(async () => {
   let graphPocNodes: Awaited<ReturnType<typeof fetchGraphPocData>>['nodes']
@@ -40,13 +48,13 @@ onMounted(async () => {
   graph = new ForceGraph3D(container.value)
     .width(width)
     .height(FALLBACK_HEIGHT)
-    .backgroundColor('#ffffff')
+    .backgroundColor(css('--canvas-bg'))
     .graphData({ nodes, links })
     .nodeId('id')
     .nodeLabel('label')
     .nodeVal((n) => 2 + (n as { weight: number }).weight * 22)
-    .nodeColor((n) => ((n as { weight: number }).weight > 0.6 ? '#b45309' : '#94a3b8'))
-    .linkColor((l) => ((l as { kind: string }).kind === 'inspiration' ? '#b45309' : '#cbd5e1'))
+    .nodeColor((n) => ((n as { weight: number }).weight > 0.6 ? css('--text-accent') : css('--overlay-nodata')))
+    .linkColor((l) => ((l as { kind: string }).kind === 'inspiration' ? css('--text-accent') : css('--edge-real')))
     .linkWidth((l) => ((l as { kind: string }).kind === 'inspiration' ? 1.5 : 0.6))
     // 3d-force-graph 沒有原生「虛線」材質,用沿線飄動的粒子近似「靈感對撞機」的動態感
     .linkDirectionalParticles((l) => ((l as { kind: string }).kind === 'inspiration' ? 3 : 0))
@@ -60,6 +68,14 @@ onMounted(async () => {
   resizeObserver.observe(container.value)
 })
 
+// nodeColor/linkColor 是 accessor function，但 three-forcegraph 只在建立/更新材質時
+// 呼叫一次，不會像 2D canvas 版本那樣每幀重畫，主題切換要手動 refresh() 才會重新跑一次
+// accessor 拿到新的 CSS 變數值；backgroundColor() 也要另外重設，同 GraphPoc2D.vue。
+watch(theme, () => {
+  graph?.backgroundColor(css('--canvas-bg'))
+  graph?.refresh()
+})
+
 onUnmounted(() => {
   resizeObserver?.disconnect()
   graph?._destructor?.()
@@ -67,13 +83,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="w-full h-[520px] flex items-center justify-center rounded border border-stone-200 bg-white text-xs text-stone-400">
+  <div v-if="loading" class="w-full h-[520px] flex items-center justify-center rounded border border-(--border-shelf) bg-(--bg-paper-light) text-xs text-(--text-ink-body)/40">
     載入知識圖譜資料中...
   </div>
-  <div v-else-if="error" class="w-full h-[520px] flex items-center justify-center rounded border border-stone-200 bg-white text-xs text-red-600">
+  <div v-else-if="error" class="w-full h-[520px] flex items-center justify-center rounded border border-(--border-shelf) bg-(--bg-paper-light) text-xs text-(--text-accent)">
     {{ error }}
   </div>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->
-  <div v-show="!loading && !error" ref="container" class="w-full overflow-hidden rounded border border-stone-200" />
+  <div v-show="!loading && !error" ref="container" class="w-full overflow-hidden rounded border border-(--border-shelf)" />
 </template>
