@@ -94,11 +94,12 @@ interface NavItem {
 }
 
 const navItems = ref<NavItem[]>([
-  { name: 'ABOUT', path: '/about' },
+  { name: 'HOME', path: '/' },
   { name: 'ARTICLES', path: '/articles' },
   { name: 'PROJECTS', path: '/projects' },
   { name: 'GRAPH', path: '/graph' },
   { name: 'NOTES', path: '/notes' },
+  { name: 'ABOUT', path: '/about' },
 ])
 
 const isMenuOpen = ref(false)
