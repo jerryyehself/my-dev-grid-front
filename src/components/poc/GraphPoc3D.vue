@@ -11,8 +11,11 @@ const FALLBACK_HEIGHT = 520
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
 const error = ref<string | null>(null)
+// settling 蓋住鏡頭還沒對焦的收斂過程，見 GraphPoc2D.vue 同樣的說明。
+const settling = ref(true)
 let graph: ForceGraph3DInstance | undefined
 let resizeObserver: ResizeObserver | undefined
+let hasZoomedToFit = false
 
 const { theme } = useTheme()
 
@@ -59,11 +62,25 @@ onMounted(async () => {
     // 3d-force-graph 沒有原生「虛線」材質,用沿線飄動的粒子近似「靈感對撞機」的動態感
     .linkDirectionalParticles((l) => ((l as { kind: string }).kind === 'inspiration' ? 3 : 0))
     .linkDirectionalParticleSpeed(0.004)
+    // 不設的話跑到真正物理收斂要 20 幾秒，見 GraphPoc2D.vue 同樣的說明。
+    .cooldownTicks(300)
+    // 力模擬收斂後鏡頭自動框住所有節點，見 GraphPoc2D.vue 同樣的說明。3D 版預設
+    // 就能拖節點(enableNodeDrag 預設開啟)，放開後一樣會 reheat 模擬再觸發一次
+    // onEngineStop，用 hasZoomedToFit 只在第一次收斂時校正鏡頭。
+    .onEngineStop(() => {
+      if (hasZoomedToFit) return
+      hasZoomedToFit = true
+      graph?.zoomToFit(400, 40)
+      settling.value = false
+    })
 
   // 容器寬度改變時同步更新畫布寬度，見 GraphPoc2D.vue 同樣的說明。
   resizeObserver = new ResizeObserver((entries) => {
     const newWidth = entries[0]?.contentRect.width
-    if (newWidth && graph) graph.width(newWidth)
+    if (newWidth && graph) {
+      graph.width(newWidth)
+      if (hasZoomedToFit) graph.zoomToFit(0, 40)
+    }
   })
   resizeObserver.observe(container.value)
 })
@@ -91,5 +108,14 @@ onUnmounted(() => {
   </div>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->
-  <div v-show="!loading && !error" ref="container" class="w-full overflow-hidden rounded border border-(--border-shelf)" />
+  <div v-show="!loading && !error" class="relative">
+    <div ref="container" class="w-full overflow-hidden rounded border border-(--border-shelf)" />
+    <div
+      v-if="!loading && !error"
+      class="absolute inset-0 flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
+      :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+    >
+      <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">// 節點排列中...</span>
+    </div>
+  </div>
 </template>
