@@ -733,16 +733,6 @@ async function boot() {
     // 推導邊(bipartite projection)用虛線跟真實邊區分開來——這是唯一負責
     // 「這條線是不是資料庫真實關聯」這件事的視覺線索，顏色/寬度只負責亮不亮。
     .linkLineDash((l) => (l.derived ? [4, 3] : null))
-    // 同型別的真實邊(不管是 Technique 的 requires/isRequiredBy 還是
-    // Implementation 的 descendantOf/accompanies/precedes)彎曲方向跟跨型別
-    // 邊分開，才看得出「這條線是同一層內部的關聯」——用 domainType 比對，
-    // 不是寫死比對 predicate 名稱，之後本體論加新的同型別關聯不用回來改這裡。
-    .linkCurvature((l) => {
-      if (l.derived) return 0.22
-      const st = typeof l.source === 'object' ? l.source.domainType : undefined
-      const tt = typeof l.target === 'object' ? l.target.domainType : undefined
-      return st && tt && st === tt ? -0.3 : 0.22
-    })
     .linkLabel((l) => {
       const s = typeof l.source === 'object' ? l.source.label : l.source
       const t = typeof l.target === 'object' ? l.target.label : l.target
@@ -752,9 +742,12 @@ async function boot() {
       }
       return `${l.predicate ?? '關聯'}：${s} → ${t}`
     })
-    // 推導邊沒有方向性(誰用了同一項技術不分先後)，不畫箭頭，跟真實邊的
-    // 「A → B」語意分開。
-    .linkDirectionalArrowLength((l) => (l.derived ? 0 : 5))
+    // 箭頭只在 hover 到端點節點時才畫：平常畫面線本來就密，箭頭常駐反而是
+    // 雜訊；「這條線有沒有方向」是 hover 想細看某個節點關聯時才需要的資訊，
+    // 跟 linkTouchesHovered() 判斷用同一套 hover 邏輯，不是另外的互動規則。
+    // 推導邊沒有方向性(誰用了同一項技術不分先後)，就算 hover 也不畫箭頭，
+    // 跟真實邊的「A → B」語意分開。
+    .linkDirectionalArrowLength((l) => (!l.derived && linkTouchesHovered(l) ? 5 : 0))
     .linkDirectionalArrowRelPos(0.96)
     .linkDirectionalArrowColor((l) => linkDisplayColor(l))
     .enableNodeDrag(false)
