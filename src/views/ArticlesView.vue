@@ -119,7 +119,7 @@ const goToArticle = (id: string) => {
       </template>
     </div>
 
-    <!-- 分類夾：依標籤切換，鬆散紙疊
+    <!-- 分類夾：依標籤切換
          手機寬度放不下全部標籤時改成橫向捲動、不換行，避免頁籤換成兩行後
          啟用中的頁籤跟下面卡片的邊框接不起來（換行後只有最後一行貼得到卡片） -->
     <div v-else>
@@ -144,18 +144,17 @@ const goToArticle = (id: string) => {
         </div>
       </div>
 
-      <div class="border border-(--border-shelf) bg-(--bg-paper-light) rounded-b rounded-tr-md p-6 sm:p-8">
+      <!-- 原本每張卡片各自旋轉角度、疊出鬆散紙堆的效果拿掉了：這種扭動除了「看起來像一疊
+           紙」之外不代表任何資訊，在文章條數一多的清單裡只會讓版面更亂，不是加分——跟
+           `.claude/skills/visual-design-language` 記錄的判斷一致（無法自我證成的裝飾元素
+           該拿掉，不是想辦法合理化它留下）。改用跟首頁近況板、時間軸同一套
+           「線條分隔、不用陰影堆疊」的清單樣式（divide-y 取代逐格 border+shadow+旋轉），
+           hover 用背景色變化取代邊框變色，跟全站清單的互動語言一致。 -->
+      <div class="border border-(--border-shelf) bg-(--bg-paper-light) rounded-b rounded-tr-md divide-y divide-(--border-shelf)">
         <article
-          v-for="(article, index) in folderArticles"
+          v-for="article in folderArticles"
           :key="article.id"
-          class="bg-(--bg-paper-light) border border-(--border-shelf) rounded-lg p-5 cursor-pointer hover:border-(--text-accent)/40 transition-colors"
-          :style="{
-            marginTop: index === 0 ? '0' : '-10px',
-            transform: `rotate(${index % 2 === 0 ? -0.8 : 1.1}deg)`,
-            boxShadow: index === 0 ? '0 6px 18px rgba(0,0,0,0.1)' : '0 10px 22px rgba(0,0,0,0.14)',
-            position: 'relative',
-            zIndex: index + 1,
-          }"
+          class="p-5 sm:p-6 cursor-pointer hover:bg-(--bg-folder) transition-colors"
           @click="goToArticle(article.id)"
         >
           <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">

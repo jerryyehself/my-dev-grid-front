@@ -10,6 +10,15 @@
 
 改版面/字體/共用元件前,先跟這份對一下,確認是刻意偏離(例如某段文案改用真實內容取代設計稿的示範文案)還是單純沒對齊。
 
+### 區域設計稿
+
+- **Projects 頁篩選器(標籤左、選項右)**:
+  - Design: [Projects Filter (Label Left)](https://claude.ai/code/artifact/17ede728-b7b3-4b2d-9f0c-7bdd3a1e0490)
+  - 技術決策:
+    - CSS Grid 佈局: `grid-cols-[64px_1fr]` 搭配 `items-baseline` 精準對齊標籤名稱與標籤群組文字基線
+    - 標籤換行: 用 `flex-wrap` 搭配 `min-width: 0` 避免浮動對齊問題
+  - PR: [#47](https://github.com/jerryyehself/my-dev-grid-front/pull/47)
+
 其他相關設計稿(較早期草稿、Home 頁參考等)、每一份的現況/是否還算數,見 `my-dev-grid-skills` 的 [`docs/design-artifacts.md`](https://github.com/jerryyehself/my-dev-grid-skills/blob/main/docs/design-artifacts.md)——那份是持續維護的活索引,這裡不重複列。
 
 ## 建議的 IDE 設定
