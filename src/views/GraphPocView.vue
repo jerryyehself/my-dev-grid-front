@@ -3,8 +3,10 @@ import { ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import GraphPoc2D from '@/components/poc/GraphPoc2D.vue'
 import GraphPoc3D from '@/components/poc/GraphPoc3D.vue'
+import GraphPathSearch from '@/components/poc/GraphPathSearch.vue'
+import GraphPathDiagram from '@/components/poc/GraphPathDiagram.vue'
 import type { GraphPocSelection } from '@/data/graphPocData'
-import type { GraphNodeType } from '@/api/graph'
+import type { GraphNodeType, GraphPathDto } from '@/api/graph'
 
 const route = useRoute()
 const mode = ref<'2d' | '3d'>(route.query.mode === '3d' ? '3d' : '2d')
@@ -18,6 +20,11 @@ const domainLabel: Record<GraphNodeType, string> = {
   technique: 'Technique',
   implementation: 'Implementation',
 }
+
+// 路徑查詢結果：null 代表「還沒查/起訖點沒選好」，畫面上不顯示任何路徑相關的東西
+// （既不高亮、也不顯示路徑清單或找不到路徑的訊息）。found=false 才是「查過了，
+// 但真的沒有路徑」，兩者要分清楚，不能都用 null 表示。
+const pathResult = ref<GraphPathDto | null>(null)
 </script>
 
 <template>
@@ -39,8 +46,14 @@ const domainLabel: Record<GraphNodeType, string> = {
       </button>
     </div>
 
-    <GraphPoc2D v-if="mode === '2d'" @select="selected = $event" />
+    <GraphPathSearch @result="pathResult = $event" />
+
+    <GraphPoc2D v-if="mode === '2d'" :highlight-path="pathResult" @select="selected = $event" />
     <GraphPoc3D v-else @select="selected = $event" />
+
+    <!-- 捷運路線圖式的路徑清單／找不到路徑的誠實空狀態——GraphPathSearch 起訖點都選
+         好才會真的查詢，pathResult 是 null 代表還沒查，這裡不用顯示任何東西。 -->
+    <GraphPathDiagram v-if="pathResult" :path="pathResult" />
 
     <!-- 圖例：色點對顏色，邊樣式對線條，最後一句是操作說明——取代原本一句純文字
          描述配色的散文，讓「這個顏色/這條線代表什麼」有真的視覺對照可查，不用

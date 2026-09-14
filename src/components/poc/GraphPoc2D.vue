@@ -3,7 +3,10 @@ import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
 import { forceCollide } from 'd3-force'
 import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from '@/data/graphPocData'
+import type { GraphPathDto } from '@/api/graph'
 import { useTheme } from '@/composables/useTheme'
+
+const props = defineProps<{ highlightPath?: GraphPathDto | null }>()
 
 // force-graph（vasturiano，3d-force-graph 的 2D 姊妹套件，一樣的宣告式鏈式 API）取代原本
 // 手刻的 d3-force + SVG 渲染 + tick loop + pointer 拖曳：tick loop、渲染、拖曳互動全部
@@ -70,7 +73,21 @@ function endpointId(x: string | number | SimNode | undefined): string {
 function linkTouchesHovered(l: SimLink): boolean {
   return hoveredNodeId != null && (endpointId(l.source) === hoveredNodeId || endpointId(l.target) === hoveredNodeId)
 }
+
+// 路徑查詢高亮：跟 hover 提亮鄰居是兩套獨立機制，但視覺上互斥——路徑查詢結果存在時
+// 優先權比 hover 高（整張圖只淡化「不在路徑上」的東西，不理會滑鼠現在剛好停在哪個
+// 節點）。非 Vue ref，是給 canvas 畫格 callback 讀的一般變數，跟 hoveredNodeId 同樣
+// 的理由——canvas 重繪不需要、也不該掛在 Vue 的響應式追蹤上。
+let pathNodeIds: Set<string> | null = null
+let pathEdgeKeys: Set<string> | null = null
+function linkKey(a: string, b: string): string {
+  return a < b ? `${a}|${b}` : `${b}|${a}`
+}
+function isPathEdge(l: SimLink): boolean {
+  return pathEdgeKeys != null && pathEdgeKeys.has(linkKey(endpointId(l.source), endpointId(l.target)))
+}
 function isDimmedNode(id: string): boolean {
+  if (pathNodeIds) return !pathNodeIds.has(id)
   if (!hoveredNodeId) return false
   if (id === hoveredNodeId) return false
   return !neighborIds.get(hoveredNodeId)?.has(id)
@@ -154,7 +171,11 @@ onMounted(async () => {
       ctx.arc(x, y, r, 0, 2 * Math.PI, false)
       ctx.fillStyle = colorFor(n)
       ctx.fill()
-      if (n.id === hoveredNodeId) {
+      if (pathNodeIds?.has(n.id)) {
+        ctx.lineWidth = 2.5
+        ctx.strokeStyle = css('--text-accent')
+        ctx.stroke()
+      } else if (n.id === hoveredNodeId) {
         ctx.lineWidth = 2
         ctx.strokeStyle = css('--text-ink-body')
         ctx.stroke()
@@ -171,7 +192,7 @@ onMounted(async () => {
           ctx.stroke()
         }
       }
-      if (isCore && !dimmed) {
+      if ((isCore || pathNodeIds?.has(n.id)) && !dimmed) {
         ctx.font = '11px sans-serif'
         ctx.textAlign = 'center'
         ctx.fillStyle = css('--text-ink-body')
@@ -180,11 +201,12 @@ onMounted(async () => {
       ctx.restore()
     })
     .linkColor((l) => {
+      if (pathNodeIds) return isPathEdge(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.12)
       if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.12)
       return l.kind === 'inspiration' ? css('--text-accent') : css('--edge-real')
     })
     .linkLineDash((l) => (l.kind === 'inspiration' ? [4, 3] : null))
-    .linkWidth((l) => (hoveredNodeId && linkTouchesHovered(l) ? 2 : 1.2))
+    .linkWidth((l) => ((pathNodeIds ? isPathEdge(l) : hoveredNodeId && linkTouchesHovered(l)) ? 2.4 : 1.2))
     .enableNodeDrag(true)
     .onNodeDragEnd((n) => {
       // 放開拖曳後讓節點回到力模擬裡自由移動，跟原本 SVG 版本 pointerup 時清掉
@@ -273,6 +295,27 @@ onMounted(async () => {
 watch(theme, () => {
   graph?.backgroundColor(css('--canvas-bg'))
 })
+
+// 路徑查詢結果變動時重算 pathNodeIds/pathEdgeKeys——不用手動觸發 redraw，
+// autoPauseRedraw(false) 已經讓畫面持續重繪，下一幀 nodeCanvasObject/linkColor
+// 自然會讀到新值（跟 hoveredNodeId 是同一套邏輯）。found=false 或還沒查詢時視同
+// 沒有高亮路徑，退回 hover 提亮邏輯。
+watch(
+  () => props.highlightPath,
+  (path) => {
+    if (!path?.found || path.nodes.length === 0) {
+      pathNodeIds = null
+      pathEdgeKeys = null
+      return
+    }
+    pathNodeIds = new Set(path.nodes.map((n) => n.id))
+    pathEdgeKeys = new Set(path.edges.map((e) => linkKey(e.source, e.target)))
+    // 找到路徑就把鏡頭帶過去——只框住路徑上的節點，不用使用者自己在一團裡面找。
+    // 初始收斂前 zoomToFit 交給 onEngineStop 處理，這裡只在已經收斂過一次之後才動作。
+    if (hasZoomedToFit) graph?.zoomToFit(400, 60, (n) => pathNodeIds?.has(n.id) ?? false)
+  },
+  { immediate: true },
+)
 
 onUnmounted(() => {
   resizeObserver?.disconnect()

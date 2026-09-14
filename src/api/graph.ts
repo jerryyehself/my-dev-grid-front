@@ -33,6 +33,39 @@ export function fetchGraph(): Promise<GraphDto> {
   return apiGet<GraphDto>('/graph')
 }
 
+// 對應後端 GraphController@path（GET /api/graph/path）：起訖點之間的最短路徑（BFS，
+// 邊當無向處理）。found=false 時 nodes/edges 都是空陣列，不是缺欄位。
+export interface GraphPathNodeDto {
+  id: string
+  type: GraphNodeType
+  label: string
+}
+
+// storedDirection/hasDefinedReverse 只在意義上屬於「逆著關係本來存的方向走」時才有
+// 判斷價值：forward 一律 hasDefinedReverse=true（用不上這個欄位，走的就是關係本來的
+// 方向）；reverse 時如果對應的 reverse_id 沒有解析到真正的反向關係，predicate 會退回
+// 原本正向的名稱顯示，這時 hasDefinedReverse 是 false，前端要用視覺區分標示「這個方向
+// 沒有定義過的語意，是借用的」。
+export interface GraphPathEdgeDto {
+  source: string
+  target: string
+  predicate: string | null
+  label: string | null
+  relation_id: number | null
+  storedDirection: 'forward' | 'reverse'
+  hasDefinedReverse: boolean
+}
+
+export interface GraphPathDto {
+  found: boolean
+  nodes: GraphPathNodeDto[]
+  edges: GraphPathEdgeDto[]
+}
+
+export function fetchGraphPath(start: string, end: string): Promise<GraphPathDto> {
+  return apiGet<GraphPathDto>(`/graph/path?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`)
+}
+
 // 2026-09-03 從真實資料庫的 GET /api/graph 存下來的快照（18 節點、20 邊，含
 // GraphController 補上的 created_at 欄位），只給「單機展示、後端沒起來」這種
 // 情境當保底填充用——不是常態資料來源。用真實查過的一份快照，不是編的示意資料。
