@@ -48,19 +48,19 @@ function css(varName: string): string {
 const radiusFor = (n: GraphPocNode) => 4 + n.weight * 16
 
 // 配色改成依 domainType（跟首頁 KnowledgeGraphPanel.vue 同一套 --node-doc/tech/impl
-// token），取代原本只有「核心/非核心」二元色——weight 已經拿去決定節點大小/呼吸動畫，
-// 顏色改負責「這是文件/技術/實作」這個分類軸，兩個視覺維度不重疊，也讓下面的圖例
-// 有實際意義（原本二元色沒東西可以列成圖例）。
+// token），取代原本只有「核心/非核心」二元色——weight 已經拿去決定節點大小，顏色改
+// 負責「這是文件/技術/實作」這個分類軸，兩個視覺維度不重疊，也讓下面的圖例有實際
+// 意義（原本二元色沒東西可以列成圖例）。
 function nodeColorVar(domainType: GraphPocNode['domainType']): string {
   return domainType === 'documentation' ? '--node-doc' : domainType === 'technique' ? '--node-tech' : '--node-impl'
 }
 const colorFor = (n: GraphPocNode) => css(nodeColorVar(n.domainType))
 
 // hover 提亮直接鄰居、淡化其餘節點/邊：跟首頁 KnowledgeGraphPanel.vue 同一套手法
-// （見該檔 hoveredNodeId/neighborIds 段落），這裡是簡化版——沒有 derived edge、沒有
-// 雷達回波動畫，只留「知道這個節點連到哪裡」這個核心功能。force-graph 已經
-// autoPauseRedraw(false) 每幀重繪（呼吸動畫需要），hover 狀態變動不用額外呼叫
-// 任何 redraw，下一幀 nodeCanvasObject/linkColor 自然會讀到新值。
+// （見該檔 hoveredNodeId/neighborIds 段落），這裡是簡化版——沒有 derived edge，只留
+// 「知道這個節點連到哪裡」這個核心功能，雷達回波動畫則跟首頁一樣有（見下面
+// hoverPingStartTime 段落）。force-graph 已經 autoPauseRedraw(false) 每幀重繪，hover
+// 狀態變動不用額外呼叫任何 redraw，下一幀 nodeCanvasObject/linkColor 自然會讀到新值。
 let hoveredNodeId: string | null = null
 let neighborIds = new Map<string, Set<string>>()
 function endpointId(x: string | number | SimNode | undefined): string {
@@ -84,15 +84,13 @@ function withAlpha(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`
 }
 
-// 2.4 秒一個週期的 ease-in-out 呼吸動畫，opacity 在 1 ↔ 0.55 之間——對應原本 SVG 版本
-// 的 `@keyframes breathe`。force-graph 的 canvas 渲染沒有 CSS 動畫可用，改成在
-// nodeCanvasObject 裡用時間算出目前的 opacity，靠 autoPauseRedraw(false) 讓畫面
-// 持續重繪（不然力模擬穩定、engine 停止 tick 之後 canvas 預設就不會再重畫，動畫會卡住）。
-const BREATHE_PERIOD_MS = 2400
-function breatheOpacity(): number {
-  const t = (Date.now() % BREATHE_PERIOD_MS) / BREATHE_PERIOD_MS
-  return 0.55 + 0.45 * ((Math.cos(2 * Math.PI * t) + 1) / 2)
-}
+// 雷達跳動：跟首頁 KnowledgeGraphPanel.vue 同一套手法（拿掉常駐呼吸發光的教訓也是那邊
+// 先踩過的——不管有沒有互動都在閃，意義不大，改成只在滑鼠真的 hover 到節點時，從節點
+// 邊緣往外擴散、邊擴邊淡出的圓環，是互動回饋，不是背景裝飾）。兩圈相位錯開半個週期，
+// 隨時都有一圈在視野裡，看起來才像連續的雷達回波，不是單一圈跳一下就停格等下一輪。
+const RADAR_PING_PERIOD_MS = 1400
+const RADAR_PING_MAX_EXPAND = 16
+let hoverPingStartTime: number | null = null
 
 // 依 clusterId 把節點初始位置錨定在圓周上分散開的各個分群中心，讓「這個節點屬於哪個
 // Scope 分類」用空間分群表達，而不是像 dagMode 那樣需要真的階層邊才畫得出分層——這份
@@ -189,7 +187,7 @@ onMounted(async () => {
       const isCore = n.weight > 0.6
       const dimmed = isDimmedNode(n.id)
       ctx.save()
-      ctx.globalAlpha = (isCore ? breatheOpacity() : 1) * (dimmed ? 0.25 : 1)
+      ctx.globalAlpha = dimmed ? 0.25 : 1
       ctx.beginPath()
       ctx.arc(x, y, r, 0, 2 * Math.PI, false)
       ctx.fillStyle = colorFor(n)
@@ -198,6 +196,18 @@ onMounted(async () => {
         ctx.lineWidth = 2
         ctx.strokeStyle = css('--text-ink-body')
         ctx.stroke()
+      }
+      // 雷達跳動：只有目前真的被 hover 的節點才畫，見上面 hoverPingStartTime 段落說明。
+      if (n.id === hoveredNodeId && hoverPingStartTime != null) {
+        const elapsed = Date.now() - hoverPingStartTime
+        for (const phaseOffset of [0, 0.5]) {
+          const t = (((elapsed / RADAR_PING_PERIOD_MS) % 1) + phaseOffset) % 1
+          ctx.beginPath()
+          ctx.arc(x, y, r + t * RADAR_PING_MAX_EXPAND, 0, 2 * Math.PI)
+          ctx.lineWidth = 1.5
+          ctx.strokeStyle = withAlpha(css('--text-accent'), (1 - t) * 0.5)
+          ctx.stroke()
+        }
       }
       if (isCore && !dimmed) {
         ctx.font = '11px sans-serif'
@@ -223,7 +233,12 @@ onMounted(async () => {
     // hover 提亮鄰居／淡化其餘：見上面 hoveredNodeId 段落說明。cursor 改成 pointer
     // 讓使用者知道節點可以點擊看內容，不用先點一次才發現。
     .onNodeHover((n) => {
-      hoveredNodeId = n?.id ?? null
+      const nextId = n?.id ?? null
+      if (nextId === hoveredNodeId) return
+      hoveredNodeId = nextId
+      // 換了 hover 目標（含離開時變成 null）都重新起算，同一個節點持續 hover 時
+      // 圈圈從頭開始循環擴散，不會沿用上一個節點停在哪個階段的進度。
+      hoverPingStartTime = nextId != null ? Date.now() : null
       if (container.value) container.value.style.cursor = n ? 'pointer' : 'default'
     })
     .onNodeClick((n) =>
@@ -246,7 +261,9 @@ onMounted(async () => {
         label: l.label,
       }),
     )
-    .autoPauseRedraw(false) // 呼吸動畫要每一幀重繪，關掉「模擬穩定就停止重繪」的省電機制
+    // hover 雷達跳動要每一幀重繪：模擬穩定、engine 停止 tick 之後 canvas 預設就不會
+    // 再重畫（省效能），關掉這個機制才能讓 hover 中的節點持續播放擴散圈動畫。
+    .autoPauseRedraw(false)
     .d3Force('cluster', clusterForce(clusterCenters, 0.15))
     .d3Force(
       'collide',
