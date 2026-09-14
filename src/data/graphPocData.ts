@@ -8,15 +8,23 @@
 // - weight：用節點的連結數（degree）除以全圖最大 degree 正規化到 0~1，取代原本
 //   「手動標記哪些是核心點子」的假資料，用「連得越多 = 越核心」這個合理的圖論代理指標。
 // - tags：後端沒有自由標籤概念，改用節點的 entity type（documentation/technique/
-//   implementation）當唯一 tag，是目前唯一算得出來的分類資訊。
+//   implementation）當唯一 tag，是目前唯一算得出來的分類資訊。歷史遺留欄位，實際沒有
+//   元件在讀，配色/分層改用下面的 domainType（同一個值，但有型別），不重複移除是因為
+//   跟這次要補的東西無關，不擴大這次改動範圍。
+// - domainType：直接用後端 GraphNodeDto.type，是配色（--node-doc/tech/impl）跟 GraphPoc3D
+//   Z 軸分層（documentation/technique/implementation 各自固定一個 Z 帶）共用的依據。
 // - daysSinceAccessed：後端目前完全沒有「存取時間」這個概念（nodes 只有 id/type/label），
-//   已知資料缺口，一律回傳 0（3D 版的 Z 軸分層在真實資料下會全部貼齊前景，等後端補上
-//   對應欄位後這裡再改，不是在前端編造假的時間數字）。
+//   已知資料缺口，一律回傳 0，前端沒有拿它做任何視覺判斷（3D 版 Z 軸分層 2026-09-14 起
+//   改用 domainType，不再依賴這個欄位，見 GraphPoc3D.vue），等後端真的補上對應欄位後
+//   這裡再視需求決定要不要恢復使用，不是在前端編造假的時間數字。
 // - kind：pivot 表（documentation<->technique / documentation<->implementation /
 //   technique<->implementation）永遠是跨型別關聯，entity_relations（例如 technique<->
 //   technique 的 requires/isRequiredBy）永遠是同型別關聯——這純粹是「這條邊來自哪張關聯
 //   表」的邊樣式區分，用來讓連線視覺上有變化，跟下面 clusterId 講的階層分群是完全不同的
 //   兩件事（這兩種邊全部都是「網路」關聯，見下段）。
+// - predicate/label：直接從後端 GraphEdgeDto 原封不動帶過來，relation_id 已經在後端解析
+//   成 Relation 的 name 當 predicate，點連線看關聯定義（見 GraphPocView.vue）用得到，
+//   不需要另外查。
 //
 // --- 階層 vs 網路的結構分離（clusterId / clusterLabel）---
 //
@@ -43,6 +51,7 @@ import {
   fetchScopes,
   type GraphEdgeDto,
   type GraphNodeDto,
+  type GraphNodeType,
   type GraphScopeDto,
 } from '@/api/graph'
 
@@ -51,6 +60,7 @@ export interface GraphPocNode {
   label: string
   weight: number // 0~1，越高代表越核心的想法
   tags: string[]
+  domainType: GraphNodeType // documentation/technique/implementation，配色跟 3D Z 軸分層都靠這個
   daysSinceAccessed: number // 越大代表越久沒被打開，用於「退到背景」的判斷
   clusterId: string // Scope 階層分群 key（見檔頭說明），查不到 Scope 資料時退回 domain type
   clusterLabel: string // clusterId 對應的可讀名稱，查不到時等於 clusterId
@@ -60,7 +70,32 @@ export interface GraphPocLink {
   source: string
   target: string
   kind: 'related' | 'inspiration' // 邊樣式區分（見檔頭說明），不代表階層/網路
+  predicate: string | null // 後端已解析成 Relation 的 name，點連線看關聯定義用得到
+  label: string | null
 }
+
+// 點節點/點連線後要顯示的內容——2D/3D 兩個元件各自的力模擬節點/邊物件內部欄位
+// (x/y/z/vx/vy/index...) 不一樣、且 force-graph 系列套件的 link.source/target 在模擬
+// 開始後會被解析成節點物件而不是原本的字串 id，兩邊都不適合直接原封不動 emit 出去給
+// GraphPocView.vue 用。這裡定義一個跟力模擬實作脫鉤的共同格式，兩個元件各自解析完成
+// 再 emit，GraphPocView.vue 只需要認得這一種形狀。
+export interface GraphPocNodeSelection {
+  kind: 'node'
+  id: string
+  label: string
+  domainType: GraphNodeType
+  weight: number
+  degree: number
+}
+export interface GraphPocLinkSelection {
+  kind: 'link'
+  sourceLabel: string
+  targetLabel: string
+  linkKind: 'related' | 'inspiration'
+  predicate: string | null
+  label: string | null
+}
+export type GraphPocSelection = GraphPocNodeSelection | GraphPocLinkSelection
 
 const nodeTypeOf = (nodeId: string): string => nodeId.split('-')[0] ?? ''
 
@@ -106,6 +141,7 @@ function toGraphPocNodes(
       label: n.label,
       weight: (degree.get(n.id) ?? 0) / maxDegree,
       tags: [n.type],
+      domainType: n.type,
       daysSinceAccessed: 0,
       clusterId,
       clusterLabel,
@@ -118,6 +154,8 @@ function toGraphPocLinks(edges: GraphEdgeDto[]): GraphPocLink[] {
     source: e.source,
     target: e.target,
     kind: nodeTypeOf(e.source) === nodeTypeOf(e.target) ? 'inspiration' : 'related',
+    predicate: e.predicate,
+    label: e.label,
   }))
 }
 
