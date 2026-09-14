@@ -2,7 +2,7 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
 import { forceCollide } from 'd3-force'
-import { fetchGraphPocData, type GraphPocNode, type GraphPocLink } from '@/data/graphPocData'
+import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from '@/data/graphPocData'
 import { useTheme } from '@/composables/useTheme'
 
 // force-graph（vasturiano，3d-force-graph 的 2D 姊妹套件，一樣的宣告式鏈式 API）取代原本
@@ -18,7 +18,13 @@ let width = FALLBACK_WIDTH
 let height = FALLBACK_HEIGHT
 
 type SimNode = GraphPocNode & NodeObject
-type SimLink = GraphPocLink & LinkObject<SimNode>
+// Omit source/target：GraphPocLink 原本的 source/target 是純字串 id（資料層的形狀），
+// 但力模擬跑起來後 force-graph 會把它們原地改寫成解析過的節點物件——用 Omit 讓這兩個
+// 欄位改吃 LinkObject<SimNode> 的 string|number|SimNode 型別，不然交集型別會被字串這邊
+// 收斂成只剩 string，typeof l.source === 'object' 分支會被 TS 判成 never。
+type SimLink = Omit<GraphPocLink, 'source' | 'target'> & LinkObject<SimNode>
+
+const emit = defineEmits<{ select: [selection: GraphPocSelection] }>()
 
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
@@ -40,7 +46,43 @@ function css(varName: string): string {
 }
 
 const radiusFor = (n: GraphPocNode) => 4 + n.weight * 16
-const colorFor = (n: GraphPocNode) => (n.weight > 0.6 ? css('--text-accent') : css('--overlay-nodata'))
+
+// 配色改成依 domainType（跟首頁 KnowledgeGraphPanel.vue 同一套 --node-doc/tech/impl
+// token），取代原本只有「核心/非核心」二元色——weight 已經拿去決定節點大小/呼吸動畫，
+// 顏色改負責「這是文件/技術/實作」這個分類軸，兩個視覺維度不重疊，也讓下面的圖例
+// 有實際意義（原本二元色沒東西可以列成圖例）。
+function nodeColorVar(domainType: GraphPocNode['domainType']): string {
+  return domainType === 'documentation' ? '--node-doc' : domainType === 'technique' ? '--node-tech' : '--node-impl'
+}
+const colorFor = (n: GraphPocNode) => css(nodeColorVar(n.domainType))
+
+// hover 提亮直接鄰居、淡化其餘節點/邊：跟首頁 KnowledgeGraphPanel.vue 同一套手法
+// （見該檔 hoveredNodeId/neighborIds 段落），這裡是簡化版——沒有 derived edge、沒有
+// 雷達回波動畫，只留「知道這個節點連到哪裡」這個核心功能。force-graph 已經
+// autoPauseRedraw(false) 每幀重繪（呼吸動畫需要），hover 狀態變動不用額外呼叫
+// 任何 redraw，下一幀 nodeCanvasObject/linkColor 自然會讀到新值。
+let hoveredNodeId: string | null = null
+let neighborIds = new Map<string, Set<string>>()
+function endpointId(x: string | number | SimNode | undefined): string {
+  if (x == null) return ''
+  return typeof x === 'object' ? x.id : String(x)
+}
+function linkTouchesHovered(l: SimLink): boolean {
+  return hoveredNodeId != null && (endpointId(l.source) === hoveredNodeId || endpointId(l.target) === hoveredNodeId)
+}
+function isDimmedNode(id: string): boolean {
+  if (!hoveredNodeId) return false
+  if (id === hoveredNodeId) return false
+  return !neighborIds.get(hoveredNodeId)?.has(id)
+}
+function hexToRgb(hex: string): [number, number, number] {
+  const v = parseInt(hex.replace('#', ''), 16)
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255]
+}
+function withAlpha(hex: string, alpha: number): string {
+  const [r, g, b] = hexToRgb(hex)
+  return `rgba(${r},${g},${b},${alpha})`
+}
 
 // 2.4 秒一個週期的 ease-in-out 呼吸動畫，opacity 在 1 ↔ 0.55 之間——對應原本 SVG 版本
 // 的 `@keyframes breathe`。force-graph 的 canvas 渲染沒有 CSS 動畫可用，改成在
@@ -121,6 +163,16 @@ onMounted(async () => {
   })
   const links: SimLink[] = graphPocLinks.map((l) => ({ ...l }))
 
+  neighborIds = new Map()
+  for (const l of links) {
+    const s = endpointId(l.source)
+    const t = endpointId(l.target)
+    if (!neighborIds.has(s)) neighborIds.set(s, new Set())
+    if (!neighborIds.has(t)) neighborIds.set(t, new Set())
+    neighborIds.get(s)!.add(t)
+    neighborIds.get(t)!.add(s)
+  }
+
   graph = new ForceGraph<SimNode, SimLink>(container.value)
     .width(width)
     .height(height)
@@ -135,13 +187,19 @@ onMounted(async () => {
       const x = n.x ?? 0
       const y = n.y ?? 0
       const isCore = n.weight > 0.6
+      const dimmed = isDimmedNode(n.id)
       ctx.save()
-      if (isCore) ctx.globalAlpha = breatheOpacity()
+      ctx.globalAlpha = (isCore ? breatheOpacity() : 1) * (dimmed ? 0.25 : 1)
       ctx.beginPath()
       ctx.arc(x, y, r, 0, 2 * Math.PI, false)
       ctx.fillStyle = colorFor(n)
       ctx.fill()
-      if (isCore) {
+      if (n.id === hoveredNodeId) {
+        ctx.lineWidth = 2
+        ctx.strokeStyle = css('--text-ink-body')
+        ctx.stroke()
+      }
+      if (isCore && !dimmed) {
         ctx.font = '11px sans-serif'
         ctx.textAlign = 'center'
         ctx.fillStyle = css('--text-ink-body')
@@ -149,9 +207,12 @@ onMounted(async () => {
       }
       ctx.restore()
     })
-    .linkColor((l) => (l.kind === 'inspiration' ? css('--text-accent') : css('--edge-real')))
+    .linkColor((l) => {
+      if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.12)
+      return l.kind === 'inspiration' ? css('--text-accent') : css('--edge-real')
+    })
     .linkLineDash((l) => (l.kind === 'inspiration' ? [4, 3] : null))
-    .linkWidth(1.2)
+    .linkWidth((l) => (hoveredNodeId && linkTouchesHovered(l) ? 2 : 1.2))
     .enableNodeDrag(true)
     .onNodeDragEnd((n) => {
       // 放開拖曳後讓節點回到力模擬裡自由移動，跟原本 SVG 版本 pointerup 時清掉
@@ -159,6 +220,32 @@ onMounted(async () => {
       n.fx = undefined
       n.fy = undefined
     })
+    // hover 提亮鄰居／淡化其餘：見上面 hoveredNodeId 段落說明。cursor 改成 pointer
+    // 讓使用者知道節點可以點擊看內容，不用先點一次才發現。
+    .onNodeHover((n) => {
+      hoveredNodeId = n?.id ?? null
+      if (container.value) container.value.style.cursor = n ? 'pointer' : 'default'
+    })
+    .onNodeClick((n) =>
+      emit('select', {
+        kind: 'node',
+        id: n.id,
+        label: n.label,
+        domainType: n.domainType,
+        weight: n.weight,
+        degree: neighborIds.get(n.id)?.size ?? 0,
+      }),
+    )
+    .onLinkClick((l) =>
+      emit('select', {
+        kind: 'link',
+        sourceLabel: (typeof l.source === 'object' ? l.source.label : nodes.find((n) => n.id === l.source)?.label) ?? String(l.source),
+        targetLabel: (typeof l.target === 'object' ? l.target.label : nodes.find((n) => n.id === l.target)?.label) ?? String(l.target),
+        linkKind: l.kind,
+        predicate: l.predicate,
+        label: l.label,
+      }),
+    )
     .autoPauseRedraw(false) // 呼吸動畫要每一幀重繪，關掉「模擬穩定就停止重繪」的省電機制
     .d3Force('cluster', clusterForce(clusterCenters, 0.15))
     .d3Force(
