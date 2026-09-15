@@ -36,121 +36,75 @@
       </div>
     </div>
 
-    <!-- 導言：照設計稿用這句，跟原本保留的哲學段落不衝突，只是搶同一個版位，選這句 -->
-    <p class="max-w-[760px] mx-auto text-lg sm:text-[22px] font-semibold leading-[1.7] text-center text-(--text-ink-main)">
-      這個網站不是履歷，是拿自己的技術知識當材料，試著把散落的東西重新編目成看得懂的結構。
-    </p>
+    <!-- 開場：訪客點進 About 想知道的是「這個人是誰」，所以身分句擺最前面。
+         原本這裡是「這個網站不是履歷…」——位置對但主詞錯了，那是在介紹網站不是介紹人，
+         改成先講人，再用一句話帶出這個站。 -->
+    <div class="max-w-[760px] mx-auto text-center space-y-3">
+      <p class="text-lg sm:text-[22px] font-semibold leading-[1.7] text-(--text-ink-main)">
+        簡單講，我是個走在網站工程師路上的圖資人。
+      </p>
+      <p class="text-[15px] leading-8 text-(--text-ink-body)">
+        這個站不是履歷，是拿自己的技術知識當材料，試著把散落的東西重新編目成看得懂的結構。
+      </p>
+    </div>
 
-    <!-- 起點：這個站是怎麼來的。使用者要求的重點段落——把圖書資訊學背景跟這個站的設計動機接起來，
-         語氣刻意放鬆，不寫成求職自我推銷。內容全部有依據（碩論題目與實習經歷來自 104 履歷自傳，
-         分類號與述詞來自 my-dev-grid 資料庫的 Scope / Relation 實際資料）。 -->
-    <section class="max-w-[760px] mx-auto space-y-5">
-      <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold">
-        // Origin
-      </div>
-      <h2 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-(--text-ink-main)">
-        這東西是怎麼來的
-      </h2>
-
-      <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
-        <p>
-          簡單講，我是個走在網站工程師路上的圖資人。
-        </p>
-        <p>
-          圖書資訊學唸到碩士，專注在資訊組織——講白一點就是分類法，研究怎麼把一堆東西整理到別人找得到。
-        </p>
-        <p>
-          更早就有徵兆。大學在議會圖書館實習整理議案資料，館員教我用文書軟體一筆一筆清，我清到一半覺得太蠢，
-          改寫巨集讓它自己跑。那時還不知道這跟寫程式有什麼關係。
-        </p>
-        <p>
-          後來開始寫程式，才發現這兩件事是同一件。程式碼裡也有一堆沒被明確講出來的結構——這個 class 為什麼長這樣、
-          當初在權衡什麼、這段邏輯對應哪份文件。只是它們從沒被編目，散在 commit 訊息和某個人的腦袋裡。然後那個人離職了。
-        </p>
-        <p>
-          所以這個網站是一個實驗：把圖書館那套資訊組織的方法，套到自己的技術知識上。
-        </p>
-        <p>
-          2022 年試過一次，叫
-          <a href="https://github.com/jerryyehself/Laravel-LearningLibrary" target="_blank" rel="noopener" class="underline hover:text-(--text-accent)">Laravel-LearningLibrary</a>。
-          那份 README 有一欄「紀錄知識節點」標著「(待補)」——這個站就是三年後回來把那兩個字補完。
-        </p>
-      </div>
-
-      <!-- 分類號不是裝飾，是資料庫裡 scopes 表的真實內容 -->
-      <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-folder) p-5 space-y-3">
-        <div class="font-mono text-[10px] tracking-[0.18em] uppercase text-(--text-ink-muted)">
-          站上的東西真的有分類號
+    <!-- 三條主線：緊接在身分句後面，這是最快回答「這人在幹嘛」的東西。
+         原本埋在 Origin 故事的結尾，訪客得讀完五百字才看得到。 -->
+    <div class="max-w-[760px] mx-auto">
+    <div class="border border-(--border-shelf) rounded-[10px] overflow-hidden">
+      <div
+        v-for="line in throughLines"
+        :key="line.when"
+        class="grid grid-cols-[76px_minmax(0,1fr)] sm:grid-cols-[110px_minmax(0,1fr)] gap-x-4 px-4 sm:px-5 py-3.5 border-b border-(--border-shelf) last:border-b-0"
+      >
+        <div class="font-mono text-[11px] tracking-[0.14em] text-(--text-accent) font-bold pt-0.5">
+          {{ line.when }}
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-3">
-          <div class="flex items-baseline gap-2.5">
-            <span class="font-mono text-[12px] font-bold text-(--text-accent)">0000</span>
-            <span class="text-[13px] text-(--text-ink-main)">文件</span>
-            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">post / sourcesite</span>
-          </div>
-          <div class="flex items-baseline gap-2.5">
-            <span class="font-mono text-[12px] font-bold text-(--text-accent)">1000</span>
-            <span class="text-[13px] text-(--text-ink-main)">技術</span>
-            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">framework / language</span>
-          </div>
-          <div class="flex items-baseline gap-2.5">
-            <span class="font-mono text-[12px] font-bold text-(--text-accent)">2000</span>
-            <span class="text-[13px] text-(--text-ink-main)">實作</span>
-            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">project / work</span>
-          </div>
-        </div>
-        <!-- 三元組：主詞—述詞—受詞，以及成對可逆的反向關係。這是本體論最核心、
-             也最容易用一句話講不清楚的概念，畫出來比寫三行字快得多。 -->
-        <div class="border-t border-(--border-shelf) pt-4">
-          <svg viewBox="0 0 320 78" class="w-full max-w-[420px] mx-auto" role="img"
-               aria-label="三元組示意：這篇文章 documents vue3，反向為 vue3 documentedBy 這篇文章">
-            <rect x="1" y="21" width="86" height="26" rx="5" fill="var(--bg-paper-light)" stroke="var(--text-accent)" stroke-opacity="0.4" />
-            <text x="44" y="38" text-anchor="middle" font-size="11" fill="var(--text-ink-main)">這篇文章</text>
-            <rect x="233" y="21" width="86" height="26" rx="5" fill="var(--bg-paper-light)" stroke="var(--text-accent)" stroke-opacity="0.4" />
-            <text x="276" y="38" text-anchor="middle" font-size="11" fill="var(--text-ink-main)">vue3</text>
-
-            <line x1="92" y1="28" x2="222" y2="28" stroke="var(--text-accent)" stroke-width="1" />
-            <polyline points="217,25 222,28 217,31" fill="none" stroke="var(--text-accent)" stroke-width="1" />
-            <text x="157" y="21" text-anchor="middle" font-size="9.5" font-family="ui-monospace, monospace" fill="var(--text-accent)">documents</text>
-
-            <line x1="228" y1="40" x2="98" y2="40" stroke="var(--text-ink-muted)" stroke-width="1" stroke-opacity="0.5" />
-            <polyline points="103,37 98,40 103,43" fill="none" stroke="var(--text-ink-muted)" stroke-width="1" stroke-opacity="0.5" />
-            <text x="163" y="54" text-anchor="middle" font-size="9.5" font-family="ui-monospace, monospace" fill="var(--text-ink-muted)">documentedBy</text>
-
-            <text x="160" y="72" text-anchor="middle" font-size="9" fill="var(--text-ink-muted)" opacity="0.7">每個述詞都有成對的反向</text>
-          </svg>
-          <p class="text-[13px] leading-7 text-(--text-ink-body) text-center mt-1">
-            <router-link to="/graph" class="underline hover:text-(--text-accent)">/graph</router-link>
-            看到的那張圖，就是這套規則長出來的。
-          </p>
-        </div>
+        <div class="text-[13.5px] leading-7 text-(--text-ink-body)">{{ line.what }}</div>
       </div>
-
-      <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
-        <p>
-          會不會過度工程？大概有一點，而且老實說還在嘗試。但我真的想知道，一個人的技術知識被好好編目過會長成什麼樣子。
-        </p>
+      <div class="bg-(--bg-folder) px-4 sm:px-5 py-4 text-[14px] leading-7 font-semibold text-(--text-ink-main)">
+        三件事是同一件：把沒有被明確表達的結構，變成明確、可用、別人能接手的東西。
       </div>
+    </div>
 
-      <!-- 三條線其實是同一條。原本是兩段散文，但「三件事並列」天生就是清單的形狀，
-           列出來讀者一眼就能自己看出共通點，不必由我在文末替他總結。 -->
-      <div class="border border-(--border-shelf) rounded-[10px] overflow-hidden">
+    </div>
+
+    <!-- Focus Areas -->
+    <div>
+      <div class="text-center font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-5">
+        Focus Areas
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div
-          v-for="line in throughLines"
-          :key="line.when"
-          class="grid grid-cols-[76px_minmax(0,1fr)] sm:grid-cols-[110px_minmax(0,1fr)] gap-x-4 px-4 sm:px-5 py-3.5 border-b border-(--border-shelf) last:border-b-0"
+          v-for="area in focusAreas"
+          :key="area.title"
+          class="border border-(--border-shelf) rounded-[10px] p-6 bg-(--bg-paper-light)"
         >
-          <div class="font-mono text-[11px] tracking-[0.14em] text-(--text-accent) font-bold pt-0.5">
-            {{ line.when }}
+          <div class="font-mono text-xs font-bold text-(--text-accent) mb-3">{{ area.index }}</div>
+          <h3 class="text-base font-bold text-(--text-ink-main) mb-2">{{ area.title }}</h3>
+          <p class="text-[13.5px] leading-relaxed text-(--text-ink-body)">{{ area.desc }}</p>
+          <div v-if="area.compare" class="mt-3 space-y-2.5">
+            <div
+              v-for="row in area.compare"
+              :key="row.label"
+              class="border-t border-(--border-shelf) pt-2.5"
+            >
+              <div class="font-mono text-[10px] tracking-[0.14em] text-(--text-ink-muted) mb-1.5">
+                {{ row.label }}
+              </div>
+              <div class="text-[12.5px] text-(--text-ink-muted) line-through">{{ row.before }}</div>
+              <div class="flex items-start gap-1.5 text-[12.5px] mt-1">
+                <svg width="11" height="13" viewBox="0 0 11 13" fill="none" class="shrink-0 mt-0.5 text-(--text-accent)">
+                  <line x1="5.5" y1="0" x2="5.5" y2="9" stroke="currentColor" stroke-width="1.2" />
+                  <polyline points="2.5,6 5.5,9.5 8.5,6" stroke="currentColor" stroke-width="1.2" fill="none" />
+                </svg>
+                <span class="text-(--text-ink-main) font-semibold">{{ row.after }}</span>
+              </div>
+            </div>
           </div>
-          <div class="text-[13.5px] leading-7 text-(--text-ink-body)">{{ line.what }}</div>
-        </div>
-        <div class="bg-(--bg-folder) px-4 sm:px-5 py-4 text-[14px] leading-7 font-semibold text-(--text-ink-main)">
-          三件事是同一件：把沒有被明確表達的結構，變成明確、可用、別人能接手的東西。
         </div>
       </div>
-
-    </section>
+    </div>
 
     <!-- 專案時間軸：這一段刻意用圖不用文字。節奏（密集 → 靜默 → 恢復）講出來像在解釋，
          畫出來就只是事實。所有座標都由 computed 從真實的 repo 建立日期算出，沒有寫死。
@@ -252,42 +206,95 @@
       </div>
     </section>
 
-    <!-- Focus Areas -->
-    <div>
-      <div class="text-center font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-5">
-        Focus Areas
+    <!-- 起點：這個站是怎麼來的。使用者要求的重點段落——把圖書資訊學背景跟這個站的設計動機接起來，
+         語氣刻意放鬆，不寫成求職自我推銷。內容全部有依據（碩論題目與實習經歷來自 104 履歷自傳，
+         分類號與述詞來自 my-dev-grid 資料庫的 Scope / Relation 實際資料）。 -->
+    <section class="max-w-[760px] mx-auto space-y-5">
+      <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold">
+        // Origin
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div
-          v-for="area in focusAreas"
-          :key="area.title"
-          class="border border-(--border-shelf) rounded-[10px] p-6 bg-(--bg-paper-light)"
-        >
-          <div class="font-mono text-xs font-bold text-(--text-accent) mb-3">{{ area.index }}</div>
-          <h3 class="text-base font-bold text-(--text-ink-main) mb-2">{{ area.title }}</h3>
-          <p class="text-[13.5px] leading-relaxed text-(--text-ink-body)">{{ area.desc }}</p>
-          <div v-if="area.compare" class="mt-3 space-y-2.5">
-            <div
-              v-for="row in area.compare"
-              :key="row.label"
-              class="border-t border-(--border-shelf) pt-2.5"
-            >
-              <div class="font-mono text-[10px] tracking-[0.14em] text-(--text-ink-muted) mb-1.5">
-                {{ row.label }}
-              </div>
-              <div class="text-[12.5px] text-(--text-ink-muted) line-through">{{ row.before }}</div>
-              <div class="flex items-start gap-1.5 text-[12.5px] mt-1">
-                <svg width="11" height="13" viewBox="0 0 11 13" fill="none" class="shrink-0 mt-0.5 text-(--text-accent)">
-                  <line x1="5.5" y1="0" x2="5.5" y2="9" stroke="currentColor" stroke-width="1.2" />
-                  <polyline points="2.5,6 5.5,9.5 8.5,6" stroke="currentColor" stroke-width="1.2" fill="none" />
-                </svg>
-                <span class="text-(--text-ink-main) font-semibold">{{ row.after }}</span>
-              </div>
-            </div>
+      <h2 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-(--text-ink-main)">
+        這東西是怎麼來的
+      </h2>
+
+      <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
+        <p>
+          圖書資訊學唸到碩士，專注在資訊組織——講白一點就是分類法，研究怎麼把一堆東西整理到別人找得到。
+        </p>
+        <p>
+          更早就有徵兆。大學在議會圖書館實習整理議案資料，館員教我用文書軟體一筆一筆清，我清到一半覺得太蠢，
+          改寫巨集讓它自己跑。那時還不知道這跟寫程式有什麼關係。
+        </p>
+        <p>
+          後來開始寫程式，才發現這兩件事是同一件。程式碼裡也有一堆沒被明確講出來的結構——這個 class 為什麼長這樣、
+          當初在權衡什麼、這段邏輯對應哪份文件。只是它們從沒被編目，散在 commit 訊息和某個人的腦袋裡。然後那個人離職了。
+        </p>
+        <p>
+          所以這個網站是一個實驗：把圖書館那套資訊組織的方法，套到自己的技術知識上。
+        </p>
+        <p>
+          2022 年試過一次，叫
+          <a href="https://github.com/jerryyehself/Laravel-LearningLibrary" target="_blank" rel="noopener" class="underline hover:text-(--text-accent)">Laravel-LearningLibrary</a>。
+          那份 README 有一欄「紀錄知識節點」標著「(待補)」——這個站就是三年後回來把那兩個字補完。
+        </p>
+      </div>
+
+      <!-- 分類號不是裝飾，是資料庫裡 scopes 表的真實內容 -->
+      <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-folder) p-5 space-y-3">
+        <div class="font-mono text-[10px] tracking-[0.18em] uppercase text-(--text-ink-muted)">
+          站上的東西真的有分類號
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-3">
+          <div class="flex items-baseline gap-2.5">
+            <span class="font-mono text-[12px] font-bold text-(--text-accent)">0000</span>
+            <span class="text-[13px] text-(--text-ink-main)">文件</span>
+            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">post / sourcesite</span>
+          </div>
+          <div class="flex items-baseline gap-2.5">
+            <span class="font-mono text-[12px] font-bold text-(--text-accent)">1000</span>
+            <span class="text-[13px] text-(--text-ink-main)">技術</span>
+            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">framework / language</span>
+          </div>
+          <div class="flex items-baseline gap-2.5">
+            <span class="font-mono text-[12px] font-bold text-(--text-accent)">2000</span>
+            <span class="text-[13px] text-(--text-ink-main)">實作</span>
+            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">project / work</span>
           </div>
         </div>
+        <!-- 三元組：主詞—述詞—受詞，以及成對可逆的反向關係。這是本體論最核心、
+             也最容易用一句話講不清楚的概念，畫出來比寫三行字快得多。 -->
+        <div class="border-t border-(--border-shelf) pt-4">
+          <svg viewBox="0 0 320 78" class="w-full max-w-[420px] mx-auto" role="img"
+               aria-label="三元組示意：這篇文章 documents vue3，反向為 vue3 documentedBy 這篇文章">
+            <rect x="1" y="21" width="86" height="26" rx="5" fill="var(--bg-paper-light)" stroke="var(--text-accent)" stroke-opacity="0.4" />
+            <text x="44" y="38" text-anchor="middle" font-size="11" fill="var(--text-ink-main)">這篇文章</text>
+            <rect x="233" y="21" width="86" height="26" rx="5" fill="var(--bg-paper-light)" stroke="var(--text-accent)" stroke-opacity="0.4" />
+            <text x="276" y="38" text-anchor="middle" font-size="11" fill="var(--text-ink-main)">vue3</text>
+
+            <line x1="92" y1="28" x2="222" y2="28" stroke="var(--text-accent)" stroke-width="1" />
+            <polyline points="217,25 222,28 217,31" fill="none" stroke="var(--text-accent)" stroke-width="1" />
+            <text x="157" y="21" text-anchor="middle" font-size="9.5" font-family="ui-monospace, monospace" fill="var(--text-accent)">documents</text>
+
+            <line x1="228" y1="40" x2="98" y2="40" stroke="var(--text-ink-muted)" stroke-width="1" stroke-opacity="0.5" />
+            <polyline points="103,37 98,40 103,43" fill="none" stroke="var(--text-ink-muted)" stroke-width="1" stroke-opacity="0.5" />
+            <text x="163" y="54" text-anchor="middle" font-size="9.5" font-family="ui-monospace, monospace" fill="var(--text-ink-muted)">documentedBy</text>
+
+            <text x="160" y="72" text-anchor="middle" font-size="9" fill="var(--text-ink-muted)" opacity="0.7">每個述詞都有成對的反向</text>
+          </svg>
+          <p class="text-[13px] leading-7 text-(--text-ink-body) text-center mt-1">
+            <router-link to="/graph" class="underline hover:text-(--text-accent)">/graph</router-link>
+            看到的那張圖，就是這套規則長出來的。
+          </p>
+        </div>
       </div>
-    </div>
+
+      <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
+        <p>
+          會不會過度工程？大概有一點，而且老實說還在嘗試。但我真的想知道，一個人的技術知識被好好編目過會長成什麼樣子。
+        </p>
+      </div>
+
+    </section>
 
     <!-- 真實可查核的數字：不放「幾年資歷」這種需要自報的數字，只放算得出來的 -->
     <div class="bg-(--bg-folder) border-y border-(--border-shelf) py-8 -mx-4 sm:-mx-6 px-4 sm:px-6">
@@ -298,27 +305,6 @@
         </div>
       </div>
     </div>
-
-    <blockquote class="max-w-[760px] mx-auto border-l-2 border-(--text-accent) pl-5 py-1">
-      <p class="font-serif italic text-[15px] text-(--text-ink-main) leading-relaxed">
-        「分類的意義從來不在分得多細，而在於下次有人來找的時候，找得到。」
-      </p>
-    </blockquote>
-
-    <!-- 原本這裡是一個手刻的靜態 bezier 連結圖，跟真正的知識圖譜功能（/graph，接真實
-         Scope/Relation 資料）語意撞名、內容也重複，issue #25 拿掉了。先留白當佔位符，
-         之後可能會放一小部分真實知識圖譜的範例節點進來 -->
-    <section>
-      <div class="mb-6">
-        <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-1.5">
-          // Network
-        </div>
-        <p class="text-[11px] font-mono text-(--text-ink-muted) max-w-2xl leading-normal">
-          籌備中——完整互動版知識圖譜見
-          <router-link to="/graph" class="underline hover:text-(--text-accent)">/graph</router-link>。
-        </p>
-      </div>
-    </section>
 
     <!-- CTA -->
     <div class="rounded-2xl bg-(--bg-nav-footer) border border-(--border-shelf) px-8 py-10 flex flex-col items-center text-center gap-6">
@@ -348,7 +334,6 @@
     </div>
   </div>
 </template>
-
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
 import { articles } from '@/data/articles'
