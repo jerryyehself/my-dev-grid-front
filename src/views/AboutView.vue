@@ -69,6 +69,12 @@
         <p>
           所以這個網站是一個實驗：把圖書館那套資訊組織的方法，套到自己的技術知識上。
         </p>
+        <p>
+          其實試過一次了。2022 年做過一個前身叫
+          <a href="https://github.com/jerryyehself/Laravel-LearningLibrary" target="_blank" rel="noopener" class="underline hover:text-(--text-accent)">Laravel-LearningLibrary</a>，
+          用 GitHub topics 檢索自己的作品、拿 chart.js 畫練習比例。那份 README 上有一欄叫「紀錄知識節點」，後面標著「(待補)」——
+          這個站基本上就是三年後回來，把那兩個字補完。
+        </p>
       </div>
 
       <!-- 分類號不是裝飾，是資料庫裡 scopes 表的真實內容 -->
@@ -202,21 +208,20 @@ import { fetchProjects } from '@/api/projects'
 const focusAreas = [
   {
     index: '01',
-    title: '後端與重構',
-    desc: 'Laravel 為主。現職接手由前手從非 Laravel 專案升級上來的公文系統，處理遷移遺留的技術債——從程式碼逆向釐清業務規則、產出 API 文件、拆解 god abstract class 並重新界定模組邊界。',
+    title: '資訊組織與本體設計',
+    desc: '借鑑 Linked Data 三元組：Scope 是階層式分類號、當主詞與受詞，Relation 是述詞且成對可逆（documents ↔ documentedBy）。碩論比較 FRBR 書目模型與讀者實際的資訊尋找心智模型，得到的結論直接用在這裡——模型設計得再嚴謹，找不到就沒有用。',
   },
   {
     index: '02',
-    title: '前端與資料視覺化',
-    desc: 'Vue 3 與 TypeScript。這個站本身就是成品：知識圖譜的 2D／3D 力導向視覺化、節點之間的最短路徑查詢，以及跟著深色模式走的整套設計 token。',
+    title: '把混亂收斂成結構',
+    desc: '前身把問題領域拆成四個各自的 model（Environment / Framework / Language / Packagetool），關聯靠多型 pivot；現在收斂成一張表加階層分類號，關聯換成帶述詞、可逆的三元組。白天的工作是同一題的另一個版本：從沒有文件的系統反推業務規則、拆解 god class。',
   },
   {
     index: '03',
-    title: '資訊組織',
-    desc: '把圖書資訊學那套分類與關聯模型，落成真的可以查詢的資料結構——階層式分類號（Scope）、帶述詞且成對可逆的關聯（Relation），而不是一堆彼此無關的標籤。',
+    title: '排程與資料加值',
+    desc: '兩代共同的主線——用排程打 GitHub API 取回 repo 資料後加值（topics、建立時間、封存狀態）。前身拿它做 topics 檢索與練習比例圖，現在餵進知識圖譜，成為 Implementation 那一族的節點。',
   },
-]
-// 專案數改打後端 API，載入完成前先用 '—' 佔位，避免顯示會誤導的 0
+]// 專案數改打後端 API，載入完成前先用 '—' 佔位，避免顯示會誤導的 0
 const projectCount = ref<string>('—')
 fetchProjects()
   .then((projects) => {
