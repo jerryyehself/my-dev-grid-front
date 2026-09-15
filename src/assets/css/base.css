@@ -81,3 +81,29 @@ body {
         font-size: 0.875rem;
     }
 }
+/* ♿ 尊重系統的「減少動態效果」設定。
+   放在檔案最後、而且用 !important，是因為站上的動態幾乎都來自 Tailwind 的
+   transition-* / duration-* utility，而 utilities layer 的優先權高於 @layer base；
+   不加 !important 的話這裡整段等於沒寫。
+
+   用 0.01ms 而不是 `none`：animation/transition 設成 none 時瀏覽器不會送出
+   transitionend / animationend 事件，任何「等動畫結束再做事」的程式碼會直接卡死；
+   壓到 0.01ms 則是動畫瞬間走完、事件照常送出。
+
+   .beacon-dot 另外處理:它代表的是「這個節點權重高」的真實狀態,不是裝飾。
+   把呼吸停掉之後要停在「亮著」那一格,否則減少動態的使用者會看不到這個狀態。 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .beacon-dot {
+        opacity: 1;
+        box-shadow: 0 0 4px 1px currentColor;
+    }
+}
