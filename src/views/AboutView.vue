@@ -38,7 +38,7 @@
 
     <!-- 導言：照設計稿用這句，跟原本保留的哲學段落不衝突，只是搶同一個版位，選這句 -->
     <p class="max-w-[760px] mx-auto text-lg sm:text-[22px] font-semibold leading-[1.7] text-center text-(--text-ink-main)">
-      這個網站不是履歷，是外部化的第二個大腦——用來收留還沒想清楚的點子、記錄踩過的坑，把散落的知識重新編目成看得懂的結構。
+      這個網站不是履歷，是拿自己的技術知識當材料，試著把散落的東西重新編目成看得懂的結構。
     </p>
 
     <!-- 起點：這個站是怎麼來的。使用者要求的重點段落——把圖書資訊學背景跟這個站的設計動機接起來，
@@ -57,28 +57,23 @@
           簡單講，我是個走在網站工程師路上的圖資人。
         </p>
         <p>
-          圖書資訊學唸到碩士，主要專注在資訊組織——講白一點就是分類法，研究怎麼把一堆東西整理到別人找得到。
-          學生時期也摸過一陣子期刊相關的議題，到現在偶爾還是會想看看學界最近在討論什麼。
+          圖書資訊學唸到碩士，專注在資訊組織——講白一點就是分類法，研究怎麼把一堆東西整理到別人找得到。
         </p>
         <p>
-          碩論比較的是小說讀者腦中的資訊尋找心智模型跟 FRBR 這套書目模型的差距，說穿了是在問：學界設計的那套結構，離人真正的找法有多遠。
+          更早就有徵兆。大學在議會圖書館實習整理議案資料，館員教我用文書軟體一筆一筆清，我清到一半覺得太蠢，
+          改寫巨集讓它自己跑。那時還不知道這跟寫程式有什麼關係。
         </p>
         <p>
-          其實更早就有徵兆。大學在台北市議會圖書館實習，工作是整理議員的議案資料，館員教我用文書軟體一筆一筆清；
-          我清到一半覺得這太蠢了，改寫巨集讓它自己跑。那時候還不知道這件事跟寫程式有什麼關係。
-        </p>
-        <p>
-          後來真的開始寫程式，才發現這兩件事根本是同一件。程式碼裡也有一堆沒被明確講出來的結構——這個 class 為什麼長這樣、
-          當初那個決定在權衡什麼、這段邏輯到底對應哪份文件。只是它們從來沒有被編目，散在 commit 訊息、聊天記錄，
-          以及某個人的腦袋裡。然後某天那個人離職了。
+          後來開始寫程式，才發現這兩件事是同一件。程式碼裡也有一堆沒被明確講出來的結構——這個 class 為什麼長這樣、
+          當初在權衡什麼、這段邏輯對應哪份文件。只是它們從沒被編目，散在 commit 訊息和某個人的腦袋裡。然後那個人離職了。
         </p>
         <p>
           所以這個網站是一個實驗：把圖書館那套資訊組織的方法，套到自己的技術知識上。
         </p>
         <p>
-          其實 2022 年試過一次，叫
+          2022 年試過一次，叫
           <a href="https://github.com/jerryyehself/Laravel-LearningLibrary" target="_blank" rel="noopener" class="underline hover:text-(--text-accent)">Laravel-LearningLibrary</a>。
-          那份 README 上有一欄「紀錄知識節點」，後面標著「(待補)」——這個站基本上就是三年後回來，把那兩個字補完。
+          那份 README 有一欄「紀錄知識節點」標著「(待補)」——這個站就是三年後回來把那兩個字補完。
         </p>
       </div>
 
@@ -104,28 +99,57 @@
             <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">project / work</span>
           </div>
         </div>
-        <p class="text-[13px] leading-7 text-(--text-ink-body) border-t border-(--border-shelf) pt-3">
-          節點之間也不是隨便連的，是有述詞的三元組：這篇文章
-          <span class="font-mono text-[11.5px] text-(--text-accent)">documents</span> 這個技術，反過來這個技術就是被它
-          <span class="font-mono text-[11.5px] text-(--text-accent)">documentedBy</span>。
-          <router-link to="/graph" class="underline hover:text-(--text-accent)">/graph</router-link>
-          看到的那張圖，就是這套規則長出來的。
-        </p>
+        <!-- 三元組：主詞—述詞—受詞，以及成對可逆的反向關係。這是本體論最核心、
+             也最容易用一句話講不清楚的概念，畫出來比寫三行字快得多。 -->
+        <div class="border-t border-(--border-shelf) pt-4">
+          <svg viewBox="0 0 320 78" class="w-full max-w-[420px] mx-auto" role="img"
+               aria-label="三元組示意：這篇文章 documents vue3，反向為 vue3 documentedBy 這篇文章">
+            <rect x="1" y="21" width="86" height="26" rx="5" fill="var(--bg-paper-light)" stroke="var(--text-accent)" stroke-opacity="0.4" />
+            <text x="44" y="38" text-anchor="middle" font-size="11" fill="var(--text-ink-main)">這篇文章</text>
+            <rect x="233" y="21" width="86" height="26" rx="5" fill="var(--bg-paper-light)" stroke="var(--text-accent)" stroke-opacity="0.4" />
+            <text x="276" y="38" text-anchor="middle" font-size="11" fill="var(--text-ink-main)">vue3</text>
+
+            <line x1="92" y1="28" x2="222" y2="28" stroke="var(--text-accent)" stroke-width="1" />
+            <polyline points="217,25 222,28 217,31" fill="none" stroke="var(--text-accent)" stroke-width="1" />
+            <text x="157" y="21" text-anchor="middle" font-size="9.5" font-family="ui-monospace, monospace" fill="var(--text-accent)">documents</text>
+
+            <line x1="228" y1="40" x2="98" y2="40" stroke="var(--text-ink-muted)" stroke-width="1" stroke-opacity="0.5" />
+            <polyline points="103,37 98,40 103,43" fill="none" stroke="var(--text-ink-muted)" stroke-width="1" stroke-opacity="0.5" />
+            <text x="163" y="54" text-anchor="middle" font-size="9.5" font-family="ui-monospace, monospace" fill="var(--text-ink-muted)">documentedBy</text>
+
+            <text x="160" y="72" text-anchor="middle" font-size="9" fill="var(--text-ink-muted)" opacity="0.7">每個述詞都有成對的反向</text>
+          </svg>
+          <p class="text-[13px] leading-7 text-(--text-ink-body) text-center mt-1">
+            <router-link to="/graph" class="underline hover:text-(--text-accent)">/graph</router-link>
+            看到的那張圖，就是這套規則長出來的。
+          </p>
+        </div>
       </div>
 
       <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
         <p>
-          會不會有點過度工程？大概有一點。把資訊組織的概念帶回來寫程式這件事，老實說也還在嘗試——
-          但我是真的想知道，一個人的技術知識如果被好好編目過，會長成什麼樣子。
-        </p>
-        <p>
-          白天的工作剛好是同一題的另一個版本——接手一套沒有技術文件、也沒有商業邏輯文件的公文系統，
-          從程式碼反推業務規則、補出 API 文件，再把糾在一起的 god class 一個一個拆開。
-        </p>
-        <p class="text-(--text-ink-main) font-semibold">
-          碩論、這個網站、還有白天那份工作，其實都在做同一件事：把沒有被明確表達的結構，變成明確、可用、別人能接手的東西。
+          會不會過度工程？大概有一點，而且老實說還在嘗試。但我真的想知道，一個人的技術知識被好好編目過會長成什麼樣子。
         </p>
       </div>
+
+      <!-- 三條線其實是同一條。原本是兩段散文，但「三件事並列」天生就是清單的形狀，
+           列出來讀者一眼就能自己看出共通點，不必由我在文末替他總結。 -->
+      <div class="border border-(--border-shelf) rounded-[10px] overflow-hidden">
+        <div
+          v-for="line in throughLines"
+          :key="line.when"
+          class="grid grid-cols-[76px_minmax(0,1fr)] sm:grid-cols-[110px_minmax(0,1fr)] gap-x-4 px-4 sm:px-5 py-3.5 border-b border-(--border-shelf) last:border-b-0"
+        >
+          <div class="font-mono text-[11px] tracking-[0.14em] text-(--text-accent) font-bold pt-0.5">
+            {{ line.when }}
+          </div>
+          <div class="text-[13.5px] leading-7 text-(--text-ink-body)">{{ line.what }}</div>
+        </div>
+        <div class="bg-(--bg-folder) px-4 sm:px-5 py-4 text-[14px] leading-7 font-semibold text-(--text-ink-main)">
+          三件事是同一件：把沒有被明確表達的結構，變成明確、可用、別人能接手的東西。
+        </div>
+      </div>
+
     </section>
 
     <!-- 專案時間軸：這一段刻意用圖不用文字。節奏（密集 → 靜默 → 恢復）講出來像在解釋，
@@ -242,6 +266,25 @@
           <div class="font-mono text-xs font-bold text-(--text-accent) mb-3">{{ area.index }}</div>
           <h3 class="text-base font-bold text-(--text-ink-main) mb-2">{{ area.title }}</h3>
           <p class="text-[13.5px] leading-relaxed text-(--text-ink-body)">{{ area.desc }}</p>
+          <div v-if="area.compare" class="mt-3 space-y-2.5">
+            <div
+              v-for="row in area.compare"
+              :key="row.label"
+              class="border-t border-(--border-shelf) pt-2.5"
+            >
+              <div class="font-mono text-[10px] tracking-[0.14em] text-(--text-ink-muted) mb-1.5">
+                {{ row.label }}
+              </div>
+              <div class="text-[12.5px] text-(--text-ink-muted) line-through">{{ row.before }}</div>
+              <div class="flex items-start gap-1.5 text-[12.5px] mt-1">
+                <svg width="11" height="13" viewBox="0 0 11 13" fill="none" class="shrink-0 mt-0.5 text-(--text-accent)">
+                  <line x1="5.5" y1="0" x2="5.5" y2="9" stroke="currentColor" stroke-width="1.2" />
+                  <polyline points="2.5,6 5.5,9.5 8.5,6" stroke="currentColor" stroke-width="1.2" fill="none" />
+                </svg>
+                <span class="text-(--text-ink-main) font-semibold">{{ row.after }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -315,19 +358,31 @@ const focusAreas = [
   {
     index: '01',
     title: '資訊組織與本體設計',
-    desc: '借鑑 Linked Data 三元組：Scope 是階層式分類號、當主詞與受詞，Relation 是述詞且成對可逆（documents ↔ documentedBy）。碩論比較 FRBR 書目模型與讀者實際的資訊尋找心智模型，得到的結論直接用在這裡——模型設計得再嚴謹，找不到就沒有用。',
+    desc: '借鑑 Linked Data 三元組：Scope 是階層分類號、當主詞與受詞，Relation 是述詞且成對可逆。做 FRBR 研究學到的一件事直接用在這裡——模型設計得再嚴謹，找不到就沒有用。',
   },
   {
     index: '02',
     title: '把混亂收斂成結構',
-    desc: '前身把問題領域拆成四個各自的 model（Environment / Framework / Language / Packagetool），關聯靠多型 pivot；現在收斂成一張表加階層分類號，關聯換成帶述詞、可逆的三元組。白天的工作是同一題的另一個版本：從沒有文件的系統反推業務規則、拆解 god class。',
+    desc: '同一套資料，三年後重做一次：',
+    // 「前身 vs 現在」本來就是對照的形狀，寫成散文反而要讀兩遍才看得出差在哪
+    compare: [
+      { label: '問題領域', before: '四個各自的 model', after: '一張表＋分類號' },
+      { label: '關聯', before: '多型 pivot', after: '帶述詞、成對可逆' },
+    ],
   },
   {
     index: '03',
     title: '排程與資料加值',
-    desc: '兩代共同的主線——用排程打 GitHub API 取回 repo 資料後加值（topics、建立時間、封存狀態）。前身拿它做 topics 檢索與練習比例圖，現在餵進知識圖譜，成為 Implementation 那一族的節點。',
+    desc: '兩代共同的主線——排程打 GitHub API 取回 repo 資料後加值。前身拿它做 topics 檢索，現在餵進知識圖譜，成為 Implementation 那一族的節點。',
   },
-]// --- About 時間軸 -----------------------------------------------------------
+]// 三條主線：原本是文末兩段散文，改成並列清單讓讀者自己看出共通點。
+const throughLines = [
+  { when: '碩論', what: '比較小說讀者的心智模型與 FRBR：學界設計的結構，離人真正的找法有多遠' },
+  { when: '這個站', what: '把自己的技術知識編目成有分類號、有述詞、查得動的圖譜' },
+  { when: '白天的工作', what: '接手沒有文件的公文系統，反推業務規則、補出 API 文件、拆解 god class' },
+]
+
+// --- About 時間軸 -----------------------------------------------------------
 // 位置一律由真實的 repo 建立日期算出來，不寫死座標：軸的起訖、年份刻度、靜默期
 // 區間都是從資料推出來的，之後多了 repo 也不用回來改這裡。
 const MILESTONES: Record<string, string> = {
