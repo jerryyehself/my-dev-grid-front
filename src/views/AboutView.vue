@@ -31,7 +31,7 @@
           IN
         </h1>
         <p class="font-mono text-[13px] tracking-wider text-(--text-nav-footer) opacity-75 mt-2">
-          FULL-STACK DEVELOPER &nbsp;·&nbsp; SYSTEM ARCHITECTURE &nbsp;·&nbsp; KNOWLEDGE SYSTEMS
+          LIBRARY &amp; INFORMATION SCIENCE &nbsp;·&nbsp; BACKEND &nbsp;·&nbsp; KNOWLEDGE ORGANIZATION
         </p>
       </div>
     </div>
@@ -54,7 +54,13 @@
 
       <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
         <p>
-          我唸的是圖書資訊學，一路唸到碩士。那幾年在學的事，講白了就是「怎麼把一堆東西整理到別人找得到」——分類號、主題標目、書目關係模型。
+          簡單講，我是個走在網站工程師路上的圖資人。
+        </p>
+        <p>
+          圖書資訊學唸到碩士，主要專注在資訊組織——講白一點就是分類法，研究怎麼把一堆東西整理到別人找得到。
+          學生時期也摸過一陣子期刊相關的議題，到現在偶爾還是會想看看學界最近在討論什麼。
+        </p>
+        <p>
           碩論比較的是小說讀者腦中的資訊尋找心智模型跟 FRBR 這套書目模型的差距，說穿了是在問：學界設計的那套結構，離人真正的找法有多遠。
         </p>
         <p>
@@ -110,7 +116,8 @@
 
       <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
         <p>
-          會不會有點過度工程？大概有一點。但我真正想知道的是：一個人的技術知識如果真的被好好編目，會長成什麼樣子。
+          會不會有點過度工程？大概有一點。把資訊組織的概念帶回來寫程式這件事，老實說也還在嘗試——
+          但我是真的想知道，一個人的技術知識如果被好好編目過，會長成什麼樣子。
         </p>
         <p>
           白天的工作剛好是同一題的另一個版本——接手一套沒有技術文件、也沒有商業邏輯文件的公文系統，
