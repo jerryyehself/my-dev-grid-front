@@ -118,15 +118,29 @@ onMounted(async () => {
             ×
           </button>
         </div>
-        <input
-          v-else
-          v-model="startQuery"
-          type="text"
-          placeholder="輸入節點名稱..."
-          class="w-full rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) px-3 py-[9px] text-[13px] text-(--text-ink-main) outline-none focus:border-(--text-accent)"
-          @focus="startOpen = true"
-          @blur="startOpen = false"
-        />
+        <div v-else class="relative">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--text-accent) opacity-60"
+          >
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            v-model="startQuery"
+            type="text"
+            placeholder="輸入節點名稱..."
+            class="w-full rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) py-[9px] pl-9 pr-3 text-[13px] text-(--text-ink-main) outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_rgba(180,83,9,0.08)]"
+            @focus="startOpen = true"
+            @blur="startOpen = false"
+          />
+        </div>
         <div
           v-if="startOpen && startMatches.length"
           class="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
@@ -154,8 +168,8 @@ onMounted(async () => {
           aria-label="交換起訖點"
           @click="swap"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-(--text-ink-body)">
-            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-(--text-ink-body)">
+            <path d="M7 7h11l-3-3M17 17H6l3 3" />
           </svg>
         </button>
       </div>
@@ -178,15 +192,29 @@ onMounted(async () => {
             ×
           </button>
         </div>
-        <input
-          v-else
-          v-model="endQuery"
-          type="text"
-          placeholder="輸入節點名稱..."
-          class="w-full rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) px-3 py-[9px] text-[13px] text-(--text-ink-main) outline-none focus:border-(--text-accent)"
-          @focus="endOpen = true"
-          @blur="endOpen = false"
-        />
+        <div v-else class="relative">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--text-accent) opacity-60"
+          >
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            v-model="endQuery"
+            type="text"
+            placeholder="輸入節點名稱..."
+            class="w-full rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) py-[9px] pl-9 pr-3 text-[13px] text-(--text-ink-main) outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_rgba(180,83,9,0.08)]"
+            @focus="endOpen = true"
+            @blur="endOpen = false"
+          />
+        </div>
         <div
           v-if="endOpen && endMatches.length"
           class="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
