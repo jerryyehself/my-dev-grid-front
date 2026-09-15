@@ -40,10 +40,10 @@
          原本這裡是「這個網站不是履歷…」——位置對但主詞錯了，那是在介紹網站不是介紹人，
          改成先講人，再用一句話帶出這個站。 -->
     <div class="max-w-[760px] mx-auto text-center space-y-3">
-      <p class="text-lg sm:text-[22px] font-semibold leading-[1.7] text-(--text-ink-main)">
+      <p class="text-[26px] sm:text-[34px] font-extrabold tracking-tight leading-[1.45] text-(--text-ink-main)">
         簡單講，我是個走在網站工程師路上的圖資人。
       </p>
-      <p class="text-[15px] leading-8 text-(--text-ink-body)">
+      <p class="text-[15px] leading-8 text-(--text-ink-body) max-w-[620px] mx-auto">
         這個站不是履歷，是拿自己的技術知識當材料，試著把散落的東西重新編目成看得懂的結構。
       </p>
     </div>
@@ -69,11 +69,20 @@
 
     </div>
 
-    <!-- Focus Areas -->
-    <div>
-      <div class="text-center font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-5">
-        Focus Areas
+    <!-- Focus Areas：整段換成滿版的 --bg-folder 底色。
+         這頁原本從開場到結尾都在同一張紙上，章節之間只靠 space-y-16 的空白分隔，
+         往下捲的時候分不出「換段落」跟「換章節」。底色換一次＝讀者知道這裡翻頁了。
+         卡片維持 --bg-paper-light，在深一階的底色上會自然讀成浮起來的東西。
+         滿版的做法跟上面的橫幅一樣，用 -mx-[50vw] w-screen 跳出 MainLayout 的 max-w-5xl，
+         裡面再把同一組容器 class 補回來，內容才會跟其他章節對齊。 -->
+    <div class="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-(--bg-folder) border-y border-(--border-shelf) py-12 sm:py-14">
+      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6">
+      <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-1.5">
+        // Focus
       </div>
+      <h2 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-(--text-ink-main) mb-7">
+        目前在練的三件事
+      </h2>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div
           v-for="area in focusAreas"
@@ -104,6 +113,7 @@
           </div>
         </div>
       </div>
+      </div>
     </div>
 
     <!-- 專案時間軸：這一段刻意用圖不用文字。節奏（密集 → 靜默 → 恢復）講出來像在解釋，
@@ -114,12 +124,18 @@
         <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-1.5">
           // Timeline
         </div>
-        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight text-(--text-ink-main)">
+        <h2 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-(--text-ink-main)">
           GitHub 上的 {{ repoPoints.length }} 個 repo
         </h2>
       </div>
 
-      <div class="relative h-[150px] sm:h-[190px] mt-8 sm:mt-10">
+      <!-- role="img":這是一張圖，不是 16 個可以逐一 tab 過去的控制項。
+           給整段一句話的替代描述，比讓每顆 6px 的點都變成鍵盤焦點合理。 -->
+      <div
+        class="timeline-plot relative h-[150px] sm:h-[190px] mt-8 sm:mt-10"
+        role="img"
+        :aria-label="timelineAlt"
+      >
         <!-- 年份刻度 -->
         <template v-for="y in timeline.years" :key="y.year">
           <div
@@ -154,20 +170,47 @@
         <!-- 軸線 -->
         <div class="absolute inset-x-0 top-1/2 h-px bg-(--text-accent)/25"></div>
 
-        <!-- 每個 repo 一個點 -->
+        <!-- 每個 repo 一個點。外層是 28px 的透明感應區——點本身只有 6~9px，滑鼠很難精準指到，
+             所以讓感應區負責接 hover，真正改變外觀的是裡面那顆點。
+             加 hover 的理由是補訊號、不是加裝飾:每顆點本來就各自代表一個 repo(有資訊)，
+             但外觀上完全沒有「可以指指看」的暗示，等於有意義卻沒有 signifier。
+             100ms / ease-out 是 NN/g 對「單純的游標回饋」這類微互動給的建議值。 -->
         <div
           v-for="dot in timeline.dots"
           :key="dot.name"
-          class="absolute top-1/2 rounded-full box-border"
-          :class="dot.archived ? 'border-[1.5px] border-(--text-accent)' : 'bg-(--text-accent)'"
+          class="group absolute top-1/2 w-7 h-7 flex items-center justify-center hover:z-20"
           :style="{
             left: dot.left + '%',
-            width: dot.size + 'px',
-            height: dot.size + 'px',
             transform: `translate(-50%, calc(-50% + ${dot.offset}px))`,
           }"
-          :title="dot.name"
-        ></div>
+        >
+          <span
+            class="rounded-full box-border transition-transform duration-100 ease-out group-hover:scale-[1.6]"
+            :class="dot.archived ? 'border-[1.5px] border-(--text-accent)' : 'bg-(--text-accent)'"
+            :style="{ width: dot.size + 'px', height: dot.size + 'px' }"
+          ></span>
+          <!-- 名字用自己畫的浮層而不是原生 title:原生 tooltip 要等快一秒才出現，
+               對「掃過去看看這顆是哪個 repo」這種用法來說慢到等於沒有。
+               靠左的點往右展開、靠右的點往左展開，才不會被容器裁掉。
+
+               底色一定要用 --bg-paper-light 這種不透明色。--bg-folder 是
+               rgba(...,0.04) 的透染色,浮層疊到里程碑標籤上時會整片透出來,
+               變成兩層字疊在一起(第一版就是這樣)。
+
+               提升層級的 z 掛在外層而不是浮層上:外層有 inline transform,
+               transform 會另外開一個 stacking context,浮層自己的 z-index
+               只在那個 context 裡有效,永遠爬不出去蓋過後面的里程碑標籤。
+               只在 hover 時才提升,平常維持原本的疊放順序。 -->
+          <span
+            class="pointer-events-none absolute bottom-full mb-1 whitespace-nowrap rounded-[4px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-sm px-2 py-1 font-mono text-[10px] text-(--text-ink-main) opacity-0 transition-opacity duration-100 ease-out group-hover:opacity-100"
+            :style="{
+              left: dot.left < 50 ? '50%' : 'auto',
+              right: dot.left < 50 ? 'auto' : '50%',
+              transform: dot.left < 50 ? 'translateX(-6px)' : 'translateX(6px)',
+            }"
+            >{{ dot.name }}</span
+          >
+        </div>
 
         <!-- 里程碑標籤：手機放不下，只在 sm 以上顯示 -->
         <div
@@ -360,7 +403,9 @@ const focusAreas = [
     title: '排程與資料加值',
     desc: '兩代共同的主線——排程打 GitHub API 取回 repo 資料後加值。前身拿它做 topics 檢索，現在餵進知識圖譜，成為 Implementation 那一族的節點。',
   },
-]// 三條主線：原本是文末兩段散文，改成並列清單讓讀者自己看出共通點。
+]
+
+// 三條主線：原本是文末兩段散文，改成並列清單讓讀者自己看出共通點。
 const throughLines = [
   { when: '碩論', what: '比較小說讀者的心智模型與 FRBR：學界設計的結構，離人真正的找法有多遠' },
   { when: '這個站', what: '把自己的技術知識編目成有分類號、有述詞、查得動的圖譜' },
@@ -454,6 +499,18 @@ const timeline = computed<TimelineModel | null>(() => {
   if (widest < 12) gap = null
 
   return { dots, labels, years, gap }
+})
+
+// 圖的替代描述。時間軸的重點是節奏（起點、靜默、恢復），不是逐一唸出 16 個 repo 名字，
+// 所以這裡講的是同一件事的文字版，而不是把畫面上的元素照抄一遍。
+const timelineAlt = computed(() => {
+  const t = timeline.value
+  const head = repoPoints.value[0]
+  const tail = repoPoints.value[repoPoints.value.length - 1]
+  if (!t || !head || !tail) return ''
+  const range = `${head.ym.replace('-', ' 年 ')} 月到 ${tail.ym.replace('-', ' 年 ')} 月`
+  const pause = t.gap ? `，中間 ${t.gap.from} 到 ${t.gap.to} 有一段沒有開新專案的空檔` : ''
+  return `專案時間軸：${repoPoints.value.length} 個 GitHub repo 的建立時間，從 ${range}${pause}。`
 })
 
 // 專案數改打後端 API，載入完成前先用 '—' 佔位，避免顯示會誤導的 0
