@@ -105,3 +105,29 @@ export async function fetchProjectsOrDemo(): Promise<{ projects: Project[]; isDe
     return { projects: projectsDemoFixture as Project[], isDemo: true }
   }
 }
+
+// ---------------------------------------------------------------------------
+// About 頁時間軸用：所有 repo（不只 scope=project），只取畫時間軸需要的三個欄位。
+// 跟 fetchProjects 的差別是不帶 ?type= 篩選——時間軸要呈現的是「什麼時候開了新東西」
+// 這個節奏，練習用的 repo 也算數，篩掉就看不出密集與靜默的對比了。
+// ---------------------------------------------------------------------------
+export interface RepoPoint {
+  name: string
+  /** YYYY-MM */
+  ym: string
+  archived: boolean
+}
+
+export async function fetchRepoTimeline(): Promise<RepoPoint[]> {
+  const { data } = await apiGet<{ data: ImplementationDto[] }>('/implementations')
+  return data
+    .filter((r) => r.git_repo_created_at)
+    .map((r) => ({
+      name: r.title,
+      ym: (r.git_repo_created_at as string).slice(0, 7),
+      // maintain_status 為 false 代表不再維護（對應 GitHub archived）；null 是「從沒被賦值」，
+      // 不能當成已封存，照 toStatusType 的同一個判斷邏輯。
+      archived: r.maintain_status === false,
+    }))
+    .sort((a, b) => (a.ym < b.ym ? -1 : a.ym > b.ym ? 1 : 0))
+}

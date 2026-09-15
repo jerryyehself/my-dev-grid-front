@@ -76,10 +76,9 @@
           所以這個網站是一個實驗：把圖書館那套資訊組織的方法，套到自己的技術知識上。
         </p>
         <p>
-          其實試過一次了。2022 年做過一個前身叫
-          <a href="https://github.com/jerryyehself/Laravel-LearningLibrary" target="_blank" rel="noopener" class="underline hover:text-(--text-accent)">Laravel-LearningLibrary</a>，
-          用 GitHub topics 檢索自己的作品、拿 chart.js 畫練習比例。那份 README 上有一欄叫「紀錄知識節點」，後面標著「(待補)」——
-          這個站基本上就是三年後回來，把那兩個字補完。
+          其實 2022 年試過一次，叫
+          <a href="https://github.com/jerryyehself/Laravel-LearningLibrary" target="_blank" rel="noopener" class="underline hover:text-(--text-accent)">Laravel-LearningLibrary</a>。
+          那份 README 上有一欄「紀錄知識節點」，後面標著「(待補)」——這個站基本上就是三年後回來，把那兩個字補完。
         </p>
       </div>
 
@@ -126,6 +125,106 @@
         <p class="text-(--text-ink-main) font-semibold">
           碩論、這個網站、還有白天那份工作，其實都在做同一件事：把沒有被明確表達的結構，變成明確、可用、別人能接手的東西。
         </p>
+      </div>
+    </section>
+
+    <!-- 專案時間軸：這一段刻意用圖不用文字。節奏（密集 → 靜默 → 恢復）講出來像在解釋，
+         畫出來就只是事實。所有座標都由 computed 從真實的 repo 建立日期算出，沒有寫死。
+         後端連不上時整段不顯示（v-if），不退回假資料——時間軸說謊比沒有時間軸糟。 -->
+    <section v-if="timeline" class="space-y-6">
+      <div>
+        <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-1.5">
+          // Timeline
+        </div>
+        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight text-(--text-ink-main)">
+          GitHub 上的 {{ repoPoints.length }} 個 repo
+        </h2>
+      </div>
+
+      <div class="relative h-[150px] sm:h-[190px] mt-8 sm:mt-10">
+        <!-- 年份刻度 -->
+        <template v-for="y in timeline.years" :key="y.year">
+          <div
+            class="absolute top-0 bottom-0 w-px bg-(--text-accent)/20"
+            :style="{ left: y.left + '%' }"
+          ></div>
+          <div
+            class="absolute top-full pt-2 -translate-x-1/2 font-mono text-[10px] sm:text-[11px] tracking-[0.14em] text-(--text-ink-muted) opacity-70"
+            :style="{ left: y.left + '%' }"
+          >
+            {{ y.year }}
+          </div>
+        </template>
+
+        <!-- 靜默期 -->
+        <template v-if="timeline.gap">
+          <div
+            class="absolute top-0 bottom-0 bg-(--bg-folder) border-x border-dashed border-(--text-accent)/25"
+            :style="{ left: timeline.gap.left + '%', width: timeline.gap.width + '%' }"
+          ></div>
+          <div
+            class="absolute top-1/2 -translate-y-[calc(50%+40px)] sm:-translate-y-[calc(50%+52px)] text-center px-1"
+            :style="{ left: timeline.gap.left + '%', width: timeline.gap.width + '%' }"
+          >
+            <div class="font-mono text-[9.5px] sm:text-[10px] tracking-[0.12em] text-(--text-ink-muted)">
+              {{ timeline.gap.from }} – {{ timeline.gap.to }}
+            </div>
+            <div class="text-xs sm:text-[13px] text-(--text-ink-body) mt-0.5">在上班，沒開新的</div>
+          </div>
+        </template>
+
+        <!-- 軸線 -->
+        <div class="absolute inset-x-0 top-1/2 h-px bg-(--text-accent)/25"></div>
+
+        <!-- 每個 repo 一個點 -->
+        <div
+          v-for="dot in timeline.dots"
+          :key="dot.name"
+          class="absolute top-1/2 rounded-full box-border"
+          :class="dot.archived ? 'border-[1.5px] border-(--text-accent)' : 'bg-(--text-accent)'"
+          :style="{
+            left: dot.left + '%',
+            width: dot.size + 'px',
+            height: dot.size + 'px',
+            transform: `translate(-50%, calc(-50% + ${dot.offset}px))`,
+          }"
+          :title="dot.name"
+        ></div>
+
+        <!-- 里程碑標籤：手機放不下，只在 sm 以上顯示 -->
+        <div
+          v-for="label in timeline.labels"
+          :key="label.name"
+          class="hidden sm:block absolute whitespace-nowrap"
+          :class="label.above ? 'bottom-[calc(50%+26px)]' : 'top-[calc(50%+26px)]'"
+          :style="{
+            left: label.left + '%',
+            transform: label.left < 50 ? 'translateX(-4px)' : 'translateX(calc(-100% + 4px))',
+            textAlign: label.left < 50 ? 'left' : 'right',
+          }"
+        >
+          <div class="font-mono text-[10px] tracking-[0.1em] text-(--text-accent) font-bold">
+            {{ label.text }}
+          </div>
+          <div class="font-mono text-[9.5px] text-(--text-ink-muted) opacity-75 mt-0.5">
+            {{ label.name }}
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--border-shelf) pt-3 mt-8 sm:mt-10">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-[9px] h-[9px] rounded-full bg-(--text-accent)"></span>
+          <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted)">里程碑</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-(--text-accent)"></span>
+          <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted)">其他 repo</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full border-[1.5px] border-(--text-accent) box-border"></span>
+          <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted)">已封存</span>
+        </span>
       </div>
     </section>
 
@@ -210,7 +309,7 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
 import { articles } from '@/data/articles'
-import { fetchProjects } from '@/api/projects'
+import { fetchProjects, fetchRepoTimeline, type RepoPoint } from '@/api/projects'
 
 const focusAreas = [
   {
@@ -228,7 +327,96 @@ const focusAreas = [
     title: '排程與資料加值',
     desc: '兩代共同的主線——用排程打 GitHub API 取回 repo 資料後加值（topics、建立時間、封存狀態）。前身拿它做 topics 檢索與練習比例圖，現在餵進知識圖譜，成為 Implementation 那一族的節點。',
   },
-]// 專案數改打後端 API，載入完成前先用 '—' 佔位，避免顯示會誤導的 0
+]// --- About 時間軸 -----------------------------------------------------------
+// 位置一律由真實的 repo 建立日期算出來，不寫死座標：軸的起訖、年份刻度、靜默期
+// 區間都是從資料推出來的，之後多了 repo 也不用回來改這裡。
+const MILESTONES: Record<string, string> = {
+  thesis: '碩論工具',
+  'Laravel-LearningLibrary': '前身',
+  'my-dev-grid': '現在這個站',
+  'my-dev-grid-front': '前台',
+}
+
+const repoPoints = ref<RepoPoint[]>([])
+fetchRepoTimeline()
+  .then((points) => {
+    repoPoints.value = points
+  })
+  .catch(() => {
+    // 後端沒起來就整段不顯示（見 template 的 v-if）。時間軸是錦上添花，
+    // 不值得為它顯示錯誤訊息，也不該退回寫死的假資料——那會在資料變動後說謊。
+  })
+
+const monthIndex = (ym: string) => Number(ym.slice(0, 4)) * 12 + Number(ym.slice(5, 7))
+
+interface TimelineModel {
+  dots: { name: string; left: number; offset: number; size: number; archived: boolean }[]
+  labels: { name: string; text: string; left: number; above: boolean }[]
+  years: { year: string; left: number }[]
+  gap: { left: number; width: number; from: string; to: string } | null
+}
+
+const timeline = computed<TimelineModel | null>(() => {
+  const pts = repoPoints.value
+  const head = pts[0]
+  const tail = pts[pts.length - 1]
+  if (!head || !tail || pts.length < 2) return null
+
+  const first = monthIndex(head.ym)
+  const last = monthIndex(tail.ym)
+  // 尾端多留兩個月，最後一個點才不會貼齊右邊界
+  const span = last - first + 2
+  // 左右各留 4% 內縮：最早與最晚的點如果貼在 0% / 100%，點本身跟它的標籤會被容器裁掉
+  const pct = (ym: string) => 4 + ((monthIndex(ym) - first) / span) * 92
+
+  // 同月份的點上下錯開，才不會疊在一起
+  const perMonth: Record<string, number> = {}
+  const dots = pts.map((p) => {
+    const n = (perMonth[p.ym] = (perMonth[p.ym] ?? 0) + 1)
+    const sameMonth = pts.filter((q) => q.ym === p.ym).length
+    return {
+      name: p.name,
+      left: pct(p.ym),
+      offset: sameMonth > 1 ? (n === 1 ? -11 : 11) : 0,
+      size: p.name in MILESTONES ? 9 : 6,
+      archived: p.archived,
+    }
+  })
+
+  const labels = pts
+    .filter((p) => p.name in MILESTONES)
+    .map((p, i) => ({ name: p.name, text: MILESTONES[p.name] ?? p.name, left: pct(p.ym), above: i % 2 === 1 }))
+
+  const years: { year: string; left: number }[] = []
+  for (let y = Math.ceil(first / 12); y * 12 <= last; y++) {
+    years.push({ year: String(y), left: 4 + ((y * 12 - first) / span) * 92 })
+  }
+
+  // 靜默期＝資料裡最長的一段「沒有新 repo」的空檔，同樣由資料推出來
+  let gap: TimelineModel['gap'] = null
+  let widest = 0
+  for (let i = 1; i < pts.length; i++) {
+    const prev = pts[i - 1]
+    const curr = pts[i]
+    if (!prev || !curr) continue
+    const months = monthIndex(curr.ym) - monthIndex(prev.ym)
+    if (months > widest) {
+      widest = months
+      gap = {
+        left: pct(prev.ym),
+        width: pct(curr.ym) - pct(prev.ym),
+        from: prev.ym.replace('-', '.'),
+        to: curr.ym.replace('-', '.'),
+      }
+    }
+  }
+  // 少於一年的空檔不特別標示，那只是正常的忙碌，不是一段故事
+  if (widest < 12) gap = null
+
+  return { dots, labels, years, gap }
+})
+
+// 專案數改打後端 API，載入完成前先用 '—' 佔位，避免顯示會誤導的 0
 const projectCount = ref<string>('—')
 fetchProjects()
   .then((projects) => {
