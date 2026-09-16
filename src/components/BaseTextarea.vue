@@ -9,6 +9,6 @@ const model = defineModel<string>({ required: true })
   <textarea
     v-model="model"
     :rows="rows"
-    class="border border-(--border-shelf) rounded-[5px] bg-(--bg-folder) px-3 py-2.5 text-(--text-ink-body) placeholder:text-(--text-ink-muted) placeholder:opacity-55 focus:outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_var(--focus-ring)] resize-y"
+    class="border border-(--border-shelf) rounded-[5px] bg-(--bg-folder) px-3 py-2.5 text-sm leading-[1.6] text-(--text-ink-body) placeholder:text-(--text-ink-muted) placeholder:opacity-55 focus:outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_var(--focus-ring)] resize-y"
   ></textarea>
 </template>

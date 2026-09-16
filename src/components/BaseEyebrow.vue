@@ -1,24 +1,29 @@
 <script setup lang="ts">
-// 全站的章節/欄位小標:等寬字、大寫、寬字距的那一行「// SOMETHING」。
-// 抽出來之前這串 class 在 About 與文章編輯頁之間重複了 18 次,每一份都是
-// 一次寫錯就默默失效的機會（今天已經發生過兩次:編不出來的刪除線、透明的 tooltip）。
+// 章節/欄位小標:等寬字、大寫、寬字距的那一行「// SOMETHING」。
 //
-// `//` 前綴由元件自己加,呼叫端只給文字——之前有的地方寫在文字裡、有的地方
-// 分成兩個 span,間距因此不一致。
+// 數值以設計稿 artifact MxnbUbQypR2ZQdZugRGxCi 的 .lbl 為準,不是照既有程式碼逆推:
+//   .lbl { font-mono; 11px; uppercase; letter-spacing:0.24em; bold; --text-accent }
+// 設計稿裡 .lbl 出現 10 次,其中 4 次行內覆寫 font-size:10px（側欄面板）,
+// 1 次覆寫 letter-spacing:0.2em（頁首那一行）——**覆寫字級時並沒有一起動字距**。
+//
+// 第一版抽這個元件時我是看著既有的 AboutView（0.2em）與編輯頁側欄（0.24em）逆推,
+// 做出「11px 配 0.2em、10px 配 0.24em」兩個變體,還幫它編了「頁面章節 vs 表單欄位」
+// 的說法——那是把程式碼既有的漂移當成設計意圖。現在字距固定 0.24em,
+// 唯一需要 0.2em 的頁首用呼叫端覆寫,跟設計稿自己的做法一致。
 withDefaults(
   defineProps<{
-    /** section 用在頁面章節（11px）,field 用在表單欄位與側欄卡片（10px）。 */
-    size?: 'section' | 'field'
+    /** 側欄面板用 field（10px）,對應設計稿的 font-size:10px 行內覆寫。字距不變。 */
+    size?: 'default' | 'field'
   }>(),
-  { size: 'section' },
+  { size: 'default' },
 )
 </script>
 
 <template>
   <div
     :class="[
-      'font-mono uppercase text-(--text-accent) font-bold',
-      size === 'section' ? 'text-[11px] tracking-[0.2em]' : 'text-[10px] tracking-[0.24em]',
+      'font-mono uppercase tracking-[0.24em] text-(--text-accent) font-bold',
+      size === 'field' ? 'text-[10px]' : 'text-[11px]',
     ]"
   >
     // <slot />

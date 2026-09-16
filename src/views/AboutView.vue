@@ -77,9 +77,7 @@
          裡面再把同一組容器 class 補回來，內容才會跟其他章節對齊。 -->
     <div class="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-(--bg-folder) border-y border-(--border-shelf) py-12 sm:py-14">
       <div class="w-full max-w-5xl mx-auto px-4 sm:px-6">
-      <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-1.5">
-        // Focus
-      </div>
+      <BaseEyebrow class="mb-1.5">Focus</BaseEyebrow>
       <h2 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-(--text-ink-main) mb-7">
         目前在練的三件事
       </h2>
@@ -121,9 +119,7 @@
          後端連不上時整段不顯示（v-if），不退回假資料——時間軸說謊比沒有時間軸糟。 -->
     <section v-if="timeline" class="space-y-6">
       <div>
-        <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold mb-1.5">
-          // Timeline
-        </div>
+        <BaseEyebrow class="mb-1.5">Timeline</BaseEyebrow>
         <h2 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-(--text-ink-main)">
           GitHub 上的 {{ repoPoints.length }} 個 repo
         </h2>
@@ -253,9 +249,7 @@
          語氣刻意放鬆，不寫成求職自我推銷。內容全部有依據（碩論題目與實習經歷來自 104 履歷自傳，
          分類號與述詞來自 my-dev-grid 資料庫的 Scope / Relation 實際資料）。 -->
     <section class="max-w-[760px] mx-auto space-y-5">
-      <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold">
-        // Origin
-      </div>
+      <BaseEyebrow>Origin</BaseEyebrow>
       <h2 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-(--text-ink-main)">
         這東西是怎麼來的
       </h2>
@@ -379,6 +373,7 @@
 </template>
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
+import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import { articles } from '@/data/articles'
 import { fetchProjects, fetchRepoTimeline, type RepoPoint } from '@/api/projects'
 

@@ -208,7 +208,9 @@ const canSave = false
   <div v-if="source" class="w-full">
     <!-- 表頭 -->
     <div class="flex flex-col gap-2 pb-3.5">
-      <BaseEyebrow>Article Editor</BaseEyebrow>
+      <!-- 設計稿裡這一行是 .lbl 唯一一處 letter-spacing:0.2em 的行內覆寫（頁首比欄位標題鬆一點），
+           用 ! 是因為字距跟元件的預設是同一個 property，不加的話誰贏取決於 Tailwind 產生 CSS 的順序 -->
+      <BaseEyebrow class="!tracking-[0.2em]">Article Editor</BaseEyebrow>
       <h1 class="font-serif text-[26px] sm:text-[34px] font-extrabold tracking-tight text-(--text-ink-main)">
         編輯文章
       </h1>
@@ -220,7 +222,7 @@ const canSave = false
       class="border-y border-(--border-shelf) bg-(--bg-folder) -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3"
     >
       <div class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 min-w-0">
-        <BaseHint class="tracking-[0.12em]">/articles/</BaseHint>
+        <BaseHint>/articles/</BaseHint>
         <span
           class="font-mono text-xs text-(--text-ink-main) border-b border-dashed border-(--border-shelf) pb-0.5 truncate"
         >
@@ -231,7 +233,7 @@ const canSave = false
             class="w-1.5 h-1.5 rounded-full"
             :class="dirty ? 'bg-(--text-accent)' : 'bg-(--text-ink-muted) opacity-40'"
           ></span>
-          <BaseHint class="tracking-[0.12em]">
+          <BaseHint>
             {{ dirty ? '尚未儲存' : '未變更' }}
           </BaseHint>
         </span>
@@ -510,7 +512,7 @@ const canSave = false
           </div>
 
           <div v-for="group in groupedLinks" :key="group.family" class="flex flex-col gap-2">
-            <BaseHint class="tracking-[0.12em]">
+            <BaseHint>
               {{ FAMILY_HEADING[group.family] }}
             </BaseHint>
             <div

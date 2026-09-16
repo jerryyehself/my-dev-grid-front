@@ -1,15 +1,25 @@
 <script setup lang="ts">
-// 灰色的小字提示。抽出來的只有「不變的那三件事」——等寬字、10px、muted 色——
-// 間距、對齊、tracking 這些會因場合而異的留在呼叫端（Vue 會把 class 合併到根節點）。
+// 灰色的小字提示。
 //
-// 刻意不做成吃一堆 prop 的萬用元件：原本散寫的 14 處裡 opacity 有 60 / 70 / 75 三種、
-// tracking 有寫跟沒寫，那種不一致本身就是散寫造成的，不是真的有三種語意。
-// 收斂成兩級:預設 75，dim 60（用在附註的附註，例如「反向：…」那一行）。
+// 數值以設計稿 artifact MxnbUbQypR2ZQdZugRGxCi 的 .hint 為準:
+//   .hint { font-mono; 10px; letter-spacing:0.12em; --text-ink-muted; opacity:0.75 }
+//
+// letter-spacing 是這個定義的一部分,第一版把它踢給呼叫端是錯的——26 個呼叫端裡
+// 多數沒補回去,等於整批字距被我改掉了。現在收回元件內。
+//
+// opacity 收斂成兩級。設計稿的行內覆寫有 0.6（5 處）、0.55（2 處）、1（1 處）;
+// 0.55 與 0.6 併成 dim 是刻意的取捨——那 0.05 的差在畫面上看不出來,
+// 留著只是讓同一種語意有兩個數值。需要 opacity:1 的場合請在呼叫端覆寫。
 withDefaults(defineProps<{ dim?: boolean }>(), { dim: false })
 </script>
 
 <template>
-  <span :class="['font-mono text-[10px] text-(--text-ink-muted)', dim ? 'opacity-60' : 'opacity-75']">
+  <span
+    :class="[
+      'font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted)',
+      dim ? 'opacity-60' : 'opacity-75',
+    ]"
+  >
     <slot />
   </span>
 </template>

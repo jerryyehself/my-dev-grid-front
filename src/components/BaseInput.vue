@@ -1,7 +1,14 @@
 <script setup lang="ts">
-// 單行輸入框。存在的理由是 focus 樣式:focus:outline-none 把瀏覽器預設的
-// 焦點框拿掉之後,一定要自己補一個看得見的替代品,否則鍵盤使用者會完全不知道
-// 焦點在哪。這條規則寫在一個地方比寫在 11 個呼叫端安全。
+// 單行輸入框。
+//
+// 數值以設計稿 artifact MxnbUbQypR2ZQdZugRGxCi 的 .fld 為準:
+//   .fld { 1px --border-shelf; --bg-paper-light; radius:6px; padding:10px 12px;
+//          14px; --text-ink-main; line-height:1.6 }
+// 第一版是照既有程式碼寫的,padding 只有 8px 12px、也沒帶字級與行高,
+// 每個呼叫端各自補——結果就是設計稿定好的基準值沒有一個地方持有。
+//
+// focus 樣式也收在這裡:focus:outline-none 把瀏覽器預設的焦點框拿掉之後,
+// 一定要自己補一個看得見的替代品,否則鍵盤使用者會完全不知道焦點在哪。
 withDefaults(
   defineProps<{
     /** default 是有外框的獨立欄位；inline 只有一條底線,用在段落標題那種嵌在卡片裡的欄位。 */
@@ -20,7 +27,7 @@ const model = defineModel<string>({ required: true })
       'text-(--text-ink-main) placeholder:text-(--text-ink-muted) placeholder:opacity-55',
       'focus:outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_var(--focus-ring)]',
       variant === 'default' &&
-        'border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-3 py-2',
+        'border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-3 py-2.5 text-sm leading-[1.6]',
       variant === 'inline' &&
         'bg-transparent border-b border-(--border-shelf) pb-1.5 min-w-0',
     ]"

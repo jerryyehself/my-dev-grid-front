@@ -121,6 +121,21 @@ real new semantic color (success/warning/error) only if a genuine tri-state or
 alert-level distinction shows up — two states that are really just
 "current" vs "past" don't need one.
 
+**Where a shared component's values come from** (added 2026-09-16, after getting
+this wrong): when the role already exists in a design canvas's `<style>` block
+(`.lbl`, `.hint`, `.fld`, `.chip` in the article-editor canvas), that block is
+the authoritative definition — build the component from it, don't reverse-engineer
+from the existing code. Extracting from code preserves whatever drift the code
+already had and hands it a component's authority. Concretely: `BaseEyebrow` was
+first built by reading `AboutView.vue` (0.2em) and the editor sidebar (0.24em),
+concluding there were two variants, and documenting a rationale ("0.2em for page
+sections, 0.24em for form fields") that no design ever stated — the canvas says
+0.24em throughout, with one single inline override to 0.2em. `BaseHint` pushed
+`letter-spacing` out to its call sites, so most of 26 call sites lost it. Count
+the canvas's overrides before inventing a variant: overridden once = an
+exception, mirror it as a call-site override; not a prop. See the `mockup-fidelity`
+skill, "When the mockup defines its own shared classes".
+
 **What didn't get built yet, on purpose**: a shared list-panel component for
 the blog-list layout. It exists once, in `ArticlesView.vue` — `HomeView.vue`
 is currently empty, so there's no second real usage to extract a shared shape

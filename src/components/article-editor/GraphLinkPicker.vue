@@ -124,7 +124,7 @@ function submit() {
 
     <!-- 1 · 族 -->
     <div class="space-y-2">
-      <BaseHint class="block tracking-[0.12em]">1 · 要連到哪一族</BaseHint>
+      <BaseHint class="block">1 · 要連到哪一族</BaseHint>
       <div class="flex flex-wrap gap-2">
         <button
           v-for="(label, key) in FAMILY_LABEL"
@@ -146,7 +146,7 @@ function submit() {
     <!-- 2 · 實體 -->
     <div class="space-y-2">
       <div class="flex items-baseline justify-between gap-3">
-        <BaseHint class="block tracking-[0.12em]">2 · 挑實體</BaseHint>
+        <BaseHint class="block">2 · 挑實體</BaseHint>
         <BaseHint class="block">{{ filtered.length }} 筆</BaseHint>
       </div>
       <BaseInput v-model="query" placeholder="搜尋…" class="w-full text-[13px]" />
@@ -184,7 +184,7 @@ function submit() {
 
     <!-- 3 · 述詞 -->
     <div class="space-y-2">
-      <BaseHint class="block tracking-[0.12em]">
+      <BaseHint class="block">
         3 · 這篇文章跟它是什麼關係
       </BaseHint>
       <div class="flex flex-wrap gap-1.5">

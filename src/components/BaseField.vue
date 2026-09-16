@@ -10,9 +10,9 @@ withDefaults(
     label: string
     /** 右側的灰字說明,例如「清單頁顯示這一段 · 84 字」。 */
     hint?: string
-    size?: 'section' | 'field'
+    size?: 'default' | 'field'
   }>(),
-  { hint: undefined, size: 'section' },
+  { hint: undefined, size: 'default' },
 )
 </script>
 
@@ -20,7 +20,7 @@ withDefaults(
   <div class="flex flex-col gap-2 min-w-0">
     <div class="flex items-baseline justify-between gap-3">
       <BaseEyebrow :size="size">{{ label }}</BaseEyebrow>
-      <BaseHint v-if="hint" class="tracking-[0.12em] shrink-0">{{ hint }}</BaseHint>
+      <BaseHint v-if="hint" class="shrink-0">{{ hint }}</BaseHint>
     </div>
     <slot />
   </div>
