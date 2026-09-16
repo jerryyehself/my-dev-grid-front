@@ -16,6 +16,9 @@ import {
   type EntityOption,
   type RelationDto,
 } from '@/api/ontology'
+import BaseCard from '@/components/BaseCard.vue'
+import BaseEyebrow from '@/components/BaseEyebrow.vue'
+import BaseInput from '@/components/BaseInput.vue'
 
 const props = defineProps<{
   /** 已經連過的實體，避免重複建立同一條邊。key 是 `${family}:${id}`。 */
@@ -106,11 +109,9 @@ function submit() {
 </script>
 
 <template>
-  <div class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) p-4 sm:p-5 space-y-5">
+  <BaseCard variant="panel" class="sm:p-5 space-y-5">
     <div class="space-y-1.5">
-      <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-        // 新增圖譜關聯
-      </div>
+      <BaseEyebrow size="field">新增圖譜關聯</BaseEyebrow>
       <p class="text-[12.5px] leading-6 text-(--text-ink-body)">
         pivot 表帶 relation_id，所以關聯一定要選述詞——只選對象等於只是標籤，不是圖譜。
       </p>
@@ -147,12 +148,7 @@ function submit() {
         <div class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">2 · 挑實體</div>
         <div class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">{{ filtered.length }} 筆</div>
       </div>
-      <input
-        v-model="query"
-        type="text"
-        placeholder="搜尋…"
-        class="w-full border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-3 py-2 text-[13px] text-(--text-ink-main) placeholder:text-(--text-ink-muted) placeholder:opacity-60 focus:outline-none focus:border-(--text-accent)"
-      />
+      <BaseInput v-model="query" placeholder="搜尋…" class="w-full text-[13px]" />
       <div class="max-h-[190px] overflow-y-auto border border-(--border-shelf) rounded-[5px] divide-y divide-(--border-shelf)">
         <button
           v-for="o in filtered"
@@ -210,9 +206,7 @@ function submit() {
 
     <!-- 這條邊長什麼樣子。正反兩向都畫出來,因為述詞成對可逆是這套本體論的核心 -->
     <div class="border border-(--border-shelf) rounded-[5px] bg-(--bg-folder) p-3 space-y-2">
-      <div class="font-mono text-[10px] tracking-[0.16em] uppercase text-(--text-accent) font-bold">
-        // 會寫進圖譜的這條邊
-      </div>
+      <BaseEyebrow size="field">會寫進圖譜的這條邊</BaseEyebrow>
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
         <span class="text-(--text-ink-main) font-bold">這篇文章</span>
         <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-60">0030 post</span>
@@ -252,5 +246,5 @@ function submit() {
         建立關聯
       </button>
     </div>
-  </div>
+  </BaseCard>
 </template>

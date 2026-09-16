@@ -17,6 +17,12 @@ import {
   type EntityOption,
   type ScopeDto,
 } from '@/api/ontology'
+import BaseButton from '@/components/BaseButton.vue'
+import BaseCard from '@/components/BaseCard.vue'
+import BaseEyebrow from '@/components/BaseEyebrow.vue'
+import BaseField from '@/components/BaseField.vue'
+import BaseInput from '@/components/BaseInput.vue'
+import BaseTextarea from '@/components/BaseTextarea.vue'
 import GraphLinkPicker from '@/components/article-editor/GraphLinkPicker.vue'
 
 const route = useRoute()
@@ -201,10 +207,8 @@ const canSave = false
   <div v-if="source" class="w-full">
     <!-- 表頭 -->
     <div class="flex flex-col gap-2 pb-3.5">
-      <div class="font-mono text-[11px] tracking-[0.2em] uppercase text-(--text-accent) font-bold">
-        // Article Editor
-      </div>
-      <h1 class="text-[26px] sm:text-[34px] font-extrabold tracking-tight text-(--text-ink-main)">
+      <BaseEyebrow>Article Editor</BaseEyebrow>
+      <h1 class="font-serif text-[26px] sm:text-[34px] font-extrabold tracking-tight text-(--text-ink-main)">
         編輯文章
       </h1>
       <p class="text-[13.5px] sm:text-sm text-(--text-ink-muted)">段落與邊註都可以增減、調換順序</p>
@@ -272,62 +276,21 @@ const canSave = false
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-7 lg:gap-9 items-start mt-7">
       <!-- 主欄 -->
       <div class="flex flex-col gap-6 min-w-0">
-        <div class="flex flex-col gap-2">
-          <label class="font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-            // Title 標題
-          </label>
-          <input
-            v-model="title"
-            type="text"
-            class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-3.5 py-3 text-lg font-bold text-(--text-ink-main) focus:outline-none focus:border-(--text-accent)"
-            @input="touch"
-          />
-        </div>
+        <BaseField label="Title 標題">
+          <BaseInput v-model="title" class="font-serif px-3.5 py-3 text-xl font-bold" @input="touch" />
+        </BaseField>
 
-        <div class="flex flex-col gap-2">
-          <div class="flex items-baseline justify-between gap-3">
-            <label class="font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-              // Summary 摘要
-            </label>
-            <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">
-              清單頁顯示這一段 · {{ summary.length }} 字
-            </span>
-          </div>
-          <textarea
-            v-model="summary"
-            rows="3"
-            class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-3 py-2.5 text-sm leading-7 text-(--text-ink-body) focus:outline-none focus:border-(--text-accent) resize-y"
-            @input="touch"
-          ></textarea>
-        </div>
+        <BaseField label="Summary 摘要" :hint="`清單頁顯示這一段 · ${summary.length} 字`">
+          <BaseTextarea v-model="summary" class="text-sm leading-7" @input="touch" />
+        </BaseField>
 
-        <div class="flex flex-col gap-2">
-          <div class="flex items-baseline justify-between gap-3">
-            <label class="font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-              // Intro 引言
-            </label>
-            <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">
-              文章頁標題下方的開場
-            </span>
-          </div>
-          <textarea
-            v-model="intro"
-            rows="3"
-            class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-3 py-2.5 text-[15px] leading-7 text-(--text-ink-body) focus:outline-none focus:border-(--text-accent) resize-y"
-            @input="touch"
-          ></textarea>
-        </div>
+        <BaseField label="Intro 引言" hint="文章頁標題下方的開場">
+          <BaseTextarea v-model="intro" class="font-serif text-[15px] leading-7" @input="touch" />
+        </BaseField>
 
         <!-- 段落 -->
         <div class="flex flex-col gap-3">
-          <div class="flex items-baseline justify-between gap-3">
-            <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-              // Sections 段落
-            </div>
-            <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">
-              {{ sections.length }} 個段落
-            </span>
-          </div>
+          <BaseField label="Sections 段落" :hint="`${sections.length} 個段落`" />
 
           <div
             v-if="sections.length"
@@ -374,21 +337,20 @@ const canSave = false
               <div class="px-3.5 py-3.5 flex flex-col gap-2.5 min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="text-(--text-accent) font-bold">//</span>
-                  <input
+                  <BaseInput
                     v-model="section.heading"
-                    type="text"
+                    variant="inline"
                     placeholder="段落標題"
-                    class="flex-1 min-w-0 text-[15px] font-bold text-(--text-ink-main) bg-transparent border-b border-(--border-shelf) pb-1.5 focus:outline-none focus:border-(--text-accent) placeholder:text-(--text-ink-muted) placeholder:opacity-50"
+                    class="flex-1 text-[15px] font-bold"
                     @input="touch"
                   />
                 </div>
-                <textarea
+                <BaseTextarea
                   v-model="section.body"
-                  rows="3"
                   placeholder="段落內容"
-                  class="text-sm leading-7 text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] px-3 py-2.5 focus:outline-none focus:border-(--text-accent) placeholder:text-(--text-ink-muted) placeholder:opacity-50 resize-y"
+                  class="text-sm leading-7"
                   @input="touch"
-                ></textarea>
+                />
               </div>
 
               <div
@@ -409,28 +371,17 @@ const canSave = false
             </div>
           </div>
 
-          <button
-            type="button"
-            class="flex items-center gap-2.5 border border-dashed border-(--border-shelf) rounded-[6px] px-3.5 py-3 text-(--text-ink-muted) hover:text-(--text-ink-main) hover:border-(--text-accent)/40 transition-colors duration-100 ease-out"
-            @click="addSection"
-          >
+          <BaseButton variant="add" type="button" @click="addSection">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span class="font-mono text-[11px] tracking-[0.18em] uppercase">新增段落</span>
-          </button>
+            新增段落
+          </BaseButton>
         </div>
 
         <!-- 邊註 -->
         <div class="flex flex-col gap-3">
-          <div class="flex items-baseline justify-between gap-3">
-            <div class="font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-              // Margins 邊註
-            </div>
-            <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">
-              顯示在文章右側欄，可留空
-            </span>
-          </div>
+          <BaseField label="Margins 邊註" hint="顯示在文章右側欄，可留空" />
 
           <div
             v-for="(note, i) in margins"
@@ -442,11 +393,10 @@ const canSave = false
                 class="w-[3px] self-stretch rounded-sm"
                 :style="{ backgroundColor: note.color === 'accent' ? 'var(--text-accent)' : 'var(--text-ink-muted)' }"
               ></div>
-              <input
+              <BaseInput
                 v-model="note.kind"
-                type="text"
                 placeholder="標記"
-                class="font-mono text-[10px] tracking-[0.18em] uppercase text-(--text-accent) border border-(--border-shelf) rounded-full px-3 py-1.5 bg-transparent w-[120px] focus:outline-none focus:border-(--text-accent)"
+                class="font-mono text-[10px] tracking-[0.18em] uppercase !text-(--text-accent) !rounded-full !bg-transparent w-[120px] !px-3 !py-1.5"
                 @input="touch"
               />
               <div class="ml-auto flex items-center gap-1.5">
@@ -479,36 +429,30 @@ const canSave = false
                 </svg>
               </button>
             </div>
-            <textarea
+            <BaseTextarea
               v-model="note.text"
-              rows="2"
+              :rows="2"
               placeholder="邊註內容"
-              class="text-[13px] leading-7 text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] px-3 py-2.5 focus:outline-none focus:border-(--text-accent) placeholder:text-(--text-ink-muted) placeholder:opacity-50 resize-y"
+              class="text-[13px] leading-7"
               @input="touch"
-            ></textarea>
+            />
           </div>
 
-          <button
-            type="button"
-            class="flex items-center gap-2.5 border border-dashed border-(--border-shelf) rounded-[6px] px-3.5 py-3 text-(--text-ink-muted) hover:text-(--text-ink-main) hover:border-(--text-accent)/40 transition-colors duration-100 ease-out"
-            @click="addMargin"
-          >
+          <BaseButton variant="add" type="button" @click="addMargin">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span class="font-mono text-[11px] tracking-[0.18em] uppercase">新增邊註</span>
-          </button>
+            新增邊註
+          </BaseButton>
         </div>
       </div>
 
       <!-- 側欄 -->
       <div class="flex flex-col gap-5 min-w-0">
         <!-- 分類號 -->
-        <div class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) p-4 flex flex-col gap-3">
+        <BaseCard variant="panel" class="gap-3">
           <div class="flex items-baseline justify-between gap-2">
-            <div class="font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-              // Scope 分類號
-            </div>
+            <BaseEyebrow size="field">Scope 分類號</BaseEyebrow>
             <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">Documentation 0000</span>
           </div>
 
@@ -555,14 +499,12 @@ const canSave = false
           <p class="font-mono text-[10px] leading-5 text-(--text-ink-muted) opacity-75 border-t border-(--border-shelf) pt-2.5">
             自己寫的文章是 post；sourcesite 留給外部官方文件
           </p>
-        </div>
+        </BaseCard>
 
         <!-- 圖譜關聯 -->
-        <div class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) p-4 flex flex-col gap-3.5">
+        <BaseCard variant="panel" class="gap-3.5">
           <div class="flex items-baseline justify-between gap-2">
-            <div class="font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-              // 圖譜關聯
-            </div>
+            <BaseEyebrow size="field">圖譜關聯</BaseEyebrow>
             <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">{{ links.length }} 條邊</span>
           </div>
 
@@ -623,24 +565,17 @@ const canSave = false
             @cancel="pickerOpen = false"
             @create="onCreateLink"
           />
-          <button
-            v-else
-            type="button"
-            class="flex items-center gap-2.5 border border-dashed border-(--border-shelf) rounded-[5px] px-3 py-2.5 text-(--text-ink-muted) hover:text-(--text-ink-main) hover:border-(--text-accent)/40 transition-colors duration-100 ease-out"
-            @click="openPicker()"
-          >
+          <BaseButton v-else variant="add" type="button" class="!text-[10px] !py-2.5" @click="openPicker()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span class="font-mono text-[10px] tracking-[0.16em] uppercase">新增關聯</span>
-          </button>
-        </div>
+            新增關聯
+          </BaseButton>
+        </BaseCard>
 
         <!-- 純標籤 -->
-        <div class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) p-4 flex flex-col gap-3">
-          <div class="font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-            // 純標籤
-          </div>
+        <BaseCard variant="panel" class="gap-3">
+          <BaseEyebrow size="field">純標籤</BaseEyebrow>
 
           <div class="flex flex-wrap gap-1.5">
             <span
@@ -655,11 +590,10 @@ const canSave = false
             </span>
           </div>
 
-          <input
+          <BaseInput
             v-model="tagInput"
-            type="text"
             placeholder="輸入標籤後按 Enter"
-            class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-3 py-2 font-mono text-[11px] text-(--text-ink-main) placeholder:text-(--text-ink-muted) placeholder:opacity-60 focus:outline-none focus:border-(--text-accent)"
+            class="font-mono text-[11px]"
             @keydown.enter.prevent="addTag"
           />
 
@@ -683,13 +617,11 @@ const canSave = false
           <p class="font-mono text-[10px] leading-5 text-(--text-ink-muted) opacity-75 border-t border-(--border-shelf) pt-2.5">
             對不到圖譜實體的分類詞留在這裡。輸入時會比對既有 Technique：對得上就升級成上面的關聯，對不上才留成純標籤。
           </p>
-        </div>
+        </BaseCard>
 
         <!-- 發布資訊 -->
-        <div class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) p-4 flex flex-col gap-3.5">
-          <div class="font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-accent) font-bold">
-            // 發布資訊
-          </div>
+        <BaseCard variant="panel" class="gap-3.5">
+          <BaseEyebrow size="field">發布資訊</BaseEyebrow>
           <div class="flex flex-col gap-1.5">
             <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">日期</span>
             <div class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-2.5 py-2 font-mono text-[13px] text-(--text-ink-main)">
@@ -715,7 +647,7 @@ const canSave = false
               </button>
             </div>
           </div>
-        </div>
+        </BaseCard>
       </div>
     </div>
   </div>

@@ -36,6 +36,10 @@
     --bg-folder: rgba(146, 64, 14, 0.04);
     --bg-active-row: rgba(180, 83, 9, 0.06);
     /* Projects 選中列專用的極淡 accent 透染，語意跟 --bg-folder 不同、不能借用 */
+    --focus-ring: rgba(180, 83, 9, 0.08);
+    /* 輸入框聚焦時的外暈。原本硬寫在 GraphPathSearch 的兩個輸入框裡，
+       深色主題的 accent 是黃色（#fabd2f）而這串是淺色主題的棕色，等於在
+       夜讀主題下發出一圈幾乎看不見的棕光——抽成 BaseInput 時才看見。 */
 
     /* 🕸️ 知識圖譜分類色（HomeView 首頁小工具）：用 dataviz skill 的 validate_palette.js
        跑過 --pairs all 驗證（節點-連結圖任兩個型別都可能相鄰，不能只驗鄰居）。
@@ -88,6 +92,8 @@
     --border-shelf: rgba(250, 189, 47, 0.18);
     --bg-folder: rgba(250, 189, 47, 0.07);
     --bg-active-row: rgba(250, 189, 47, 0.09);
+    /* 深色底上要多一點 alpha 才看得出來，比例比照 --bg-folder 的 0.04 → 0.07 */
+    --focus-ring: rgba(250, 189, 47, 0.15);
 
     /* 深色模式另外重跑驗證：暖黃拉深一點才進亮度區間，跟 --text-accent 脫鉤
        （那個是 UI 強調色，這裡是圖表分類色，各自驗證各自的） */

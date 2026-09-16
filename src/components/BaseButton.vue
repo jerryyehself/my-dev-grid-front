@@ -1,7 +1,7 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'ghost' | 'tab' | 'page'
+    variant?: 'primary' | 'ghost' | 'tab' | 'page' | 'add'
     active?: boolean
   }>(),
   { variant: 'primary', active: false },
@@ -22,6 +22,10 @@ withDefaults(
           ? 'text-(--text-accent) border-(--border-shelf) border-b-transparent font-bold bg-(--bg-paper-light) pt-2.5 pb-2'
           : 'text-(--text-ink-muted) font-medium border-transparent bg-(--bg-folder) hover:text-(--text-ink-main) hover:bg-(--bg-folder)/70 pt-2 pb-2',
       ],
+      // 虛線外框的「新增一個」按鈕。虛線本身就是 signifier:這裡還沒有東西,
+      // 按下去才會長出來——跟實線的既有項目一眼可以分開
+      variant === 'add' &&
+        'flex items-center gap-2.5 border border-dashed border-(--border-shelf) rounded-[6px] px-3.5 py-3 text-[11px] tracking-[0.18em] uppercase text-(--text-ink-muted) hover:text-(--text-ink-main) hover:border-(--text-accent)/40',
       variant === 'page' && [
         'rounded-xs px-2.5 py-1 text-[11px]',
         active
