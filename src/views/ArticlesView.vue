@@ -51,7 +51,19 @@ const goToArticle = (id: string) => {
 
 <template>
   <div class="w-full">
-    <div class="flex items-center justify-end mb-6">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <!-- 管理頁入口。跟文章頁的「編輯」一樣，目前沒有登入機制（D-34 排進 v1 但未實作），
+           所以對任何訪客都看得到；等 auth 做起來之後這裡要改成只對已登入者顯示。 -->
+      <router-link
+        :to="{ name: 'article-manage' }"
+        class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        管理
+      </router-link>
       <div class="inline-flex rounded-full border border-(--border-shelf) p-0.5 gap-0.5">
         <button
           type="button"

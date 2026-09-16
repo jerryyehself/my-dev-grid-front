@@ -52,6 +52,20 @@ const router = createRouter({
       },
     },
     {
+      // 放在 /articles/:id 前面:vue-router 的靜態片段本來就排在動態片段之前，
+      // 順序不影響比對結果，但排在前面才讀得出「manage 不是某篇文章的 id」
+      path: '/articles/manage',
+      name: 'article-manage',
+      component: () => import('@/views/ArticleManageView.vue'),
+      meta: {
+        tag: 'Manage Articles',
+        title: '文章管理',
+        subtitle: '文章清單與草稿狀態',
+        // 這頁自己畫了表頭與動作列，通用表頭會把同一組標題再顯示一次
+        hideHeader: true,
+      },
+    },
+    {
       path: '/articles/:id',
       name: 'article-detail',
       component: () => import('@/views/ArticleDetailView.vue'),
