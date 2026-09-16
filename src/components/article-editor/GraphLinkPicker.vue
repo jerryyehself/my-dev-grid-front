@@ -5,6 +5,7 @@
 // 只選對象不選述詞，存進去的就只是標籤，不是圖譜。所以「建立關聯」在述詞選定之前
 // 一律不可按，而且畫面上一直顯示這條邊正反兩個方向長什麼樣子。
 import { computed, ref, watch } from 'vue'
+import BaseHint from '@/components/BaseHint.vue'
 import {
   FAMILY_COLOR,
   FAMILY_LABEL,
@@ -123,7 +124,7 @@ function submit() {
 
     <!-- 1 · 族 -->
     <div class="space-y-2">
-      <div class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">1 · 要連到哪一族</div>
+      <BaseHint class="block tracking-[0.12em]">1 · 要連到哪一族</BaseHint>
       <div class="flex flex-wrap gap-2">
         <button
           v-for="(label, key) in FAMILY_LABEL"
@@ -145,8 +146,8 @@ function submit() {
     <!-- 2 · 實體 -->
     <div class="space-y-2">
       <div class="flex items-baseline justify-between gap-3">
-        <div class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">2 · 挑實體</div>
-        <div class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">{{ filtered.length }} 筆</div>
+        <BaseHint class="block tracking-[0.12em]">2 · 挑實體</BaseHint>
+        <BaseHint class="block">{{ filtered.length }} 筆</BaseHint>
       </div>
       <BaseInput v-model="query" placeholder="搜尋…" class="w-full text-[13px]" />
       <div class="max-h-[190px] overflow-y-auto border border-(--border-shelf) rounded-[5px] divide-y divide-(--border-shelf)">
@@ -164,10 +165,10 @@ function submit() {
             :style="{ backgroundColor: FAMILY_COLOR[family] }"
           ></span>
           <span class="text-[13px] font-bold text-(--text-ink-main) truncate">{{ o.title }}</span>
-          <span v-if="o.scope" class="font-mono text-[10px] text-(--text-ink-muted) opacity-60 shrink-0">
+          <BaseHint v-if="o.scope" dim class="shrink-0">
             {{ o.scope }}
-          </span>
-          <span v-if="isExisting(o)" class="ml-auto font-mono text-[10px] text-(--text-ink-muted) shrink-0">已連</span>
+          </BaseHint>
+          <BaseHint v-if="isExisting(o)" class="ml-auto shrink-0">已連</BaseHint>
           <svg
             v-else-if="picked?.id === o.id"
             width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -183,9 +184,9 @@ function submit() {
 
     <!-- 3 · 述詞 -->
     <div class="space-y-2">
-      <div class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">
+      <BaseHint class="block tracking-[0.12em]">
         3 · 這篇文章跟它是什麼關係
-      </div>
+      </BaseHint>
       <div class="flex flex-wrap gap-1.5">
         <button
           v-for="r in predicateOptions"
@@ -209,24 +210,24 @@ function submit() {
       <BaseEyebrow size="field">會寫進圖譜的這條邊</BaseEyebrow>
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
         <span class="text-(--text-ink-main) font-bold">這篇文章</span>
-        <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-60">0030 post</span>
+        <BaseHint dim>0030 post</BaseHint>
         <span class="font-mono text-[11px] text-(--text-accent) font-bold">
           {{ predicate ?? '—' }}
         </span>
         <span class="text-(--text-ink-main) font-bold">{{ picked?.title ?? '—' }}</span>
-        <span v-if="picked?.scope" class="font-mono text-[10px] text-(--text-ink-muted) opacity-60">
+        <BaseHint v-if="picked?.scope" dim>
           {{ picked.scope }}
-        </span>
+        </BaseHint>
       </div>
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-(--text-ink-body)">
-        <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">反向</span>
+        <BaseHint>反向</BaseHint>
         <span>{{ picked?.title ?? '—' }}</span>
         <span class="font-mono text-[11px] text-(--text-accent)">{{ reverseName ?? '—' }}</span>
         <span>這篇文章</span>
       </div>
-      <p class="font-mono text-[10px] leading-5 text-(--text-ink-muted) opacity-70">
+      <BaseHint class="block leading-5">
         存進 {{ storageTargetOf(family) }}
-      </p>
+      </BaseHint>
     </div>
 
     <div class="flex items-center justify-end gap-2">

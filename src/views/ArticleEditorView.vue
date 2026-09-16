@@ -6,6 +6,7 @@
 // 因為三張 pivot 表與 entity_relations 都有 relation_id——只存對象不存述詞,
 // 這個圖譜就退化成一般的標籤系統了。
 import { computed, ref, watch } from 'vue'
+import BaseHint from '@/components/BaseHint.vue'
 import { useRoute } from 'vue-router'
 import { articles, type Article, type ArticleMarginNote, type ArticleSection } from '@/data/articles'
 import {
@@ -219,7 +220,7 @@ const canSave = false
       class="border-y border-(--border-shelf) bg-(--bg-folder) -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3"
     >
       <div class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 min-w-0">
-        <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted)">/articles/</span>
+        <BaseHint class="tracking-[0.12em]">/articles/</BaseHint>
         <span
           class="font-mono text-xs text-(--text-ink-main) border-b border-dashed border-(--border-shelf) pb-0.5 truncate"
         >
@@ -230,9 +231,9 @@ const canSave = false
             class="w-1.5 h-1.5 rounded-full"
             :class="dirty ? 'bg-(--text-accent)' : 'bg-(--text-ink-muted) opacity-40'"
           ></span>
-          <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted)">
+          <BaseHint class="tracking-[0.12em]">
             {{ dirty ? '尚未儲存' : '未變更' }}
-          </span>
+          </BaseHint>
         </span>
       </div>
       <div class="flex items-center gap-2">
@@ -303,9 +304,9 @@ const canSave = false
             >
               <!-- 左側:序號與上下移動。桌機滑過才出現,手機一律常駐 44px 觸控目標 -->
               <div class="flex flex-col items-center gap-1 py-3 bg-(--bg-folder) self-stretch">
-                <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">
+                <BaseHint>
                   {{ String(i + 1).padStart(2, '0') }}
-                </span>
+                </BaseHint>
                 <div
                   class="flex flex-col items-center transition-opacity duration-100 ease-out sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                 >
@@ -453,7 +454,7 @@ const canSave = false
         <BaseCard variant="panel" class="gap-3">
           <div class="flex items-baseline justify-between gap-2">
             <BaseEyebrow size="field">Scope 分類號</BaseEyebrow>
-            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">Documentation 0000</span>
+            <BaseHint>Documentation 0000</BaseHint>
           </div>
 
           <p v-if="scopeError" class="font-mono text-[10px] leading-5 text-(--text-accent)">
@@ -496,22 +497,22 @@ const canSave = false
             </button>
           </div>
 
-          <p class="font-mono text-[10px] leading-5 text-(--text-ink-muted) opacity-75 border-t border-(--border-shelf) pt-2.5">
+          <BaseHint class="block leading-5 border-t border-(--border-shelf) pt-2.5">
             自己寫的文章是 post；sourcesite 留給外部官方文件
-          </p>
+          </BaseHint>
         </BaseCard>
 
         <!-- 圖譜關聯 -->
         <BaseCard variant="panel" class="gap-3.5">
           <div class="flex items-baseline justify-between gap-2">
             <BaseEyebrow size="field">圖譜關聯</BaseEyebrow>
-            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">{{ links.length }} 條邊</span>
+            <BaseHint>{{ links.length }} 條邊</BaseHint>
           </div>
 
           <div v-for="group in groupedLinks" :key="group.family" class="flex flex-col gap-2">
-            <span class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75">
+            <BaseHint class="tracking-[0.12em]">
               {{ FAMILY_HEADING[group.family] }}
-            </span>
+            </BaseHint>
             <div
               v-for="link in group.items"
               :key="`${link.family}:${link.entity.id}`"
@@ -525,9 +526,9 @@ const canSave = false
                 <span class="text-[13px] font-bold text-(--text-ink-main) truncate">
                   {{ link.entity.title }}
                 </span>
-                <span v-if="link.entity.scope" class="font-mono text-[10px] text-(--text-ink-muted) opacity-55 shrink-0">
+                <BaseHint v-if="link.entity.scope" dim class="shrink-0">
                   {{ link.entity.scope }}
-                </span>
+                </BaseHint>
                 <button
                   type="button"
                   :aria-label="`移除跟 ${link.entity.title} 的關聯`"
@@ -540,22 +541,22 @@ const canSave = false
                 </button>
               </div>
               <div class="flex items-center gap-1.5">
-                <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-60">述詞</span>
+                <BaseHint dim>述詞</BaseHint>
                 <span
                   class="font-mono text-[10px] tracking-[0.08em] text-(--text-accent) border border-(--border-shelf) rounded-full px-2.5 py-0.5 bg-(--bg-paper-light)"
                 >
                   {{ link.predicate }}
                 </span>
               </div>
-              <p class="font-mono text-[10px] leading-5 text-(--text-ink-muted) opacity-60">
+              <BaseHint dim class="block leading-5">
                 反向：{{ link.entity.title }} {{ link.reverse }} 這篇文章 · {{ storageTargetOf(link.family) }}
-              </p>
+              </BaseHint>
             </div>
           </div>
 
-          <p v-if="!links.length" class="font-mono text-[10px] leading-5 text-(--text-ink-muted) opacity-70">
+          <BaseHint v-if="!links.length" class="block leading-5">
             還沒有任何關聯。一條邊要有對象也要有述詞才算數。
-          </p>
+          </BaseHint>
 
           <GraphLinkPicker
             v-if="pickerOpen"
@@ -608,28 +609,28 @@ const canSave = false
               <span class="font-mono text-[10px] tracking-[0.1em] text-(--text-accent) font-bold">
                 {{ tag }} 對得上 {{ matchedTechnique(tag)?.scope ?? 'Technique' }}
               </span>
-              <span class="font-mono text-[10px] leading-5 text-(--text-ink-muted)">
+              <BaseHint class="leading-5">
                 點這裡升級成帶述詞的圖譜關聯
-              </span>
+              </BaseHint>
             </button>
           </template>
 
-          <p class="font-mono text-[10px] leading-5 text-(--text-ink-muted) opacity-75 border-t border-(--border-shelf) pt-2.5">
+          <BaseHint class="block leading-5 border-t border-(--border-shelf) pt-2.5">
             對不到圖譜實體的分類詞留在這裡。輸入時會比對既有 Technique：對得上就升級成上面的關聯，對不上才留成純標籤。
-          </p>
+          </BaseHint>
         </BaseCard>
 
         <!-- 發布資訊 -->
         <BaseCard variant="panel" class="gap-3.5">
           <BaseEyebrow size="field">發布資訊</BaseEyebrow>
           <div class="flex flex-col gap-1.5">
-            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">日期</span>
+            <BaseHint>日期</BaseHint>
             <div class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-2.5 py-2 font-mono text-[13px] text-(--text-ink-main)">
               {{ source.date }}
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
-            <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-75">狀態</span>
+            <BaseHint>狀態</BaseHint>
             <div class="flex gap-1 border border-(--border-shelf) rounded-full p-1">
               <button
                 v-for="opt in [{ v: false, label: '草稿' }, { v: true, label: '已發布' }]"

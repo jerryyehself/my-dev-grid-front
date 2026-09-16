@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { RouterLink } from 'vue-router'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
 import { forceCollide } from 'd3-force'
@@ -917,15 +919,7 @@ onUnmounted(() => {
     </div>
 
     <div v-if="!loading && colorMode === 'type'" class="flex flex-wrap items-center gap-4 text-[12px] text-(--text-ink-muted) mb-3">
-      <span class="flex items-center gap-1.5"
-        ><span class="w-2 h-2 rounded-full" :style="{ background: 'var(--node-doc)' }"></span>Documentation</span
-      >
-      <span class="flex items-center gap-1.5"
-        ><span class="w-2 h-2 rounded-full" :style="{ background: 'var(--node-tech)' }"></span>Technique</span
-      >
-      <span class="flex items-center gap-1.5"
-        ><span class="w-2 h-2 rounded-full" :style="{ background: 'var(--node-impl)' }"></span>Implementation</span
-      >
+      <GraphLegendDots />
       <span class="flex items-center gap-1.5"
         ><span class="w-4 h-0 border-t border-dashed border-(--text-ink-muted)"></span>推導關聯（非真實邊）</span
       >
@@ -944,9 +938,7 @@ onUnmounted(() => {
       >
     </div>
 
-    <div v-if="loading" class="h-[460px] flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
-      // LOADING_GRAPH...
-    </div>
+    <BaseLoadingBlock v-if="loading" height="460px">// LOADING_GRAPH...</BaseLoadingBlock>
 
     <div
       v-show="!loading"

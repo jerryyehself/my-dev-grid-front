@@ -3,6 +3,7 @@
 // 抽出來是因為「小標與提示要對齊基線、間距要一致」這件事之前靠每個呼叫端
 // 自己記得寫 items-baseline justify-between,少寫一次就歪掉而且不容易看出來。
 import BaseEyebrow from './BaseEyebrow.vue'
+import BaseHint from './BaseHint.vue'
 
 withDefaults(
   defineProps<{
@@ -19,12 +20,7 @@ withDefaults(
   <div class="flex flex-col gap-2 min-w-0">
     <div class="flex items-baseline justify-between gap-3">
       <BaseEyebrow :size="size">{{ label }}</BaseEyebrow>
-      <span
-        v-if="hint"
-        class="font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted) opacity-75 shrink-0"
-      >
-        {{ hint }}
-      </span>
+      <BaseHint v-if="hint" class="tracking-[0.12em] shrink-0">{{ hint }}</BaseHint>
     </div>
     <slot />
   </div>

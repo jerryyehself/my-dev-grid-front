@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import ForceGraph3D, { type ForceGraph3DInstance, type NodeObject, type LinkObject } from '3d-force-graph'
 import * as THREE from 'three'
 import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from '@/data/graphPocData'
@@ -283,12 +284,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="w-full h-[520px] flex items-center justify-center rounded border border-(--border-shelf) bg-(--bg-paper-light) text-xs text-(--text-ink-body)/40">
-    載入知識圖譜資料中...
-  </div>
-  <div v-else-if="error" class="w-full h-[520px] flex items-center justify-center rounded border border-(--border-shelf) bg-(--bg-paper-light) text-xs text-(--text-accent)">
-    {{ error }}
-  </div>
+  <BaseLoadingBlock v-if="loading" height="520px">// LOADING_GRAPH...</BaseLoadingBlock>
+  <BaseLoadingBlock v-else-if="error" height="520px" tone="error">{{ error }}</BaseLoadingBlock>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->
   <div v-show="!loading && !error" class="relative">
