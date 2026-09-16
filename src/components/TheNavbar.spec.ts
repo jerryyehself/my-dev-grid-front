@@ -13,7 +13,7 @@ function makeRouter() {
       { path: '/about', name: 'about', component: Stub },
       { path: '/articles', name: 'articles', component: Stub },
       { path: '/projects', name: 'projects', component: Stub },
-      { path: '/notes', name: 'notes', component: Stub },
+      { path: '/graph', name: 'graph', component: Stub },
     ],
   })
 }
