@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { nodeColorVar } from '@/api/ontology'
+import BaseInput from '@/components/BaseInput.vue'
 import { fetchGraphPath, type GraphNodeType, type GraphPathDto } from '@/api/graph'
 import { fetchGraphPocData, type GraphPocNode } from '@/data/graphPocData'
 
@@ -16,9 +18,7 @@ const domainLabel: Record<GraphNodeType, string> = {
   technique: 'Technique',
   implementation: 'Implementation',
 }
-function nodeColorVar(domainType: GraphNodeType): string {
-  return domainType === 'documentation' ? '--node-doc' : domainType === 'technique' ? '--node-tech' : '--node-impl'
-}
+
 
 // 起訖點各自獨立的打字搜尋狀態：query 是輸入框文字，selected 是已經選定的節點（非 null
 // 時輸入框改顯示已選定的 pill，不是文字輸入格），open 控制下拉候選要不要展開。
@@ -132,11 +132,10 @@ onMounted(async () => {
           >
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input
+          <BaseInput
             v-model="startQuery"
-            type="text"
             placeholder="輸入節點名稱..."
-            class="w-full rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) py-[9px] pl-9 pr-3 text-[13px] text-(--text-ink-main) outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_rgba(180,83,9,0.08)]"
+            class="w-full !rounded-[10px] py-[9px] pl-9 pr-3 text-[13px]"
             @focus="startOpen = true"
             @blur="startOpen = false"
           />
@@ -206,11 +205,10 @@ onMounted(async () => {
           >
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input
+          <BaseInput
             v-model="endQuery"
-            type="text"
             placeholder="輸入節點名稱..."
-            class="w-full rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) py-[9px] pl-9 pr-3 text-[13px] text-(--text-ink-main) outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_rgba(180,83,9,0.08)]"
+            class="w-full !rounded-[10px] py-[9px] pl-9 pr-3 text-[13px]"
             @focus="endOpen = true"
             @blur="endOpen = false"
           />

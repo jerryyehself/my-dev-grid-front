@@ -98,7 +98,11 @@ const navItems = ref<NavItem[]>([
   { name: 'ARTICLES', path: '/articles' },
   { name: 'PROJECTS', path: '/projects' },
   { name: 'GRAPH', path: '/graph' },
-  { name: 'NOTES', path: '/notes' },
+  // NOTES 先註解掉:router/index.ts 裡沒有 /notes 這條路由,點下去只會得到空白頁,
+  // 每次載入任何頁面 console 都還會噴兩次 Vue Router 的 No match 警告。
+  // 導覽列上的連結對使用者的承諾是「這裡有東西」,沒有東西就不該掛在上面。
+  // 之後真的做了 Notes 頁再把這行打開,路由補在 router/index.ts。
+  // { name: 'NOTES', path: '/notes' },
   { name: 'ABOUT', path: '/about' },
 ])
 

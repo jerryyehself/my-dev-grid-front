@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { GraphNodeType, GraphPathDto } from '@/api/graph'
+import { nodeColorVar } from '@/api/ontology'
+import type { GraphPathDto } from '@/api/graph'
 
 const props = defineProps<{ path: GraphPathDto | null }>()
-
-function nodeColorVar(type: GraphNodeType): string {
-  return type === 'documentation' ? '--node-doc' : type === 'technique' ? '--node-tech' : '--node-impl'
-}
 
 // 捷運路線圖式佈局：站點等距排在一條橫線上，站名依索引奇偶交錯畫在線的上/下方避免
 // 疊字（跟首頁/這頁其餘地方常見的「密集標籤交錯避讓」手法一致）。寬度依站點數量算，

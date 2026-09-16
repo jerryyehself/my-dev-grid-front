@@ -52,6 +52,20 @@ const router = createRouter({
       },
     },
     {
+      // 放在 /articles/:id 前面:vue-router 的靜態片段本來就排在動態片段之前，
+      // 順序不影響比對結果，但排在前面才讀得出「manage 不是某篇文章的 id」
+      path: '/articles/manage',
+      name: 'article-manage',
+      component: () => import('@/views/ArticleManageView.vue'),
+      meta: {
+        tag: 'Manage Articles',
+        title: '文章管理',
+        subtitle: '文章清單與草稿狀態',
+        // 這頁自己畫了表頭與動作列，通用表頭會把同一組標題再顯示一次
+        hideHeader: true,
+      },
+    },
+    {
       path: '/articles/:id',
       name: 'article-detail',
       component: () => import('@/views/ArticleDetailView.vue'),
@@ -62,6 +76,20 @@ const router = createRouter({
         title: 'Article Detail',
         subtitle: '深入閱讀',
         hideHeader: true,
+      },
+    },
+    {
+      path: '/articles/:id/edit',
+      name: 'article-editor',
+      component: () => import('@/views/ArticleEditorView.vue'),
+      meta: {
+        tag: 'Article Editor',
+        title: '編輯文章',
+        subtitle: '段落與邊註都可以增減、調換順序',
+        // 編輯頁自己畫了表頭與動作列，通用表頭會把同一組標題再顯示一次
+        hideHeader: true,
+        // 主從式版面：主欄加 340px 側欄，1024px 會擠到側欄沒有呼吸空間
+        contentWidth: '1120px',
       },
     },
     {

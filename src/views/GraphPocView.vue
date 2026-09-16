@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { useRoute, RouterLink } from 'vue-router'
 import GraphPoc2D from '@/components/poc/GraphPoc2D.vue'
 import GraphPoc3D from '@/components/poc/GraphPoc3D.vue'
@@ -60,15 +61,7 @@ const pathResult = ref<GraphPathDto | null>(null)
          自己記文字說明。3D 版另外在畫布裡疊了三片色板 + 浮動文字標籤標示三層，
          這裡的色點圖例同一套顏色，兩邊對得起來。 -->
     <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-(--text-ink-muted)">
-      <span class="flex items-center gap-1.5"
-        ><span class="w-2 h-2 rounded-full" :style="{ background: 'var(--node-doc)' }"></span>Documentation</span
-      >
-      <span class="flex items-center gap-1.5"
-        ><span class="w-2 h-2 rounded-full" :style="{ background: 'var(--node-tech)' }"></span>Technique</span
-      >
-      <span class="flex items-center gap-1.5"
-        ><span class="w-2 h-2 rounded-full" :style="{ background: 'var(--node-impl)' }"></span>Implementation</span
-      >
+      <GraphLegendDots />
       <span class="flex items-center gap-1.5"
         ><span class="w-4 h-0 border-t border-(--edge-real)"></span>跨型別真實關聯</span
       >

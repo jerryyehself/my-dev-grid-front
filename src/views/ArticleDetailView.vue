@@ -1,6 +1,20 @@
 <template>
   <div v-if="article" class="w-full">
-    <BackToArticlesLink class="mb-7 inline-flex" />
+    <div class="flex items-center justify-between gap-4 mb-7">
+      <BackToArticlesLink class="inline-flex" />
+      <!-- 編輯頁的入口。目前還沒有登入機制（D-34 排進 v1 但未實作），所以這個連結
+           對任何訪客都看得到；等 auth 做起來之後這裡要改成只對已登入者顯示。 -->
+      <router-link
+        :to="{ name: 'article-editor', params: { id: article.id } }"
+        class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+        </svg>
+        編輯
+      </router-link>
+    </div>
 
     <div class="border-b border-(--border-shelf) pb-6 mb-8">
       <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-accent) font-bold mb-3">
