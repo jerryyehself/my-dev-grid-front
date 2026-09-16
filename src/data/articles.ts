@@ -1,8 +1,3 @@
-export interface ArticleSection {
-  heading: string
-  body: string
-}
-
 export interface ArticleMarginNote {
   kind: string
   text: string
@@ -22,8 +17,6 @@ export interface Article {
    * 渲染走 `MarkdownBody.vue`：mdast → Vue vnode，不經過 v-html（D-47）。
    */
   body: string
-  /** @deprecated 被 `body` 取代，等三個消費端都改完就拿掉。 */
-  sections: ArticleSection[]
   margins?: ArticleMarginNote[]
 }
 
@@ -70,23 +63,6 @@ Rule of Three 說第三次。Martin Fowler 在《Refactoring》裡寫下來、�
 
 不是「有沒有重複」，是**這段東西寫錯的時候，會不會有人發現**。會，那重複三次也還好；不會，那第三次就該收。
 `,
-    sections: [
-      {
-        heading: '為何要收斂到 View',
-        body:
-          '當一個畫面需要同時處理資料流、互動邏輯與視覺回饋時，最重要的不是把它拆得更細，而是把高頻互動收斂到單一決策點。這樣的設計能降低 context 切換，讓判斷與維護都更直接。',
-      },
-      {
-        heading: '可維護的邏輯邊界',
-        body:
-          '將事件驅動與狀態處理維持在 View 層，配合適當的 Layout 與抽象層，能讓 UI 的行為邏輯可讀性提升、測試成本下降，並避免過度封裝造成的逆向理解成本。',
-      },
-      {
-        heading: '實務收斂成果',
-        body:
-          '這種做法讓後續的改動不再牽一髮動全身，且在多頁面共用的設計系統下，能維持穩定的交互節奏與更清楚的責任分界。',
-      },
-    ],
     margins: [
       {
         kind: '延伸想法',
@@ -153,18 +129,6 @@ focus:shadow-[0_0_0_3px_rgba(180,83,9,0.08)]
 
 唯一抓得到的方法是逐項比對實際渲染值，而且**兩個主題都要比**。只驗淺色，這兩個都會活下來。
 `,
-    sections: [
-      {
-        heading: '動態排版的關鍵',
-        body:
-          '在 Tailwind v4 的環境下，透過 CSS 變數與最小化的 spacing 規則，可以建立一套能兼顧流體與印刷感的排版語彙。',
-      },
-      {
-        heading: '暗黑與明亮雙主題',
-        body:
-          '雙主題並不是簡單翻轉色彩，而是重新調整對比與材質層級，讓視覺密度在不同情境下仍然舒適。',
-      },
-    ],
     margins: [
       {
         kind: '已知限制',
@@ -231,18 +195,6 @@ function moveSection(i, delta) {
 
 改成這樣之後，「調換順序」從**會悄悄弄壞指涉**變成安全操作——因為 id 跟著那段文字一起搬。原本用來保護順序的那顆按鈕，反而是最需要被拿掉的東西。
 `,
-    sections: [
-      {
-        heading: '跨層級互動的難點',
-        body:
-          '當介面中存在非父子關係的節點，元件封裝會讓事件流變得難以追蹤。集中式事件驅動能讓頭緒更清楚，也更容易在後續擴展時掌握。',
-      },
-      {
-        heading: '可預期的交互節奏',
-        body:
-          '像腳註跳轉、關係圖高亮及局部滾動這種體驗，都需要一套穩定的事件總線來協調，而不是讓每個元件各自猜測。',
-      },
-    ],
     margins: [
       {
         kind: '延伸想法',
@@ -302,18 +254,6 @@ function moveSection(i, delta) {
 
 [About](/about) 頁的三個小標就是這樣對回 2.64px 的。
 `,
-    sections: [
-      {
-        heading: '微幾何的力量',
-        body:
-          '瑞士式排版的重點在於細部節奏，而不是華麗的裝飾。靠著簡潔的間距與微妙的線條，畫面可以變得更有辨識度。',
-      },
-      {
-        heading: '數位介面的應用',
-        body:
-          '在索引與資訊密度高的介面中，精準的排版節奏能讓注意力自然被引導到最重要的內容。',
-      },
-    ],
     margins: [
       {
         kind: '已知限制',
