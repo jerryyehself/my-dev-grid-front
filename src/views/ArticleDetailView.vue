@@ -33,22 +33,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-10 items-start">
       <div>
-        <section class="space-y-7">
-          <article
-            v-for="(section, index) in article.sections"
-            :id="`section-${index}`"
-            :key="section.heading"
-            class="space-y-2.5 scroll-mt-24"
-          >
-            <h3 class="text-base font-bold text-(--text-ink-main) flex items-center gap-2">
-              <span class="text-(--text-accent)">//</span>
-              <span>{{ section.heading }}</span>
-            </h3>
-            <p class="text-[15px] leading-8 text-(--text-ink-body) text-justify">
-              {{ section.body }}
-            </p>
-          </article>
-        </section>
+        <MarkdownBody :source="article.body" />
 
         <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
           <router-link
@@ -81,17 +66,21 @@
 
       <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
       <div class="lg:sticky lg:top-24 flex flex-col gap-8">
-        <div>
+        <div v-if="headings.length">
           <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
             本文結構
           </div>
+          <!-- slug 從 extractHeadings 來，跟 MarkdownBody 渲染標題時用的是同一份，
+               所以目錄的 href 一定對得上內文的 id。兩邊各自算 slug 會漂移，
+               而漂移的症狀是「點了沒反應」，不會有任何錯誤訊息 -->
           <ol class="flex flex-col gap-2 border-l border-(--border-shelf) pl-3.5">
-            <li v-for="(section, index) in article.sections" :key="section.heading">
+            <li v-for="heading in headings" :key="heading.slug">
               <a
-                :href="`#section-${index}`"
+                :href="`#${heading.slug}`"
                 class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
               >
-                {{ section.heading }}
+                {{ heading.text }}
               </a>
             </li>
           </ol>
@@ -144,9 +133,14 @@ import { computed, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { articles, getArticleById } from '@/data/articles'
 import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
+import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
+import { extractHeadings } from '@/components/markdown/headings'
 
 const route = useRoute()
 const article = computed(() => getArticleById(route.params.id as string))
+
+/** 本文結構側欄。跟 MarkdownBody 內部用的是同一個 extractHeadings，slug 不會分岔。 */
+const headings = computed(() => (article.value ? extractHeadings(article.value.body) : []))
 
 // route.meta 的 tag/title 只是掛載前的靜態佔位，這裡掛載後改寫成真正的文章標題，
 // 讓捲動追蹤列（MainLayout）顯示的內容跟頁面上真正的文章標題一致，不是寫死的「Article Detail」

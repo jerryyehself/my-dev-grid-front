@@ -13,6 +13,7 @@ import { RouterLink } from 'vue-router'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
+import { extractHeadings } from './headings'
 
 const props = defineProps<{ source: string }>()
 
@@ -36,6 +37,13 @@ interface MdNode {
 const processor = unified().use(remarkParse).use(remarkGfm)
 
 const tree = computed(() => processor.parse(props.source) as unknown as MdNode)
+
+/** 這篇的所有標題，依文件順序。父層要拿去做目錄,所以 expose 出去。 */
+const headings = computed(() => extractHeadings(props.source))
+
+// render() 走到第幾個 heading。每次從頭 render 都要歸零,
+// 否則第二次渲染會從上次的位置接下去,id 全部對不上
+let headingCursor = 0
 
 /** 站內連結走 RouterLink，站外開新分頁並補 rel。判斷依據是「有沒有協定」。 */
 function isInternal(url: string): boolean {
@@ -68,11 +76,19 @@ function render(node: MdNode): VNode[] {
       // 沿用文章頁既有的 h3 樣式:accent 色的 // 前綴加粗體標題。
       // 深度越深字越小，但都維持同一個形狀，不另外發明第二套標題語彙。
       const size = node.depth === 2 ? 'text-base' : node.depth === 3 ? 'text-[15px]' : 'text-sm'
+      // id 從 headings 依序取，不在這裡自己算 slug——目錄跟這裡必須是同一份，
+      // 分開算會漂移，而且症狀是「點目錄沒反應」，不會有任何錯誤訊息
+      const slug = headings.value[headingCursor++]?.slug
       return [
-        h('h3', { class: `${size} font-bold text-(--text-ink-main) flex items-center gap-2 mt-8 mb-2.5` }, [
-          h('span', { class: 'text-(--text-accent)' }, '//'),
-          h('span', {}, kids(node)),
-        ]),
+        h(
+          'h3',
+          {
+            id: slug,
+            // 導覽列是 sticky，捲到錨點時要留出它的高度，不然標題會被蓋住
+            class: `${size} font-bold text-(--text-ink-main) flex items-center gap-2 mt-8 mb-2.5 scroll-mt-24`,
+          },
+          [h('span', { class: 'text-(--text-accent)' }, '//'), h('span', {}, kids(node))],
+        ),
       ]
     }
 
@@ -185,7 +201,12 @@ function render(node: MdNode): VNode[] {
 }
 
 /** 見 template 下方註解:參考必須穩定，不能每次 render 都造一個新的。 */
-const Rendered = () => render(tree.value)
+const Rendered = () => {
+  headingCursor = 0
+  return render(tree.value)
+}
+
+defineExpose({ headings })
 
 function renderRow(row: MdNode, align: MdNode['align'], isHead: boolean): VNode {
   const cells = (row.children ?? []).map((cell, i) => {
