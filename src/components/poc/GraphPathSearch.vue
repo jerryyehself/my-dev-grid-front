@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { nodeColorVar } from '@/api/ontology'
 import BaseInput from '@/components/BaseInput.vue'
 import { fetchGraphPath, type GraphNodeType, type GraphPathDto } from '@/api/graph'
 import { fetchGraphPocData, type GraphPocNode } from '@/data/graphPocData'
@@ -17,9 +18,7 @@ const domainLabel: Record<GraphNodeType, string> = {
   technique: 'Technique',
   implementation: 'Implementation',
 }
-function nodeColorVar(domainType: GraphNodeType): string {
-  return domainType === 'documentation' ? '--node-doc' : domainType === 'technique' ? '--node-tech' : '--node-impl'
-}
+
 
 // 起訖點各自獨立的打字搜尋狀態：query 是輸入框文字，selected 是已經選定的節點（非 null
 // 時輸入框改顯示已選定的 pill，不是文字輸入格），open 控制下拉候選要不要展開。

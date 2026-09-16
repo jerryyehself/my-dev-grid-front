@@ -4,6 +4,7 @@
 // 這五個端點在 my-dev-grid 的 routes/api.php 裡是 apiResources(['only' => ['index','show']])，
 // 完全公開不需要登入；寫入（store/update/destroy）才在 auth:sanctum 後面。
 import { apiGet } from './client'
+import type { GraphNodeType } from './graph'
 
 /** 後端所有 index 端點的共同外層：{ type, data }。 */
 interface ListEnvelope<T> {
@@ -70,8 +71,12 @@ export function fetchDocumentationOptions(): Promise<EntityOption[]> {
   return apiGet<ListEnvelope<RawEntity>>('/documentations').then((r) => r.data.map(toOption))
 }
 
-/** 圖譜裡的三個族。`documentation` 同時是文章自己所屬的族（同型別關聯走 entity_relations）。 */
-export type EntityFamily = 'technique' | 'implementation' | 'documentation'
+/**
+ * 圖譜裡的三個族。`documentation` 同時是文章自己所屬的族（同型別關聯走 entity_relations）。
+ * 這三個字串跟 `/api/graph` 回傳的 `GraphNodeType` 是同一組值,所以直接沿用同一個型別,
+ * 不另外宣告一份看起來一樣、之後卻可能各自漂移的聯合型別。
+ */
+export type EntityFamily = GraphNodeType
 
 export const FAMILY_LABEL: Record<EntityFamily, string> = {
   technique: 'TECHNIQUE 1000',
@@ -80,13 +85,25 @@ export const FAMILY_LABEL: Record<EntityFamily, string> = {
 }
 
 /**
- * 每一族在圖譜上的代表色。沿用 /graph 頁既有的節點配色，
- * 讓編輯頁挑到的顏色跟之後在圖譜上看到的是同一個。
+ * 每一族在圖譜上的代表色,回傳的是 CSS 變數而不是色碼。
+ *
+ * 一開始這裡寫的是 '#0e8a72' 這種硬寫的色碼,照著設計稿抄過來的——但設計稿只畫了
+ * 淺色版,而 --node-* 這三個 token 在夜讀主題有各自重新驗證過的另一組值
+ * （#b8791a / #279c7d / #b356a8,為了在深色底上拉到夠亮）。硬寫色碼等於讓編輯頁的
+ * 節點顏色永遠停在淺色主題,切到夜讀就跟 /graph 上同一個節點對不起來。
+ *
+ * GraphPathSearch.vue 與 GraphPathDiagram.vue 原本各自有一份一模一樣的
+ * nodeColorVar()，現在都改成呼叫這裡，三份合成一份。
  */
 export const FAMILY_COLOR: Record<EntityFamily, string> = {
-  technique: '#0e8a72',
-  implementation: '#8a3aa8',
-  documentation: '#b45309',
+  technique: 'var(--node-tech)',
+  implementation: 'var(--node-impl)',
+  documentation: 'var(--node-doc)',
+}
+
+/** 只要 token 名字（不含 var(...)）的呼叫端用這個，例如要組成 `var(${name})` 以外的寫法。 */
+export function nodeColorVar(type: GraphNodeType): string {
+  return type === 'documentation' ? '--node-doc' : type === 'technique' ? '--node-tech' : '--node-impl'
 }
 
 /**
