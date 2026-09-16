@@ -85,7 +85,7 @@ const router = createRouter({
       meta: {
         tag: 'Article Editor',
         title: '編輯文章',
-        subtitle: '段落與邊註都可以增減、調換順序',
+        subtitle: '內文用 Markdown，邊註可以增減',
         // 編輯頁自己畫了表頭與動作列，通用表頭會把同一組標題再顯示一次
         hideHeader: true,
         // 主從式版面：主欄加 340px 側欄，1024px 會擠到側欄沒有呼吸空間

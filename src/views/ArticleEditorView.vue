@@ -1,6 +1,9 @@
 <script setup lang="ts">
 // 文章編輯頁。目前是「只有視覺、沒有持久化」的狀態,理由寫在下面的 canSave 附近。
 //
+// 內文是一個 Markdown 欄位（D-46），不是結構化的段落陣列——後者讓內文只能是
+// 純文字，粗體/程式碼/清單/連結一個都放不了。
+//
 // 本體論上的定位（D-40）：一篇文章就是一筆 Documentation,scope 掛 post（0030）,
 // 而不是現有那 5 筆的 sourcesite（0010,外部官方文件）。所有圖譜連結都必須帶述詞,
 // 因為三張 pivot 表與 entity_relations 都有 relation_id——只存對象不存述詞,
@@ -8,7 +11,7 @@
 import { computed, ref, watch } from 'vue'
 import BaseHint from '@/components/BaseHint.vue'
 import { useRoute } from 'vue-router'
-import { articles, type Article, type ArticleMarginNote, type ArticleSection } from '@/data/articles'
+import { articles, type Article, type ArticleMarginNote } from '@/data/articles'
 import {
   FAMILY_COLOR,
   fetchScopes,
@@ -25,6 +28,7 @@ import BaseField from '@/components/BaseField.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseTextarea from '@/components/BaseTextarea.vue'
 import GraphLinkPicker from '@/components/article-editor/GraphLinkPicker.vue'
+import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 
 const route = useRoute()
 
@@ -52,7 +56,8 @@ const source = computed<Article | undefined>(() =>
 const title = ref('')
 const summary = ref('')
 const intro = ref('')
-const sections = ref<ArticleSection[]>([])
+const body = ref('')
+const bodyMode = ref<'edit' | 'preview'>('edit')
 const margins = ref<ArticleMarginNote[]>([])
 const tags = ref<string[]>([])
 const links = ref<DraftLink[]>([])
@@ -67,7 +72,7 @@ watch(
     title.value = a.title
     summary.value = a.summary
     intro.value = a.intro
-    sections.value = a.sections.map((s) => ({ ...s }))
+    body.value = a.body
     margins.value = (a.margins ?? []).map((m) => ({ ...m }))
     tags.value = [...a.tags]
     links.value = []
@@ -123,27 +128,6 @@ function removeTag(i: number) {
 }
 
 // --- 段落與邊註 ------------------------------------------------------------
-function addSection() {
-  sections.value.push({ heading: '', body: '' })
-  touch()
-}
-
-function removeSection(i: number) {
-  sections.value.splice(i, 1)
-  touch()
-}
-
-/** 上下移動一格。到頭或到尾就不動,按鈕本身也會停用,不用靠這裡擋。 */
-function moveSection(i: number, delta: number) {
-  const j = i + delta
-  const a = sections.value[i]
-  const b = sections.value[j]
-  if (!a || !b) return
-  sections.value[i] = b
-  sections.value[j] = a
-  touch()
-}
-
 function addMargin() {
   margins.value.push({ kind: '延伸想法', text: '', color: 'accent' })
   touch()
@@ -194,11 +178,12 @@ function removeLink(link: DraftLink) {
 }
 
 // --- 存檔 ------------------------------------------------------------------
-// 存不了,而且短期內也存不了,所以按鈕做成停用而不是做成可按但沒反應。
-// 兩個各自獨立的原因:
-// 1. 後端的 Documentation 只有 title / url / uri / note / status,沒有放內文的欄位,
-//    段落與邊註目前在資料庫裡沒有地方可以去（design-artifacts.md 裡列為「尚未決定」）。
-// 2. 寫入端點全部在 auth:sanctum 後面,而登入雖然排進 v1（D-34）但還沒做。
+// 存不了,所以按鈕做成停用而不是做成可按但沒反應。
+//
+// 2026-09-16 更新:原本這裡有兩個理由,其中一個已經解掉了——後端的 documentations
+// 已經有 body 欄位（my-dev-grid PR #53），內文有地方可以去了。剩下的唯一阻礙是
+// 寫入端點全部在 auth:sanctum 後面,而登入雖然排進 v1（D-34）但還沒做。
+//
 // 畫成可按的樣子會是這個專案自己禁止的假訊號——跟當初拿掉導覽列那顆會呼吸的
 // 圓點是同一類問題:看起來代表某個狀態,實際上背後什麼都沒有。
 const canSave = false
@@ -214,7 +199,7 @@ const canSave = false
       <h1 class="font-serif text-[26px] sm:text-[34px] font-extrabold tracking-tight text-(--text-ink-main)">
         編輯文章
       </h1>
-      <p class="text-[13.5px] sm:text-sm text-(--text-ink-muted)">段落與邊註都可以增減、調換順序</p>
+      <p class="text-[13.5px] sm:text-sm text-(--text-ink-muted)">內文用 Markdown，邊註可以增減</p>
     </div>
 
     <!-- 動作列 -->
@@ -270,8 +255,10 @@ const canSave = false
         尚不能儲存
       </span>
       ——後端的
-      <code class="font-mono text-[11.5px]">Documentation</code>
-      只有 title / url / uri / note / status，沒有放內文的欄位，段落與邊註在資料庫裡還沒有地方可以去；寫入端點也都在
+      <code class="font-mono text-[11.5px]">documentations</code>
+      已經有
+      <code class="font-mono text-[11.5px]">body</code>
+      欄位，內文有地方可以去了；卡在寫入端點都在
       <code class="font-mono text-[11.5px]">auth:sanctum</code>
       後面而登入尚未實作。這頁目前只做視覺與互動，改動不會被保存。
     </p>
@@ -291,95 +278,54 @@ const canSave = false
           <BaseTextarea v-model="intro" class="font-serif text-[15px] leading-7" @input="touch" />
         </BaseField>
 
-        <!-- 段落 -->
+        <!-- 內文。從「一堆段落」換成一個 Markdown 欄位（D-46）。
+             原本這裡是段落卡片清單，每張有標題、內文、上下移動、刪除——那個模型
+             讓內文只能是純文字（渲染端是 {{ }} 插值），粗體、程式碼、清單、連結
+             一個都放不了。排序按鈕也一併拿掉:Markdown 裡搬動段落就是搬動文字，
+             而且改成顯式錨點之後搬動不會像原本那樣默默改掉錨點的指向。 -->
         <div class="flex flex-col gap-3">
-          <BaseField label="Sections 段落" :hint="`${sections.length} 個段落`" />
-
-          <div
-            v-if="sections.length"
-            class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) overflow-hidden"
-          >
-            <div
-              v-for="(section, i) in sections"
-              :key="i"
-              class="group grid grid-cols-[44px_minmax(0,1fr)_44px] sm:grid-cols-[38px_minmax(0,1fr)_38px] items-start border-b border-(--border-shelf) last:border-b-0"
-            >
-              <!-- 左側:序號與上下移動。桌機滑過才出現,手機一律常駐 44px 觸控目標 -->
-              <div class="flex flex-col items-center gap-1 py-3 bg-(--bg-folder) self-stretch">
-                <BaseHint>
-                  {{ String(i + 1).padStart(2, '0') }}
-                </BaseHint>
-                <div
-                  class="flex flex-col items-center transition-opacity duration-100 ease-out sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-                >
-                  <button
-                    type="button"
-                    :disabled="i === 0"
-                    aria-label="上移這個段落"
-                    class="w-11 h-11 sm:w-6 sm:h-6 flex items-center justify-center text-(--text-accent) disabled:opacity-25 disabled:cursor-not-allowed"
-                    @click="moveSection(i, -1)"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="18 15 12 9 6 15" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    :disabled="i === sections.length - 1"
-                    aria-label="下移這個段落"
-                    class="w-11 h-11 sm:w-6 sm:h-6 flex items-center justify-center text-(--text-accent) disabled:opacity-25 disabled:cursor-not-allowed"
-                    @click="moveSection(i, 1)"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="px-3.5 py-3.5 flex flex-col gap-2.5 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-(--text-accent) font-bold">//</span>
-                  <BaseInput
-                    v-model="section.heading"
-                    variant="inline"
-                    placeholder="段落標題"
-                    class="flex-1 text-[15px] font-bold"
-                    @input="touch"
-                  />
-                </div>
-                <BaseTextarea
-                  v-model="section.body"
-                  placeholder="段落內容"
-                  class="text-sm leading-7"
-                  @input="touch"
-                />
-              </div>
-
-              <div
-                class="flex justify-center pt-3 transition-opacity duration-100 ease-out sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+          <BaseField label="Body 內文" :hint="`Markdown · ${body.length} 字`">
+            <div class="flex gap-1 self-start border border-(--border-shelf) rounded-full p-[3px]">
+              <button
+                v-for="m in (['edit', 'preview'] as const)"
+                :key="m"
+                type="button"
+                class="rounded-full px-4 py-1.5 font-mono text-[10px] tracking-[0.14em] transition-colors duration-100 ease-out"
+                :class="
+                  bodyMode === m
+                    ? 'bg-(--bg-folder) text-(--text-accent) font-bold'
+                    : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
+                "
+                @click="bodyMode = m"
               >
-                <button
-                  type="button"
-                  aria-label="刪除這個段落"
-                  class="w-11 h-11 sm:w-6 sm:h-6 flex items-center justify-center text-(--text-accent) opacity-60 hover:opacity-100"
-                  @click="removeSection(i)"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                </button>
-              </div>
+                {{ m === 'edit' ? '編輯' : '預覽' }}
+              </button>
             </div>
+          </BaseField>
+
+          <!-- 預覽用切換而不是並排即時預覽:並排的話每按一個鍵都要重新 parse 整篇，
+               那是所有 Markdown 編輯器都要 debounce 的原因。切換模式時才 parse，
+               問題根本不會發生，而且手機也放得下 -->
+          <BaseTextarea
+            v-if="bodyMode === 'edit'"
+            v-model="body"
+            :rows="20"
+            placeholder="用 Markdown 寫。## 標題、**粗體**、`code`、- 清單、| 表格 |、[連結](/graph)"
+            class="font-mono !text-[13px] !leading-7"
+            @input="touch"
+          />
+          <div
+            v-else
+            class="border border-(--border-shelf) rounded-[5px] bg-(--bg-paper-light) px-4 py-3 min-h-[200px]"
+          >
+            <MarkdownBody v-if="body.trim()" :source="body" />
+            <BaseHint v-else class="block">還沒有內容</BaseHint>
           </div>
 
-          <BaseButton variant="add" type="button" @click="addSection">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            新增段落
-          </BaseButton>
+          <BaseHint class="block leading-5">
+            站內連結用相對路徑（例如 <code class="font-mono">[圖譜](/graph)</code>）會渲染成
+            RouterLink，點下去不會整頁重載；站外連結自動開新分頁。
+          </BaseHint>
         </div>
 
         <!-- 邊註 -->

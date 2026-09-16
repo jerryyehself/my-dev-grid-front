@@ -67,8 +67,18 @@ body {
         color: var(--text-ink-body);
         line-height: 1.8;
         margin-bottom: 1.25rem;
-        text-align: justify;
-        /* 讓段落左右對齊，像實體書一樣工整 */
+        /* 讓段落左右對齊，像實體書一樣工整。
+           只在 640px 以上才套用:窄欄分散對齊會擠出「河道」——中文之間被拉開
+           一大片空白,而且中英混排（例如內文裡的 duplication、abstraction）
+           跟行內程式碼會讓情況更糟,因為那些是不能斷開的整塊。
+           實體書的欄寬本來就夠，手機不是，同一條規則在兩種欄寬下效果相反。 */
+        text-align: left;
+    }
+
+    @media (min-width: 40rem) {
+        .global-page-wrapper p {
+            text-align: justify;
+        }
     }
 
     /* 💻 筆記區的程式碼片段微調 */

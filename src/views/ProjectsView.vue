@@ -150,7 +150,7 @@ watch(
             {{ selected.title }}
           </h2>
 
-          <p v-if="selected.desc" class="text-sm sm:text-[15px] text-(--text-ink-body) leading-relaxed text-justify max-w-2xl mb-6">
+          <p v-if="selected.desc" class="text-sm sm:text-[15px] text-(--text-ink-body) leading-relaxed text-left sm:text-justify max-w-2xl mb-6">
             {{ selected.desc }}
           </p>
 

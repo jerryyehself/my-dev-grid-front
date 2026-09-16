@@ -2,8 +2,9 @@
 // 文章管理清單。依設計稿 artifact MxnbUbQypR2ZQdZugRGxCi 的 ArticleList artboard 實作。
 //
 // 跟編輯頁一樣是「只有視覺、沒有持久化」:資料來自 src/data/articles.ts 的假資料,
-// 「新增文章」與刪除都停用,理由跟編輯頁的「發布」同一個——後端的 Documentation
-// 沒有放內文的欄位,寫入端點也都在 auth:sanctum 後面而登入尚未實作（D-34）。
+// 「新增文章」與刪除都停用,理由跟編輯頁的「發布」同一個——寫入端點都在
+// auth:sanctum 後面,而登入雖然排進 v1（D-34）但還沒做。
+// （內文欄位那個理由 2026-09-16 已經解掉了，見 my-dev-grid PR #53。）
 import { computed, ref } from 'vue'
 import { articles, type Article } from '@/data/articles'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
@@ -52,9 +53,19 @@ const visible = computed(() => {
   })
 })
 
-/** 第三行的摘要。段落數是真的,邊註與關聯沒有就不寫,不用「0 則」佔位。 */
+/**
+ * 第三行的摘要。沒有的東西就不寫,不用「0 則」佔位。
+ *
+ * 原本第一項是「N 個段落」,那是結構化 sections 模型下的數字。改成 Markdown
+ * 之後「段落」不再是可數的實體,改用字數。
+ *
+ * 一度也想顯示小節數,用 extractHeadings() 從標題節點算。拿掉了:那會把整個
+ * Markdown parser（31 KB gzip）拉進這條路由,只為了一個管理清單上的裝飾性數字。
+ * 想準確數小節就需要 parser（用正則會把程式碼區塊裡的 # 也算進去）,
+ * 而這個數字不值得那個代價。
+ */
 function summaryLine(a: Article): string {
-  const parts = [`${a.sections.length} 個段落`]
+  const parts = [`${a.body.length} 字`]
   if (a.margins?.length) parts.push(`${a.margins.length} 則邊註`)
   if (a.relatedProjects?.length) parts.push(`關聯 ${a.relatedProjects.join('、')}`)
   return parts.join(' · ')
@@ -94,11 +105,9 @@ const canWrite = false
       <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-(--text-accent) font-bold">
         尚不能新增或刪除
       </span>
-      ——後端的
-      <code class="font-mono text-[11.5px]">Documentation</code>
-      沒有放內文的欄位，寫入端點也都在
+      ——寫入端點都在
       <code class="font-mono text-[11.5px]">auth:sanctum</code>
-      後面而登入尚未實作。這頁目前只做視覺與篩選。
+      後面，而登入尚未實作。這頁目前只做視覺與篩選。
     </p>
 
     <!-- 篩選與搜尋 -->
