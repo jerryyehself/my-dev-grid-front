@@ -70,7 +70,7 @@ function render(node: MdNode): VNode[] {
       return [h('span', node.value ?? '')]
 
     case 'paragraph':
-      return [h('p', { class: 'text-[15px] leading-8 text-(--text-ink-body) text-justify' }, kids(node))]
+      return [h('p', { class: 'text-[15px] leading-8 text-(--text-ink-body) text-left sm:text-justify' }, kids(node))]
 
     case 'heading': {
       // 沿用文章頁既有的 h3 樣式:accent 色的 // 前綴加粗體標題。

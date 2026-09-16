@@ -124,7 +124,7 @@ const goToArticle = (id: string) => {
           >
             {{ article.title }}
           </h3>
-          <p class="text-(--text-ink-body) text-sm leading-relaxed text-justify max-w-[620px]">
+          <p class="text-(--text-ink-body) text-sm leading-relaxed text-left sm:text-justify max-w-[620px]">
             {{ article.summary }}
           </p>
         </article>
@@ -174,7 +174,7 @@ const goToArticle = (id: string) => {
             <span class="text-(--text-accent) font-bold">// {{ article.tags.join(' / ') }}</span>
           </div>
           <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">{{ article.title }}</h3>
-          <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-justify max-w-[700px]">
+          <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-left sm:text-justify max-w-[700px]">
             {{ article.summary }}
           </p>
         </article>
