@@ -130,3 +130,100 @@ export function storageTargetOf(family: EntityFamily): string {
   if (family === 'implementation') return 'documentation_implementation（帶 relation_id）'
   return 'entity_relations（同型別，不走 pivot）'
 }
+
+/* ------------------------------------------------------------------ *
+ * 本體論詳情頁（規格「本體論編輯規格」第 4 步）
+ *
+ * 上面那批是**清單**，給編輯器的下拉選單用；下面這批是**單筆詳情**，欄位多很多，
+ * 而且只有 show 端點才有——`children_count` 這類計數是 `whenCounted`，清單端點
+ * 沒有跑 `loadCount()` 就整個不會出現（不是 0，是 key 不存在）。所以型別上全部
+ * 標成選填，呼叫端拿 `?? 0` 收尾，不要假設它一定在。
+ * ------------------------------------------------------------------ */
+
+/** 詳情頁要的那一排計數。三族實體分開給，因為一個 scope 實際上只會有其中一族。 */
+export interface ScopeCounts {
+  children_count?: number
+  siblings_count?: number
+  subject_of_count?: number
+  object_of_count?: number
+  documentations_count?: number
+  techniques_count?: number
+  implementations_count?: number
+  entities_count?: number
+}
+
+/**
+ * 述詞定義。`subject` / `object` 是**Scope 的 id**，不是巢狀物件——
+ * 後端刻意只給 id（`optional($this->subject)->id`），所以名字要自己用
+ * `fetchScopes()` 的清單查。別在這裡假裝它是物件。
+ */
+export interface RelationSummaryDto {
+  id: number
+  name: string
+  full_call_number: string
+  note: string | null
+  reverse_id: number | null
+  subject: number | null
+  object: number | null
+}
+
+export interface ScopeDetailDto extends ScopeCounts {
+  id: number
+  name: string
+  class_number: string
+  call_number: string
+  parent_class: number | null
+  full_call_number: string
+  comment: string | null
+  note: string | null
+  parent?: ScopeDto | null
+  children?: ScopeDto[]
+  /** **後端已經把自己排除掉了**，前端不要再濾一次，也不要把自己補回去。 */
+  siblings?: ScopeDto[]
+  subject_of?: RelationSummaryDto[]
+  object_of?: RelationSummaryDto[]
+}
+
+export interface RelationDetailDto extends RelationSummaryDto {
+  class_number: string
+  call_number: string
+  reverse: { id: number; name: string } | null
+  is_referenced: boolean
+  /** 被自己的邊鎖住（`self`）還是被反向那條的邊鎖住（`reverse`）。 */
+  referenced_via: 'self' | 'reverse' | null
+  locked_fields: string[]
+  own_edges_count: number
+  reverse_edges_count: number
+}
+
+/** 一條邊。四張連結表正規化成同一個形狀，`source` 說它來自哪一張。 */
+export interface EdgeDto {
+  subject_type: string
+  subject_id: number
+  subject_title: string
+  object_type: string
+  object_id: number
+  object_title: string
+  source: string
+}
+
+/** Laravel paginator 的外層，只取畫面真的會用到的欄位。 */
+export interface EdgePage {
+  data: EdgeDto[]
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+}
+
+export function fetchScope(id: number): Promise<ScopeDetailDto> {
+  return apiGet<ScopeDetailDto>(`/scopes/${id}`)
+}
+
+export function fetchRelation(id: number): Promise<RelationDetailDto> {
+  return apiGet<RelationDetailDto>(`/relations/${id}`)
+}
+
+export function fetchRelationEdges(id: number, page = 1, perPage = 25): Promise<EdgePage> {
+  return apiGet<EdgePage>(`/relations/${id}/edges?page=${page}&per_page=${perPage}`)
+}
