@@ -93,6 +93,71 @@ const router = createRouter({
       },
     },
     {
+      // 本體論詳情頁（規格「本體論編輯規格」第 4 步）。前綴 `/ontology` 是這次新開的，
+      // 站上其他路由都是單層（/articles、/projects、/graph），沒有前綴慣例可循——
+      // 分成兩層是因為本體論後面還會長出清單與編輯頁（規格第 6、8 步），
+      // 現在不分層之後就得把三種頁面平鋪在根目錄。
+      //
+      // 一覽是規格第 6 步補上的。在它之前，詳情頁只能用網址直接開，站上沒有任何
+      // 連結指進來——那是規格的順序（先詳情後清單），現在入口補上了。
+      path: '/ontology/scopes',
+      name: 'ontology-scopes',
+      component: () => import('@/views/OntologyScopesView.vue'),
+      meta: {
+        tag: 'Ontology',
+        title: '分類一覽',
+        subtitle: '頂層分類與其子分類',
+        hideHeader: true,
+      },
+    },
+    {
+      // 排在 `/ontology/scopes/:id` 前面。跟上面 `/articles/manage` 那條註解是同一個
+      // 理由：靜態片段本來就排在動態片段之前，順序不影響比對結果，但排在前面才
+      // 讀得出「new 不是某個分類的 id」。
+      path: '/ontology/scopes/new',
+      name: 'ontology-scope-new',
+      component: () => import('@/views/OntologyScopeEditView.vue'),
+      meta: {
+        tag: 'Ontology',
+        title: '新增分類',
+        subtitle: '選一個頂層分類當父層',
+        hideHeader: true,
+      },
+    },
+    {
+      path: '/ontology/scopes/:id',
+      name: 'ontology-scope',
+      component: () => import('@/views/OntologyScopeDetailView.vue'),
+      meta: {
+        tag: 'Ontology',
+        title: '分類詳情',
+        subtitle: '子類、兄弟、述詞定義與實體計數',
+        hideHeader: true,
+      },
+    },
+    {
+      path: '/ontology/scopes/:id/edit',
+      name: 'ontology-scope-edit',
+      component: () => import('@/views/OntologyScopeEditView.vue'),
+      meta: {
+        tag: 'Ontology',
+        title: '編輯分類',
+        subtitle: '父類、子類號、名稱與說明',
+        hideHeader: true,
+      },
+    },
+    {
+      path: '/ontology/relations/:id',
+      name: 'ontology-relation',
+      component: () => import('@/views/OntologyRelationDetailView.vue'),
+      meta: {
+        tag: 'Ontology',
+        title: '述詞詳情',
+        subtitle: '使用這個述詞的邊，以及它為什麼被鎖定',
+        hideHeader: true,
+      },
+    },
+    {
       path: '/graph',
       name: 'graph',
       component: () => import('@/views/GraphPocView.vue'),
