@@ -9,6 +9,7 @@
  */
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -82,13 +83,17 @@ function familyDot(fullCallNumber: string | undefined): string {
   <BaseLoadingBlock v-else-if="!scope" height="220px">LOADING</BaseLoadingBlock>
 
   <div v-else class="w-full">
-    <!-- 麵包屑。只連到「確實存在的頁面」——本體論一覽（規格第 6 步）還沒做，
-         所以那一層是純文字，不是一個連到 404 的連結。 -->
+    <!-- 麵包屑。只連到「確實存在的頁面」——「本體論」那一層原本是純文字，因為
+         一覽（規格第 6 步）還沒做；第 6 步做完之後它就是一個真的連結了。 -->
     <div
       class="mb-5 flex flex-wrap items-center gap-2 font-mono text-[11px] text-(--text-ink-muted)"
     >
       <span class="inline-block h-2 w-2 rounded-full" :class="familyDot(scope.full_call_number)" />
-      <span>本體論</span>
+      <router-link
+        :to="{ name: 'ontology-scopes' }"
+        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+        >本體論</router-link
+      >
       <template v-if="scope.parent">
         <span>/</span>
         <router-link
@@ -112,6 +117,12 @@ function familyDot(fullCallNumber: string | undefined): string {
       <h1 class="text-2xl font-bold tracking-tight text-(--text-ink-main) sm:text-3xl">
         {{ scope.name }}
       </h1>
+      <router-link
+        :to="{ name: 'ontology-scope-edit', params: { id: scope.id } }"
+        class="ml-auto self-center"
+      >
+        <BaseButton variant="primary">編輯</BaseButton>
+      </router-link>
     </div>
 
     <!-- 用 div 不是 p，是為了閃開 base.css 的 `.global-page-wrapper p { text-align: justify }`
