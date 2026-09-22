@@ -2,8 +2,11 @@
 // 文章編輯頁。D-56（登入）落地後，title/body/分類號（type）/Technique與
 // Implementation 關聯/發布狀態這幾項後端真的有欄位撐著的東西改成真的存讀。
 //
-// summary/intro/margins（邊註）/純標籤/文章對文章關聯這五項，後端 documentations
-// 資料表完全沒有對應欄位（entity_relations 表存在，但 DocumentationController
+// summary/intro（D-57）：不開獨立欄位，也不開獨立輸入框——內容本來就該寫在
+// Body 的 Markdown 裡，用格式帶（例如第一段當作 intro），不是另外存一份。
+//
+// margins（邊註）/純標籤/文章對文章關聯這三項，後端 documentations 資料表
+// 完全沒有對應欄位（entity_relations 表存在，但 DocumentationController
 // 沒有 sync 邏輯，文章對文章連結目前寫不進去）——刻意留在本地狀態、不送進
 // payload，不假裝存得住，理由跟做法見下面「存檔」那段與畫面上的說明文字。
 //
@@ -64,8 +67,6 @@ const isEditing = computed(() => editingId.value !== null)
 
 // --- 可編輯的本地狀態 -------------------------------------------------------
 const title = ref('')
-const summary = ref('')
-const intro = ref('')
 const body = ref('')
 const bodyMode = ref<'edit' | 'preview'>('edit')
 const margins = ref<ArticleMarginNote[]>([])
@@ -123,10 +124,8 @@ async function load() {
       scopeCall.value = '0030'
       links.value = []
     }
-    // summary/intro/margins/純標籤：後端沒有對應欄位可讀，編輯既有文章時
-    // 這幾項永遠是空的——不是漏讀，是真的沒有東西可以讀回來。
-    summary.value = ''
-    intro.value = ''
+    // margins/純標籤：後端沒有對應欄位可讀，編輯既有文章時這幾項永遠是空的
+    // ——不是漏讀，是真的沒有東西可以讀回來。
     margins.value = []
     tags.value = []
     dirty.value = false
@@ -236,8 +235,9 @@ function removeLink(link: DraftLink) {
 
 // --- 存檔 ------------------------------------------------------------------
 // 只有 title/body/分類號/technique·implementation 關聯/發布狀態送進 payload——
-// summary/intro/margins/純標籤/文章對文章關聯後端沒有對應欄位或還沒接線
-// （entity_relations 表存在，但 controller 沒有 sync 邏輯），不假裝存得住。
+// margins/純標籤/文章對文章關聯後端沒有對應欄位或還沒接線（entity_relations
+// 表存在，但 controller 沒有 sync 邏輯），不假裝存得住；summary/intro 不算在
+// 這裡面，因為 D-57 之後它們本來就不是獨立欄位，內容已經在 body 裡了。
 const canSave = computed(
   () => !saving.value && title.value.trim() !== '' && body.value.trim() !== '',
 )
@@ -382,8 +382,8 @@ const publish = () => saveWithStatus(true)
         部分欄位還沒接後端
       </span>
       ——Title／內文／分類號／Technique・Implementation 圖譜關聯／發布狀態已經真的會存進資料庫；
-      Summary／Intro／邊註／純標籤／跟其他文章的關聯（entity_relations 表存在，但寫入邏輯還沒接）
-      這五項後端目前沒有對應欄位，先留在這頁本地讓你打字用，重新整理或離開這頁就會消失。
+      邊註／純標籤／跟其他文章的關聯（entity_relations 表存在，但寫入邏輯還沒接）
+      這三項後端目前沒有對應欄位，先留在這頁本地讓你打字用，重新整理或離開這頁就會消失。
     </p>
 
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-7 lg:gap-9 items-start mt-7">
@@ -392,14 +392,6 @@ const publish = () => saveWithStatus(true)
         <BaseField label="Title 標題">
           <BaseInput v-model="title" class="font-serif px-3.5 py-3 text-xl font-bold" @input="touch" />
           <BaseHint v-if="fieldErrors.title" class="block text-(--text-accent)">{{ fieldErrors.title }}</BaseHint>
-        </BaseField>
-
-        <BaseField label="Summary 摘要（本地暫存）" :hint="`清單頁顯示這一段 · ${summary.length} 字`">
-          <BaseTextarea v-model="summary" class="text-sm leading-7" @input="touch" />
-        </BaseField>
-
-        <BaseField label="Intro 引言（本地暫存）" hint="文章頁標題下方的開場">
-          <BaseTextarea v-model="intro" class="font-serif text-[15px] leading-7" @input="touch" />
         </BaseField>
 
         <!-- 內文。從「一堆段落」換成一個 Markdown 欄位（D-46）。
@@ -447,6 +439,10 @@ const publish = () => saveWithStatus(true)
           </div>
 
           <BaseHint v-if="fieldErrors.body" class="block text-(--text-accent)">{{ fieldErrors.body }}</BaseHint>
+          <BaseHint class="block leading-5">
+            不另外開 Summary／Intro 欄位（D-57）：第一段就是清單頁摘要跟文章頁開場，
+            直接寫在這裡。
+          </BaseHint>
           <BaseHint class="block leading-5">
             站內連結用相對路徑（例如 <code class="font-mono">[圖譜](/graph)</code>）會渲染成
             RouterLink，點下去不會整頁重載；站外連結自動開新分頁。
