@@ -31,7 +31,8 @@
         </router-link>
       </div>
 
-      <div class="hidden md:block">
+      <div class="hidden md:flex items-center gap-3">
+        <AuthStatus />
         <ThemeToggle />
       </div>
 
@@ -73,7 +74,8 @@
       >
         {{ item.name }}
       </router-link>
-      <div class="pt-2 mt-1 border-t border-black/20">
+      <div class="pt-2 mt-1 border-t border-black/20 flex items-center justify-between">
+        <AuthStatus />
         <ThemeToggle />
       </div>
     </div>
@@ -84,6 +86,7 @@
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import AuthStatus from '@/components/AuthStatus.vue'
 
 // ⚡ 引入當前路由，用於精準驅動 Active 色條的動態樣式
 const route = useRoute()
