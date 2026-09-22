@@ -88,11 +88,13 @@ describe('createScope / updateScope', () => {
     }
   })
 
-  it('非 422 的失敗仍然是一般 Error，不會被誤當成驗證失敗', async () => {
-    mockFetch.mockResolvedValue(jsonResponse({ message: 'Unauthenticated.' }, 401))
+  it('非 422/401 的失敗仍然是一般 Error，不會被誤當成驗證失敗', async () => {
+    // 401 現在有自己專門的處理（client.ts 的 handleUnauthorized，
+    // decision-register.md D-56 上線後：導去登入頁，見 client.spec.ts），
+    // 不再落到這條「一般 Error」路徑，這裡改用 500 驗證同一件事：
+    // 非 422、也不是登入過期，一樣不能被歸進欄位錯誤。
+    mockFetch.mockResolvedValue(jsonResponse({ message: 'Server Error.' }, 500))
 
-    // 寫入端點在 auth:sanctum 後面,而登入還沒做(D-34／D-49),所以 401 是
-    // 目前按下儲存**實際會拿到**的回應。它不能被歸進欄位錯誤。
     const promise = createScope({
       parent_class: 3,
       call_number: '',
@@ -100,7 +102,7 @@ describe('createScope / updateScope', () => {
       comment: '說明',
       note: '',
     })
-    await expect(promise).rejects.toThrow('401')
+    await expect(promise).rejects.toThrow('500')
     await expect(promise).rejects.not.toBeInstanceOf(ApiValidationError)
   })
 })

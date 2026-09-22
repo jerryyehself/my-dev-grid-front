@@ -1,9 +1,42 @@
+import { getActivePinia } from 'pinia'
+import { useAuthStore } from '@/stores/useAuthStore'
+import router from '@/router'
+
 // 後端 my-dev-grid（Laravel）的 API base URL，透過 VITE_API_BASE_URL 覆寫；
 // 本地開發預設打 Laravel 內建伺服器的預設埠。
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
 
+/**
+ * Sanctum API token 模式（decision-register.md D-56）：帶
+ * `Authorization: Bearer`，不是 cookie，所以不用 `credentials: 'include'`。
+ * `useAuthStore()` 在一般 component 外的模組層級呼叫也能用——Pinia 在
+ * `app.use(createPinia())` 之後會設一個全域 active instance，這個專案
+ * 只有一個 Pinia instance，不會有拿錯 instance 的問題。
+ *
+ * 先檢查 `getActivePinia()`：這個專案既有的 API 單元測試（例如
+ * `projects.spec.ts`）直接呼叫 `fetchProjects()`，不會先 mount 一個掛了
+ * Pinia 的 app，沒有這層防呆的話 `useAuthStore()` 會直接丟
+ * "no active Pinia" 例外，把本來跟認證無關的測試也弄壞。
+ */
+function authHeaders(): Record<string, string> {
+  if (!getActivePinia()) return {}
+  const token = useAuthStore().token
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+/**
+ * token 過期/被撤銷時後端回 401，統一導去登入頁並帶上原本要去的路徑——
+ * 跟 Triple 後台 `useFetchAPI.js` 既有的 401 處理邏輯是同一個模式。
+ */
+function handleUnauthorized(): never {
+  if (getActivePinia()) useAuthStore().$patch({ token: null, user: null })
+  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+  throw new Error('Unauthorized')
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`)
+  const res = await fetch(`${BASE_URL}${path}`, { headers: authHeaders() })
+  if (res.status === 401) handleUnauthorized()
   if (!res.ok) {
     throw new Error(`API 請求失敗（${res.status}）：${path}`)
   }
@@ -48,9 +81,15 @@ function flattenErrors(errors: Record<string, string[] | string>): Record<string
 async function sendJson<T>(method: 'POST' | 'PUT', path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...authHeaders(),
+    },
     body: JSON.stringify(body),
   })
+
+  if (res.status === 401) handleUnauthorized()
 
   if (res.status === 422) {
     // 422 的 body 一定是 JSON，但真的解析失敗時不要讓它變成看不懂的例外，
