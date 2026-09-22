@@ -47,9 +47,8 @@ describe('authHeaders', () => {
     await apiPost('/scopes', { name: 'x' })
 
     for (const [, init] of mockFetch.mock.calls) {
-      expect((init?.headers as Record<string, string>).Authorization).toBe(
-        'Bearer plain-text-token',
-      )
+      const headers = init?.headers as Record<string, string> | undefined
+      expect(headers?.Authorization).toBe('Bearer plain-text-token')
     }
   })
 })
