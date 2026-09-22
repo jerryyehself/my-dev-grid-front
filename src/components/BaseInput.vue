@@ -13,8 +13,9 @@ withDefaults(
   defineProps<{
     /** default 是有外框的獨立欄位；inline 只有一條底線,用在段落標題那種嵌在卡片裡的欄位。 */
     variant?: 'default' | 'inline'
+    type?: 'text' | 'email' | 'password'
   }>(),
-  { variant: 'default' },
+  { variant: 'default', type: 'text' },
 )
 const model = defineModel<string>({ required: true })
 </script>
@@ -22,7 +23,7 @@ const model = defineModel<string>({ required: true })
 <template>
   <input
     v-model="model"
-    type="text"
+    :type="type"
     :class="[
       'text-(--text-ink-main) placeholder:text-(--text-ink-muted) placeholder:opacity-55',
       'focus:outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_var(--focus-ring)]',

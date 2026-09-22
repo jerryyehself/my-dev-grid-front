@@ -1,9 +1,30 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: {
+        tag: 'Login',
+        title: '登入',
+        subtitle: 'Google／LINE 或 email 備援表單',
+        hideHeader: true,
+      },
+    },
+    {
+      // 後端 TokenSocialAuthController 登入成功後導回這裡（token 放在
+      // URL fragment）。不需要 meta.tag 這類頁面裝飾——使用者只會在這裡
+      // 停留幾百毫秒，掛載完就被導走。
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('@/views/AuthCallbackView.vue'),
+      meta: { hideHeader: true },
+    },
     {
       path: '/',
       name: 'home',
@@ -63,6 +84,9 @@ const router = createRouter({
         subtitle: '文章清單與草稿狀態',
         // 這頁自己畫了表頭與動作列，通用表頭會把同一組標題再顯示一次
         hideHeader: true,
+        // 會看到草稿狀態、連去編輯頁——D-56 token 模式上線後才有意義擋，
+        // 之前沒有登入機制，這條路由本來就沒有真的被保護過。
+        requiresAuth: true,
       },
     },
     {
@@ -90,6 +114,7 @@ const router = createRouter({
         hideHeader: true,
         // 主從式版面：主欄加 340px 側欄，1024px 會擠到側欄沒有呼吸空間
         contentWidth: '1120px',
+        requiresAuth: true,
       },
     },
     {
@@ -122,6 +147,7 @@ const router = createRouter({
         title: '新增分類',
         subtitle: '選一個頂層分類當父層',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
@@ -144,6 +170,7 @@ const router = createRouter({
         title: '編輯分類',
         subtitle: '父類、子類號、名稱與說明',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
@@ -168,6 +195,15 @@ const router = createRouter({
       },
     },
   ],
+})
+
+// Token 是記憶體狀態，開機/整頁重新整理後一定是未登入，這裡只做「有沒有
+// token」的前端層級檢查——真正的權限判斷永遠在後端 Policy（見
+// app/Policies），這道 guard 只是不讓使用者先看到一個註定會 401 的頁面。
+router.beforeEach((to) => {
+  if (to.meta.requiresAuth && !useAuthStore().isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
 })
 
 export default router
