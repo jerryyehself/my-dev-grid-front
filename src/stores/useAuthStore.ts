@@ -19,7 +19,6 @@ interface AuthUser {
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   const user = ref<AuthUser | null>(null)
-  const checked = ref(false)
 
   const isAuthenticated = computed(() => token.value !== null)
 
@@ -27,17 +26,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   function authHeaders(): Record<string, string> {
     return token.value ? { Authorization: `Bearer ${token.value}` } : {}
-  }
-
-  /** 開機時沒有 token 就一定是未登入——沒有 session 可以問後端「我是誰」。 */
-  async function checkAuth() {
-    if (!token.value) {
-      user.value = null
-      checked.value = true
-      return
-    }
-    await fetchCurrentUser()
-    checked.value = true
   }
 
   async function fetchCurrentUser() {
@@ -92,9 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     token,
     user,
-    checked,
     isAuthenticated,
-    checkAuth,
     login,
     logout,
     setTokenFromOAuthCallback,
