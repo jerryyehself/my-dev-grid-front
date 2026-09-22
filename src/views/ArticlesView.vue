@@ -52,8 +52,9 @@ const goToArticle = (id: string) => {
 <template>
   <div class="w-full">
     <div class="flex items-center justify-between gap-4 mb-6">
-      <!-- 管理頁入口。跟文章頁的「編輯」一樣，目前沒有登入機制（D-34 排進 v1 但未實作），
-           所以對任何訪客都看得到；等 auth 做起來之後這裡要改成只對已登入者顯示。 -->
+      <!-- 管理頁入口。D-56 落地後 /articles/manage 本身已經是 requiresAuth 路由，
+           未登入點進去會被導去登入頁——這裡刻意不因為登入狀態隱藏連結本身,
+           見到「管理」但點進去先被要求登入,是常見且合理的模式,不是假訊號。 -->
       <router-link
         :to="{ name: 'article-manage' }"
         class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"

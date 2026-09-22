@@ -112,3 +112,12 @@ export function apiPost<T>(path: string, body: unknown): Promise<T> {
 export function apiPut<T>(path: string, body: unknown): Promise<T> {
   return sendJson<T>('PUT', path, body)
 }
+
+export async function apiDelete<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers: authHeaders() })
+  if (res.status === 401) handleUnauthorized()
+  if (!res.ok) {
+    throw new Error(`API 請求失敗（${res.status}）：DELETE ${path}`)
+  }
+  return res.json() as Promise<T>
+}
