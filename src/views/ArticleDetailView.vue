@@ -2,8 +2,9 @@
   <div v-if="article" class="w-full">
     <div class="flex items-center justify-between gap-4 mb-7">
       <BackToArticlesLink class="inline-flex" />
-      <!-- 編輯頁的入口。目前還沒有登入機制（D-34 排進 v1 但未實作），所以這個連結
-           對任何訪客都看得到；等 auth 做起來之後這裡要改成只對已登入者顯示。 -->
+      <!-- 編輯頁的入口。D-56 落地後 /articles/:id/edit 是 requiresAuth 路由，
+           未登入點進去會被導去登入頁——連結本身不因登入狀態隱藏，見 ArticlesView.vue
+           同一類連結的說明。 -->
       <router-link
         :to="{ name: 'article-editor', params: { id: article.id } }"
         class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"

@@ -90,6 +90,23 @@ const router = createRouter({
       },
     },
     {
+      // 排在 /articles/:id 前面，跟 /articles/manage 同一個理由：靜態片段
+      // 本來就排在動態片段之前，但排在前面才讀得出「new 不是某篇文章的 id」。
+      // 跟編輯頁共用同一個元件（ArticleEditorView 用 route.params.id 有沒有
+      // 值判斷新增／編輯），比照 /ontology/scopes/new 已經在用的模式。
+      path: '/articles/new',
+      name: 'article-new',
+      component: () => import('@/views/ArticleEditorView.vue'),
+      meta: {
+        tag: 'Article Editor',
+        title: '新增文章',
+        subtitle: '內文用 Markdown',
+        hideHeader: true,
+        contentWidth: '1120px',
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/articles/:id',
       name: 'article-detail',
       component: () => import('@/views/ArticleDetailView.vue'),

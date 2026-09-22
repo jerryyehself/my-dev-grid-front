@@ -1,36 +1,46 @@
 <script setup lang="ts">
-// 文章編輯頁。目前是「只有視覺、沒有持久化」的狀態,理由寫在下面的 canSave 附近。
+// 文章編輯頁。D-56（登入）落地後，title/body/分類號（type）/Technique與
+// Implementation 關聯/發布狀態這幾項後端真的有欄位撐著的東西改成真的存讀。
 //
-// 內文是一個 Markdown 欄位（D-46），不是結構化的段落陣列——後者讓內文只能是
-// 純文字，粗體/程式碼/清單/連結一個都放不了。
+// summary/intro/margins（邊註）/純標籤/文章對文章關聯這五項，後端 documentations
+// 資料表完全沒有對應欄位（entity_relations 表存在，但 DocumentationController
+// 沒有 sync 邏輯，文章對文章連結目前寫不進去）——刻意留在本地狀態、不送進
+// payload，不假裝存得住，理由跟做法見下面「存檔」那段與畫面上的說明文字。
 //
-// 本體論上的定位（D-40）：一篇文章就是一筆 Documentation,scope 掛 post（0030）,
-// 而不是現有那 5 筆的 sourcesite（0010,外部官方文件）。所有圖譜連結都必須帶述詞,
-// 因為三張 pivot 表與 entity_relations 都有 relation_id——只存對象不存述詞,
-// 這個圖譜就退化成一般的標籤系統了。
+// 本體論上的定位（D-40）：一篇文章就是一筆 Documentation，預設分類號掛
+// post（0030），而不是現有那 5 筆的 sourcesite（0010，外部官方文件）——但
+// 這頁的分類號選單本來就開放選任何 0000 底下的子分類，不是寫死成 post。
+// 所有圖譜連結都必須帶述詞，因為三張 pivot 表與 entity_relations 都有
+// relation_id——只存對象不存述詞，這個圖譜就退化成一般的標籤系統了。
 import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import BaseButton from '@/components/BaseButton.vue'
+import BaseCard from '@/components/BaseCard.vue'
+import BaseEyebrow from '@/components/BaseEyebrow.vue'
+import BaseField from '@/components/BaseField.vue'
 import BaseHint from '@/components/BaseHint.vue'
-import { useRoute } from 'vue-router'
-import { articles, type Article, type ArticleMarginNote } from '@/data/articles'
+import BaseInput from '@/components/BaseInput.vue'
+import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import BaseTextarea from '@/components/BaseTextarea.vue'
+import GraphLinkPicker from '@/components/article-editor/GraphLinkPicker.vue'
+import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
+import { ApiValidationError } from '@/api/client'
+import { type ArticleMarginNote } from '@/data/articles'
+import { createArticle, fetchArticle, updateArticle, type ArticleRelationDto } from '@/api/articles'
 import {
   FAMILY_COLOR,
+  fetchRelations,
   fetchScopes,
   fetchTechniqueOptions,
   storageTargetOf,
   type EntityFamily,
   type EntityOption,
+  type RelationDto,
   type ScopeDto,
 } from '@/api/ontology'
-import BaseButton from '@/components/BaseButton.vue'
-import BaseCard from '@/components/BaseCard.vue'
-import BaseEyebrow from '@/components/BaseEyebrow.vue'
-import BaseField from '@/components/BaseField.vue'
-import BaseInput from '@/components/BaseInput.vue'
-import BaseTextarea from '@/components/BaseTextarea.vue'
-import GraphLinkPicker from '@/components/article-editor/GraphLinkPicker.vue'
-import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 
 const route = useRoute()
+const router = useRouter()
 
 /** 編輯中的一條圖譜關聯。族 + 實體 + 述詞 + 反向述詞,四個都齊了才是一條合法的邊。 */
 interface DraftLink {
@@ -46,13 +56,13 @@ const FAMILY_HEADING: Record<EntityFamily, string> = {
   documentation: '→ 其他文章（同型別）',
 }
 
-const source = computed<Article | undefined>(() =>
-  articles.find((a) => a.id === String(route.params.id)),
-)
+const editingId = computed(() => {
+  const id = route.params.id
+  return typeof id === 'string' ? Number(id) : null
+})
+const isEditing = computed(() => editingId.value !== null)
 
 // --- 可編輯的本地狀態 -------------------------------------------------------
-// 直接改 articles 陣列裡的物件會污染這份共用假資料（同一個 module instance 會被
-// 清單頁與詳細頁讀到）,所以進來就先複製一份,離開頁面就丟掉。
 const title = ref('')
 const summary = ref('')
 const intro = ref('')
@@ -64,22 +74,69 @@ const links = ref<DraftLink[]>([])
 const scopeCall = ref('0030')
 const published = ref(false)
 const dirty = ref(false)
+const createdAt = ref<string | null>(null)
 
-watch(
-  source,
-  (a) => {
-    if (!a) return
-    title.value = a.title
-    summary.value = a.summary
-    intro.value = a.intro
-    body.value = a.body
-    margins.value = (a.margins ?? []).map((m) => ({ ...m }))
-    tags.value = [...a.tags]
-    links.value = []
+const ready = ref(false)
+const loadError = ref(false)
+const saving = ref(false)
+const saveError = ref('')
+const fieldErrors = ref<Record<string, string>>({})
+
+let allRelations: RelationDto[] = []
+
+function toDraftLink(
+  family: 'technique' | 'implementation',
+  item: ArticleRelationDto,
+): DraftLink {
+  const rel = allRelations.find((r) => r.id === item.relation_id)
+  const reverseRel = rel?.reverse_id ? allRelations.find((r) => r.id === rel.reverse_id) : null
+  return {
+    family,
+    entity: { id: item.id, title: item.title, scope: null },
+    predicate: rel?.name ?? '（找不到述詞）',
+    reverse: reverseRel?.name ?? '（找不到反向述詞）',
+  }
+}
+
+async function load() {
+  loadError.value = false
+  ready.value = false
+  try {
+    allRelations = await fetchRelations()
+
+    if (isEditing.value) {
+      const a = await fetchArticle(editingId.value!)
+      title.value = a.title
+      body.value = a.body ?? ''
+      published.value = a.status === 1
+      createdAt.value = a.creation_date ?? a.created_at
+      scopeCall.value = a.scope?.full_call_number ?? '0030'
+      links.value = [
+        ...a.techniques.map((t) => toDraftLink('technique', t)),
+        ...a.implementations.map((t) => toDraftLink('implementation', t)),
+      ]
+    } else {
+      title.value = ''
+      body.value = ''
+      published.value = false
+      createdAt.value = null
+      scopeCall.value = '0030'
+      links.value = []
+    }
+    // summary/intro/margins/純標籤：後端沒有對應欄位可讀，編輯既有文章時
+    // 這幾項永遠是空的——不是漏讀，是真的沒有東西可以讀回來。
+    summary.value = ''
+    intro.value = ''
+    margins.value = []
+    tags.value = []
     dirty.value = false
-  },
-  { immediate: true },
-)
+    ready.value = true
+  } catch {
+    loadError.value = true
+  }
+}
+
+watch(() => route.fullPath, load, { immediate: true })
 
 function touch() {
   dirty.value = true
@@ -178,26 +235,85 @@ function removeLink(link: DraftLink) {
 }
 
 // --- 存檔 ------------------------------------------------------------------
-// 存不了,所以按鈕做成停用而不是做成可按但沒反應。
-//
-// 2026-09-16 更新:原本這裡有兩個理由,其中一個已經解掉了——後端的 documentations
-// 已經有 body 欄位（my-dev-grid PR #53），內文有地方可以去了。剩下的唯一阻礙是
-// 寫入端點全部在 auth:sanctum 後面,而登入雖然排進 v1（D-34）但還沒做。
-//
-// 畫成可按的樣子會是這個專案自己禁止的假訊號——跟當初拿掉導覽列那顆會呼吸的
-// 圓點是同一類問題:看起來代表某個狀態,實際上背後什麼都沒有。
-const canSave = false
+// 只有 title/body/分類號/technique·implementation 關聯/發布狀態送進 payload——
+// summary/intro/margins/純標籤/文章對文章關聯後端沒有對應欄位或還沒接線
+// （entity_relations 表存在，但 controller 沒有 sync 邏輯），不假裝存得住。
+const canSave = computed(
+  () => !saving.value && title.value.trim() !== '' && body.value.trim() !== '',
+)
+
+async function saveWithStatus(statusPublished: boolean) {
+  if (!canSave.value) return
+  saving.value = true
+  saveError.value = ''
+  fieldErrors.value = {}
+
+  const type = docScopes.value.find((s) => s.full_call_number === scopeCall.value)?.id
+  if (!type) {
+    saveError.value = '分類號清單還沒載入完成，稍等一下再試'
+    saving.value = false
+    return
+  }
+
+  const byName = new Map(allRelations.map((r) => [r.name, r.id]))
+  const graphLinks = links.value.filter((l) => l.family !== 'documentation')
+  const techniques = graphLinks
+    .filter((l) => l.family === 'technique')
+    .map((l) => ({ id: l.entity.id, relation_id: byName.get(l.predicate)! }))
+  const implementations = graphLinks
+    .filter((l) => l.family === 'implementation')
+    .map((l) => ({ id: l.entity.id, relation_id: byName.get(l.predicate)! }))
+
+  try {
+    const res = isEditing.value
+      ? await updateArticle(editingId.value!, {
+          type,
+          title: title.value.trim(),
+          body: body.value,
+          status: statusPublished ? 1 : 0,
+          techniques,
+          implementations,
+        })
+      : await createArticle({
+          type,
+          title: title.value.trim(),
+          body: body.value,
+          status: statusPublished ? 1 : 0,
+          techniques,
+          implementations,
+        })
+    published.value = statusPublished
+    dirty.value = false
+    if (!isEditing.value) {
+      router.push({ name: 'article-editor', params: { id: res.data.id } })
+    }
+  } catch (error) {
+    if (error instanceof ApiValidationError) {
+      fieldErrors.value = error.fieldErrors
+    } else {
+      saveError.value = error instanceof Error ? error.message : '儲存失敗'
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+const saveDraft = () => saveWithStatus(false)
+const publish = () => saveWithStatus(true)
 </script>
 
 <template>
-  <div v-if="source" class="w-full">
+  <BaseLoadingBlock v-if="loadError" height="220px" tone="error">讀不到這篇文章</BaseLoadingBlock>
+  <BaseLoadingBlock v-else-if="!ready" height="220px">LOADING</BaseLoadingBlock>
+
+  <div v-else class="w-full">
     <!-- 表頭 -->
     <div class="flex flex-col gap-2 pb-3.5">
       <!-- 設計稿裡這一行是 .lbl 唯一一處 letter-spacing:0.2em 的行內覆寫（頁首比欄位標題鬆一點），
            用 ! 是因為字距跟元件的預設是同一個 property，不加的話誰贏取決於 Tailwind 產生 CSS 的順序 -->
       <BaseEyebrow class="!tracking-[0.2em]">Article Editor</BaseEyebrow>
       <h1 class="font-serif text-[26px] sm:text-[34px] font-extrabold tracking-tight text-(--text-ink-main)">
-        編輯文章
+        {{ isEditing ? '編輯文章' : '新增文章' }}
       </h1>
       <p class="text-[13.5px] sm:text-sm text-(--text-ink-muted)">內文用 Markdown，邊註可以增減</p>
     </div>
@@ -211,7 +327,7 @@ const canSave = false
         <span
           class="font-mono text-xs text-(--text-ink-main) border-b border-dashed border-(--border-shelf) pb-0.5 truncate"
         >
-          {{ source.id }}
+          {{ isEditing ? editingId : '新文章' }}
         </span>
         <span class="inline-flex items-center gap-1.5">
           <span
@@ -225,7 +341,8 @@ const canSave = false
       </div>
       <div class="flex items-center gap-2">
         <router-link
-          :to="{ name: 'article-detail', params: { id: source.id } }"
+          v-if="isEditing"
+          :to="{ name: 'article-detail', params: { id: editingId! } }"
           class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--border-shelf) px-4 py-2 text-(--text-ink-body) hover:text-(--text-ink-main) transition-colors duration-100 ease-out"
         >
           預覽
@@ -234,33 +351,39 @@ const canSave = false
           type="button"
           :disabled="!canSave"
           class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--border-shelf) px-4 py-2 text-(--text-ink-body) disabled:opacity-35 disabled:cursor-not-allowed"
+          @click="saveDraft"
         >
-          存草稿
+          {{ saving ? '儲存中…' : '存草稿' }}
         </button>
         <button
           type="button"
           :disabled="!canSave"
           class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--text-ink-main) bg-(--text-ink-main) px-4 py-2 font-bold text-(--bg-paper-light) disabled:opacity-35 disabled:cursor-not-allowed"
+          @click="publish"
         >
-          發布
+          {{ saving ? '儲存中…' : '發布' }}
         </button>
       </div>
     </div>
 
-    <!-- 為什麼兩顆按鈕是停用的。不寫出來的話,停用就只是個沒有解釋的死路 -->
+    <p
+      v-if="saveError"
+      class="border border-(--text-accent) bg-(--bg-folder) px-4 py-3 mt-5 text-[12.5px] leading-6 text-(--text-accent)"
+      role="alert"
+    >
+      {{ saveError }}
+    </p>
+
+    <!-- 誠實揭露哪些欄位真的會存、哪些還不會，不是免責聲明 -->
     <p
       class="border border-dashed border-(--border-shelf) rounded-[6px] bg-(--bg-folder) px-4 py-3 mt-5 text-[12.5px] leading-6 text-(--text-ink-body)"
     >
       <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-(--text-accent) font-bold">
-        尚不能儲存
+        部分欄位還沒接後端
       </span>
-      ——後端的
-      <code class="font-mono text-[11.5px]">documentations</code>
-      已經有
-      <code class="font-mono text-[11.5px]">body</code>
-      欄位，內文有地方可以去了；卡在寫入端點都在
-      <code class="font-mono text-[11.5px]">auth:sanctum</code>
-      後面而登入尚未實作。這頁目前只做視覺與互動，改動不會被保存。
+      ——Title／內文／分類號／Technique・Implementation 圖譜關聯／發布狀態已經真的會存進資料庫；
+      Summary／Intro／邊註／純標籤／跟其他文章的關聯（entity_relations 表存在，但寫入邏輯還沒接）
+      這五項後端目前沒有對應欄位，先留在這頁本地讓你打字用，重新整理或離開這頁就會消失。
     </p>
 
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-7 lg:gap-9 items-start mt-7">
@@ -268,13 +391,14 @@ const canSave = false
       <div class="flex flex-col gap-6 min-w-0">
         <BaseField label="Title 標題">
           <BaseInput v-model="title" class="font-serif px-3.5 py-3 text-xl font-bold" @input="touch" />
+          <BaseHint v-if="fieldErrors.title" class="block text-(--text-accent)">{{ fieldErrors.title }}</BaseHint>
         </BaseField>
 
-        <BaseField label="Summary 摘要" :hint="`清單頁顯示這一段 · ${summary.length} 字`">
+        <BaseField label="Summary 摘要（本地暫存）" :hint="`清單頁顯示這一段 · ${summary.length} 字`">
           <BaseTextarea v-model="summary" class="text-sm leading-7" @input="touch" />
         </BaseField>
 
-        <BaseField label="Intro 引言" hint="文章頁標題下方的開場">
+        <BaseField label="Intro 引言（本地暫存）" hint="文章頁標題下方的開場">
           <BaseTextarea v-model="intro" class="font-serif text-[15px] leading-7" @input="touch" />
         </BaseField>
 
@@ -322,6 +446,7 @@ const canSave = false
             <BaseHint v-else class="block">還沒有內容</BaseHint>
           </div>
 
+          <BaseHint v-if="fieldErrors.body" class="block text-(--text-accent)">{{ fieldErrors.body }}</BaseHint>
           <BaseHint class="block leading-5">
             站內連結用相對路徑（例如 <code class="font-mono">[圖譜](/graph)</code>）會渲染成
             RouterLink，點下去不會整頁重載；站外連結自動開新分頁。
@@ -330,7 +455,7 @@ const canSave = false
 
         <!-- 邊註 -->
         <div class="flex flex-col gap-3">
-          <BaseField label="Margins 邊註" hint="顯示在文章右側欄，可留空" />
+          <BaseField label="Margins 邊註（本地暫存）" hint="顯示在文章右側欄，可留空" />
 
           <div
             v-for="(note, i) in margins"
@@ -460,6 +585,7 @@ const canSave = false
           <div v-for="group in groupedLinks" :key="group.family" class="flex flex-col gap-2">
             <BaseHint>
               {{ FAMILY_HEADING[group.family] }}
+              <span v-if="group.family === 'documentation'">（本地暫存，還存不進去）</span>
             </BaseHint>
             <div
               v-for="link in group.items"
@@ -524,7 +650,7 @@ const canSave = false
 
         <!-- 純標籤 -->
         <BaseCard variant="panel" class="gap-3">
-          <BaseEyebrow size="field">純標籤</BaseEyebrow>
+          <BaseEyebrow size="field">純標籤（本地暫存）</BaseEyebrow>
 
           <div class="flex flex-wrap gap-1.5">
             <span
@@ -572,9 +698,9 @@ const canSave = false
         <BaseCard variant="panel" class="gap-3.5">
           <BaseEyebrow size="field">發布資訊</BaseEyebrow>
           <div class="flex flex-col gap-1.5">
-            <BaseHint>日期</BaseHint>
+            <BaseHint>建立日期</BaseHint>
             <div class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-2.5 py-2 font-mono text-[13px] text-(--text-ink-main)">
-              {{ source.date }}
+              {{ createdAt ?? '尚未儲存' }}
             </div>
           </div>
           <div class="flex flex-col gap-1.5">
@@ -595,11 +721,12 @@ const canSave = false
                 {{ opt.label }}
               </button>
             </div>
+            <BaseHint class="block leading-5">
+              這個切換只影響下一次按「存草稿」／「發布」時要送哪個狀態，本身不會單獨觸發存檔。
+            </BaseHint>
           </div>
         </BaseCard>
       </div>
     </div>
   </div>
-
-  <p v-else class="font-mono text-[13px] text-(--text-ink-muted)">找不到這篇文章。</p>
 </template>

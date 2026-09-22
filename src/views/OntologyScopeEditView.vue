@@ -12,10 +12,10 @@
  * 在 `UpdateScopeRequest` 只有 `max:100`。所以必填標示跟著動詞走,不是兩邊都標必填——
  * 那會擋掉後端其實允許的操作(把既有分類的說明清空)。
  *
- * **寫入路徑無法端到端驗證**,規格 §08 已經講明:`store`/`update` 在 `auth:sanctum`
- * 後面,而登入(D-34／D-49)還沒做。本機開發用的是「暫時拿掉 auth:sanctum 但絕不
- * 提交」,後端 15 支 `rejects_unauthenticated_request` 測試會在 CI 擋住誤提交。
- * 也就是說:**這一頁的讀取與驗證邏輯測得到,真正送出去那一步測不到。**
+ * **寫入路徑**:`store`/`update` 在 `auth:sanctum` 後面,登入(D-56,Sanctum API
+ * token)落地後這條路由本身也標了 `requiresAuth`(見 router/index.ts),未登入
+ * 進不到這一頁。後端仍保留 15 支 `rejects_unauthenticated_request` 測試,防的是
+ * 「有 token 但過期/被撤銷」這類 API 層級的誤提交,不是前端這層路由守衛的重複。
  */
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -278,12 +278,6 @@ function cancel() {
           {{ saving ? '儲存中' : '儲存' }}
         </BaseButton>
         <BaseButton variant="ghost" @click="cancel">取消</BaseButton>
-      </div>
-
-      <!-- 誠實揭露,不是免責聲明:寫入端點在 auth:sanctum 後面,而登入還沒做
-           (D-34／D-49)。按下去會 401,這不是這一頁的 bug。 -->
-      <div class="mt-4 text-xs leading-relaxed text-(--text-ink-muted)">
-        寫入需要登入，而登入（D-34／D-49）還沒做——這頁的送出路徑目前無法端到端驗證。
       </div>
     </BaseCard>
   </div>
