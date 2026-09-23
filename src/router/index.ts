@@ -191,6 +191,31 @@ const router = createRouter({
       },
     },
     {
+      path: '/ontology/relations',
+      name: 'ontology-relations',
+      component: () => import('@/views/OntologyRelationsView.vue'),
+      meta: {
+        tag: 'Ontology',
+        title: '述詞一覽',
+        subtitle: '主詞、述詞與受詞，成對可逆',
+        hideHeader: true,
+      },
+    },
+    {
+      // 排在 `/ontology/relations/:id` 前面，跟 `/ontology/scopes/new` 同一個理由：
+      // 靜態片段本來就排在動態片段之前，排在前面才讀得出「new 不是某個述詞的 id」。
+      path: '/ontology/relations/new',
+      name: 'ontology-relation-new',
+      component: () => import('@/views/OntologyRelationEditView.vue'),
+      meta: {
+        tag: 'Ontology',
+        title: '新增述詞',
+        subtitle: '主詞、受詞與述詞名稱',
+        hideHeader: true,
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/ontology/relations/:id',
       name: 'ontology-relation',
       component: () => import('@/views/OntologyRelationDetailView.vue'),
@@ -199,6 +224,18 @@ const router = createRouter({
         title: '述詞詳情',
         subtitle: '使用這個述詞的邊，以及它為什麼被鎖定',
         hideHeader: true,
+      },
+    },
+    {
+      path: '/ontology/relations/:id/edit',
+      name: 'ontology-relation-edit',
+      component: () => import('@/views/OntologyRelationEditView.vue'),
+      meta: {
+        tag: 'Ontology',
+        title: '編輯述詞',
+        subtitle: '被引用後主詞、受詞與名稱會鎖定',
+        hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
