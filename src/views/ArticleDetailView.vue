@@ -32,13 +32,13 @@
         {{ article.title }}
       </h1>
 
-      <p v-if="intro" class="max-w-2xl text-base leading-8 text-(--text-ink-body) mt-4">
+      <p v-if="intro" class="max-w-prose text-base leading-[1.6] text-(--text-ink-body) mt-4">
         {{ intro }}
       </p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-10 items-start">
-      <div>
+      <div class="max-w-prose">
         <MarkdownBody :source="article.body ?? ''" />
 
         <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
