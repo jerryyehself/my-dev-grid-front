@@ -38,6 +38,22 @@
 
 主題色票、字級、動畫的判準見 `.claude/skills/visual-design-language/SKILL.md`。
 
+## 後端串接與登入
+
+打 [`my-dev-grid`](https://github.com/jerryyehself/my-dev-grid)（Laravel）的公開 API（`VITE_API_BASE_URL`，預設 `http://localhost:8000/api`），讀（`index`／`show`）不用登入，寫入用 Sanctum **API token**（`POST /auth/login`，`useAuthStore` 存記憶體，不落 `localStorage`——整頁重新整理就會登出，是刻意的取捨，理由見 `useAuthStore.ts` 的註解）。之所以是 token 模式不是 SPA session cookie，是因為跨 origin、沒有共用根網域可以讓瀏覽器帶 cookie（D-56，`my-dev-grid-skills/docs/decision-register.md`）。
+
+### 管理頁面
+
+這個網站現在是後端本體論資料（`Scope`／`Relation`）跟文章的正式管理介面，取代後端內嵌的舊後台 Triple 只剩下移除前的過渡（D-48，見上述 decision register）：
+
+| 路徑 | 說明 |
+| --- | --- |
+| `/articles/manage`、`/articles/new`、`/articles/:id/edit` | 文章 CRUD，內文是 Markdown（`ArticleEditorView.vue`） |
+| `/ontology/scopes`、`/ontology/scopes/new`、`/ontology/scopes/:id`、`/ontology/scopes/:id/edit` | 階層分類號一覽/詳情/新增/編輯 |
+| `/ontology/relations`、`/ontology/relations/new`、`/ontology/relations/:id`、`/ontology/relations/:id/edit` | 述詞一覽/詳情/新增/編輯。被任何邊引用的述詞，編輯頁裡主詞/受詞/名稱/子類號會鎖成唯讀（只剩備註能改） |
+
+`Technique`／`Implementation`／`Documentation` 這三種實體本身（不是上面的分類/述詞定義）目前完全靠後端 GitHub sync 自動建立，還沒有任何介面能手動編輯，列在 `my-dev-grid-skills` 的 `management-debt-ledger.md` 技術債。
+
 ## 文章內文的渲染
 
 文章內文是 **Markdown 原文**(後端 `documentations.body`),渲染走 `src/components/markdown/MarkdownBody.vue`:`remark` 解析成 mdast,再一個節點對一個 `h()` 呼叫產生 Vue vnode。
