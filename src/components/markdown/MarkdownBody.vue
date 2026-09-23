@@ -70,7 +70,7 @@ function render(node: MdNode): VNode[] {
       return [h('span', node.value ?? '')]
 
     case 'paragraph':
-      return [h('p', { class: 'text-[15px] leading-8 text-(--text-ink-body) text-left sm:text-justify' }, kids(node))]
+      return [h('p', { class: 'text-base leading-[1.6] text-(--text-ink-body) text-left sm:text-justify' }, kids(node))]
 
     case 'heading': {
       // 沿用文章頁既有的 h3 樣式:accent 色的 // 前綴加粗體標題。
@@ -163,7 +163,7 @@ function render(node: MdNode): VNode[] {
         node.checked === null || node.checked === undefined
           ? []
           : [h('input', { type: 'checkbox', checked: node.checked, disabled: true, class: 'mr-2 accent-(--text-accent)' })]
-      return [h('li', { class: 'text-[15px] leading-7 text-(--text-ink-body)' }, [...box, ...kids(node)])]
+      return [h('li', { class: 'text-base leading-[1.6] text-(--text-ink-body)' }, [...box, ...kids(node)])]
     }
 
     case 'blockquote':

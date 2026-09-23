@@ -197,6 +197,43 @@ the current selection is still a valid match (only reset to the first result
 when the selected item actually drops out) — jumping the selection on every
 filter change reads as broken, not helpful.
 
+## Typography — body prose
+
+Long-form running prose (article body, the About page's origin-story
+paragraphs) had been repeating the same class string (`text-[15px]
+leading-8`) at every call site with no shared name and no consistent width
+constraint — the same "the rule never got named, so it drifted" failure
+this file already documents for `BaseEyebrow`/`BaseHint` above. Fixed
+2026-09-23, after user-directed research confirmed the numbers themselves
+needed to change, not just get named:
+
+- **Size**: `text-base` (16px), not `text-[15px]` — readability research is
+  consistent that body copy under 16px reads as too small for sustained
+  reading.
+- **Line height**: `leading-[1.6]`, not `leading-8` (2.0 — well above the
+  1.4–1.6 range WCAG-adjacent guidance cites). The old value wasn't
+  arbitrary: without a width cap, several of these blocks ran 90–100+
+  characters per line, and the oversized line-height was silently
+  compensating for that. Fixing width is the more fundamental fix — a
+  value picked to compensate for a different bug isn't a value worth
+  keeping once that bug is fixed.
+- **Width**: `max-w-prose` (65ch), replacing ad hoc pixel caps
+  (`max-w-[760px]`, `max-w-[620px]`, `max-w-2xl`) that were never derived
+  from the 50–75-character-per-line readability range, just picked to look
+  reasonable. Apply it to the running-text block itself, not necessarily
+  its containing section — a section can stay wider to hold a heading or a
+  non-text element (a diagram, a classification table) at its own width;
+  only the text needs the narrower cap.
+
+Applies to: `MarkdownBody.vue`'s rendered `<p>`/`<li>`, `ArticleDetailView.vue`'s
+intro paragraph and article-body wrapper, `AboutView.vue`'s origin-story
+paragraphs and opening lede. Does **not** apply to captions, eyebrows, or
+short UI labels at smaller sizes (`text-[13px]`/`text-[13.5px]`/`text-[14px]`
+elsewhere in `AboutView.vue`) — those are a different typographic role with
+different constraints, not an oversight to fix the same way. Headline
+typography (Fraunces) and eyebrow/mono labels were evaluated in the same
+research pass and confirmed already correct — no change.
+
 ## Extending the token set
 
 New tokens are sometimes genuinely needed (e.g. a color for the knowledge

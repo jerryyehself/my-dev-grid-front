@@ -43,7 +43,7 @@
       <p class="text-[26px] sm:text-[34px] font-extrabold tracking-tight leading-[1.45] text-(--text-ink-main)">
         簡單講，我是個走在網站工程師路上的圖資人。
       </p>
-      <p class="text-[15px] leading-8 text-(--text-ink-body) max-w-[620px] mx-auto">
+      <p class="text-base leading-[1.6] text-(--text-ink-body) max-w-prose mx-auto">
         這個站不是履歷，是拿自己的技術知識當材料，試著把散落的東西重新編目成看得懂的結構。
       </p>
     </div>
@@ -254,7 +254,7 @@
         這東西是怎麼來的
       </h2>
 
-      <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
+      <div class="max-w-prose space-y-4 text-base leading-[1.6] text-(--text-ink-body)">
         <p>
           圖書資訊學唸到碩士，專注在資訊組織——講白一點就是分類法，研究怎麼把一堆東西整理到別人找得到。
         </p>
@@ -325,7 +325,7 @@
         </div>
       </div>
 
-      <div class="space-y-4 text-[15px] leading-8 text-(--text-ink-body)">
+      <div class="max-w-prose space-y-4 text-base leading-[1.6] text-(--text-ink-body)">
         <p>
           會不會過度工程？大概有一點，而且老實說還在嘗試。但我真的想知道，一個人的技術知識被好好編目過會長成什麼樣子。
         </p>
