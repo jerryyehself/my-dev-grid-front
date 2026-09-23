@@ -1,11 +1,54 @@
 <script setup lang="ts">
+// 文章清單。D-56 落地後第一次真的接上 /api/documentations——之前這裡讀的是
+// src/data/articles.ts 的假資料，跟後台編輯器（已經真的能存）完全斷開：
+// 編輯器新增的文章，訪客在這裡從來看不到。
+//
+// tags：後端沒有自由文字標籤欄位（D-40），這裡改用真的圖譜關聯
+// （techniques／implementations 的 title）當篩選依據。
+// summary：D-57，不是獨立欄位，取 body 第一段（見 excerptOf）。
+// 只列 status===1（已發布）——草稿不該出現在訪客看得到的清單。
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { articles as articleList } from '@/data/articles'
+import { fetchArticles, type ArticleDto } from '@/api/articles'
+import { excerptOf } from '@/components/markdown/excerpt'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 
 const router = useRouter()
-const articles = ref(articleList)
+
+const ready = ref(false)
+const loadError = ref(false)
+const articles = ref<ArticleDto[]>([])
+
+async function load() {
+  ready.value = false
+  loadError.value = false
+  try {
+    const all = await fetchArticles()
+    // 後端 index() 依 title 排序（DocumentationController），不是日期——
+    // 時間軸要照日期分組，這裡一定要自己重排，不能假設 API 順序就是時間序。
+    articles.value = all
+      .filter((a) => a.status === 1)
+      .sort((a, b) => displayDate(b).localeCompare(displayDate(a)))
+    ready.value = true
+  } catch {
+    loadError.value = true
+  }
+}
+load()
+
+function tagsOf(a: ArticleDto): string[] {
+  return [...a.techniques, ...a.implementations].map((t) => t.title)
+}
+
+function summaryOf(a: ArticleDto): string {
+  return excerptOf(a.body ?? '')
+}
+
+function displayDate(a: ArticleDto): string {
+  const raw = a.creation_date ?? a.created_at
+  return raw ? raw.slice(0, 10) : '—'
+}
 
 const viewMode = ref<'timeline' | 'folder'>('timeline')
 const currentTag = ref('')
@@ -13,21 +56,21 @@ const currentTag = ref('')
 const allTags = computed(() => {
   const tagsSet = new Set<string>()
   articles.value.forEach((article) => {
-    article.tags.forEach((t) => tagsSet.add(t))
+    tagsOf(article).forEach((t) => tagsSet.add(t))
   })
   return Array.from(tagsSet)
 })
 
-// 時間軸：依 article.date（如 "2026.07.02"）換算月份分組
+// 時間軸：依 displayDate（YYYY-MM-DD）換算月份分組
 const monthLabel = (date: string) => {
-  const [year, month] = date.split('.')
+  const [year, month] = date.split('-')
   return `${year}年${Number(month)}月`
 }
 
 const timelineGroups = computed(() => {
-  const groups: { month: string; articles: typeof articleList }[] = []
+  const groups: { month: string; articles: ArticleDto[] }[] = []
   for (const article of articles.value) {
-    const month = monthLabel(article.date)
+    const month = monthLabel(displayDate(article))
     const last = groups[groups.length - 1]
     if (last && last.month === month) {
       last.articles.push(article)
@@ -41,10 +84,10 @@ const timelineGroups = computed(() => {
 // 分類夾：依標籤過濾，卡片用鬆散堆疊呈現
 const folderArticles = computed(() => {
   if (!currentTag.value) return articles.value
-  return articles.value.filter((article) => article.tags.includes(currentTag.value))
+  return articles.value.filter((article) => tagsOf(article).includes(currentTag.value))
 })
 
-const goToArticle = (id: string) => {
+const goToArticle = (id: number) => {
   router.push({ name: 'article-detail', params: { id } })
 }
 </script>
@@ -93,6 +136,12 @@ const goToArticle = (id: string) => {
       </div>
     </div>
 
+    <BaseLoadingBlock v-if="!ready && !loadError" height="240px">載入中…</BaseLoadingBlock>
+    <BaseLoadingBlock v-else-if="loadError" height="240px" tone="error">
+      文章清單載入失敗，重新整理再試一次。
+    </BaseLoadingBlock>
+
+    <template v-else>
     <!-- 時間軸：依日期線性掃視 -->
     <div v-if="viewMode === 'timeline'" class="relative pl-7">
       <div class="absolute left-[5px] top-1.5 bottom-1.5 w-0.5 bg-(--border-shelf)"></div>
@@ -117,8 +166,8 @@ const goToArticle = (id: string) => {
             class="absolute -left-[24.5px] top-[7px] w-[7px] h-[7px] rounded-full bg-(--text-ink-muted)"
           ></div>
           <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
-            <span class="text-(--text-ink-muted)">{{ article.date }}</span>
-            <span class="text-(--text-accent) font-bold">// {{ article.tags[0] }}</span>
+            <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
+            <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">// {{ tagsOf(article)[0] }}</span>
           </div>
           <h3
             class="text-base font-bold text-(--text-ink-main) mb-1.5 group-hover:text-(--text-accent) transition-colors"
@@ -126,7 +175,7 @@ const goToArticle = (id: string) => {
             {{ article.title }}
           </h3>
           <p class="text-(--text-ink-body) text-sm leading-relaxed text-left sm:text-justify max-w-[620px]">
-            {{ article.summary }}
+            {{ summaryOf(article) }}
           </p>
         </article>
       </template>
@@ -171,12 +220,12 @@ const goToArticle = (id: string) => {
           @click="goToArticle(article.id)"
         >
           <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
-            <span class="text-(--text-ink-muted)">{{ article.date }}</span>
-            <span class="text-(--text-accent) font-bold">// {{ article.tags.join(' / ') }}</span>
+            <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
+            <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">// {{ tagsOf(article).join(' / ') }}</span>
           </div>
           <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">{{ article.title }}</h3>
           <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-left sm:text-justify max-w-[700px]">
-            {{ article.summary }}
+            {{ summaryOf(article) }}
           </p>
         </article>
 
@@ -188,5 +237,6 @@ const goToArticle = (id: string) => {
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
