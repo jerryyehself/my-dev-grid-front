@@ -81,9 +81,14 @@ function familyDot(fullCallNumber: string | undefined): string {
           分類一覽
         </h1>
       </div>
-      <router-link :to="{ name: 'ontology-scope-new' }">
-        <BaseButton variant="primary">新增分類</BaseButton>
-      </router-link>
+      <div class="flex items-center gap-2">
+        <router-link :to="{ name: 'ontology-relations' }">
+          <BaseButton variant="ghost">述詞一覽</BaseButton>
+        </router-link>
+        <router-link :to="{ name: 'ontology-scope-new' }">
+          <BaseButton variant="primary">新增分類</BaseButton>
+        </router-link>
+      </div>
     </div>
 
     <!-- 用 div 不是 p,避開 base.css 的 `.global-page-wrapper p { text-align: justify }`

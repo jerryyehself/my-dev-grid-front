@@ -14,8 +14,14 @@ withDefaults(
     /** default 是有外框的獨立欄位；inline 只有一條底線,用在段落標題那種嵌在卡片裡的欄位。 */
     variant?: 'default' | 'inline'
     type?: 'text' | 'email' | 'password'
+    /**
+     * 規格「本體論編輯規格」缺口 G5：被引用的 Relation 只剩 `note` 可改。
+     * 視覺跟 `BaseSelect` 既有的 `disabled` 一致（`opacity-40` + 不可互動），
+     * 不另外發明一種「鎖定」樣式——鎖定的理由是文字說明的責任，不是外框顏色的責任。
+     */
+    disabled?: boolean
   }>(),
-  { variant: 'default', type: 'text' },
+  { variant: 'default', type: 'text', disabled: false },
 )
 const model = defineModel<string>({ required: true })
 </script>
@@ -24,9 +30,11 @@ const model = defineModel<string>({ required: true })
   <input
     v-model="model"
     :type="type"
+    :disabled="disabled"
     :class="[
       'text-(--text-ink-main) placeholder:text-(--text-ink-muted) placeholder:opacity-55',
       'focus:outline-none focus:border-(--text-accent) focus:shadow-[0_0_0_3px_var(--focus-ring)]',
+      'disabled:pointer-events-none disabled:opacity-40',
       variant === 'default' &&
         'border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-3 py-2.5 text-sm leading-[1.6]',
       variant === 'inline' &&

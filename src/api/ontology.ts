@@ -318,3 +318,111 @@ export function updateScope(id: number, payload: ScopeWritePayload): Promise<Sco
 export function previewFullCallNumber(parentClassNumber: string, callNumber: string): string {
   return `${parentClassNumber}${callNumber.trim()}`
 }
+
+/* ------------------------------------------------------------------ *
+ * Relation 新增與編輯（規格「本體論編輯規格」第 8 步）
+ * ------------------------------------------------------------------ */
+
+/**
+ * 一族在分類號裡的代碼。`full_call_number` 首碼 0/1/2 對應
+ * documentation/technique/implementation——跟 `ArticleEditorView.vue` 的
+ * `familyDot()` 判斷同一組前綴，這裡另外宣告是因為那邊回的是 CSS class，
+ * 這裡要的是拿去組 `class_number` 的數字字元。
+ */
+export function relationFamilyDigit(fullCallNumber: string | undefined): string | null {
+  const digit = fullCallNumber?.[0]
+  return digit === '0' || digit === '1' || digit === '2' ? digit : null
+}
+
+/**
+ * Relation 的 `class_number` 是「主詞族＋受詞族」兩碼（規格 §04）。
+ *
+ * **不像 Scope 的 B1，這裡後端沒有幫忙推導**——`StoreRelationRequest`／
+ * `UpdateRelationRequest` 的 `class_number` 仍是 `required|numeric` 的一般
+ * 輸入欄位，前端算完這兩碼之後要**放進 payload 一起送出**，不是算給人看
+ * 而已（規格 v4 補記的細節）。
+ */
+export function deriveRelationClassNumber(
+  subjectFullCallNumber: string | undefined,
+  objectFullCallNumber: string | undefined,
+): string | null {
+  const s = relationFamilyDigit(subjectFullCallNumber)
+  const o = relationFamilyDigit(objectFullCallNumber)
+  return s !== null && o !== null ? `${s}${o}` : null
+}
+
+/**
+ * 清單頁／候選計算要的一列。跟 `RelationDto`（下拉選單用，只給 id/name/reverse_id）
+ * 分開宣告，理由跟 `ScopeListDto` 之於 `ScopeDto`一樣：這裡多要 `subject`／`object`，
+ * 是為了在前端重算 G1 的反向候選（`ReverseIsAvailable`／`ReverseIsSwapped` 的邏輯，
+ * 後端沒有對應的「候選」端點，前端只能撈全部關係自己判斷）。
+ *
+ * `/api/relations`（index）實際回的就是完整 `RelationResource`，本來就含這幾個欄位，
+ * 這裡只是給它一個誠實的型別，不是另外打一支不同的端點。
+ */
+export interface RelationCandidateDto {
+  id: number
+  name: string
+  reverse_id: number | null
+  subject: number | null
+  object: number | null
+}
+
+export function fetchRelationCandidateList(): Promise<RelationCandidateDto[]> {
+  return apiGet<ListEnvelope<RelationCandidateDto>>('/relations').then((r) => r.data)
+}
+
+/**
+ * G1：在「主詞受詞已對調」的關係裡，挑出還沒配對、或已經配對給正在編輯的這一筆
+ * 的那一個。規格已經驗證過 15 條關係裡每一條的合法候選都剛好是 0 或 1 個
+ * （對稱關係例外，見 `isSymmetric` 呼叫端）,所以這裡回單一個候選而不是清單。
+ *
+ * `selfId` 是正在編輯的這一筆自己的 id（新增時是 `null`）——候選清單要排除自己，
+ * 而「目標已經指向自己」也要算可用（本來就是這一對，重送同樣的值）。
+ */
+export function findReverseCandidate(
+  all: RelationCandidateDto[],
+  subjectId: number,
+  objectId: number,
+  selfId: number | null,
+): RelationCandidateDto | null {
+  return (
+    all.find(
+      (r) =>
+        r.id !== selfId &&
+        r.subject === objectId &&
+        r.object === subjectId &&
+        (r.reverse_id === null || r.reverse_id === selfId),
+    ) ?? null
+  )
+}
+
+/**
+ * 新增與修改送的是同一份 payload。**跟 Scope 不一樣的一點**：`class_number` 要由
+ * 前端算好（`deriveRelationClassNumber()`）放進來，後端不會推導。
+ */
+export interface RelationWritePayload {
+  subject_id: number
+  object_id: number
+  class_number: string
+  call_number: string
+  name: string
+  note: string
+  reverse_id: number | null
+}
+
+interface RelationWriteResponse {
+  data: RelationDetailDto
+  message: string
+}
+
+export function createRelation(payload: RelationWritePayload): Promise<RelationWriteResponse> {
+  return apiPost<RelationWriteResponse>('/relations', payload)
+}
+
+export function updateRelation(
+  id: number,
+  payload: RelationWritePayload,
+): Promise<RelationWriteResponse> {
+  return apiPut<RelationWriteResponse>(`/relations/${id}`, payload)
+}

@@ -9,6 +9,7 @@
  */
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -119,7 +120,18 @@ const lockReason = computed(() => {
     <div
       class="mb-5 flex flex-wrap items-center gap-2 font-mono text-[11px] text-(--text-ink-muted)"
     >
-      <span>本體論</span><span>/</span><span>述詞</span><span>/</span>
+      <router-link
+        :to="{ name: 'ontology-scopes' }"
+        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+        >本體論</router-link
+      >
+      <span>/</span>
+      <router-link
+        :to="{ name: 'ontology-relations' }"
+        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+        >述詞</router-link
+      >
+      <span>/</span>
       <span class="text-(--text-ink-body)">{{ relation.name }}</span>
     </div>
 
@@ -133,6 +145,12 @@ const lockReason = computed(() => {
         {{ relation.name }}
       </h1>
       <BaseTag v-if="relation.is_referenced" tone="accent">已被引用 · 欄位鎖定</BaseTag>
+      <router-link
+        :to="{ name: 'ontology-relation-edit', params: { id: relation.id } }"
+        class="ml-auto self-center"
+      >
+        <BaseButton variant="primary">{{ relation.is_referenced ? '編輯註釋' : '編輯' }}</BaseButton>
+      </router-link>
     </div>
 
     <!-- 三元組那一行。族別色直接用 --node-doc / tech / impl，跟首頁圖譜同一組
