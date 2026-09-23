@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import BaseTag from '@/components/BaseTag.vue'
 import { fetchProjectsOrDemo, type Project } from '@/api/projects'
-import { articles as articleList } from '@/data/articles'
+import { fetchArticles, type ArticleDto } from '@/api/articles'
 
 // 首頁「近況板」：左欄「近期專案」用真實 fetchProjectsOrDemo() 資料（跟 KnowledgeGraphPanel
 // 同一套「正常打 API、連不上才退回存好的快照＋顯示 DEMO_DATA」誠實 fallback），右欄「近期文章」
-// 用網站本來就有的真實文章清單（src/data/articles.ts，不是為了這個元件另外編的）。
+// 打真的 /api/documentations——**這裡原本讀 src/data/articles.ts，註解宣稱那是「網站本來就有
+// 的真實文章清單」，但那份檔案其實是純假資料，後台編輯器新增的文章從來不會出現在這裡。**
+// 2026-09-23 改成真的 API：只列 status===1（已發布），跟 ArticlesView.vue 同一個規則。
 //
 // 這裡刻意沒有照搬 Claude Design 稿（artifact 4492caf5）「其他孵化中」欄位的擱置中／待評估／
 // 觀察中點子清單——那份清單是設計稿作者在畫布裡直接記下的個人待辦（GCP Cloud Run 部署、PARA
@@ -37,11 +39,24 @@ onMounted(async () => {
   projectsLoading.value = false
 })
 
-// 文章依日期新到舊排序（來源陣列本來就是新到舊，這裡不假設順序，直接照 "YYYY.MM.DD" 字串排序）；
-// 首頁只帶前 4 筆當「近期動態」，其餘留給 /articles 頁。
-const recentArticles = computed(() =>
-  [...articleList].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)).slice(0, 4),
-)
+function articleDate(a: ArticleDto): string {
+  const raw = a.creation_date ?? a.created_at
+  return raw ? raw.slice(0, 10) : ''
+}
+
+const recentArticles = ref<ArticleDto[]>([])
+const articlesLoading = ref(true)
+
+// 後端 DocumentationController@index() 依 title 排序，不是日期——首頁只帶前 4 筆
+// 當「近期動態」，一定要自己重排成日期新到舊，不能假設 API 回傳順序。
+onMounted(async () => {
+  const all = await fetchArticles().catch(() => [])
+  recentArticles.value = all
+    .filter((a) => a.status === 1)
+    .sort((a, b) => articleDate(b).localeCompare(articleDate(a)))
+    .slice(0, 4)
+  articlesLoading.value = false
+})
 </script>
 
 <template>
@@ -97,7 +112,7 @@ const recentArticles = computed(() =>
         </RouterLink>
       </div>
 
-      <!-- 右欄：近期文章（真實 src/data/articles.ts，不是佔位內容） -->
+      <!-- 右欄：近期文章（真的打 /api/documentations，只列已發布） -->
       <div>
         <h3
           class="flex items-center gap-1.5 font-mono text-[12px] font-extrabold tracking-[0.05em] uppercase text-(--text-ink-muted) mb-2.5"
@@ -116,10 +131,13 @@ const recentArticles = computed(() =>
           >
             <div class="flex items-center gap-2 mb-1 font-mono text-[10px]">
               <span class="font-bold text-(--text-accent)">// ARTICLE</span>
-              <span class="text-(--text-ink-muted) tabular-nums">{{ a.date }}</span>
+              <span class="text-(--text-ink-muted) tabular-nums">{{ articleDate(a) }}</span>
             </div>
             <div class="text-[12.5px] leading-snug text-(--text-ink-body)">{{ a.title }}</div>
           </RouterLink>
+          <p v-if="!articlesLoading && !recentArticles.length" class="px-[18px] py-4 text-[12.5px] text-(--text-ink-muted)">
+            目前沒有已發布的文章。
+          </p>
         </div>
 
         <RouterLink to="/articles" class="inline-block mt-2.5 font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted) hover:text-(--text-accent)">

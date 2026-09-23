@@ -374,7 +374,7 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
-import { articles } from '@/data/articles'
+import { fetchArticles } from '@/api/articles'
 import { fetchProjects, fetchRepoTimeline, type RepoPoint } from '@/api/projects'
 
 const focusAreas = [
@@ -508,7 +508,9 @@ const timelineAlt = computed(() => {
   return `專案時間軸：${repoPoints.value.length} 個 GitHub repo 的建立時間，從 ${range}${pause}。`
 })
 
-// 專案數改打後端 API，載入完成前先用 '—' 佔位，避免顯示會誤導的 0
+// 專案數／文章數都改打後端 API，載入完成前先用 '—' 佔位，避免顯示會誤導的 0。
+// 文章數原本讀 src/data/articles.ts（假資料，固定 5 篇，後台編輯器新增的文章
+// 從來不會反映到這裡）——2026-09-23 改成真的算已發布文章數。
 const projectCount = ref<string>('—')
 fetchProjects()
   .then((projects) => {
@@ -518,8 +520,17 @@ fetchProjects()
     // 這個數字只是統計展示，載入失敗就維持佔位符號，不用另外顯示錯誤訊息干擾整頁
   })
 
+const articleCount = ref<string>('—')
+fetchArticles()
+  .then((list) => {
+    articleCount.value = String(list.filter((a) => a.status === 1).length)
+  })
+  .catch(() => {
+    // 同上，載入失敗維持佔位符號
+  })
+
 const stats = computed(() => [
-  { value: String(articles.length), label: '篇文章' },
+  { value: articleCount.value, label: '篇文章' },
   { value: projectCount.value, label: '個專案' },
   { value: '2022.06', label: '開發資歷起點' },
 ])
