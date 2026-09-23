@@ -69,6 +69,7 @@ const isEditing = computed(() => editingId.value !== null)
 const title = ref('')
 const body = ref('')
 const bodyMode = ref<'edit' | 'preview'>('edit')
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const margins = ref<ArticleMarginNote[]>([])
 const tags = ref<string[]>([])
 const links = ref<DraftLink[]>([])
@@ -231,6 +232,45 @@ function onCreateLink(payload: DraftLink) {
 function removeLink(link: DraftLink) {
   links.value = links.value.filter((l) => l !== link)
   touch()
+}
+
+// --- 匯入／匯出 --------------------------------------------------------------
+// 本地檔案匯入：body 存的本來就是 Markdown 原文（D-46），讀檔案文字內容
+// 直接塞進同一個欄位就完事，不用另外接後端——跟手打/貼上是同一條存檔路徑。
+function triggerFileImport() {
+  fileInputRef.value?.click()
+}
+
+function onFileSelected(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = '' // 清空，不然選同一個檔案兩次不會觸發 change
+  if (!file) return
+  if (body.value.trim() && !window.confirm('目前已經有內容，確定要用檔案內容覆蓋嗎？這個動作可以再手動復原。')) {
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = () => {
+    body.value = typeof reader.result === 'string' ? reader.result : ''
+    touch()
+  }
+  reader.readAsText(file)
+}
+
+// 匯出：body 已經是 Markdown 原文，包成 Blob 下載即可，不用後端 export
+// 端點。檔名用標題轉檔名安全字元，沒標題就退回 article.md。
+function exportMarkdown() {
+  const safeName = title.value.trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '-')
+  const blob = new Blob([body.value], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${safeName || 'article'}.md`
+  // 沒掛到 DOM 上,部分瀏覽器（含 headless Chromium）抓不到 download 屬性,檔名會退回預設值
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
 }
 
 // --- 存檔 ------------------------------------------------------------------
@@ -401,21 +441,52 @@ const publish = () => saveWithStatus(true)
              而且改成顯式錨點之後搬動不會像原本那樣默默改掉錨點的指向。 -->
         <div class="flex flex-col gap-3">
           <BaseField label="Body 內文" :hint="`Markdown · ${body.length} 字`">
-            <div class="flex gap-1 self-start border border-(--border-shelf) rounded-full p-[3px]">
-              <button
-                v-for="m in (['edit', 'preview'] as const)"
-                :key="m"
-                type="button"
-                class="rounded-full px-4 py-1.5 font-mono text-[10px] tracking-[0.14em] transition-colors duration-100 ease-out"
-                :class="
-                  bodyMode === m
-                    ? 'bg-(--bg-folder) text-(--text-accent) font-bold'
-                    : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
-                "
-                @click="bodyMode = m"
-              >
-                {{ m === 'edit' ? '編輯' : '預覽' }}
-              </button>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex gap-1 self-start border border-(--border-shelf) rounded-full p-[3px]">
+                <button
+                  v-for="m in (['edit', 'preview'] as const)"
+                  :key="m"
+                  type="button"
+                  class="rounded-full px-4 py-1.5 font-mono text-[10px] tracking-[0.14em] transition-colors duration-100 ease-out"
+                  :class="
+                    bodyMode === m
+                      ? 'bg-(--bg-folder) text-(--text-accent) font-bold'
+                      : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
+                  "
+                  @click="bodyMode = m"
+                >
+                  {{ m === 'edit' ? '編輯' : '預覽' }}
+                </button>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <input
+                  ref="fileInputRef"
+                  type="file"
+                  accept=".md,.markdown,.txt"
+                  class="hidden"
+                  @change="onFileSelected"
+                />
+                <BaseButton variant="ghost" type="button" @click="triggerFileImport">
+                  從檔案匯入
+                </BaseButton>
+                <BaseButton
+                  variant="ghost"
+                  type="button"
+                  disabled
+                  title="Notion／HackMD 等外部平台匯入還沒串接，規劃中（見 management-debt-ledger.md）"
+                >
+                  從網站匯入
+                </BaseButton>
+                <BaseButton
+                  variant="ghost"
+                  type="button"
+                  :disabled="!body.trim()"
+                  @click="exportMarkdown"
+                >
+                  匯出成 .md
+                </BaseButton>
+              </div>
             </div>
           </BaseField>
 
