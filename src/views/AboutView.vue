@@ -283,17 +283,17 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-3">
           <div class="flex items-baseline gap-2.5">
-            <span class="font-mono text-[12px] font-bold text-(--text-accent)">0000</span>
+            <span class="font-['Courier_Prime',ui-monospace,monospace] text-[13px] font-bold text-(--text-accent)">0000</span>
             <span class="text-[13px] text-(--text-ink-main)">文件</span>
             <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">post / sourcesite</span>
           </div>
           <div class="flex items-baseline gap-2.5">
-            <span class="font-mono text-[12px] font-bold text-(--text-accent)">1000</span>
+            <span class="font-['Courier_Prime',ui-monospace,monospace] text-[13px] font-bold text-(--text-accent)">1000</span>
             <span class="text-[13px] text-(--text-ink-main)">技術</span>
             <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">framework / language</span>
           </div>
           <div class="flex items-baseline gap-2.5">
-            <span class="font-mono text-[12px] font-bold text-(--text-accent)">2000</span>
+            <span class="font-['Courier_Prime',ui-monospace,monospace] text-[13px] font-bold text-(--text-accent)">2000</span>
             <span class="text-[13px] text-(--text-ink-main)">實作</span>
             <span class="font-mono text-[10px] text-(--text-ink-muted) opacity-70">project / work</span>
           </div>
