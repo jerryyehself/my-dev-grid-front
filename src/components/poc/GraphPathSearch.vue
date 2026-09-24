@@ -37,6 +37,24 @@ function matches(query: string): GraphPocNode[] {
 const startMatches = computed(() => matches(startQuery.value))
 const endMatches = computed(() => matches(endQuery.value))
 
+// 還沒打字時的瀏覽清單：依型別分組，每組最多列 6 筆——原本 matches('') 回傳空陣列，
+// 下拉完全不會展開，只能靠打字才看得到候選，等於沒有「瀏覽」這個路徑。分組用型別
+// (documentation/technique/implementation) 而不是 scope，因為節點本身只有型別資訊，
+// scope 是另一張表（Scope），現在的圖節點資料形狀沒有帶 scope 欄位過來（見
+// graphPocData.ts 的 GraphPocNode），要分組只能分得出型別這個維度。
+const domainOrder: GraphNodeType[] = ['documentation', 'technique', 'implementation']
+function browseGroups(): { type: GraphNodeType; label: string; items: GraphPocNode[] }[] {
+  return domainOrder
+    .map((type) => ({
+      type,
+      label: domainLabel[type],
+      items: nodes.value.filter((n) => n.domainType === type).slice(0, 6),
+    }))
+    .filter((g) => g.items.length > 0)
+}
+const startGroups = computed(() => (startQuery.value.trim() ? [] : browseGroups()))
+const endGroups = computed(() => (endQuery.value.trim() ? [] : browseGroups()))
+
 function selectStart(n: GraphPocNode) {
   startSelected.value = n
   startQuery.value = ''
@@ -141,21 +159,41 @@ onMounted(async () => {
           />
         </div>
         <div
-          v-if="startOpen && startMatches.length"
-          class="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
+          v-if="startOpen && (startMatches.length || startGroups.length)"
+          class="absolute left-0 right-0 top-full z-10 mt-1 max-h-72 overflow-y-auto rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
         >
-          <div
-            v-for="n in startMatches"
-            :key="n.id"
-            class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
-            @mousedown.prevent="selectStart(n)"
-          >
-            <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
-            <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
-            <span class="ml-auto font-mono text-[10px] uppercase tracking-[0.05em] text-(--text-accent) opacity-70">{{
-              domainLabel[n.domainType]
-            }}</span>
-          </div>
+          <template v-if="startQuery.trim()">
+            <div
+              v-for="n in startMatches"
+              :key="n.id"
+              class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
+              @mousedown.prevent="selectStart(n)"
+            >
+              <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
+              <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
+              <span class="ml-auto font-mono text-[10px] uppercase tracking-[0.05em] text-(--text-accent) opacity-70">{{
+                domainLabel[n.domainType]
+              }}</span>
+            </div>
+          </template>
+          <!-- 還沒打字：依型別分組瀏覽，取代原本「不打字就完全空白」的下拉 -->
+          <template v-else>
+            <div v-for="group in startGroups" :key="group.type">
+              <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-(--text-accent) opacity-80">
+                {{ group.label }}
+              </div>
+              <div
+                v-for="n in group.items"
+                :key="n.id"
+                class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
+                @mousedown.prevent="selectStart(n)"
+              >
+                <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
+                <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
+              </div>
+            </div>
+            <div class="px-3 py-1.5 text-[10px] text-(--text-ink-muted) opacity-70">輸入文字可縮小範圍</div>
+          </template>
         </div>
       </div>
 
@@ -214,21 +252,41 @@ onMounted(async () => {
           />
         </div>
         <div
-          v-if="endOpen && endMatches.length"
-          class="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
+          v-if="endOpen && (endMatches.length || endGroups.length)"
+          class="absolute left-0 right-0 top-full z-10 mt-1 max-h-72 overflow-y-auto rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
         >
-          <div
-            v-for="n in endMatches"
-            :key="n.id"
-            class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
-            @mousedown.prevent="selectEnd(n)"
-          >
-            <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
-            <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
-            <span class="ml-auto font-mono text-[10px] uppercase tracking-[0.05em] text-(--text-accent) opacity-70">{{
-              domainLabel[n.domainType]
-            }}</span>
-          </div>
+          <template v-if="endQuery.trim()">
+            <div
+              v-for="n in endMatches"
+              :key="n.id"
+              class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
+              @mousedown.prevent="selectEnd(n)"
+            >
+              <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
+              <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
+              <span class="ml-auto font-mono text-[10px] uppercase tracking-[0.05em] text-(--text-accent) opacity-70">{{
+                domainLabel[n.domainType]
+              }}</span>
+            </div>
+          </template>
+          <!-- 還沒打字：依型別分組瀏覽，取代原本「不打字就完全空白」的下拉 -->
+          <template v-else>
+            <div v-for="group in endGroups" :key="group.type">
+              <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-(--text-accent) opacity-80">
+                {{ group.label }}
+              </div>
+              <div
+                v-for="n in group.items"
+                :key="n.id"
+                class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
+                @mousedown.prevent="selectEnd(n)"
+              >
+                <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
+                <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
+              </div>
+            </div>
+            <div class="px-3 py-1.5 text-[10px] text-(--text-ink-muted) opacity-70">輸入文字可縮小範圍</div>
+          </template>
         </div>
       </div>
     </div>
