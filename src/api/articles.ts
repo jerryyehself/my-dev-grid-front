@@ -93,3 +93,32 @@ export function updateArticle(
 export function deleteArticle(id: number): Promise<{ message: string }> {
   return apiDelete<{ message: string }>(`/documentations/${id}`)
 }
+
+// 2026-09-24：跟 api/projects.ts 的 fetchProjectsOrDemo()、api/graph.ts 的
+// fetchGraphOrDemo() 同一套作法——正常打真的 API，連不上（單機展示沒開後端）才退回
+// 保底填充內容，並誠實回報 isDemo 讓畫面標示「這不是即時資料」。跟那兩個快照不同的
+// 地方：這裡的內容是刻意寫的填充文（body 裡自己就講明「這是示範內容」），不是從
+// 真實資料庫存下來的快照——文章内容本來就是給人讀的長文字，比起真的貼一篇資料庫
+// 文章當保底（等後端內容更新，這裡的展示內容也會顯得過期卻沒人會去同步），
+// 明講「這是填充文」更誠實，也不用擔心跟真實內容的時效落差。
+import articlesDemoFixture from '@/data/articlesDemoFixture.json'
+
+export async function fetchArticlesOrDemo(): Promise<{ articles: ArticleDto[]; isDemo: boolean }> {
+  try {
+    return { articles: await fetchArticles(), isDemo: false }
+  } catch (e) {
+    console.warn('[articles] 連不上後端，改用填充內容（僅供單機展示）', e)
+    return { articles: articlesDemoFixture as ArticleDto[], isDemo: true }
+  }
+}
+
+export async function fetchArticleOrDemo(id: number): Promise<{ article: ArticleDto; isDemo: boolean }> {
+  try {
+    return { article: await fetchArticle(id), isDemo: false }
+  } catch (e) {
+    const demo = (articlesDemoFixture as ArticleDto[]).find((a) => a.id === id)
+    if (!demo) throw e // demo 清單裡也沒有這個 id，誠實回報「找不到」，不要生一篇假的出來
+    console.warn('[articles] 連不上後端，改用填充內容（僅供單機展示）', e)
+    return { article: demo, isDemo: true }
+  }
+}

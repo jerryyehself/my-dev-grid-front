@@ -5,6 +5,10 @@
   </BaseLoadingBlock>
 
   <div v-else class="w-full">
+    <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
+      // DEMO_DATA（連不上後端，顯示的是填充內容，不是真的文章）
+    </p>
+
     <div class="flex items-center justify-between gap-4 mb-7">
       <BackToArticlesLink class="inline-flex" />
       <!-- 編輯頁的入口。D-56 落地後 /articles/:id/edit 是 requiresAuth 路由，
@@ -124,7 +128,7 @@
 // 這裡直接不顯示，不假裝有資料可以讀。
 import { computed, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
-import { fetchArticle, fetchArticles, type ArticleDto } from '@/api/articles'
+import { fetchArticleOrDemo, fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
 import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -138,15 +142,23 @@ const article = ref<ArticleDto | null>(null)
 const publishedList = ref<ArticleDto[]>([])
 const ready = ref(false)
 const loadError = ref(false)
+const isDemoData = ref(false)
 
 async function load() {
   ready.value = false
   loadError.value = false
   article.value = null
   try {
-    const [a, all] = await Promise.all([fetchArticle(articleId.value), fetchArticles()])
+    // fetchArticleOrDemo()/fetchArticlesOrDemo()：正常打真的 API，連不上才退回填充
+    // 內容——見 api/articles.ts 的說明。填充內容裡不存在的 id（不是從 demo 清單點進來
+    // 的）會照樣被 fetchArticleOrDemo 丟出「找不到」，走進下面的 catch，不會生一篇假的。
+    const [{ article: a, isDemo: articleDemo }, { articles: all, isDemo: listDemo }] = await Promise.all([
+      fetchArticleOrDemo(articleId.value),
+      fetchArticlesOrDemo(),
+    ])
     article.value = a
     publishedList.value = all.filter((item) => item.status === 1)
+    isDemoData.value = articleDemo || listDemo
     ready.value = true
   } catch {
     loadError.value = true
