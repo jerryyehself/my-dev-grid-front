@@ -33,7 +33,7 @@
 // 拿掉的還有 api/graph.ts 的 fetchScopes()/fetchNodeScopeIds()——那兩個 API 呼叫存在的唯一
 // 理由就是算這個分區，沒有分區邏輯在用就是純粹浪費一次網路來回。
 
-import { fetchGraph, type GraphEdgeDto, type GraphNodeDto, type GraphNodeType } from '@/api/graph'
+import { fetchGraphOrDemo, type GraphEdgeDto, type GraphNodeDto, type GraphNodeType } from '@/api/graph'
 
 export interface GraphPocNode {
   id: string
@@ -105,11 +105,16 @@ function toGraphPocLinks(edges: GraphEdgeDto[]): GraphPocLink[] {
   }))
 }
 
-export async function fetchGraphPocData(): Promise<{ nodes: GraphPocNode[]; links: GraphPocLink[] }> {
-  const { nodes, edges } = await fetchGraph()
+// 2026-09-24 改用 fetchGraphOrDemo()：這頁原本連不上後端就直接丟錯（三個消費元件的
+// catch 都只顯示錯誤訊息），跟 Home 頁「知識網路」小工具（KnowledgeGraphPanel.vue）
+// 同樣呼叫 /api/graph、卻已經有 demo fallback 的情況不一致——單純是這頁在
+// fetchGraphOrDemo() 出現前就存在，後來沒有回頭補上，不是刻意要求這頁一定要接後端。
+export async function fetchGraphPocData(): Promise<{ nodes: GraphPocNode[]; links: GraphPocLink[]; isDemo: boolean }> {
+  const { dto, isDemo } = await fetchGraphOrDemo()
 
   return {
-    nodes: toGraphPocNodes(nodes, edges),
-    links: toGraphPocLinks(edges),
+    nodes: toGraphPocNodes(dto.nodes, dto.edges),
+    links: toGraphPocLinks(dto.edges),
+    isDemo,
   }
 }

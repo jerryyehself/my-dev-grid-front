@@ -9,7 +9,7 @@
 // 只列 status===1（已發布）——草稿不該出現在訪客看得到的清單。
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchArticles, type ArticleDto } from '@/api/articles'
+import { fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -18,13 +18,17 @@ const router = useRouter()
 
 const ready = ref(false)
 const loadError = ref(false)
+const isDemoData = ref(false)
 const articles = ref<ArticleDto[]>([])
 
 async function load() {
   ready.value = false
   loadError.value = false
   try {
-    const all = await fetchArticles()
+    // fetchArticlesOrDemo()：正常打真的 API，連不上（本機沒開後端）才退回填充內容，
+    // 見 api/articles.ts 的說明——跟 Home 頁專案/知識網路小工具同一套 fallback 慣例。
+    const { articles: all, isDemo } = await fetchArticlesOrDemo()
+    isDemoData.value = isDemo
     // 後端 index() 依 title 排序（DocumentationController），不是日期——
     // 時間軸要照日期分組，這裡一定要自己重排，不能假設 API 順序就是時間序。
     articles.value = all
@@ -142,6 +146,9 @@ const goToArticle = (id: number) => {
     </BaseLoadingBlock>
 
     <template v-else>
+    <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
+      // DEMO_DATA（連不上後端，顯示的是填充內容，不是真的文章）
+    </p>
     <!-- 時間軸：依日期線性掃視 -->
     <div v-if="viewMode === 'timeline'" class="relative pl-7">
       <div class="absolute left-[5px] top-1.5 bottom-1.5 w-0.5 bg-(--border-shelf)"></div>
