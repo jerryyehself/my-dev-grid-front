@@ -15,7 +15,7 @@ type SimNode = GraphPocNode & NodeObject
 // source/target 收斂成只剩字串，typeof l.source === 'object' 分支會被 TS 判成 never。
 type SimLink = Omit<GraphPocLink, 'source' | 'target'> & LinkObject<SimNode>
 
-const emit = defineEmits<{ select: [selection: GraphPocSelection] }>()
+const emit = defineEmits<{ select: [selection: GraphPocSelection]; demo: [isDemo: boolean] }>()
 
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
@@ -151,7 +151,10 @@ onMounted(async () => {
   let graphPocNodes: GraphPocNode[]
   let graphPocLinks: GraphPocLink[]
   try {
-    ;({ nodes: graphPocNodes, links: graphPocLinks } = await fetchGraphPocData())
+    const { nodes, links, isDemo } = await fetchGraphPocData()
+    graphPocNodes = nodes
+    graphPocLinks = links
+    emit('demo', isDemo)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '載入知識圖譜資料失敗'
     loading.value = false
