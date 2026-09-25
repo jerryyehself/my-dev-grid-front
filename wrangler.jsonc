@@ -9,5 +9,9 @@
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
-  }
+  },
+  // Cloudflare 這個專案的部署指令設定成 `npx wrangler preview`（PR 預覽用），
+  // 這個指令要求設定檔裡有 previews 區塊才會執行，內容可以是空的——
+  // assets/compatibility 這些設定留在最外層就好，不用搬進 previews 裡面。
+  "previews": {}
 }
