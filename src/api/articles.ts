@@ -96,11 +96,16 @@ export function deleteArticle(id: number): Promise<{ message: string }> {
 
 // 2026-09-24：跟 api/projects.ts 的 fetchProjectsOrDemo()、api/graph.ts 的
 // fetchGraphOrDemo() 同一套作法——正常打真的 API，連不上（單機展示沒開後端）才退回
-// 保底填充內容，並誠實回報 isDemo 讓畫面標示「這不是即時資料」。跟那兩個快照不同的
-// 地方：這裡的內容是刻意寫的填充文（body 裡自己就講明「這是示範內容」），不是從
-// 真實資料庫存下來的快照——文章内容本來就是給人讀的長文字，比起真的貼一篇資料庫
-// 文章當保底（等後端內容更新，這裡的展示內容也會顯得過期卻沒人會去同步），
-// 明講「這是填充文」更誠實，也不用擔心跟真實內容的時效落差。
+// 保底填充內容，並誠實回報 isDemo 讓畫面標示「這不是即時資料」。
+//
+// 2026-09-25 改版：body 內容從「自己編的示範散文」換成 `daily-claude-summary` 專案
+// `reports/` 資料夾裡三篇真的寫過的技術文件（逐字引用，只去掉重複的 H1）——使用者
+// 要求填充文章要用真的 report 內容，不要自己編。`reports/` 是主題式的技術文件（例如
+// 前端建置工具問答、首頁視覺化設計決策），不是 `summaries/` 那種逐日對話流水帳；
+// 後者內容偏內部協作/交接細節（session id、hook 腳本內部機制等），不適合當公開文章
+// 的填充內容。body 沒有另外加揭露句——D-57 的摘要就是抓 body 第一段，加一句每篇
+// 都一樣的揭露文字只會蓋掉這三篇本來就有意義的摘要；`isDemo` 已經讓畫面在頁面層級
+// 顯示 DEMO_DATA 橫幅，不需要每篇內文再重複講一次。
 import articlesDemoFixture from '@/data/articlesDemoFixture.json'
 
 export async function fetchArticlesOrDemo(): Promise<{ articles: ArticleDto[]; isDemo: boolean }> {
