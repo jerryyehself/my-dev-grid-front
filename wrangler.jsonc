@@ -1,0 +1,13 @@
+{
+  // Cloudflare Pages 現在底層跑在 Workers 的 static assets 機制上，SPA fallback
+  // 要靠這裡的 assets.not_found_handling 設定，不能用 public/_redirects 的
+  // `/* /index.html 200` 這種寫法——那條規則會跟 Cloudflare 自己內建的
+  // .html/index 路徑正規化互相觸發，被判定成無限迴圈（deploy 直接失敗，
+  // error code 100324）。name 要跟 Cloudflare 專案本身的名稱一致。
+  "name": "my-dev-grid-front",
+  "compatibility_date": "2026-09-25",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
