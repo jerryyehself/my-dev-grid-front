@@ -4,7 +4,10 @@
        D-58（這頁介紹網站，不介紹作者；拿掉 Timeline 與自我介紹）、D-59（配色）、D-60（字型）。
        整頁由滿版色帶組成，route meta 設了 fullBleed，MainLayout 不套內容欄寬度也不留上下白。
        顏色一律走 token，設計稿裡沒有對應 token 的值才寫成 color-mix()，理由寫在各處註解。 -->
-  <div class="w-full">
+  <!-- leading-[normal]：設計稿沒指定行高的文字都是瀏覽器預設的 normal，不是 body 的 1.5。
+       少了這行，分類卡、述詞標籤、卡片標題都會被撐高（分類卡多 12px，會蓋住「技術」卡下緣的兩個箭頭）；
+       需要特定行高的段落與標題各自寫了 leading-[…]，不受影響 -->
+  <div class="w-full leading-[normal]">
     <!-- ① 照片橫幅。用 <img> 不用 CSS 背景圖，才能給 alt -->
     <header
       class="relative overflow-hidden bg-(--bg-band-strong) h-[440px] sm:h-[520px] lg:h-[600px] flex flex-col justify-end"
