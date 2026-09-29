@@ -19,7 +19,7 @@ contrast-verified by the scripts in `design/palettes/tools/`, not hand-picked;
 the other candidates (green buckram, navy v1) and every token's audit live in
 `design/palettes/`. The previous palettes (light "米白＋磚紅" `#fcfaf2`/`#b45309`,
 which matched the AI-cliché checklist below and failed AA at 4.40:1; dark
-Gruvbox) are retired. Type (D-60): headings `--font-serif` = Noto Serif TC,
+Gruvbox) are retired. Error messages use their own `--text-error` (same generator, ≥5:1 on every ground it sits on, and kept visibly apart from `--text-accent` — OKLab ΔE ≥ 0.1 — because form labels are accent-coloured right above the error line); `BaseHint`/`BaseLoadingBlock` take `tone="error"` rather than callers overriding the text colour. Type (D-60): headings `--font-serif` = Noto Serif TC,
 the "IN / ARCHIVE" wordmark `--font-wordmark` = Libre Caslon Text 700;
 Fraunces is no longer loaded. `references/alternate-palettes.md` holds older
 dark-slot candidates from the Gruvbox era — swapping a theme still means

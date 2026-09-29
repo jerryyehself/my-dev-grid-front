@@ -24,6 +24,11 @@ function solve(h, c, bg, target, toward) {
 const a = (hex, al) => `rgba(${hexRgb(hex).join(', ')}, ${al})`;
 
 const NAVY_H = 262, BRASS_H = 78, OX_H = 18, PAPER_H = 80;
+// 錯誤色（--text-error，2026-09-29 追加）：要跟酒紅強調色（OX_H=18）分得開——表單裡欄位標籤是
+// 強調色、錯誤訊息就在它正下方，兩個顏色太近錯誤就不顯眼。色相 28～44、彩度 0.17～0.21 掃過一輪：
+// 對比固定 5:1 時明度被鎖住，只剩彩度能拉開距離，只有 0.21 這一檔在淺色主題過得了 OKLab ΔE ≥ 0.1，
+// 其中色相 28 餘裕最大（0.108）。深色主題彩度撐不到那麼高，0.13 就已經跟黃銅強調色分得很開
+const ERR_H = 28, ERR_C_LIGHT = 0.21, ERR_C_DARK = 0.13;
 
 function leo(mode) {
   const light = mode === 'light';
@@ -79,6 +84,11 @@ function build(mode) {
   [['doc', OX_H, 0.13], ['tech', 195, 0.1], ['impl', 290, 0.12]].forEach(([n, h, c]) => {
     t['--cat-fill-' + n] = solve(h, c, '#ffffff', 5, 'dark');
   });
+  // 錯誤文字：錯誤訊息會出現在卡紙底、淡藏青卡片、色帶底三種底色上，
+  // 對「對比最差的那一個」解到 5:1（留一點餘裕給 4.5），其他兩個自然更高
+  const errBgs = [t['--bg-paper-light'], t['--bg-paper-dark'], t['--bg-folder']];
+  const worstBg = errBgs.reduce((w, b) => (light ? lum(b) < lum(w) : lum(b) > lum(w)) ? b : w);
+  t['--text-error'] = solve(ERR_H, light ? ERR_C_LIGHT : ERR_C_DARK, worstBg, 5, light ? 'dark' : 'light');
   return t;
 }
 
@@ -90,12 +100,17 @@ const PAIRS = [
   ['--text-nav-footer', '--bg-nav-footer', 4.5], ['--text-nav-hover', '--bg-nav-footer', 4.5],
   ['--text-on-band', '--bg-band-strong', 4.5], ['--accent-brass', '--bg-band-strong', 4.5],
   ['--edge-real', '--canvas-bg', 3],
+  ['--text-error', '--bg-paper-light', 4.5], ['--text-error', '--bg-paper-dark', 4.5], ['--text-error', '--bg-folder', 4.5],
 ];
 const out = { label: '藏青第二版' };
 for (const mode of ['light', 'dark']) {
   const t = build(mode);
   const audit = PAIRS.map(([f, b, min]) => ({ pair: `${f} / ${b}`, ratio: +cr(t[f], t[b]).toFixed(2), min, ok: cr(t[f], t[b]) >= min }));
   ['doc', 'tech', 'impl'].forEach((n) => audit.push({ pair: `#ffffff / --cat-fill-${n}`, ratio: +cr('#ffffff', t['--cat-fill-' + n]).toFixed(2), min: 4.5, ok: cr('#ffffff', t['--cat-fill-' + n]) >= 4.5 }));
+  // 錯誤色要跟強調色看得出不同：OKLab 距離 ≥ 0.1（約略是「並排時一眼分得出」的程度）
+  const dE = (x, y) => { const p = oklch(x), q = oklch(y); const pa = [p.l, p.c * Math.cos(p.h * Math.PI / 180), p.c * Math.sin(p.h * Math.PI / 180)], qa = [q.l, q.c * Math.cos(q.h * Math.PI / 180), q.c * Math.sin(q.h * Math.PI / 180)]; return Math.hypot(pa[0] - qa[0], pa[1] - qa[1], pa[2] - qa[2]); };
+  const errVsAccent = dE(t['--text-error'], t['--text-accent']);
+  audit.push({ pair: '--text-error vs --text-accent (OKLab ΔE)', ratio: +errVsAccent.toFixed(3), min: 0.1, ok: errVsAccent >= 0.1 });
   out[mode] = { tokens: t, audit };
   console.log(mode, audit.filter((x) => !x.ok).length ? 'FAIL ' + JSON.stringify(audit.filter((x) => !x.ok)) : `all ${audit.length} pairs pass`);
   console.log(Object.entries(t).filter(([, v]) => v.startsWith('#')).map(([k, v]) => k.slice(2) + '=' + v).join(' '));

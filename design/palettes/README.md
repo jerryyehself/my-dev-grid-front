@@ -30,6 +30,8 @@ document.documentElement.classList.add('palette-navy-v2')
 
 `navy-v2.css` 裡標「新增提案」的 token（`--bg-band-strong`、`--text-on-band`、`--accent-brass`、`--accent-secondary`、`--cat-fill-*`）已經討論過並採用（D-59），現在是 `variables.css` 的正式 token，About 頁在用。
 
+**錯誤色 `--text-error`（同日追加）**：`gen2.mjs` 對錯誤訊息會出現的三種底色（卡紙、淡藏青、卡片）中對比最差的那一個解到 5:1，另外要求跟 `--text-accent` 的 OKLab 距離 ≥ 0.1——表單欄位標籤是強調色、錯誤訊息就在正下方，太近就不顯眼。色相 28～44、彩度 0.17～0.21 掃過一輪，淺色主題只有彩度 0.21 過得了，取餘裕最大的色相 28：淺色 `#c70d12`、深色 `#e57d71`。登入頁原本寫死的 `text-red-700`、以及借用 `--text-accent` 的 18 處錯誤訊息都改用它。
+
 ## 怎麼產生的
 
 1. **Leonardo**（`@adobe/leonardo-contrast-colors`）：指定每個 token 對底色的目標對比，例如次要文字 5.4:1、強調色 5.4 到 7.2:1，由它反推色值，淺色和深色主題各算一次。

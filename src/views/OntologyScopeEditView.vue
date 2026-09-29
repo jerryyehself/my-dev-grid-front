@@ -220,7 +220,7 @@ function cancel() {
         <!-- G2：只列頂層,選完即時顯示推算出來的完整分類號。 -->
         <BaseField label="父類" hint="必填 · 只能選頂層分類">
           <BaseSelect v-model="parentClass" :options="parentOptions" placeholder="選一個頂層分類" />
-          <BaseHint v-if="fieldErrors.parent_class" class="text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.parent_class" tone="error">{{
             fieldErrors.parent_class
           }}</BaseHint>
         </BaseField>
@@ -234,14 +234,14 @@ function cancel() {
             <template v-if="!callNumber.trim()"> · 子類號留空就只有分類號兩碼</template>
           </BaseHint>
           <BaseHint v-else dim>選好父類之後才算得出完整分類號</BaseHint>
-          <BaseHint v-if="fieldErrors.call_number" class="text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.call_number" tone="error">{{
             fieldErrors.call_number
           }}</BaseHint>
         </BaseField>
 
         <BaseField label="名稱" hint="必填 · 不可重複">
           <BaseInput v-model="name" />
-          <BaseHint v-if="fieldErrors.name" class="text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.name" tone="error">{{
             fieldErrors.name
           }}</BaseHint>
         </BaseField>
@@ -252,14 +252,14 @@ function cancel() {
           :hint="isEditing ? `選填 · 上限 ${COMMENT_LIMIT} 字` : `必填 · 上限 ${COMMENT_LIMIT} 字`"
         >
           <BaseTextarea v-model="comment" :rows="2" :limit="COMMENT_LIMIT" />
-          <BaseHint v-if="fieldErrors.comment" class="text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.comment" tone="error">{{
             fieldErrors.comment
           }}</BaseHint>
         </BaseField>
 
         <BaseField label="註釋" :hint="`選填 · 上限 ${NOTE_LIMIT} 字`">
           <BaseTextarea v-model="note" :rows="3" :limit="NOTE_LIMIT" />
-          <BaseHint v-if="fieldErrors.note" class="text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.note" tone="error">{{
             fieldErrors.note
           }}</BaseHint>
         </BaseField>

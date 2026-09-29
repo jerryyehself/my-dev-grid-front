@@ -66,6 +66,11 @@
     --cat-fill-doc: #b34f57;
     --cat-fill-tech: #007d7d;
     --cat-fill-impl: #7264b3;
+
+    /* ⚠️ 錯誤訊息（2026-09-29 追加）：表單欄位錯誤、載入失敗、登入錯誤。
+       跟 --text-accent 刻意分開——欄位標籤是強調色，錯誤就在它正下方，顏色太近就不顯眼
+       （腳本要求兩者 OKLab ΔE ≥ 0.1）。對卡紙底、淡藏青底、卡片底都 ≥ 5:1 */
+    --text-error: #c70d12;
 }
 
 /* 🕯️ 2. 深色主題（class 名稱沿用 .theme-terminal，useTheme 與測試都靠它） */
@@ -106,4 +111,6 @@
     --cat-fill-doc: #b34f57;
     --cat-fill-tech: #007d7d;
     --cat-fill-impl: #7264b3;
+
+    --text-error: #e57d71;
 }

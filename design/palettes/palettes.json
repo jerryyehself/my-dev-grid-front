@@ -408,7 +408,8 @@
         "--accent-secondary": "#8d651e",
         "--cat-fill-doc": "#b34f57",
         "--cat-fill-tech": "#007d7d",
-        "--cat-fill-impl": "#7264b3"
+        "--cat-fill-impl": "#7264b3",
+        "--text-error": "#c70d12"
       },
       "audit": [
         {
@@ -514,6 +515,24 @@
           "ok": true
         },
         {
+          "pair": "--text-error / --bg-paper-light",
+          "ratio": 5.51,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-paper-dark",
+          "ratio": 5.01,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-folder",
+          "ratio": 5.21,
+          "min": 4.5,
+          "ok": true
+        },
+        {
           "pair": "#ffffff / --cat-fill-doc",
           "ratio": 5.03,
           "min": 4.5,
@@ -529,6 +548,12 @@
           "pair": "#ffffff / --cat-fill-impl",
           "ratio": 5.01,
           "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error vs --text-accent (OKLab ΔE)",
+          "ratio": 0.108,
+          "min": 0.1,
           "ok": true
         }
       ]
@@ -562,7 +587,8 @@
         "--accent-secondary": "#cd7e83",
         "--cat-fill-doc": "#b34f57",
         "--cat-fill-tech": "#007d7d",
-        "--cat-fill-impl": "#7264b3"
+        "--cat-fill-impl": "#7264b3",
+        "--text-error": "#e57d71"
       },
       "audit": [
         {
@@ -668,6 +694,24 @@
           "ok": true
         },
         {
+          "pair": "--text-error / --bg-paper-light",
+          "ratio": 5.64,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-paper-dark",
+          "ratio": 6.49,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-folder",
+          "ratio": 5.01,
+          "min": 4.5,
+          "ok": true
+        },
+        {
           "pair": "#ffffff / --cat-fill-doc",
           "ratio": 5.03,
           "min": 4.5,
@@ -683,6 +727,12 @@
           "pair": "#ffffff / --cat-fill-impl",
           "ratio": 5.01,
           "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error vs --text-accent (OKLab ΔE)",
+          "ratio": 0.122,
+          "min": 0.1,
           "ok": true
         }
       ]
