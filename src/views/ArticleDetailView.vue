@@ -32,7 +32,10 @@
         <span class="text-(--text-ink-muted) font-normal opacity-60">{{ displayDate(article) }}</span>
       </div>
 
-      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-(--text-ink-main) leading-tight">
+      <!-- 跟 MainLayout 的頁面標題同一套：--font-serif（Noto Serif TC）900（D-60）。這頁藏了通用表頭、
+           自己畫標題，所以 D-60 換字型時沒跟到，全站只剩這裡是無襯線；編輯頁的標題輸入框本來就是襯線，
+           不改的話編輯時看到的跟發布後不一樣。不加負字距：中文粗襯線字距收緊會糊在一起 -->
+      <h1 class="font-serif font-black text-2xl sm:text-3xl text-(--text-ink-main) leading-tight">
         {{ article.title }}
       </h1>
 
