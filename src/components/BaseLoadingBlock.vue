@@ -21,7 +21,7 @@ withDefaults(
 <template>
   <div
     class="w-full flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) font-mono text-[11px] tracking-widest"
-    :class="tone === 'error' ? 'text-(--text-accent)' : 'text-(--text-ink-body)/40'"
+    :class="tone === 'error' ? 'text-(--text-error)' : 'text-(--text-ink-body)/40'"
     :style="{ height }"
   >
     <slot />

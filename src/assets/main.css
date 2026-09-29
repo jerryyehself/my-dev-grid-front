@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 
-/* Fraunces 取代預設無襯線 fallback，給標題/引言更多個性；字體本身在 index.html 載入 */
+/* 標題用 Noto Serif TC、字標用 Libre Caslon Text（D-60，取代 Fraunces——它沒有中文字形，
+   中文標題其實一直是各裝置的系統字）。字體本身在 index.html 載入。
+   --font-wordmark 只給「IN / ARCHIVE」字標用，Tailwind 會自動產生 font-wordmark utility */
 @theme {
-  --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Noto Serif TC', Georgia, 'Times New Roman', serif;
+  --font-wordmark: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
 }

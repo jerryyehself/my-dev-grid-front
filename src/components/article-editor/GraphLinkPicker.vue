@@ -118,7 +118,7 @@ function submit() {
       </p>
     </div>
 
-    <p v-if="loadError" class="font-mono text-[11px] text-(--text-accent)">
+    <p v-if="loadError" class="font-mono text-[11px] text-(--text-error)">
       {{ loadError }}——後端沒起來的話這裡沒有替代資料可用，不會改用寫死的清單。
     </p>
 

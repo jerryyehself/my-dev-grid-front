@@ -249,7 +249,7 @@ function cancel() {
               :disabled="isLocked('subject_id')"
               placeholder="選一個頂層分類"
             />
-            <BaseHint v-if="fieldErrors.subject_id" class="text-(--text-accent)">{{
+            <BaseHint v-if="fieldErrors.subject_id" tone="error">{{
               fieldErrors.subject_id
             }}</BaseHint>
           </BaseField>
@@ -261,7 +261,7 @@ function cancel() {
               :disabled="isLocked('object_id')"
               placeholder="選一個頂層分類"
             />
-            <BaseHint v-if="fieldErrors.object_id" class="text-(--text-accent)">{{
+            <BaseHint v-if="fieldErrors.object_id" tone="error">{{
               fieldErrors.object_id
             }}</BaseHint>
           </BaseField>
@@ -274,14 +274,14 @@ function cancel() {
 
         <BaseField label="名稱" hint="必填 · 不可重複">
           <BaseInput v-model="name" :disabled="isLocked('name')" />
-          <BaseHint v-if="fieldErrors.name" class="text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.name" tone="error">{{
             fieldErrors.name
           }}</BaseHint>
         </BaseField>
 
         <BaseField label="子類號" hint="選填 · 數字">
           <BaseInput v-model="callNumber" :disabled="isLocked('call_number')" />
-          <BaseHint v-if="fieldErrors.call_number" class="text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.call_number" tone="error">{{
             fieldErrors.call_number
           }}</BaseHint>
         </BaseField>
@@ -310,14 +310,14 @@ function cancel() {
           <BaseHint v-else class="mt-1 block" dim>
             還沒有對調的那一條，要先建立主詞受詞對調的述詞才能勾選
           </BaseHint>
-          <BaseHint v-if="fieldErrors.reverse_id" class="mt-1 block text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.reverse_id" class="mt-1 block" tone="error">{{
             fieldErrors.reverse_id
           }}</BaseHint>
         </BaseField>
 
         <BaseField label="註釋" :hint="`選填 · 上限 ${NOTE_LIMIT} 字`">
           <BaseTextarea v-model="note" :rows="3" :limit="NOTE_LIMIT" />
-          <BaseHint v-if="fieldErrors.note" class="text-(--text-accent)">{{
+          <BaseHint v-if="fieldErrors.note" tone="error">{{
             fieldErrors.note
           }}</BaseHint>
         </BaseField>

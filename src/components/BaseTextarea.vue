@@ -58,14 +58,14 @@ const near = computed(
       :aria-invalid="over || undefined"
       class="rounded-[5px] border bg-(--bg-folder) px-3 py-2.5 text-sm leading-[1.6] text-(--text-ink-body) placeholder:text-(--text-ink-muted) placeholder:opacity-55 focus:shadow-[0_0_0_3px_var(--focus-ring)] focus:outline-none resize-y"
       :class="
-        over ? 'border-(--text-accent)' : 'border-(--border-shelf) focus:border-(--text-accent)'
+        over ? 'border-(--text-error)' : 'border-(--border-shelf) focus:border-(--text-accent)'
       "
     ></textarea>
 
-    <!-- 超出上限用的是 `--text-accent`,不是新開一個紅色 token。站上沒有 danger/error
-         色票,既有的錯誤語彙就是強調色(見 BaseLoadingBlock 的 tone="error")。
-         為了讓「逼近」跟「已超出」不只差在顏色——那兩者同色會分不出來——超出時
-         另外加粗並直接寫出超出幾個字,靠的是字重加文字,不是再發明一個顏色。
+    <!-- 逼近上限用 `--text-accent`(提醒),超出上限用 `--text-error`(已經是錯誤)。
+         以前站上沒有錯誤色,兩者都只能用強調色;2026-09-29 新增了 --text-error,
+         而且配色腳本要求它跟強調色看得出不同。超出時仍然加粗並直接寫出超出幾個字——
+         只靠顏色區分對色弱的人不夠,字重加文字才是主要訊號,顏色是輔助。
 
          aria-live="polite":超出上限是**已經發生**的錯誤,讀螢幕的人要在打字當下
          知道,不是等按下儲存才從錯誤訊息裡發現。用 polite 而不是 assertive,
@@ -74,8 +74,8 @@ const near = computed(
       <BaseHint v-if="!over && !near" dim>{{ used }} / {{ limit }}</BaseHint>
       <span
         v-else
-        class="font-mono text-[10px] tracking-[0.12em] text-(--text-accent)"
-        :class="over && 'font-bold'"
+        class="font-mono text-[10px] tracking-[0.12em]"
+        :class="over ? 'font-bold text-(--text-error)' : 'text-(--text-accent)'"
       >
         {{ used }} / {{ limit }}<template v-if="over"> · 超出 {{ used - limit }} 字</template>
       </span>

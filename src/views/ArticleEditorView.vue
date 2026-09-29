@@ -431,7 +431,7 @@ const publish = () => saveWithStatus(true)
       <div class="flex flex-col gap-6 min-w-0">
         <BaseField label="Title 標題">
           <BaseInput v-model="title" class="font-serif px-3.5 py-3 text-xl font-bold" @input="touch" />
-          <BaseHint v-if="fieldErrors.title" class="block text-(--text-accent)">{{ fieldErrors.title }}</BaseHint>
+          <BaseHint v-if="fieldErrors.title" class="block" tone="error">{{ fieldErrors.title }}</BaseHint>
         </BaseField>
 
         <!-- 內文。從「一堆段落」換成一個 Markdown 欄位（D-46）。
@@ -509,7 +509,7 @@ const publish = () => saveWithStatus(true)
             <BaseHint v-else class="block">還沒有內容</BaseHint>
           </div>
 
-          <BaseHint v-if="fieldErrors.body" class="block text-(--text-accent)">{{ fieldErrors.body }}</BaseHint>
+          <BaseHint v-if="fieldErrors.body" class="block" tone="error">{{ fieldErrors.body }}</BaseHint>
           <BaseHint class="block leading-5">
             不另外開 Summary／Intro 欄位（D-57）：第一段就是清單頁摘要跟文章頁開場，
             直接寫在這裡。
@@ -597,7 +597,7 @@ const publish = () => saveWithStatus(true)
             <BaseHint>Documentation 0000</BaseHint>
           </div>
 
-          <p v-if="scopeError" class="font-mono text-[10px] leading-5 text-(--text-accent)">
+          <p v-if="scopeError" class="font-mono text-[10px] leading-5 text-(--text-error)">
             讀不到分類號清單——後端沒起來時這裡不會改用寫死的四個選項。
           </p>
 
