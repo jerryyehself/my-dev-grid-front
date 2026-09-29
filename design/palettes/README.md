@@ -34,19 +34,19 @@ document.documentElement.classList.add('palette-navy-v2')
 
 1. **Leonardo**（`@adobe/leonardo-contrast-colors`）：指定每個 token 對底色的目標對比，例如次要文字 5.4:1、強調色 5.4 到 7.2:1，由它反推色值，淺色和深色主題各算一次。
 2. **culori**：補 Leonardo 不處理的部分，包括導覽列（深底）上的文字/選中色，以及抽屜面板這種「上面放白字」的分類色。做法是固定色相和彩度，二分搜尋 OKLCH 明度，直到達到目標對比。
-3. **節點分類色**：用 dataviz skill 的 `validate_palette.js --pairs all` 驗證（亮度帶、彩度下限、色盲模擬 ΔE、一般視覺 ΔE、對 `--canvas-bg` 的對比）。`search.cjs` 在固定色相下搜尋明度組合，挑最低 ΔE 最大、而且全部檢查都通過的那一組。
+3. **節點分類色**：用 dataviz skill 的 `validate_palette.js --pairs all` 驗證（亮度帶、彩度下限、色盲模擬 ΔE、一般視覺 ΔE、對 `--canvas-bg` 的對比）。`search.mjs` 在固定色相下搜尋明度組合，挑最低 ΔE 最大、而且全部檢查都通過的那一組。
 
 重跑：
 
 ```bash
 cd design/palettes/tools
 npm i                  # 依賴只裝在這個目錄，不進前端專案
-node gen.cjs           # 綠布、藏青第一版（specs.json 定義種子色）
-node gen2.cjs          # 藏青第二版（要在 gen.cjs 之後跑，它會把結果併進 palettes.json）
-VALIDATE_PALETTE=<dataviz skill 的 scripts/validate_palette.js> node search.cjs light "#e4ebf5" '[[15,0.14],[195,0.12],[290,0.13]]'
+node gen.mjs           # 綠布、藏青第一版（specs.json 定義種子色）
+node gen2.mjs          # 藏青第二版（要在 gen.mjs 之後跑，它會把結果併進 palettes.json）
+VALIDATE_PALETTE=<dataviz skill 的 scripts/validate_palette.js> node search.mjs light "#e4ebf5" '[[15,0.14],[195,0.12],[290,0.13]]'
 ```
 
-`shots.cjs` 會把 `palettes.json` 的配色用 CSS 覆寫注入正在跑的 dev server（`localhost:5173`），逐頁截圖（首頁、Articles、Projects、Graph、About × 兩個主題），完全不改程式碼。啟動前後端的方式見 `.claude/skills/run-app/SKILL.md`。Chromium 要用 `--proxy-server=https=<代理>`，只讓 https 走代理：這個環境的代理只接受 CONNECT，bypass 清單對 localhost 無效，整個走代理會拿到代理的錯誤頁。
+`shots.mjs` 會把 `palettes.json` 的配色用 CSS 覆寫注入正在跑的 dev server（`localhost:5173`），逐頁截圖（首頁、Articles、Projects、Graph、About × 兩個主題），完全不改程式碼。啟動前後端的方式見 `.claude/skills/run-app/SKILL.md`。Chromium 要用 `--proxy-server=https=<代理>`，只讓 https 走代理：這個環境的代理只接受 CONNECT，bypass 清單對 localhost 無效，整個走代理會拿到代理的錯誤頁。
 
 ## 驗證結果
 

@@ -1,7 +1,7 @@
 // 把候選配色用 CSS 覆寫注入真實網站，逐頁截圖（不改任何程式碼）
-const { chromium } = require('playwright');
-const fs = require('fs');
-const P = require('../palettes.json');
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+const P = JSON.parse(fs.readFileSync(new URL('../palettes.json', import.meta.url), 'utf8'));
 const OUT = process.env.SHOTS_DIR || '/tmp/palette-shots';
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -28,7 +28,7 @@ const IDS = (process.argv[2] || 'current,A,B').split(',');
           if (c) { const s = document.createElement('style'); s.id = 'palette-override'; s.textContent = c; document.head.appendChild(s); }
           document.documentElement.classList.toggle('theme-terminal', th === 'terminal');
         });
-        try { localStorage.setItem('theme', th); } catch (e) {}
+        try { localStorage.setItem('theme', th); } catch { /* 沒有 localStorage 就略過 */ }
       }, [css(id), theme]);
       for (const [name, path] of PAGES) {
         await page.goto('http://localhost:5173' + path, { waitUntil: 'networkidle' }).catch(() => {});

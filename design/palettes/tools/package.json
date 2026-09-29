@@ -2,7 +2,7 @@
   "private": true,
   "description": "候選配色的產生/驗證腳本，只在這個目錄裝依賴，不進前端專案本身",
   "scripts": {
-    "gen": "node gen.cjs && node gen2.cjs"
+    "gen": "node gen.mjs && node gen2.mjs"
   },
   "dependencies": {
     "@adobe/leonardo-contrast-colors": "1.1.0",

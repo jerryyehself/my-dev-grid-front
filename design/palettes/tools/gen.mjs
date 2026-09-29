@@ -1,8 +1,12 @@
 // 從種子色產生整套 token（淺色＋深色），用 Leonardo 依對比目標反推色值，
 // 再用 culori 補 Leonardo 不處理的「對深色導覽列」配色與節點分類色。
-const { Theme, Color, BackgroundColor, contrast } = require('@adobe/leonardo-contrast-colors');
-const { formatHex, oklch, rgb, clampChroma } = require('culori');
-const fs = require('fs');
+import { Theme, Color, BackgroundColor } from '@adobe/leonardo-contrast-colors';
+import { formatHex, oklch, rgb, clampChroma } from 'culori';
+import fs from 'node:fs';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 
 const hexRgb = (h) => { const c = rgb(h); return [c.r, c.g, c.b].map((v) => Math.round(v * 255)); };
 const cr = (a, b) => {
@@ -40,7 +44,6 @@ function build(spec, mode) {
   const [nPaperDark, nEdge, nMuted, nBody, nMain] = L.neutral;
   const [acc, accDeep] = L.accent;
   const chrome = L.chrome[0];
-  const ch = oklch(chrome);
   const navText = solve(spec.neutralHue, 0.012, chrome, 11, 'light');
   const navHover = solve(spec.navHoverHue, spec.navHoverC, chrome, 5.2, 'light');
   const t = {

@@ -1,7 +1,11 @@
 // 藏青第二版：60 卡紙底／30 藏青（色帶、深色區塊、淡藏青卡片）／10 酒紅，黃銅當第三色
-const { Theme, Color, BackgroundColor } = require('@adobe/leonardo-contrast-colors');
-const { formatHex, oklch, rgb, clampChroma } = require('culori');
-const fs = require('fs');
+import { Theme, Color, BackgroundColor } from '@adobe/leonardo-contrast-colors';
+import { formatHex, oklch, rgb, clampChroma } from 'culori';
+import fs from 'node:fs';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 
 const hexRgb = (h) => { const c = rgb(h); return [c.r, c.g, c.b].map((v) => Math.round(v * 255)); };
 const lum = (h) => { const [r, g, b] = hexRgb(h).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
@@ -43,7 +47,6 @@ function build(mode) {
   const [band, card] = L.tint;
   const chrome = L.chrome[0];
   const accent = light ? L.ox[0] : L.brass[0];          // 深色主題的強調色改用黃銅，酒紅在深底上會變粉
-  const accentDeep = light ? L.ox[1] : L.brass[0];
   const brassOnNavy = solve(BRASS_H, 0.11, chrome, 6, 'light');
   const nodes = light ? ['#a33949', '#009393', '#534294'] : ['#ad4251', '#00a7a7', '#8071c8']; // 對新的 canvas-bg 重新搜尋過（validate_palette --pairs all，含對比）
   const t = {
