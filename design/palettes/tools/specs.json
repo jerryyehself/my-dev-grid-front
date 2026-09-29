@@ -1,0 +1,97 @@
+{
+ "A": {
+  "label": "綠布書脊＋黃銅（銀行燈）",
+  "neutralHue": 150,
+  "neutralKeys": [
+   "#161c19",
+   "#6b756f",
+   "#f6f8f4"
+  ],
+  "accentKeys": [
+   "#1f5c43",
+   "#2d6a4f"
+  ],
+  "chromeKeys": [
+   "#1d3a2c"
+  ],
+  "navHoverHue": 80,
+  "navHoverC": 0.11,
+  "nodes": [
+   [
+    "doc",
+    70,
+    0.12
+   ],
+   [
+    "tech",
+    245,
+    0.11
+   ],
+   [
+    "impl",
+    350,
+    0.13
+   ]
+  ],
+  "nodeHex": {
+   "light": [
+    "#c18434",
+    "#478cc4",
+    "#8a3362"
+   ],
+   "dark": [
+    "#c18434",
+    "#5399d1",
+    "#973f6e"
+   ]
+  }
+ },
+ "B": {
+  "label": "藏青書脊＋酒紅",
+  "neutralHue": 255,
+  "neutralKeys": [
+   "#171a21",
+   "#6c717b",
+   "#f6f7f9"
+  ],
+  "accentKeys": [
+   "#7a2433",
+   "#8a2d3b"
+  ],
+  "chromeKeys": [
+   "#1c2a45"
+  ],
+  "navHoverHue": 20,
+  "navHoverC": 0.08,
+  "nodes": [
+   [
+    "doc",
+    15,
+    0.14
+   ],
+   [
+    "tech",
+    190,
+    0.115
+   ],
+   [
+    "impl",
+    290,
+    0.13
+   ]
+  ],
+  "nodeHex": {
+   "light": [
+    "#be525f",
+    "#00a7a7",
+    "#59479a"
+   ],
+   "dark": [
+    "#be525f",
+    "#00a7a7",
+    "#6453a7"
+   ]
+  },
+  "accentRatioLight": 7.2
+ }
+}

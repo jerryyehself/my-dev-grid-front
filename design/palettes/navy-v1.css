@@ -1,0 +1,52 @@
+/* 候選配色：藏青書脊＋酒紅（第一版）
+ * 產生方式與驗證結果見同目錄 README.md；數值由 tools/ 的腳本產生，不要手改。
+ * 試用：<html> 加上 class="palette-navy-v1"，並 import 這個檔案（兩個主題都會跟著換）。
+ * 標「新增提案」的 token 目前 variables.css 沒有，元件也還沒用到。 */
+
+html.palette-navy-v1 {
+    --bg-paper-light: #f7f8f9;
+    --bg-paper-dark: #eff0f2;
+    --bg-nav-footer: #1a2741;
+    --text-nav-footer: #d9dee6;
+    --text-nav-hover: #c98887;
+    --text-ink-main: #272a31;
+    --text-ink-body: #444951;
+    --text-ink-muted: #626670;
+    --text-accent: #8e3543;
+    --border-shelf: rgba(130, 41, 55, 0.12);
+    --bg-folder: rgba(130, 41, 55, 0.04);
+    --bg-active-row: rgba(142, 53, 67, 0.07);
+    --focus-ring: rgba(142, 53, 67, 0.12);
+    --edge-real: #737781;
+    --overlay-nodata: #acb0b6;
+    --canvas-bg: #eff0f2;
+    --canvas-dot: rgba(130, 41, 55, 0.1);
+    --node-shadow: rgba(39, 42, 49, 0.28);
+    --node-doc: #be525f;
+    --node-tech: #00a7a7;
+    --node-impl: #59479a;
+}
+
+html.palette-navy-v1.theme-terminal {
+    --bg-paper-light: #21252c;
+    --bg-paper-dark: #181b22;
+    --bg-nav-footer: #0e1523;
+    --text-nav-footer: #c4c9d1;
+    --text-nav-hover: #b87878;
+    --text-ink-main: #eff0f3;
+    --text-ink-body: #ced0d5;
+    --text-ink-muted: #9ea2a9;
+    --text-accent: #c99ea4;
+    --border-shelf: rgba(201, 158, 164, 0.2);
+    --bg-folder: rgba(201, 158, 164, 0.07);
+    --bg-active-row: rgba(201, 158, 164, 0.1);
+    --focus-ring: rgba(201, 158, 164, 0.18);
+    --edge-real: #6e727c;
+    --overlay-nodata: #45494e;
+    --canvas-bg: #181b22;
+    --canvas-dot: rgba(201, 158, 164, 0.1);
+    --node-shadow: rgba(0, 0, 0, 0.5);
+    --node-doc: #be525f;
+    --node-tech: #00a7a7;
+    --node-impl: #6453a7;
+}
