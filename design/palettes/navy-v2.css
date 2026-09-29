@@ -1,0 +1,68 @@
+/* 候選配色：藏青第二版：卡紙底＋藏青色帶＋酒紅＋黃銅
+ * 產生方式與驗證結果見同目錄 README.md；數值由 tools/ 的腳本產生，不要手改。
+ * 試用：<html> 加上 class="palette-navy-v2"，並 import 這個檔案（兩個主題都會跟著換）。
+ * 標「新增提案」的 token 目前 variables.css 沒有，元件也還沒用到。 */
+
+html.palette-navy-v2 {
+    --bg-paper-light: #f6f5f2;
+    --bg-paper-dark: #e4ebf5;
+    --bg-nav-footer: #162541;
+    --text-nav-footer: #e8e3dd;
+    --text-nav-hover: #c99a4d;
+    --text-ink-main: #202839;
+    --text-ink-body: #3e4758;
+    --text-ink-muted: #596273;
+    --text-accent: #922e39;
+    --border-shelf: rgba(22, 37, 65, 0.14);
+    --bg-folder: #eaeff8;
+    --bg-active-row: rgba(146, 46, 57, 0.08);
+    --focus-ring: rgba(146, 46, 57, 0.16);
+    --edge-real: #6d7686;
+    --overlay-nodata: #adb1b7;
+    --canvas-bg: #e4ebf5;
+    --canvas-dot: rgba(22, 37, 65, 0.1);
+    --node-shadow: rgba(22, 37, 65, 0.24);
+    --node-doc: #a33949;
+    --node-tech: #009393;
+    --node-impl: #534294;
+    /* 新增提案 */
+    --bg-band-strong: #162541;
+    --text-on-band: #e8e3dd;
+    --accent-brass: #c99a4d;
+    --accent-secondary: #8d651e;
+    --cat-fill-doc: #b34f57;
+    --cat-fill-tech: #007d7d;
+    --cat-fill-impl: #7264b3;
+}
+
+html.palette-navy-v2.theme-terminal {
+    --bg-paper-light: #1d232d;
+    --bg-paper-dark: #0d1529;
+    --bg-nav-footer: #040a1a;
+    --text-nav-footer: #cec9c3;
+    --text-nav-hover: #b38637;
+    --text-ink-main: #e8edf6;
+    --text-ink-body: #c8ced9;
+    --text-ink-muted: #99a0ad;
+    --text-accent: #d7ac66;
+    --border-shelf: rgba(179, 134, 55, 0.2);
+    --bg-folder: #1e2c44;
+    --bg-active-row: rgba(215, 172, 102, 0.12);
+    --focus-ring: rgba(215, 172, 102, 0.22);
+    --edge-real: #6c7585;
+    --overlay-nodata: #3f4247;
+    --canvas-bg: #0d1529;
+    --canvas-dot: rgba(179, 134, 55, 0.1);
+    --node-shadow: rgba(0, 0, 0, 0.5);
+    --node-doc: #ad4251;
+    --node-tech: #00a7a7;
+    --node-impl: #8071c8;
+    /* 新增提案 */
+    --bg-band-strong: #0d1529;
+    --text-on-band: #d6d2cb;
+    --accent-brass: #b38637;
+    --accent-secondary: #cd7e83;
+    --cat-fill-doc: #b34f57;
+    --cat-fill-tech: #007d7d;
+    --cat-fill-impl: #7264b3;
+}
