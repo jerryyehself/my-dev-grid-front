@@ -1,6 +1,6 @@
 # 候選配色
 
-2026-09-29 About 頁改版時產生的幾組候選配色，**目前都沒有接上正式網站**，留著日後切換、比較用。正式配色仍然是 `src/assets/css/variables.css`。
+2026-09-29 About 頁改版時產生的幾組候選配色，留著日後切換、比較用。**藏青第二版已經是全站正式配色**（D-59，同日），數值原封不動搬進 `src/assets/css/variables.css`；其他兩組沒有接上正式網站。
 
 ## 為什麼有這個目錄
 
@@ -28,7 +28,7 @@ document.documentElement.classList.add('palette-navy-v2')
 
 兩個主題會一起換：`.theme-terminal` 在的時候套深色那組。
 
-`navy-v2.css` 裡標「新增提案」的 token（`--bg-band-strong`、`--text-on-band`、`--accent-brass`、`--accent-secondary`、`--cat-fill-*`）目前 `variables.css` 沒有、元件也還沒用到。照 visual-design-language skill 的規則，新增 token 類別要先討論過，所以只是提案。
+`navy-v2.css` 裡標「新增提案」的 token（`--bg-band-strong`、`--text-on-band`、`--accent-brass`、`--accent-secondary`、`--cat-fill-*`）已經討論過並採用（D-59），現在是 `variables.css` 的正式 token，About 頁在用。
 
 ## 怎麼產生的
 

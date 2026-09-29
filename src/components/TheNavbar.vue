@@ -6,12 +6,15 @@
     <div
       class="w-full h-16 px-4 md:px-8 flex items-center justify-between font-mono text-xs"
     >
+      <!-- 字標（D-32 的「IN / ARCHIVE」，D-60 的寫法）：兩半等大、Libre Caslon Text 700、斜線用黃銅。
+           以前 ARCHIVE 是 11px、65% 透明度，手機上還整個藏起來，字標只剩「IN」——
+           NN/g 的首頁原則是 logo 要比周圍的導覽文字醒目，不能讀起來像另一個選單項目，
+           所以兩半一樣大，手機只縮字級不拿掉 -->
       <router-link
         to="/"
-        class="flex items-baseline gap-2 text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
+        class="font-wordmark font-bold text-[20px] sm:text-[26px] tracking-[0.06em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
       >
-        <span class="font-serif italic font-bold text-[19px] tracking-normal">IN</span>
-        <span class="hidden sm:inline font-light text-[11px] tracking-[0.15em] opacity-65">ARCHIVE</span>
+        IN<span class="text-(--accent-brass) mx-[0.28em]">/</span>ARCHIVE
       </router-link>
 
       <!-- 手機寬度放不下四個導覽項目＋主題切換鈕，中大螢幕才用橫排 -->

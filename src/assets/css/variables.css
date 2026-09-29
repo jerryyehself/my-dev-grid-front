@@ -1,110 +1,109 @@
 /* ==========================================================================
-   📚 1. 預設主題：現代木質圖書館風 (Modern Library)
+   全站配色：藏青第二版（decision-register D-59，2026-09-29）
+   卡紙底 60%／藏青 30%（導覽列、色帶、淡藏青卡片）／酒紅 10%，黃銅當第三色。
+   色值不是手調的：由 design/palettes/tools/ 的腳本用 Leonardo 依目標對比反推、
+   culori 補明度、dataviz 的 validate_palette.js 驗證節點分類色，兩個主題各算一次。
+   產生方式、每組文字/底色的對比結果見 design/palettes/README.md 與 palettes.json（B2）。
+   要改色請改腳本的種子色再重跑，不要直接改這裡的數字——改一個值就會破壞整組的對比驗證。
+
+   取代的舊配色：淺色「米白＋磚紅」（#fcfaf2／#b45309，就是 AI 生成設計最常見的樣板，
+   而且 #b45309 在 --bg-paper-dark 上只有 4.40:1，小字沒過 AA）、深色 Gruvbox。
    ========================================================================== */
+
+/* 📚 1. 淺色主題 */
 :root,
 .theme-library {
-    /* 📄 畫布與紙張色 */
-    --bg-paper-light: #fcfaf2;
-    /* 中間主內容宣紙白 */
-    --bg-paper-dark: #f4f0e1;
-    /* 中間主內容藏書黃 */
+    /* 📄 紙張底色 */
+    --bg-paper-light: #f6f5f2;
+    --bg-paper-dark: #e4ebf5;
 
-    /* 🪵 頭尾加深專用色 (深胡桃木色) */
-    --bg-nav-footer: #291205;
-    /* 極致深沉、接近黑色的胡桃木褐 */
-    --text-nav-footer: #f4f0e1;
-    /* 在深色背景下的淺色羊皮紙字 */
-    --text-nav-hover: #b45309;
-    /* 跟 --text-accent 對齊，設計稿裡 Nav 的 active/hover 用的就是 accent 色，不是另一個更亮的黃 */
+    /* 導覽列與頁尾（藏青書脊） */
+    --bg-nav-footer: #162541;
+    --text-nav-footer: #e8e3dd;
+    --text-nav-hover: #c99a4d;
 
-    /* 🎛️ 物理光學後台控制接口 (預設：開啟深色毛玻璃煙霧鏡) */
+    /* 🎛️ 導覽列毛玻璃（跟配色無關的控制值） */
     --nav-bg-opacity: 0.65;
     /* 調整此數值控制透明度 (0.0 到 1.0) */
     --nav-blur: 12px;
     /* 調整此數值控制毛玻璃模糊度 (0px 代表關閉) */
 
-    /* ✒️ 圖書館墨色與線條 */
-    --text-ink-main: #451a03;
-    /* Amber-950: 沉穩墨赭 */
-    --text-ink-body: #78350f;
-    /* Amber-900: 印刷炭褐 */
-    --text-ink-muted: #b45309;
-    /* Amber-700: 牛皮紙棕 */
-    --text-accent: #b45309;
-    /* 亮點色：黃銅色 */
-    --border-shelf: rgba(146, 64, 14, 0.1);
-    --bg-folder: rgba(146, 64, 14, 0.04);
-    --bg-active-row: rgba(180, 83, 9, 0.06);
+    /* ✒️ 文字與線條 */
+    --text-ink-main: #202839;
+    --text-ink-body: #3e4758;
+    --text-ink-muted: #596273;
+    --text-accent: #922e39;
+    /* 酒紅：淺色主題的強調色 */
+    --border-shelf: rgba(22, 37, 65, 0.14);
+    --bg-folder: #eaeff8;
+    /* 淡藏青卡片底 */
+    --bg-active-row: rgba(146, 46, 57, 0.08);
     /* Projects 選中列專用的極淡 accent 透染，語意跟 --bg-folder 不同、不能借用 */
-    --focus-ring: rgba(180, 83, 9, 0.08);
-    /* 輸入框聚焦時的外暈。原本硬寫在 GraphPathSearch 的兩個輸入框裡，
-       深色主題的 accent 是黃色（#fabd2f）而這串是淺色主題的棕色，等於在
-       夜讀主題下發出一圈幾乎看不見的棕光——抽成 BaseInput 時才看見。 */
+    --focus-ring: rgba(146, 46, 57, 0.16);
+    /* 輸入框聚焦時的外暈 */
 
-    /* 🕸️ 知識圖譜分類色（HomeView 首頁小工具）：用 dataviz skill 的 validate_palette.js
-       跑過 --pairs all 驗證（節點-連結圖任兩個型別都可能相鄰，不能只驗鄰居）。
-       --node-doc 沿用 --text-accent 的黃銅色，--node-tech/--node-impl 是另外挑的，
-       跟既有色票脫鉤，各自獨立驗證。 */
-    --node-doc: #b45309;
-    --node-tech: #0e8a72;
-    --node-impl: #8a3aa8;
-    /* 2026-09-12 使用者反應邊看不清楚，實測 #a8998a 對 --canvas-bg 只有 2.42:1
-       （WCAG 圖形物件建議 3:1 都不到）；同色相/飽和度往深壓到 L=0.45，
-       升到 3.99:1，明顯更清楚但還是比節點本身的顏色淡，維持「邊是輔助資訊」
-       的視覺位階。 */
-    --edge-real: #847362;
-    --overlay-nodata: #c4b8a8;
-    --canvas-bg: #f4f0e1;
-    --canvas-dot: rgba(146, 64, 14, 0.1);
-    --node-shadow: rgba(69, 26, 3, 0.28);
+    /* 🕸️ 知識圖譜分類色：validate_palette.js --pairs all 驗證過（節點-連結圖任兩型都可能相鄰） */
+    --node-doc: #a33949;
+    --node-tech: #009393;
+    --node-impl: #534294;
+    --edge-real: #6d7686;
+    --overlay-nodata: #adb1b7;
+    --canvas-bg: #e4ebf5;
+    --canvas-dot: rgba(22, 37, 65, 0.1);
+    --node-shadow: rgba(22, 37, 65, 0.24);
+
+    /* 🧱 內容區的色帶與第三色（D-59 新增）。
+       淺色主題裡 --bg-band-strong/--text-on-band 跟導覽列同值、--accent-brass 跟 --text-nav-hover 同值，
+       但語意不同（內容區色帶 vs 導覽列），分開命名才能各自調整，不要改成互相引用。 */
+    --bg-band-strong: #162541;
+    --text-on-band: #e8e3dd;
+    --accent-brass: #c99a4d;
+    /* 黃銅：字標斜線、色帶上的強調、框線 */
+    --accent-secondary: #8d651e;
+    /* 第二強調色：淺色主題是深黃銅，深色主題反過來是淡酒紅 */
+    /* 放白字的分類號色塊（0000／1000／2000）。跟 --node-* 分開：這組是針對白字 4.5:1 驗證的，
+       兩個主題同值 */
+    --cat-fill-doc: #b34f57;
+    --cat-fill-tech: #007d7d;
+    --cat-fill-impl: #7264b3;
 }
 
-/* ==========================================================================
-   🕯️ 2. 夜讀主題：夜間書庫終端機 (Archive Terminal)
-   色票來源:Gruvbox (base16 標準格式,tinted-theming/base16-schemes),
-   不是憑空調的 —— 這是被大量終端機/編輯器主題長期驗證過易讀性的暖色調色盤。
-   對比度已用 WCAG 公式驗證過,見 .claude/skills/visual-design-language/SKILL.md。
-   ========================================================================== */
+/* 🕯️ 2. 深色主題（class 名稱沿用 .theme-terminal，useTheme 與測試都靠它） */
 .theme-terminal {
-    --bg-paper-light: #282828;
-    /* Gruvbox base01 */
-    --bg-paper-dark: #1d2021;
-    /* Gruvbox base00,最暗 */
+    --bg-paper-light: #1d232d;
+    --bg-paper-dark: #0d1529;
 
-    --bg-nav-footer: #1d2021;
-    /* Gruvbox base00 */
-    --text-nav-footer: #bdae93;
-    /* Gruvbox base04 */
-    --text-nav-hover: #fabd2f;
-    /* Gruvbox base0A(黃),延續圖書館主題的黃銅高亮基因 */
+    --bg-nav-footer: #040a1a;
+    --text-nav-footer: #cec9c3;
+    --text-nav-hover: #b38637;
 
     --nav-bg-opacity: 0.95;
     --nav-blur: 0px;
 
-    --text-ink-main: #fbf1c7;
-    /* Gruvbox base07 */
-    --text-ink-body: #ebdbb2;
-    /* Gruvbox base06 */
-    --text-ink-muted: #bdae93;
-    /* Gruvbox base04 */
-    --text-accent: #fabd2f;
-    /* Gruvbox base0A(黃) */
-    --border-shelf: rgba(250, 189, 47, 0.18);
-    --bg-folder: rgba(250, 189, 47, 0.07);
-    --bg-active-row: rgba(250, 189, 47, 0.09);
-    /* 深色底上要多一點 alpha 才看得出來，比例比照 --bg-folder 的 0.04 → 0.07 */
-    --focus-ring: rgba(250, 189, 47, 0.15);
+    --text-ink-main: #e8edf6;
+    --text-ink-body: #c8ced9;
+    --text-ink-muted: #99a0ad;
+    --text-accent: #d7ac66;
+    /* 深色主題改用黃銅當強調色 */
+    --border-shelf: rgba(179, 134, 55, 0.2);
+    --bg-folder: #1e2c44;
+    --bg-active-row: rgba(215, 172, 102, 0.12);
+    --focus-ring: rgba(215, 172, 102, 0.22);
 
-    /* 深色模式另外重跑驗證：暖黃拉深一點才進亮度區間，跟 --text-accent 脫鉤
-       （那個是 UI 強調色，這裡是圖表分類色，各自驗證各自的） */
-    --node-doc: #b8791a;
-    --node-tech: #279c7d;
-    --node-impl: #b356a8;
-    /* 同一次對比修正（見淺色主題註解）：#665c4f 對 --canvas-bg 只有 2.51:1，
-       同色相/飽和度往淺拉到 L=0.50，升到 4.44:1。 */
-    --edge-real: #918371;
-    --overlay-nodata: #665c4f;
-    --canvas-bg: #1d2021;
-    --canvas-dot: rgba(250, 189, 47, 0.09);
+    --node-doc: #ad4251;
+    --node-tech: #00a7a7;
+    --node-impl: #8071c8;
+    --edge-real: #6c7585;
+    --overlay-nodata: #3f4247;
+    --canvas-bg: #0d1529;
+    --canvas-dot: rgba(179, 134, 55, 0.1);
     --node-shadow: rgba(0, 0, 0, 0.5);
+
+    --bg-band-strong: #0d1529;
+    --text-on-band: #d6d2cb;
+    --accent-brass: #b38637;
+    --accent-secondary: #cd7e83;
+    --cat-fill-doc: #b34f57;
+    --cat-fill-tech: #007d7d;
+    --cat-fill-impl: #7264b3;
 }

@@ -39,15 +39,16 @@ const router = createRouter({
       path: '/about',
       name: 'about',
       component: () => import('@/views/AboutView.vue'),
-      // 💡 配置驅動 UI：回歸直覺、輕鬆的個人與系統分類，拒絕過度工程
       meta: {
-        type: 'profile',
-        tag: 'About Me',
-        title: 'IN',
-        subtitle: 'Full-Stack Developer / Artifact Sandbox',
+        tag: 'About',
+        title: '私人藏書，公開目錄',
+        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結。',
         // About 頁自己畫了一個滿版橫幅當作大標題，跟 MainLayout 的通用表頭是同一件事，
-        // 兩個都顯示會重複兩次姓名/職稱，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
+        // 兩個都顯示會重複兩次，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
         hideHeader: true,
+        // 整頁由滿版色帶組成（照片橫幅到 AUTHOR 色帶），主內容區上下都不留白，
+        // 第一段貼齊導覽列、最後一段貼齊頁尾。只有這頁需要，其他 hideHeader 頁面仍要上留白
+        fullBleed: true,
       },
     },
     {

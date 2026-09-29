@@ -45,7 +45,9 @@
           <slot name="tag"></slot>
         </div>
 
-        <h1 class="!font-extrabold tracking-tight text-(--text-ink-main) text-[28px] sm:text-[34px]">
+        <!-- 頁面標題用 --font-serif（Noto Serif TC 900），跟 About 的章節標題同一套（D-60）。
+             以前這裡沒指定字型，標題吃的是內文的無襯線字，換了 --font-serif 也到不了這裡 -->
+        <h1 class="font-serif !font-black text-(--text-ink-main) text-[28px] sm:text-[34px] leading-tight">
           <slot name="title"></slot>
         </h1>
 
@@ -55,13 +57,27 @@
       </div>
     </header>
 
-    <!-- 📖 主內容區：hideHeader 時上面沒有 header 佔位，這段留白就不需要了，讓橫幅直接貼齊導覽列 -->
+    <!-- 📖 主內容區分三種：
+         - fullBleed（About）：整頁由滿版色帶組成，不套內容欄寬度、不留上下白，
+           也不套 .global-page-wrapper 的文件排版預設值（h2 的上下距離與 flex、段落分散對齊），
+           那是給文章這類「文件」頁用的，套在設計過的頁面上只會一格一格被覆寫掉
+         - hideHeader（文章內頁、編輯頁、本體論頁…）：頁面自己畫表頭，但不是滿版橫幅，
+           要補上通用表頭原本的上留白。以前這兩種混在一起都給 pt-0，結果這些頁面的
+           第一行字直接貼在導覽列底邊
+         - 其他：通用表頭已經留了上白，這裡只補一點 -->
     <main
-      class="grow w-full max-w-5xl mx-auto px-4 sm:px-6 pb-8"
-      :class="props.hideHeader ? 'pt-0' : 'pt-3 sm:pt-4'"
-      :style="widthStyle"
+      class="grow w-full"
+      :class="
+        props.fullBleed
+          ? ''
+          : [
+              'max-w-5xl mx-auto px-4 sm:px-6 pb-8',
+              props.hideHeader ? 'pt-6 sm:pt-8' : 'pt-3 sm:pt-4',
+            ]
+      "
+      :style="props.fullBleed ? undefined : widthStyle"
     >
-      <article class="global-page-wrapper">
+      <article :class="{ 'global-page-wrapper': !props.fullBleed }">
         <slot name="content"></slot>
       </article>
     </main>
@@ -81,7 +97,7 @@ import TheNavbar from '@/components/TheNavbar.vue'
 
 // 大部分頁面共用 max-w-5xl（1024px）；個別頁面如果設計稿要更寬/更窄，
 // 透過 route.meta.contentWidth 覆蓋，不用整站改寬度。
-const props = defineProps<{ contentWidth?: string; hideHeader?: boolean }>()
+const props = defineProps<{ contentWidth?: string; hideHeader?: boolean; fullBleed?: boolean }>()
 const widthStyle = computed(() => (props.contentWidth ? { maxWidth: props.contentWidth } : undefined))
 
 const isScrolled = ref(false)

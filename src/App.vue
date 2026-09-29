@@ -15,10 +15,11 @@ const pageSubtitle = computed(
 )
 const contentWidth = computed(() => route.meta.contentWidth as string | undefined)
 const hideHeader = computed(() => Boolean(route.meta.hideHeader))
+const fullBleed = computed(() => Boolean(route.meta.fullBleed))
 </script>
 
 <template>
-  <MainLayout :content-width="contentWidth" :hide-header="hideHeader">
+  <MainLayout :content-width="contentWidth" :hide-header="hideHeader" :full-bleed="fullBleed">
     <template #tag>
       <span>
         {{ pageTag }}
