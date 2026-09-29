@@ -72,7 +72,6 @@ onMounted(async () => {
         <h3
           class="flex items-center gap-1.5 font-mono text-[12px] font-extrabold tracking-[0.05em] uppercase text-(--text-ink-muted) mb-2.5"
         >
-          <span class="text-(--text-accent)">//</span>
           <span>近期專案</span>
         </h3>
 
@@ -117,7 +116,6 @@ onMounted(async () => {
         <h3
           class="flex items-center gap-1.5 font-mono text-[12px] font-extrabold tracking-[0.05em] uppercase text-(--text-ink-muted) mb-2.5"
         >
-          <span class="text-(--text-accent)">//</span>
           <span>近期文章</span>
         </h3>
 
@@ -130,7 +128,6 @@ onMounted(async () => {
             class="block px-[18px] py-3 border-b border-(--border-shelf) last:border-b-0 hover:bg-(--bg-folder) transition-colors"
           >
             <div class="flex items-center gap-2 mb-1 font-mono text-[10px]">
-              <span class="font-bold text-(--text-accent)">// ARTICLE</span>
               <span class="text-(--text-ink-muted) tabular-nums">{{ articleDate(a) }}</span>
             </div>
             <div class="text-[12.5px] leading-snug text-(--text-ink-body)">{{ a.title }}</div>
