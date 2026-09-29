@@ -28,7 +28,7 @@
 
     <div class="border-b border-(--border-shelf) pb-6 mb-8">
       <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-accent) font-bold mb-3">
-        <span v-if="tags.length">// {{ tags.join(' / ') }}</span>
+        <span v-if="tags.length">{{ tags.join(' / ') }}</span>
         <span class="text-(--text-ink-muted) font-normal opacity-60">{{ displayDate(article) }}</span>
       </div>
 

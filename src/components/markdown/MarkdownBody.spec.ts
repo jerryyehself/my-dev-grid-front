@@ -47,11 +47,10 @@ describe('MarkdownBody', () => {
     expect(w.find('del').text()).toBe('刪除線')
   })
 
-  it('標題沿用站上的 // 前綴樣式', async () => {
+  it('標題不加 // 前綴（程式碼註解的造型只留給技術頁）', async () => {
     const w = await mountMd('## 收斂到 View')
     const h = w.find('h3')
-    expect(h.text()).toContain('//')
-    expect(h.text()).toContain('收斂到 View')
+    expect(h.text()).toBe('收斂到 View')
   })
 
   it('清單與任務清單', async () => {

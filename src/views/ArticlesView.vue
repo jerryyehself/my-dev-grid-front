@@ -174,7 +174,7 @@ const goToArticle = (id: number) => {
           ></div>
           <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
-            <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">// {{ tagsOf(article)[0] }}</span>
+            <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article)[0] }}</span>
           </div>
           <h3
             class="text-base font-bold text-(--text-ink-main) mb-1.5 group-hover:text-(--text-accent) transition-colors"
@@ -228,7 +228,7 @@ const goToArticle = (id: number) => {
         >
           <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
-            <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">// {{ tagsOf(article).join(' / ') }}</span>
+            <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article).join(' / ') }}</span>
           </div>
           <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">{{ article.title }}</h3>
           <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-left sm:text-justify max-w-[700px]">
