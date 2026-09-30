@@ -6,7 +6,7 @@
 
   <div v-else class="w-full">
     <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
-      // DEMO_DATA（連不上後端，顯示的是填充內容，不是真的文章）
+      示範資料（連不上後端，顯示的是填充內容，不是真的文章）
     </p>
 
     <div class="flex items-center justify-between gap-4 mb-7">

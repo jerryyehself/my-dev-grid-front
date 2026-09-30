@@ -18,7 +18,7 @@ const MODES = [
 ] as const
 
 // 2026-09-24：跟 Home 頁「知識網路」小工具（KnowledgeGraphPanel.vue）用同一套
-// DEMO_DATA 標示慣例——這頁原本連不上後端就直接顯示錯誤，沒有跟著補上 demo
+// 「示範資料」標示慣例——這頁原本連不上後端就直接顯示錯誤，沒有跟著補上 demo
 // fallback，見 graphPocData.ts 的說明。2D/3D 只會掛一個（依 mode），各自回報
 // 自己那次 fetch 的結果即可，不用互相同步。
 const isDemoData = ref(false)
@@ -28,9 +28,9 @@ const isDemoData = ref(false)
 // 元件、哪個渲染引擎點出來的。
 const selected = ref<GraphPocSelection | null>(null)
 const domainLabel: Record<GraphNodeType, string> = {
-  documentation: 'Documentation',
-  technique: 'Technique',
-  implementation: 'Implementation',
+  documentation: '文件',
+  technique: '技術',
+  implementation: '實作',
 }
 
 // 路徑查詢結果：null 代表「還沒查/起訖點沒選好」，畫面上不顯示任何路徑相關的東西
@@ -50,7 +50,7 @@ const pathResult = ref<GraphPathDto | null>(null)
     <GraphPoc3D v-else @select="selected = $event" @demo="isDemoData = $event" />
 
     <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest">
-      // DEMO_DATA（連不上後端，顯示的是存好的資料快照，不是即時資料）
+      示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
     </p>
 
     <!-- 捷運路線圖式的路徑清單／找不到路徑的誠實空狀態——GraphPathSearch 起訖點都選

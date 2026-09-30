@@ -246,7 +246,7 @@ const router = createRouter({
       meta: {
         tag: 'Knowledge Graph',
         title: '知識圖譜',
-        subtitle: '文件、技巧與實作之間的連結,2D 與 3D 兩種檢視',
+        subtitle: '文件、技術與實作之間的連結，2D 與 3D 兩種檢視',
       },
     },
   ],

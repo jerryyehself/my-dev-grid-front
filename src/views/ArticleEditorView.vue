@@ -439,7 +439,7 @@ const publish = () => saveWithStatus(true)
       <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-(--text-accent) font-bold">
         部分欄位還沒接後端
       </span>
-      ——Title／內文／分類號／Technique・Implementation 圖譜關聯／發布狀態已經真的會存進資料庫；
+      ——標題／內文／分類號／技術・實作圖譜關聯／發布狀態已經真的會存進資料庫；
       邊註／純標籤／跟其他文章的關聯（entity_relations 表存在，但寫入邏輯還沒接）
       這三項後端目前沒有對應欄位，先留在這頁本地讓你打字用，重新整理或離開這頁就會消失。
     </p>
@@ -598,7 +598,7 @@ const publish = () => saveWithStatus(true)
         <BaseCard variant="panel" class="gap-3">
           <div class="flex items-baseline justify-between gap-2">
             <BaseEyebrow size="field">Scope 分類號</BaseEyebrow>
-            <BaseHint>Documentation 0000</BaseHint>
+            <BaseHint>文件 0000</BaseHint>
           </div>
 
           <p v-if="scopeError" class="font-mono text-[10px] leading-5 text-(--text-error)">
@@ -752,7 +752,7 @@ const publish = () => saveWithStatus(true)
               @click="openPicker('technique', tag)"
             >
               <span class="font-mono text-[10px] tracking-[0.1em] text-(--text-accent) font-bold">
-                {{ tag }} 對得上 {{ matchedTechnique(tag)?.scope ?? 'Technique' }}
+                {{ tag }} 對得上 {{ matchedTechnique(tag)?.scope ?? '技術' }}
               </span>
               <BaseHint class="leading-5">
                 點這裡升級成帶述詞的圖譜關聯

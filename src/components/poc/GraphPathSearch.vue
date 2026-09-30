@@ -14,9 +14,9 @@ const nodes = ref<GraphPocNode[]>([])
 const loadError = ref<string | null>(null)
 
 const domainLabel: Record<GraphNodeType, string> = {
-  documentation: 'Documentation',
-  technique: 'Technique',
-  implementation: 'Implementation',
+  documentation: '文件',
+  technique: '技術',
+  implementation: '實作',
 }
 
 
@@ -291,7 +291,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <p v-if="searching" class="font-mono text-[11px] tracking-widest text-(--text-ink-body) opacity-70">// 查詢路徑中...</p>
+    <p v-if="searching" class="font-mono text-[11px] tracking-widest text-(--text-ink-body) opacity-70">查詢路徑中…</p>
     <p v-else-if="searchError" class="text-[12px] text-(--text-error)">{{ searchError }}</p>
   </div>
 </template>

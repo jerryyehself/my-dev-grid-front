@@ -15,9 +15,9 @@ import type { GraphNodeType } from '@/api/graph'
 defineOptions({ inheritAttrs: false })
 
 const ITEMS: { type: GraphNodeType; label: string }[] = [
-  { type: 'documentation', label: 'Documentation' },
-  { type: 'technique', label: 'Technique' },
-  { type: 'implementation', label: 'Implementation' },
+  { type: 'documentation', label: '文件' },
+  { type: 'technique', label: '技術' },
+  { type: 'implementation', label: '實作' },
 ]
 </script>
 

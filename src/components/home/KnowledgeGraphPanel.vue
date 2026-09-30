@@ -87,9 +87,9 @@ let width = 900
 let height = 460
 
 const typeLabel: Record<GraphNodeType, string> = {
-  documentation: 'Documentation',
-  technique: 'Technique',
-  implementation: 'Implementation',
+  documentation: '文件',
+  technique: '技術',
+  implementation: '實作',
 }
 
 function css(varName: string): string {
@@ -882,7 +882,7 @@ onUnmounted(() => {
     </p>
 
     <p v-if="!loading && isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-2">
-      // DEMO_DATA（連不上後端，顯示的是存好的資料快照，不是即時資料）
+      示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
     </p>
 
     <div v-if="!loading" class="flex items-center gap-2 mb-2.5">
@@ -923,11 +923,11 @@ onUnmounted(() => {
       <span>較新</span>
       <span class="flex items-center gap-1.5 ml-2"
         ><span class="w-2 h-2 rounded-full" :style="{ background: 'var(--overlay-nodata)' }"></span
-        >尚無建立時間資料（Technique／Documentation）</span
+        >尚無建立時間資料（技術／文件）</span
       >
     </div>
 
-    <BaseLoadingBlock v-if="loading" height="460px">// LOADING_GRAPH...</BaseLoadingBlock>
+    <BaseLoadingBlock v-if="loading" height="460px">圖譜載入中…</BaseLoadingBlock>
 
     <div
       v-show="!loading"
@@ -945,7 +945,7 @@ onUnmounted(() => {
         :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       >
         <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">
-          // 節點排列中...
+          節點排列中…
         </span>
       </div>
 

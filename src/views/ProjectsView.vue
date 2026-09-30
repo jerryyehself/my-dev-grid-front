@@ -45,11 +45,11 @@ watch(
 <template>
   <div class="w-full">
     <div v-if="loading" class="py-16 text-center text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
-      // LOADING_PROJECTS...
+      專案載入中…
     </div>
 
     <div v-else-if="error" class="py-16 flex flex-col items-center gap-4 text-center">
-      <p class="text-[11px] font-mono text-(--text-accent) tracking-widest">// FAILED_TO_LOAD</p>
+      <p class="text-[11px] font-mono text-(--text-accent) tracking-widest">載入失敗</p>
       <p class="text-sm text-(--text-ink-body)">{{ error }}</p>
       <BaseButton variant="primary" @click="load">重試</BaseButton>
     </div>
