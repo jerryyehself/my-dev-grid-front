@@ -207,9 +207,10 @@ onMounted(async () => {
     .linkColor((l) => {
       if (pathNodeIds) return isPathEdge(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.12)
       if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.12)
-      return l.kind === 'inspiration' ? css('--text-accent') : css('--edge-real')
+      // 同類別、跨類別都是直接關係，畫成同一種實線。虛線全站只留給首頁的「間接關聯」
+      // （推算出來、資料庫裡沒有的），同一種線不能在兩頁代表兩件事（2026-09-30 使用者同意）
+      return css('--edge-real')
     })
-    .linkLineDash((l) => (l.kind === 'inspiration' ? [4, 3] : null))
     .linkWidth((l) => ((pathNodeIds ? isPathEdge(l) : hoveredNodeId && linkTouchesHovered(l)) ? 2.4 : 1.2))
     .enableNodeDrag(true)
     .onNodeDragEnd((n) => {
@@ -237,6 +238,8 @@ onMounted(async () => {
         domainType: n.domainType,
         weight: n.weight,
         degree: neighborIds.get(n.id)?.size ?? 0,
+        subtype: n.subtype,
+        url: n.url,
       }),
     )
     .onLinkClick((l) =>

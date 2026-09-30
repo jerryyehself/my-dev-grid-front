@@ -10,6 +10,9 @@ export interface Project {
   started: string
   repo: string
   role?: string
+  /** 後端 Implementation 的 id。圖譜節點連到專案頁時用它選中那一筆（?implementation=<id>）；
+   *  示範資料快照沒有這個欄位 */
+  implementationId?: number
 }
 
 interface ScopeDto {
@@ -68,6 +71,7 @@ const toProject = (raw: ImplementationDto, id: string): Project => {
     tags: raw.techniques.map((t) => t.title),
     started: toStartedYm(raw.git_repo_created_at),
     repo: raw.title,
+    implementationId: raw.id,
   }
 }
 

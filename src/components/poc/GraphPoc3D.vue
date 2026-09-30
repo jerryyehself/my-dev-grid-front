@@ -205,20 +205,21 @@ onMounted(async () => {
       return blendTowardBg(base, 0.15)
     })
     .linkColor((l) => {
-      const base = l.kind === 'inspiration' ? css('--text-accent') : css('--edge-real')
+      // 同類別、跨類別都是直接關係，一種顏色、一種粗細（見 GraphPoc2D 的同一段說明）
+      const base = css('--edge-real')
       if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : blendTowardBg(base, 0.12)
       return base
     })
     .linkWidth((l) => {
       if (hoveredNodeId && linkTouchesHovered(l)) return 2.2
-      return l.kind === 'inspiration' ? 1.5 : 0.6
+      return 1
     })
-    // 3d-force-graph 沒有原生「虛線」材質,用沿線飄動的粒子近似「靈感對撞機」的動態感，
-    // hover 到的鄰居邊額外加密粒子當提示。
-    .linkDirectionalParticles((l) => {
-      if (hoveredNodeId && linkTouchesHovered(l)) return 5
-      return l.kind === 'inspiration' ? 3 : 0
-    })
+    // 套件預設的線條不透明度是 0.2，疊在深淺兩種背景上幾乎看不到線（2026-09-30 模擬讀者審查）。
+    // 淡化靠上面 linkColor 的 blendTowardBg 處理，這裡整體拉高
+    .linkOpacity(0.85)
+    // hover 到的鄰居邊加上沿線飄動的粒子當提示。以前同類別的邊平常也有粒子（模擬 2D 的虛線），
+    // 2026-09-30 同類別跟跨類別統一成同一種直接關係之後拿掉
+    .linkDirectionalParticles((l) => (hoveredNodeId && linkTouchesHovered(l) ? 5 : 0))
     .linkDirectionalParticleSpeed(0.004)
     .onNodeHover((n) => {
       const nextId = n?.id ?? null
@@ -234,6 +235,8 @@ onMounted(async () => {
         domainType: n.domainType,
         weight: n.weight,
         degree: neighborIds.get(n.id)?.size ?? 0,
+        subtype: n.subtype,
+        url: n.url,
       }),
     )
     .onLinkClick((l) =>

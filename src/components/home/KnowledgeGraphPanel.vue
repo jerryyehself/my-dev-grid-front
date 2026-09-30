@@ -2,6 +2,8 @@
 import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
+import BaseSwitch from '@/components/BaseSwitch.vue'
+import { graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
 import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { RouterLink } from 'vue-router'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
@@ -51,6 +53,8 @@ interface SimNode extends NodeObject {
   label: string
   degree: number
   createdAt: string | null
+  subtype: string | null
+  url: string | null
 }
 interface SimLink extends LinkObject<SimNode> {
   predicate: string | null
@@ -77,7 +81,7 @@ const loading = ref(true)
 // 遮罩蓋住這段而不是整個藏起來，讓使用者看得出「畫面正在動、還沒定」而不是空白。
 const settling = ref(true)
 const isDemoData = ref(false)
-const stats = reactive({ doc: 0, tech: 0, impl: 0, edges: 0 })
+const stats = reactive({ doc: 0, tech: 0, impl: 0, edges: 0, indirect: 0 })
 
 const { theme } = useTheme()
 
@@ -191,6 +195,17 @@ const radiusFor = (n: SimNode) => 4.5 + Math.min(n.degree, 8) * 1.1
 // 用 forceRedraw() 手動觸發重畫就夠。
 let hoveredNodeId: string | null = null
 let neighborIds = new Map<string, Set<string>>()
+// 只算直接關係的鄰居。間接關聯的虛線關掉時（預設），hover 只亮直接相連的節點——
+// 不然會亮起一堆畫面上看不到連線的節點
+let directNeighborIds = new Map<string, Set<string>>()
+
+// 間接關聯（推算出來的虛線）預設不顯示，免得畫面太雜；使用者自己打開才畫
+// （2026-09-30 使用者決定）。只影響畫不畫、hover 亮誰，不影響力模擬，所以切換時
+// 節點位置不會跳動。autoPauseRedraw(false) 讓畫面每幀重畫，改這個值下一幀就生效
+const showIndirect = ref(false)
+function currentNeighbors(): Map<string, Set<string>> {
+  return showIndirect.value ? neighborIds : directNeighborIds
+}
 
 // 雷達跳動：原本高權重節點常駐呼吸發光的效果拿掉了（不管有沒有互動都在閃，
 // 意義不大），改成只在滑鼠真的 hover 到節點時，從節點邊緣往外擴散一圈淡出的
@@ -212,22 +227,23 @@ function linkTouchesHovered(l: SimLink): boolean {
 function isDimmedNode(id: string): boolean {
   if (!hoveredNodeId) return false
   if (id === hoveredNodeId) return false
-  return !neighborIds.get(hoveredNodeId)?.has(id)
+  return !currentNeighbors().get(hoveredNodeId)?.has(id)
 }
 function withAlpha(hex: string, alpha: number): string {
   const [r, g, b] = hexToRgb(hex)
   return `rgba(${r},${g},${b},${alpha})`
 }
 // hover 中：跟被 hover 節點有直接關聯的邊提亮成 accent 色，其餘淡化。
-// 沒有 hover 時：推導邊（見 computeDerivedEdges）用比真實邊更淡的顏色，
-// 搭配虛線讓「這條線是算出來的、不是資料庫真實關聯」一眼看得出來；淡度本身
-// 再依 derivedStrength() 分級，共用鄰居越多顏色越接近真實邊。
+// 沒有 hover 時：推導邊（見 computeDerivedEdges）用 --accent-secondary（淺色黃銅、深色玫瑰）
+// 加虛線，跟灰色實線的直接關係分開；透明度再依 derivedStrength() 分級，共用鄰居越多越明顯。
+// 2026-09-30 以前推導邊是更淡的灰虛線，模擬讀者審查實測打開「間接關聯」開關後畫面幾乎
+// 沒變（新增的線不到畫面 0.2% 的像素），開了等於沒開，所以改成有顏色、跟 hover 的 accent 也不撞色。
 function linkDisplayColor(l: SimLink): string {
   if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.18)
   const filterDimmed = isLinkFilterDimmed(l)
   if (l.derived) {
-    const base = 0.28 + 0.42 * derivedStrength(l)
-    return withAlpha(css('--edge-real'), filterDimmed ? base * 0.4 : base)
+    const base = 0.6 + 0.4 * derivedStrength(l)
+    return withAlpha(css('--accent-secondary'), filterDimmed ? base * 0.3 : base)
   }
   return filterDimmed ? withAlpha(css('--edge-real'), 0.22) : css('--edge-real')
 }
@@ -251,7 +267,7 @@ function shouldLabelNode(n: SimNode): boolean {
 function shouldRenderLabel(n: SimNode): boolean {
   if (shouldLabelNode(n)) return true
   if (n.id === hoveredNodeId) return true
-  return hoveredNodeId != null && (neighborIds.get(hoveredNodeId)?.has(n.id) ?? false)
+  return hoveredNodeId != null && (currentNeighbors().get(hoveredNodeId)?.has(n.id) ?? false)
 }
 
 const measureCtx = document.createElement('canvas').getContext('2d')!
@@ -515,29 +531,32 @@ interface PopoverState {
   kind: string
   title: string
   rows: string[]
+  link: GraphNodeLink | null
   left: number
   top: number
 }
-const popover = reactive<PopoverState>({ open: false, kind: '', title: '', rows: [], left: 0, top: 0 })
+const popover = reactive<PopoverState>({ open: false, kind: '', title: '', rows: [], link: null, left: 0, top: 0 })
 
 function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEvent) {
   if (kind === 'node') {
     const n = obj as SimNode
     popover.kind = typeLabel[n.domainType]
     popover.title = n.label
-    popover.rows = [`共 ${n.degree} 條登記的關係`]
-    if (n.createdAt) popover.rows.push(`repo 建立於 ${n.createdAt}`)
+    popover.rows = [`共 ${n.degree} 條直接關係`]
+    if (n.createdAt) popover.rows.push(`GitHub 上建立於 ${n.createdAt}`)
+    popover.link = graphNodeLink(n)
   } else {
     const l = obj as SimLink
+    popover.link = null
     const s = typeof l.source === 'object' ? l.source.label : l.source
     const t = typeof l.target === 'object' ? l.target.label : l.target
     if (l.derived) {
       const viaLabels = (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id).join('、')
-      popover.kind = '推導關聯（虛線）'
+      popover.kind = '間接關聯（虛線）'
       popover.title = `${String(s)} ↔ ${String(t)}`
-      popover.rows = [`透過共同的「${viaLabels}」間接相關`, '這是推導出來的，不是登記的關係']
+      popover.rows = [`兩邊都連到「${viaLabels}」`, '這是推算出來的，不是直接關係']
     } else {
-      popover.kind = '登記的關係'
+      popover.kind = '直接關係'
       popover.title = l.predicate ?? '（未命名的關係）'
       popover.rows = [String(s), `→ ${String(t)}`]
     }
@@ -596,6 +615,8 @@ async function boot() {
       label: n.label,
       degree: degree.get(n.id) ?? 0,
       createdAt: n.created_at,
+      subtype: n.subtype ?? null,
+      url: n.url ?? null,
       x: target.cx + (Math.random() - 0.5) * 24,
       y: target.cy + (Math.random() - 0.5) * 24,
     }
@@ -608,6 +629,7 @@ async function boot() {
   // 首頁先行試作：同型別節點透過共同鄰居推導出來的關聯（見 computeDerivedEdges()
   // 檔頭註解），只加在這個 panel，/graph 頁完整探索頁先不動。
   const derivedLinks = computeDerivedEdges(simNodes, simLinks)
+  stats.indirect = derivedLinks.length
   const allLinks: SimLink[] = [...simLinks, ...derivedLinks]
 
   // 三層各自的目標中心點/範圍半徑要先算好，clampAllNodes()／layerBoundaryForce
@@ -624,6 +646,15 @@ async function boot() {
     if (!neighborIds.has(t)) neighborIds.set(t, new Set())
     neighborIds.get(s)!.add(t)
     neighborIds.get(t)!.add(s)
+  }
+  directNeighborIds = new Map()
+  for (const l of simLinks) {
+    const s = endpointId(l.source)
+    const t = endpointId(l.target)
+    if (!directNeighborIds.has(s)) directNeighborIds.set(s, new Set())
+    if (!directNeighborIds.has(t)) directNeighborIds.set(t, new Set())
+    directNeighborIds.get(s)!.add(t)
+    directNeighborIds.get(t)!.add(s)
   }
 
   graph = new ForceGraph<SimNode, SimLink>(container.value)
@@ -736,16 +767,17 @@ async function boot() {
     // 真實邊寬度從 1.1 拉到 1.5：三層疊圖之後線條密度變高，太細會糊成一片，
     // 跟 --edge-real 顏色對比度修正（見 variables.css 註解）一起處理「edge
     // 辨識度太低」的問題——顏色負責跟背景的對比，寬度負責跟其他線條的區分。
-    .linkWidth((l) => (linkTouchesHovered(l) ? 2.2 : l.derived ? 0.6 + 0.6 * derivedStrength(l) : 1.5))
+    .linkWidth((l) => (linkTouchesHovered(l) ? 2.2 : l.derived ? 1.2 + 0.8 * derivedStrength(l) : 1.5))
     // 推導邊(bipartite projection)用虛線跟真實邊區分開來——這是唯一負責
     // 「這條線是不是資料庫真實關聯」這件事的視覺線索，顏色/寬度只負責亮不亮。
-    .linkLineDash((l) => (l.derived ? [4, 3] : null))
+    .linkLineDash((l) => (l.derived ? [5, 4] : null))
+    .linkVisibility((l) => !l.derived || showIndirect.value)
     .linkLabel((l) => {
       const s = typeof l.source === 'object' ? l.source.label : l.source
       const t = typeof l.target === 'object' ? l.target.label : l.target
       if (l.derived) {
         const viaLabels = (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id).join('、')
-        return `${s} ↔ ${t}（推導關聯：透過「${viaLabels}」間接相關，不是登記的關係）`
+        return `${s} ↔ ${t}：間接關聯，兩邊都連到「${viaLabels}」（推算出來的，不是直接關係）`
       }
       return `${l.predicate ?? '關聯'}：${s} → ${t}`
     })
@@ -878,7 +910,7 @@ onUnmounted(() => {
         >{{ stats.tech }}</b
       >
       項技術、<b class="text-(--text-ink-main) tabular-nums">{{ stats.impl }}</b> 個實作，由
-      <b class="text-(--text-ink-main) tabular-nums">{{ stats.edges }}</b> 條登記的關係串成的知識網路。
+      <b class="text-(--text-ink-main) tabular-nums">{{ stats.edges }}</b> 條直接關係串成的知識網路。
     </p>
 
     <p v-if="!loading && isDemoData" class="text-[14px] text-(--text-accent) mb-2">
@@ -905,14 +937,39 @@ onUnmounted(() => {
       >
         {{ typeLabel[type] }}
       </button>
+      <!-- 間接關聯預設不畫（見 showIndirect）。放在「顯示層」同一列：都是「畫面上要顯示什麼」 -->
+      <span aria-hidden="true" class="mx-1 h-5 border-l border-(--border-shelf)"></span>
+      <BaseSwitch v-model="showIndirect" label="間接關聯" aria-describedby="kg-indirect-note" />
     </div>
+
+    <!-- 開關的說明：關著的時候說開了會多什麼，開著的時候當虛線的圖例。兩種節點顏色模式都顯示，
+         所以不放進下面只在「依類別」出現的圖例列。模擬讀者審查（2026-09-30）：開關旁邊沒有說明，
+         讀者不知道開了會看到什麼；原本唯一的說明在圖下面的清單裡，句子又太長 -->
+    <p
+      v-if="!loading"
+      id="kg-indirect-note"
+      class="flex flex-wrap items-center gap-x-1.5 text-[13px] text-(--text-ink-muted) mb-2.5"
+    >
+      <span
+        aria-hidden="true"
+        class="w-5 h-0 border-t-2 border-dashed"
+        :class="showIndirect ? 'border-(--accent-secondary)' : 'border-(--text-ink-muted)/50'"
+      ></span>
+      <template v-if="showIndirect">
+        間接關聯（{{ stats.indirect }} 條）：兩個同類節點連到相同的節點，就用虛線連起來，共同的越多線越明顯。這是推算出來的，不是直接關係。
+      </template>
+      <template v-else>打開「間接關聯」，會用虛線標出連到相同節點的同類節點（推算出來的，不是直接關係）。</template>
+    </p>
 
     <div v-if="!loading && colorMode === 'type'" class="flex flex-wrap items-center gap-4 text-[13px] text-(--text-ink-muted) mb-3">
       <GraphLegendDots />
       <span class="flex items-center gap-1.5"
-        ><span class="w-4 h-0 border-t border-dashed border-(--text-ink-muted)"></span>推導關聯</span
+        ><span class="w-4 h-0 border-t border-(--edge-real)"></span>直接關係</span
       >
-      <span class="ml-auto">滑到節點上看相連的節點・點節點看內容・點連線看是什麼關係</span>
+      <!-- 「滑到節點上」在觸控裝置沒有意義，只在能 hover 的裝置顯示 -->
+      <span class="ml-auto"
+        ><span class="hidden [@media(hover:hover)]:inline">滑到節點上看相連的節點・</span>點節點看內容・點連線看是什麼關係</span
+      >
     </div>
     <div v-else-if="!loading" class="flex flex-wrap items-center gap-2.5 text-[11.5px] font-mono text-(--text-ink-muted) mb-3">
       <span>較舊</span>
@@ -956,7 +1013,7 @@ onUnmounted(() => {
       >
         <button
           type="button"
-          class="absolute top-1.5 right-2 text-(--text-ink-muted) text-base leading-none p-1 cursor-pointer"
+          class="absolute top-0.5 right-0.5 w-9 h-9 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) text-base leading-none cursor-pointer"
           aria-label="關閉"
           @click="popover.open = false"
         >
@@ -969,6 +1026,20 @@ onUnmounted(() => {
         <div v-for="(row, i) in popover.rows" :key="i" class="text-[12.5px] text-(--text-ink-body) mb-0.5">
           {{ row }}
         </div>
+        <RouterLink
+          v-if="popover.link?.kind === 'internal'"
+          :to="popover.link.to"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
+          >{{ popover.link.text }}</RouterLink
+        >
+        <a
+          v-else-if="popover.link?.kind === 'external'"
+          :href="popover.link.href"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
+          >{{ popover.link.text }}</a
+        >
       </div>
     </div>
 
@@ -977,7 +1048,7 @@ onUnmounted(() => {
     <ul class="mt-3 flex flex-col gap-1 text-[14px] leading-relaxed text-(--text-ink-muted)">
       <li><b class="text-(--text-ink-body)">顏色</b>：文件、技術、實作三大類。切到「依建立時間」改用時間色階；目前只有專案有建立時間，其他節點顯示灰色。</li>
       <li><b class="text-(--text-ink-body)">大小</b>：關係越多的節點越大。</li>
-      <li><b class="text-(--text-ink-body)">線</b>：實線是目錄裡登記的關係；虛線是推導出來的——兩個同類節點共用越多技術，虛線越明顯，但它不是登記的關係。</li>
+      <li><b class="text-(--text-ink-body)">線</b>：實線是直接關係，也就是目錄裡記下來的。虛線是間接關聯，預設不顯示，見上面的開關說明。</li>
       <li><b class="text-(--text-ink-body)">圓框</b>：三大類各自的範圍，重疊的地方就是彼此相關的節點。</li>
       <li>點節點看詳細資料。想拖曳節點、查兩點之間的路徑，到<RouterLink to="/graph" class="text-(--text-accent) hover:underline">圖譜頁</RouterLink>。</li>
     </ul>

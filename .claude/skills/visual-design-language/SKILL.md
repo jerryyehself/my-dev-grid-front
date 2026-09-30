@@ -143,6 +143,12 @@ context) and multi-select filter chips like the graph's 顯示層 (category
 colours carry meaning). A new one-of-N toggle reaches for `BaseSegmented`, not
 a fresh set of ternary classes. Comparison: canvas `8nZmo6sneYNdSEgfGHXst8`.
 
+`BaseSwitch` (added 2026-09-30) is the on/off counterpart: a single thing
+shown or hidden, `role="switch"`. Its "on" track uses the same
+`--bg-selected`/`--text-on-selected` pair, so the site has only one look for
+"this is on/selected". First use: the home graph's 間接關聯 switch. It is off
+by default because the user wanted a less cluttered first view.
+
 **Where a shared component's values come from** (added 2026-09-16, after getting
 this wrong): when the role already exists in a design canvas's `<style>` block
 (`.lbl`, `.hint`, `.fld`, `.chip` in the article-editor canvas), that block is
@@ -283,8 +289,16 @@ Copy rules checked in the same pass:
   section do.
 - Visitor-facing text avoids developer vocabulary: hover, 邊, 型別,
   已實現, library names like `force-graph`, identifiers like `All_Essays`.
-  Registered relations are 登記的關係, and computed ones are 推導關聯.
+  Relations in the catalogue are 直接關係 and computed ones are 間接關聯.
+  The earlier 登記的關係 was dropped: the user asked what it meant.
   The categories are 類別/三大類, never 型別.
+- Graph line style follows the same split. 直接關係 is a solid `--edge-real`
+  line on every graph. 間接關聯 is a dashed `--accent-secondary` line, home
+  graph only. It was a paler gray dash first, but a reader review measured
+  almost no visible change when the switch was turned on, so it now has its
+  own color. Hover stays `--text-accent`, so the two never collide.
+- Don't tell touch users to hover. Hover-only hints ("滑到節點上…") sit in a
+  `[@media(hover:hover)]` span.
 
 Sources, and which parts are judgment:
 - **11px label floor**: sourced. Apple HIG sets 11pt as the minimum text

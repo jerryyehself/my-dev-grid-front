@@ -62,6 +62,7 @@ describe('fetchProjects', () => {
         tags: ['Vue3', 'TypeScript'],
         started: '2026.06',
         repo: 'my-dev-grid-front',
+        implementationId: 1,
       },
     ])
   })
