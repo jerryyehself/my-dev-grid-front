@@ -35,7 +35,7 @@ async function handleLogout() {
     <button
       v-if="auth.isAuthenticated"
       type="button"
-      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[11px] font-mono tracking-[0.15em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
+      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
       @click="handleLogout"
     >
       登出
@@ -43,7 +43,7 @@ async function handleLogout() {
     <router-link
       v-else-if="showLoginEntry"
       to="/login"
-      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[11px] font-mono tracking-[0.15em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
+      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
     >
       登入
     </router-link>

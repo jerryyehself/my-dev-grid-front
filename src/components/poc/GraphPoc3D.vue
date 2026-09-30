@@ -193,6 +193,8 @@ onMounted(async () => {
     .width(width)
     .height(FALLBACK_HEIGHT)
     .backgroundColor(css('--canvas-bg'))
+    // 函式庫預設會在畫布角落放一行英文操作說明（Left-click: rotate…），關掉，改用 GraphPocView 圖例列的中文提示
+    .showNavInfo(false)
     .graphData({ nodes, links })
     .nodeId('id')
     .nodeLabel('label')
@@ -298,7 +300,7 @@ onUnmounted(() => {
       class="absolute inset-0 flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
       :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
     >
-      <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">節點排列中…</span>
+      <span class="text-[13px] text-(--text-ink-body)/70">節點排列中…</span>
     </div>
   </div>
 </template>

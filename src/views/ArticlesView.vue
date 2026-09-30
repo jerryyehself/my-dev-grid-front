@@ -141,7 +141,7 @@ const goToArticle = (id: number) => {
           <div
             class="absolute -left-7 top-0.5 w-3 h-3 rounded-full bg-(--text-accent) ring-[3px] ring-(--bg-paper-light)"
           ></div>
-          <div class="font-mono text-xs tracking-wider font-bold text-(--text-accent)">
+          <div class="text-[13px] tracking-[0.05em] font-bold text-(--text-accent)">
             {{ group.month }}
           </div>
         </div>
@@ -180,7 +180,7 @@ const goToArticle = (id: number) => {
       >
         <div class="flex flex-nowrap gap-x-1 items-end">
           <BaseButton variant="tab" class="shrink-0" :active="!currentTag" @click="currentTag = ''">
-            All_Essays
+            全部
           </BaseButton>
 
           <BaseButton

@@ -75,7 +75,7 @@ watch(
            https://claude.ai/code/artifact/17ede728-b7b3-4b2d-9f0c-7bdd3a1e0490。 -->
       <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 grid grid-cols-[64px_1fr] gap-x-3.5 gap-y-4 items-baseline">
         <template v-for="group in filterGroups" :key="group.label">
-          <div class="font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted)">
+          <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted)">
             {{ group.label }}
           </div>
           <div class="flex flex-wrap gap-1.5 min-w-0">

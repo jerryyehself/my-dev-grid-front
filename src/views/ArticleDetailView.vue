@@ -80,7 +80,7 @@
       <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
       <div class="lg:sticky lg:top-24 flex flex-col gap-8">
         <div v-if="headings.length">
-          <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+          <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
             本文結構
           </div>
           <!-- slug 從 extractHeadings 來，跟 MarkdownBody 渲染標題時用的是同一份，
