@@ -2,7 +2,11 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
+    <!-- 網站 icon（D2：藏青圓角方塊＋Libre Caslon「IN」＋黃銅底線），由 design/icon/build.mjs 產生。
+         現代瀏覽器用 SVG，舊瀏覽器退回 .ico；iOS 主畫面用 180px 方角 PNG（系統自己裁圓角） -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 站名跟 src/siteMeta.ts 的 SITE_TITLE 一致；進站後由 App.vue 依頁面改寫 -->
     <title>IN / ARCHIVE — Jerry Yeh</title>
@@ -12,7 +16,7 @@
     >
     <!-- 社群分享預覽（Open Graph）。這是 SPA，LinkedIn／LINE／Facebook 的爬蟲不跑 JavaScript，
          只讀得到這裡的靜態值，所以站內每個網址分享出去都是同一張卡片。
-         og:image 等網站 icon／品牌圖定案後再補；沒有圖時卡片只顯示文字 -->
+         og:image 也是 design/icon/build.mjs 產生的，網址要寫絕對路徑 -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="IN / ARCHIVE">
     <meta property="og:title" content="IN / ARCHIVE — Jerry Yeh">
@@ -22,7 +26,11 @@
     >
     <meta property="og:url" content="https://jerrylib.com/">
     <meta property="og:locale" content="zh_TW">
-    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="https://jerrylib.com/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="IN / ARCHIVE 字標，下方寫著「私人藏書，公開目錄」">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- 標題字 Noto Serif TC（中文標題有真正的字形，不再落到各裝置的系統襯線字）＋
