@@ -30,7 +30,7 @@ const model = defineModel<T>({ required: true })
       type="button"
       :aria-pressed="model === opt.value"
       :class="[
-        `font-['Courier_Prime',ui-monospace,monospace] font-bold rounded-[6px] border cursor-pointer transition-colors`,
+        `inline-flex items-center justify-center leading-none font-['Courier_Prime',ui-monospace,monospace] font-bold rounded-[6px] border cursor-pointer transition-colors`,
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)',
         size === 'md' ? 'min-h-11 px-[18px] text-[15px]' : 'min-h-8 px-3 text-[13px]',
         stretch && 'flex-1',
@@ -40,7 +40,11 @@ const model = defineModel<T>({ required: true })
       ]"
       @click="model = opt.value"
     >
-      {{ opt.label }}
+      <!-- 文字往下推 0.15em：Courier Prime 的上下留白（ascent／descent）不對稱，行框的中線比字的
+           實際墨跡低，中文又是用別的字型補字，結果整排字看起來偏上約 1.5–2px（2026-09-30 使用者
+           指出，像素量過：上方留白比下方少 3.5–4.75px）。用 relative top 而不是 translate，
+           位移會對齊像素，字不會糊 -->
+      <span class="relative top-[0.15em]">{{ opt.label }}</span>
     </button>
   </div>
 </template>

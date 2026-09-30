@@ -64,7 +64,7 @@ onMounted(async () => {
     <div class="flex items-center justify-between gap-3 mb-2">
       <h2 class="text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">近況板</h2>
     </div>
-    <p class="text-sm text-(--text-ink-body) mb-4">目前維護中的專案，以及最近發布的文章。</p>
+    <p class="text-sm text-(--text-ink-body) mb-4">GitHub 上的公開專案，以及最近發布的文章。</p>
 
     <div class="grid grid-cols-1 md:grid-cols-[1.3fr_1fr] gap-6 items-start">
       <!-- 左欄：近期專案（真實 maintain_status，tiered accent/muted tag） -->
@@ -146,7 +146,7 @@ onMounted(async () => {
     <!-- 給訪客的讀法說明。原本這裡是開發筆記（比設計稿少了哪一欄、為什麼），2026-09-30 使用者
          決定改成對應的說明；那段取捨的紀錄在 design-artifacts.md「近期焦點」那一列 -->
     <p class="mt-4 text-[14px] leading-relaxed text-(--text-ink-muted)">
-      專案取自 GitHub 上的公開 repo，右側標籤是維護狀態（Active／Archived）；文章只列已發布的。
+      專案右側的標籤是 repo 在 GitHub 上有沒有封存（Active／Archived）；文章只列已發布的。
     </p>
   </section>
 </template>
