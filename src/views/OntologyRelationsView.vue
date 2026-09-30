@@ -10,6 +10,7 @@
  * `class_number` 本身（主詞族＋受詞族）已經是排序依據。
  */
 import { computed, ref } from 'vue'
+import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import BaseHint from '@/components/BaseHint.vue'
@@ -70,9 +71,11 @@ const rows = computed(() => relations.value ?? [])
           述詞一覽
         </h1>
       </div>
-      <router-link :to="{ name: 'ontology-relation-new' }">
-        <BaseButton variant="primary">新增述詞</BaseButton>
-      </router-link>
+      <AuthOnly>
+        <router-link :to="{ name: 'ontology-relation-new' }">
+          <BaseButton variant="primary">新增述詞</BaseButton>
+        </router-link>
+      </AuthOnly>
     </div>
 
     <div class="mb-7 max-w-[52ch] text-sm leading-relaxed text-(--text-ink-body)">
@@ -106,9 +109,11 @@ const rows = computed(() => relations.value ?? [])
           反向 {{ rel.reverse_id ? '已配對' : '未配對' }}
         </BaseHint>
 
-        <router-link :to="{ name: 'ontology-relation-edit', params: { id: rel.id } }">
-          <BaseButton variant="ghost">編輯</BaseButton>
-        </router-link>
+        <AuthOnly>
+          <router-link :to="{ name: 'ontology-relation-edit', params: { id: rel.id } }">
+            <BaseButton variant="ghost">編輯</BaseButton>
+          </router-link>
+        </AuthOnly>
       </li>
     </ul>
 

@@ -11,6 +11,7 @@
  * 只能用網址直接開,站上沒有任何連結指進來。
  */
 import { computed, ref } from 'vue'
+import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import BaseHint from '@/components/BaseHint.vue'
@@ -85,9 +86,11 @@ function familyDot(fullCallNumber: string | undefined): string {
         <router-link :to="{ name: 'ontology-relations' }">
           <BaseButton variant="ghost">述詞一覽</BaseButton>
         </router-link>
-        <router-link :to="{ name: 'ontology-scope-new' }">
-          <BaseButton variant="primary">新增分類</BaseButton>
-        </router-link>
+        <AuthOnly>
+          <router-link :to="{ name: 'ontology-scope-new' }">
+            <BaseButton variant="primary">新增分類</BaseButton>
+          </router-link>
+        </AuthOnly>
       </div>
     </div>
 
@@ -116,12 +119,14 @@ function familyDot(fullCallNumber: string | undefined): string {
           >子類 {{ group.children.length }} · 述詞
           {{ (group.top.subject_of_count ?? 0) + (group.top.object_of_count ?? 0) }}</BaseHint
         >
-        <router-link
-          :to="{ name: 'ontology-scope-edit', params: { id: group.top.id } }"
-          class="ml-auto"
-        >
-          <BaseButton variant="ghost">編輯</BaseButton>
-        </router-link>
+        <AuthOnly>
+          <router-link
+            :to="{ name: 'ontology-scope-edit', params: { id: group.top.id } }"
+            class="ml-auto"
+          >
+            <BaseButton variant="ghost">編輯</BaseButton>
+          </router-link>
+        </AuthOnly>
       </div>
 
       <ul>
@@ -148,9 +153,11 @@ function familyDot(fullCallNumber: string | undefined): string {
           <BaseHint dim class="shrink-0 tabular-nums"
             >實體 {{ child.entities_count ?? 0 }}</BaseHint
           >
-          <router-link :to="{ name: 'ontology-scope-edit', params: { id: child.id } }">
-            <BaseButton variant="ghost">編輯</BaseButton>
-          </router-link>
+          <AuthOnly>
+            <router-link :to="{ name: 'ontology-scope-edit', params: { id: child.id } }">
+              <BaseButton variant="ghost">編輯</BaseButton>
+            </router-link>
+          </AuthOnly>
         </li>
       </ul>
 

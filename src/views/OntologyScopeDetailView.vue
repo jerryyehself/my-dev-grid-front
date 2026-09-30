@@ -9,6 +9,7 @@
  */
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
@@ -117,12 +118,14 @@ function familyDot(fullCallNumber: string | undefined): string {
       <h1 class="text-2xl font-bold tracking-tight text-(--text-ink-main) sm:text-3xl">
         {{ scope.name }}
       </h1>
-      <router-link
-        :to="{ name: 'ontology-scope-edit', params: { id: scope.id } }"
-        class="ml-auto self-center"
-      >
-        <BaseButton variant="primary">編輯</BaseButton>
-      </router-link>
+      <AuthOnly>
+        <router-link
+          :to="{ name: 'ontology-scope-edit', params: { id: scope.id } }"
+          class="ml-auto self-center"
+        >
+          <BaseButton variant="primary">編輯</BaseButton>
+        </router-link>
+      </AuthOnly>
     </div>
 
     <!-- 用 div 不是 p，是為了閃開 base.css 的 `.global-page-wrapper p { text-align: justify }`
