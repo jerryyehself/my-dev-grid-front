@@ -13,6 +13,7 @@ import { fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
 import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 
 const router = useRouter()
@@ -56,6 +57,10 @@ function displayDate(a: ArticleDto): string {
 }
 
 const viewMode = ref<'timeline' | 'folder'>('timeline')
+const VIEW_MODES = [
+  { value: 'timeline', label: '時間軸' },
+  { value: 'folder', label: '分類夾' },
+] as const
 const currentTag = ref('')
 
 const allTags = computed(() => {
@@ -113,33 +118,9 @@ const goToArticle = (id: number) => {
           管理
         </router-link>
       </AuthOnly>
-      <!-- ml-auto：沒登入時左邊的「管理」不存在，justify-between 只剩一個子元素會把切換鈕擠到左邊 -->
-      <div class="ml-auto inline-flex rounded-full border border-(--border-shelf) p-0.5 gap-0.5">
-        <button
-          type="button"
-          class="px-4 py-1.5 rounded-full font-mono text-[11px] tracking-wider font-bold transition-colors cursor-pointer"
-          :class="
-            viewMode === 'timeline'
-              ? 'bg-(--bg-folder) text-(--text-accent)'
-              : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
-          "
-          @click="viewMode = 'timeline'"
-        >
-          時間軸
-        </button>
-        <button
-          type="button"
-          class="px-4 py-1.5 rounded-full font-mono text-[11px] tracking-wider font-bold transition-colors cursor-pointer"
-          :class="
-            viewMode === 'folder'
-              ? 'bg-(--bg-folder) text-(--text-accent)'
-              : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
-          "
-          @click="viewMode = 'folder'"
-        >
-          分類夾
-        </button>
-      </div>
+      <!-- ml-auto：沒登入時左邊的「管理」不存在，justify-between 只剩一個子元素會把切換鈕擠到左邊。
+           全站統一的「幾選一」切換（D-66） -->
+      <BaseSegmented v-model="viewMode" :options="VIEW_MODES" label="文章排列方式" class="ml-auto" />
     </div>
 
     <BaseLoadingBlock v-if="!ready && !loadError" height="240px">載入中…</BaseLoadingBlock>

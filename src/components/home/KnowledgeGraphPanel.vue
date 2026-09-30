@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import BaseSegmented from '@/components/BaseSegmented.vue'
 import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { RouterLink } from 'vue-router'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
@@ -171,6 +172,10 @@ function isLinkFilterDimmed(l: SimLink): boolean {
 }
 
 const colorMode = ref<'type' | 'overlay'>('type')
+const COLOR_MODES = [
+  { value: 'type', label: '依類型' },
+  { value: 'overlay', label: '依建立時間' },
+] as const
 function nodeColorFor(n: SimNode): string {
   if (colorMode.value === 'type') return typeColor(n.domainType)
   if (!n.createdAt) return css('--overlay-nodata') || '#9a9186'
@@ -882,24 +887,8 @@ onUnmounted(() => {
 
     <div v-if="!loading" class="flex items-center gap-2 mb-2.5">
       <span class="font-mono text-[11px] uppercase tracking-[0.08em] text-(--text-ink-muted)">節點顏色</span>
-      <button
-        type="button"
-        class="rounded-full border border-(--border-shelf) px-3 py-1 font-mono text-[11.5px] cursor-pointer"
-        :class="colorMode === 'type' ? 'bg-(--text-accent) text-(--bg-paper-light) border-(--text-accent)' : 'bg-(--bg-folder) text-(--text-ink-muted)'"
-        :aria-pressed="colorMode === 'type'"
-        @click="colorMode = 'type'"
-      >
-        依類型
-      </button>
-      <button
-        type="button"
-        class="rounded-full border border-(--border-shelf) px-3 py-1 font-mono text-[11.5px] cursor-pointer"
-        :class="colorMode === 'overlay' ? 'bg-(--text-accent) text-(--bg-paper-light) border-(--text-accent)' : 'bg-(--bg-folder) text-(--text-ink-muted)'"
-        :aria-pressed="colorMode === 'overlay'"
-        @click="colorMode = 'overlay'"
-      >
-        依建立時間
-      </button>
+      <!-- 全站統一的「幾選一」切換（D-66）。下面的「顯示層」不換：它可以多選，顏色是分類色，有語意 -->
+      <BaseSegmented v-model="colorMode" :options="COLOR_MODES" label="節點顏色" />
     </div>
 
     <div v-if="!loading" class="flex items-center gap-2 mb-2.5">
