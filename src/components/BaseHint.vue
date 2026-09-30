@@ -10,14 +10,24 @@
 // opacity 收斂成兩級。設計稿的行內覆寫有 0.6（5 處）、0.55（2 處）、1（1 處）;
 // 0.55 與 0.6 併成 dim 是刻意的取捨——那 0.05 的差在畫面上看不出來,
 // 留著只是讓同一種語意有兩個數值。需要 opacity:1 的場合請在呼叫端覆寫。
-withDefaults(defineProps<{ dim?: boolean }>(), { dim: false })
+//
+// tone="error"（2026-09-29）：錯誤訊息用 --text-error、不透明。以前錯誤訊息是呼叫端
+// 在 class 裡塞 text-(--text-accent)／text-red-700，但這裡本身就有 text-(--text-ink-muted)，
+// 兩個文字色 utility 打架時是元件自己的灰色贏，再加上 0.75 透明度——15 處錯誤訊息
+// 實際上一直顯示成灰字。顏色由元件決定，呼叫端不要再用 class 覆寫文字色
+withDefaults(defineProps<{ dim?: boolean; tone?: 'muted' | 'error' }>(), {
+  dim: false,
+  tone: 'muted',
+})
 </script>
 
 <template>
   <span
     :class="[
-      'font-mono text-[10px] tracking-[0.12em] text-(--text-ink-muted)',
-      dim ? 'opacity-60' : 'opacity-75',
+      'font-mono text-[10px] tracking-[0.12em]',
+      tone === 'error'
+        ? 'text-(--text-error)'
+        : ['text-(--text-ink-muted)', dim ? 'opacity-60' : 'opacity-75'],
     ]"
   >
     <slot />

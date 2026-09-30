@@ -73,8 +73,9 @@ function render(node: MdNode): VNode[] {
       return [h('p', { class: 'text-base leading-[1.6] text-(--text-ink-body) text-left sm:text-justify' }, kids(node))]
 
     case 'heading': {
-      // 沿用文章頁既有的 h3 樣式:accent 色的 // 前綴加粗體標題。
-      // 深度越深字越小，但都維持同一個形狀，不另外發明第二套標題語彙。
+      // 粗體標題，深度越深字越小，但都維持同一個形狀，不另外發明第二套標題語彙。
+      // 以前前面有 accent 色的 `//`：那是程式碼註解的造型，放在圖譜、本體論這類技術頁合理，
+      // 放在長文閱讀裡是雜訊（2026-09-29 拿掉，文章列表與首頁文章列同步拿掉）。
       const size = node.depth === 2 ? 'text-base' : node.depth === 3 ? 'text-[15px]' : 'text-sm'
       // id 從 headings 依序取，不在這裡自己算 slug——目錄跟這裡必須是同一份，
       // 分開算會漂移，而且症狀是「點目錄沒反應」，不會有任何錯誤訊息
@@ -88,9 +89,9 @@ function render(node: MdNode): VNode[] {
             // 第二層 sticky，45px）疊起來共 109px，捲到錨點時要留出兩層的總高度，
             // 不然標題會卡在追蹤列底下、只露出一半——scroll-mt-24（96px）當初只算了
             // 導覽列那一層，沒算到追蹤列，2026-09-25 使用者實測抓到這個落差才補上。
-            class: `${size} font-bold text-(--text-ink-main) flex items-center gap-2 mt-8 mb-2.5 scroll-mt-32`,
+            class: `${size} font-bold text-(--text-ink-main) mt-8 mb-2.5 scroll-mt-32`,
           },
-          [h('span', { class: 'text-(--text-accent)' }, '//'), h('span', {}, kids(node))],
+          kids(node),
         ),
       ]
     }

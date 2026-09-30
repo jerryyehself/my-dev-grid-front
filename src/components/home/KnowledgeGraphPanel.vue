@@ -942,7 +942,7 @@ onUnmounted(() => {
 
     <div
       v-show="!loading"
-      class="kg-stage relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_rgba(41,18,5,0.14)] overflow-hidden h-[460px]"
+      class="kg-stage relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden h-[460px]"
       :style="{
         background: 'var(--canvas-bg)',
         backgroundImage: 'radial-gradient(var(--canvas-dot) 1.3px, transparent 1.3px)',
@@ -961,7 +961,7 @@ onUnmounted(() => {
       </div>
 
       <div
-        class="popover absolute min-w-[220px] max-w-[280px] rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_rgba(41,18,5,0.14)] transition-[opacity,transform] duration-150 z-10"
+        class="popover absolute min-w-[220px] max-w-[280px] rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] transition-[opacity,transform] duration-150 z-10"
         :class="popover.open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-1.5 pointer-events-none'"
         :style="{ left: popover.left + 'px', top: popover.top + 'px' }"
       >

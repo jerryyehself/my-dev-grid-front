@@ -65,7 +65,7 @@ async function handleSubmit() {
         <p class="text-sm text-(--text-ink-muted)">用 Google／LINE 帳號，或 email 備援表單。</p>
       </div>
 
-      <BaseHint v-if="authError" class="text-red-700">{{ authError }}</BaseHint>
+      <BaseHint v-if="authError" tone="error">{{ authError }}</BaseHint>
 
       <div class="flex flex-col gap-2">
         <a
@@ -95,7 +95,7 @@ async function handleSubmit() {
         <BaseField label="密碼">
           <BaseInput v-model="password" type="password" required autocomplete="current-password" />
         </BaseField>
-        <BaseHint v-if="errorMessage" class="text-red-700">{{ errorMessage }}</BaseHint>
+        <BaseHint v-if="errorMessage" tone="error">{{ errorMessage }}</BaseHint>
         <BaseButton variant="primary" class="justify-center py-2.5" :disabled="submitting">
           {{ submitting ? '登入中…' : '登入' }}
         </BaseButton>

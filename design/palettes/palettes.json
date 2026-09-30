@@ -1,0 +1,741 @@
+{
+  "A": {
+    "label": "綠布書脊＋黃銅（銀行燈）",
+    "light": {
+      "tokens": {
+        "--bg-paper-light": "#f7f9f5",
+        "--bg-paper-dark": "#eef1ed",
+        "--bg-nav-footer": "#162c21",
+        "--text-nav-footer": "#d8dfd9",
+        "--text-nav-hover": "#bd9243",
+        "--text-ink-main": "#252b28",
+        "--text-ink-body": "#434b46",
+        "--text-ink-muted": "#5f6863",
+        "--text-accent": "#377157",
+        "--border-shelf": "rgba(28, 82, 60, 0.12)",
+        "--bg-folder": "rgba(28, 82, 60, 0.04)",
+        "--bg-active-row": "rgba(55, 113, 87, 0.07)",
+        "--focus-ring": "rgba(55, 113, 87, 0.12)",
+        "--edge-real": "#707a74",
+        "--overlay-nodata": "#acb2ac",
+        "--canvas-bg": "#eef1ed",
+        "--canvas-dot": "rgba(28, 82, 60, 0.1)",
+        "--node-shadow": "rgba(37, 43, 40, 0.28)",
+        "--node-doc": "#c18434",
+        "--node-tech": "#478cc4",
+        "--node-impl": "#8a3362"
+      },
+      "audit": [
+        {
+          "pair": "--text-ink-main / --bg-paper-light",
+          "ratio": 13.63,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-main / --bg-paper-dark",
+          "ratio": 12.68,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-light",
+          "ratio": 8.5,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-dark",
+          "ratio": 7.9,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-light",
+          "ratio": 5.44,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-dark",
+          "ratio": 5.06,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-light",
+          "ratio": 5.41,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-dark",
+          "ratio": 5.04,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-footer / --bg-nav-footer",
+          "ratio": 10.93,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-hover / --bg-nav-footer",
+          "ratio": 5.19,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--edge-real / --canvas-bg",
+          "ratio": 3.9,
+          "min": 3,
+          "ok": true
+        }
+      ]
+    },
+    "dark": {
+      "tokens": {
+        "--bg-paper-light": "#202723",
+        "--bg-paper-dark": "#171d1a",
+        "--bg-nav-footer": "#0c1812",
+        "--text-nav-footer": "#c4ccc5",
+        "--text-nav-hover": "#ac8230",
+        "--text-ink-main": "#eff2ed",
+        "--text-ink-body": "#ced2ce",
+        "--text-ink-muted": "#9da49f",
+        "--text-accent": "#90b0a2",
+        "--border-shelf": "rgba(144, 176, 162, 0.2)",
+        "--bg-folder": "rgba(144, 176, 162, 0.07)",
+        "--bg-active-row": "rgba(144, 176, 162, 0.1)",
+        "--focus-ring": "rgba(144, 176, 162, 0.18)",
+        "--edge-real": "#6b756f",
+        "--overlay-nodata": "#454a46",
+        "--canvas-bg": "#171d1a",
+        "--canvas-dot": "rgba(144, 176, 162, 0.1)",
+        "--node-shadow": "rgba(0, 0, 0, 0.5)",
+        "--node-doc": "#c18434",
+        "--node-tech": "#5399d1",
+        "--node-impl": "#973f6e"
+      },
+      "audit": [
+        {
+          "pair": "--text-ink-main / --bg-paper-light",
+          "ratio": 13.51,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-main / --bg-paper-dark",
+          "ratio": 15.15,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-light",
+          "ratio": 9.98,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-dark",
+          "ratio": 11.19,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-light",
+          "ratio": 5.99,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-dark",
+          "ratio": 6.72,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-light",
+          "ratio": 6.48,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-dark",
+          "ratio": 7.27,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-footer / --bg-nav-footer",
+          "ratio": 11.07,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-hover / --bg-nav-footer",
+          "ratio": 5.19,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--edge-real / --canvas-bg",
+          "ratio": 3.59,
+          "min": 3,
+          "ok": true
+        }
+      ]
+    }
+  },
+  "B": {
+    "label": "藏青書脊＋酒紅",
+    "light": {
+      "tokens": {
+        "--bg-paper-light": "#f7f8f9",
+        "--bg-paper-dark": "#eff0f2",
+        "--bg-nav-footer": "#1a2741",
+        "--text-nav-footer": "#d9dee6",
+        "--text-nav-hover": "#c98887",
+        "--text-ink-main": "#272a31",
+        "--text-ink-body": "#444951",
+        "--text-ink-muted": "#626670",
+        "--text-accent": "#8e3543",
+        "--border-shelf": "rgba(130, 41, 55, 0.12)",
+        "--bg-folder": "rgba(130, 41, 55, 0.04)",
+        "--bg-active-row": "rgba(142, 53, 67, 0.07)",
+        "--focus-ring": "rgba(142, 53, 67, 0.12)",
+        "--edge-real": "#737781",
+        "--overlay-nodata": "#acb0b6",
+        "--canvas-bg": "#eff0f2",
+        "--canvas-dot": "rgba(130, 41, 55, 0.1)",
+        "--node-shadow": "rgba(39, 42, 49, 0.28)",
+        "--node-doc": "#be525f",
+        "--node-tech": "#00a7a7",
+        "--node-impl": "#59479a"
+      },
+      "audit": [
+        {
+          "pair": "--text-ink-main / --bg-paper-light",
+          "ratio": 13.51,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-main / --bg-paper-dark",
+          "ratio": 12.6,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-light",
+          "ratio": 8.52,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-dark",
+          "ratio": 7.95,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-light",
+          "ratio": 5.41,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-dark",
+          "ratio": 5.04,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-light",
+          "ratio": 7.21,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-dark",
+          "ratio": 6.72,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-footer / --bg-nav-footer",
+          "ratio": 11.02,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-hover / --bg-nav-footer",
+          "ratio": 5.21,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--edge-real / --canvas-bg",
+          "ratio": 3.93,
+          "min": 3,
+          "ok": true
+        }
+      ]
+    },
+    "dark": {
+      "tokens": {
+        "--bg-paper-light": "#21252c",
+        "--bg-paper-dark": "#181b22",
+        "--bg-nav-footer": "#0e1523",
+        "--text-nav-footer": "#c4c9d1",
+        "--text-nav-hover": "#b87878",
+        "--text-ink-main": "#eff0f3",
+        "--text-ink-body": "#ced0d5",
+        "--text-ink-muted": "#9ea2a9",
+        "--text-accent": "#c99ea4",
+        "--border-shelf": "rgba(201, 158, 164, 0.2)",
+        "--bg-folder": "rgba(201, 158, 164, 0.07)",
+        "--bg-active-row": "rgba(201, 158, 164, 0.1)",
+        "--focus-ring": "rgba(201, 158, 164, 0.18)",
+        "--edge-real": "#6e727c",
+        "--overlay-nodata": "#45494e",
+        "--canvas-bg": "#181b22",
+        "--canvas-dot": "rgba(201, 158, 164, 0.1)",
+        "--node-shadow": "rgba(0, 0, 0, 0.5)",
+        "--node-doc": "#be525f",
+        "--node-tech": "#00a7a7",
+        "--node-impl": "#6453a7"
+      },
+      "audit": [
+        {
+          "pair": "--text-ink-main / --bg-paper-light",
+          "ratio": 13.49,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-main / --bg-paper-dark",
+          "ratio": 15.12,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-light",
+          "ratio": 9.96,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-dark",
+          "ratio": 11.17,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-light",
+          "ratio": 6,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-dark",
+          "ratio": 6.72,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-light",
+          "ratio": 6.52,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-dark",
+          "ratio": 7.31,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-footer / --bg-nav-footer",
+          "ratio": 10.97,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-hover / --bg-nav-footer",
+          "ratio": 5.21,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--edge-real / --canvas-bg",
+          "ratio": 3.58,
+          "min": 3,
+          "ok": true
+        }
+      ]
+    }
+  },
+  "B2": {
+    "label": "藏青第二版",
+    "light": {
+      "tokens": {
+        "--bg-paper-light": "#f6f5f2",
+        "--bg-paper-dark": "#e4ebf5",
+        "--bg-nav-footer": "#162541",
+        "--text-nav-footer": "#e8e3dd",
+        "--text-nav-hover": "#c99a4d",
+        "--text-ink-main": "#202839",
+        "--text-ink-body": "#3e4758",
+        "--text-ink-muted": "#596273",
+        "--text-accent": "#922e39",
+        "--border-shelf": "rgba(22, 37, 65, 0.14)",
+        "--bg-folder": "#eaeff8",
+        "--bg-active-row": "rgba(146, 46, 57, 0.08)",
+        "--focus-ring": "rgba(146, 46, 57, 0.16)",
+        "--edge-real": "#6d7686",
+        "--overlay-nodata": "#adb1b7",
+        "--canvas-bg": "#e4ebf5",
+        "--canvas-dot": "rgba(22, 37, 65, 0.1)",
+        "--node-shadow": "rgba(22, 37, 65, 0.24)",
+        "--node-doc": "#a33949",
+        "--node-tech": "#009393",
+        "--node-impl": "#534294",
+        "--bg-band-strong": "#162541",
+        "--text-on-band": "#e8e3dd",
+        "--accent-brass": "#c99a4d",
+        "--accent-secondary": "#8d651e",
+        "--cat-fill-doc": "#b34f57",
+        "--cat-fill-tech": "#007d7d",
+        "--cat-fill-impl": "#7264b3",
+        "--text-error": "#c70d12"
+      },
+      "audit": [
+        {
+          "pair": "--text-ink-main / --bg-paper-light",
+          "ratio": 13.53,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-main / --bg-paper-dark",
+          "ratio": 12.29,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-main / --bg-folder",
+          "ratio": 12.78,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-light",
+          "ratio": 8.57,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-dark",
+          "ratio": 7.79,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-folder",
+          "ratio": 8.1,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-light",
+          "ratio": 5.63,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-dark",
+          "ratio": 5.12,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-folder",
+          "ratio": 5.32,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-light",
+          "ratio": 7.21,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-dark",
+          "ratio": 6.55,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-folder",
+          "ratio": 6.81,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-footer / --bg-nav-footer",
+          "ratio": 11.97,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-hover / --bg-nav-footer",
+          "ratio": 5.97,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-on-band / --bg-band-strong",
+          "ratio": 11.97,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--accent-brass / --bg-band-strong",
+          "ratio": 5.97,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--edge-real / --canvas-bg",
+          "ratio": 3.82,
+          "min": 3,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-paper-light",
+          "ratio": 5.51,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-paper-dark",
+          "ratio": 5.01,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-folder",
+          "ratio": 5.21,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "#ffffff / --cat-fill-doc",
+          "ratio": 5.03,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "#ffffff / --cat-fill-tech",
+          "ratio": 4.97,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "#ffffff / --cat-fill-impl",
+          "ratio": 5.01,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error vs --text-accent (OKLab ΔE)",
+          "ratio": 0.108,
+          "min": 0.1,
+          "ok": true
+        }
+      ]
+    },
+    "dark": {
+      "tokens": {
+        "--bg-paper-light": "#1d232d",
+        "--bg-paper-dark": "#0d1529",
+        "--bg-nav-footer": "#040a1a",
+        "--text-nav-footer": "#cec9c3",
+        "--text-nav-hover": "#b38637",
+        "--text-ink-main": "#e8edf6",
+        "--text-ink-body": "#c8ced9",
+        "--text-ink-muted": "#99a0ad",
+        "--text-accent": "#d7ac66",
+        "--border-shelf": "rgba(179, 134, 55, 0.2)",
+        "--bg-folder": "#1e2c44",
+        "--bg-active-row": "rgba(215, 172, 102, 0.12)",
+        "--focus-ring": "rgba(215, 172, 102, 0.22)",
+        "--edge-real": "#6c7585",
+        "--overlay-nodata": "#3f4247",
+        "--canvas-bg": "#0d1529",
+        "--canvas-dot": "rgba(179, 134, 55, 0.1)",
+        "--node-shadow": "rgba(0, 0, 0, 0.5)",
+        "--node-doc": "#ad4251",
+        "--node-tech": "#00a7a7",
+        "--node-impl": "#8071c8",
+        "--bg-band-strong": "#0d1529",
+        "--text-on-band": "#d6d2cb",
+        "--accent-brass": "#b38637",
+        "--accent-secondary": "#cd7e83",
+        "--cat-fill-doc": "#b34f57",
+        "--cat-fill-tech": "#007d7d",
+        "--cat-fill-impl": "#7264b3",
+        "--text-error": "#e57d71"
+      },
+      "audit": [
+        {
+          "pair": "--text-ink-main / --bg-paper-light",
+          "ratio": 13.43,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-main / --bg-paper-dark",
+          "ratio": 15.46,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-main / --bg-folder",
+          "ratio": 11.93,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-light",
+          "ratio": 9.99,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-paper-dark",
+          "ratio": 11.49,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-body / --bg-folder",
+          "ratio": 8.86,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-light",
+          "ratio": 6,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-paper-dark",
+          "ratio": 6.91,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-ink-muted / --bg-folder",
+          "ratio": 5.33,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-light",
+          "ratio": 7.5,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-paper-dark",
+          "ratio": 8.63,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-accent / --bg-folder",
+          "ratio": 6.66,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-footer / --bg-nav-footer",
+          "ratio": 12,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-nav-hover / --bg-nav-footer",
+          "ratio": 6,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-on-band / --bg-band-strong",
+          "ratio": 12.05,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--accent-brass / --bg-band-strong",
+          "ratio": 5.52,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--edge-real / --canvas-bg",
+          "ratio": 3.91,
+          "min": 3,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-paper-light",
+          "ratio": 5.64,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-paper-dark",
+          "ratio": 6.49,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error / --bg-folder",
+          "ratio": 5.01,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "#ffffff / --cat-fill-doc",
+          "ratio": 5.03,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "#ffffff / --cat-fill-tech",
+          "ratio": 4.97,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "#ffffff / --cat-fill-impl",
+          "ratio": 5.01,
+          "min": 4.5,
+          "ok": true
+        },
+        {
+          "pair": "--text-error vs --text-accent (OKLab ΔE)",
+          "ratio": 0.122,
+          "min": 0.1,
+          "ok": true
+        }
+      ]
+    }
+  }
+}

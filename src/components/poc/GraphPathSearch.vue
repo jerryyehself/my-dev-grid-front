@@ -115,7 +115,7 @@ onMounted(async () => {
       <p class="text-[13px] text-(--text-ink-body)">輸入起點與終點，找出兩者之間經過哪些節點與關係</p>
     </div>
 
-    <div v-if="loadError" class="text-[12px] text-(--text-accent)">{{ loadError }}</div>
+    <div v-if="loadError" class="text-[12px] text-(--text-error)">{{ loadError }}</div>
 
     <div class="flex items-start gap-3">
       <!-- 起點 -->
@@ -292,6 +292,6 @@ onMounted(async () => {
     </div>
 
     <p v-if="searching" class="font-mono text-[11px] tracking-widest text-(--text-ink-body) opacity-70">// 查詢路徑中...</p>
-    <p v-else-if="searchError" class="text-[12px] text-(--text-accent)">{{ searchError }}</p>
+    <p v-else-if="searchError" class="text-[12px] text-(--text-error)">{{ searchError }}</p>
   </div>
 </template>

@@ -10,14 +10,21 @@ management and idea incubation. That framing is why visual decisions here get
 checked against more than taste: a choice that looks fine but doesn't mean
 anything (see the nav dot example below) is a bug, not a style preference.
 
-**Current themes**: `.theme-library` (default) is the shipped "現代木質圖書館風".
-`.theme-terminal` is the shipped "夜讀" theme, toggled via `useTheme.ts` /
-`ThemeToggle.vue` — currently filled with a Gruvbox-sourced palette (see
-"Generating a color palette" below for why). Three other fully-worked,
-WCAG-checked candidate palettes for that same `.theme-terminal` slot are kept
-ready to paste in at `references/alternate-palettes.md` — swapping the theme
-later means replacing the values inside `.theme-terminal`, not renaming
-anything or touching the toggle logic.
+**Current themes** (since 2026-09-29, decision-register D-59): both
+`.theme-library` (light, default) and `.theme-terminal` (dark, toggled via
+`useTheme.ts` / `ThemeToggle.vue`) are filled with the **navy v2** palette —
+card-stock ground, navy (`--bg-nav-footer`/`--bg-band-strong`), wine accent in
+light / brass accent in dark, brass as a third color. Values were generated and
+contrast-verified by the scripts in `design/palettes/tools/`, not hand-picked;
+the other candidates (green buckram, navy v1) and every token's audit live in
+`design/palettes/`. The previous palettes (light "米白＋磚紅" `#fcfaf2`/`#b45309`,
+which matched the AI-cliché checklist below and failed AA at 4.40:1; dark
+Gruvbox) are retired. Error messages use their own `--text-error` (same generator, ≥5:1 on every ground it sits on, and kept visibly apart from `--text-accent` — OKLab ΔE ≥ 0.1 — because form labels are accent-coloured right above the error line); `BaseHint`/`BaseLoadingBlock` take `tone="error"` rather than callers overriding the text colour. Type (D-60): headings `--font-serif` = Noto Serif TC,
+the "IN / ARCHIVE" wordmark `--font-wordmark` = Libre Caslon Text 700;
+Fraunces is no longer loaded. `references/alternate-palettes.md` holds older
+dark-slot candidates from the Gruvbox era — swapping a theme still means
+replacing the values inside the theme block, not renaming classes or touching
+the toggle logic.
 
 ## The chain: tokens → component rule → architecture → whole site
 
@@ -232,7 +239,9 @@ short UI labels at smaller sizes (`text-[13px]`/`text-[13.5px]`/`text-[14px]`
 elsewhere in `AboutView.vue`) — those are a different typographic role with
 different constraints, not an oversight to fix the same way. Headline
 typography (Fraunces) and eyebrow/mono labels were evaluated in the same
-research pass and confirmed already correct — no change.
+research pass and confirmed already correct — no change. (Superseded
+2026-09-29 by D-60: Fraunces has no CJK glyphs, so Chinese headings were in
+fact rendering in each device's fallback serif; headings moved to Noto Serif TC.)
 
 ## Extending the token set
 

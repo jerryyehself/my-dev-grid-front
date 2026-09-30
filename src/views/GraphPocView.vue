@@ -39,14 +39,22 @@ const pathResult = ref<GraphPathDto | null>(null)
     <div class="flex items-center gap-2">
       <button
         class="rounded-full border px-3 py-1 text-xs font-mono uppercase tracking-wider"
-        :class="mode === '2d' ? 'bg-stone-900 text-white' : 'border-stone-300 text-stone-600'"
+        :class="
+          mode === '2d'
+            ? 'bg-(--bg-band-strong) border-(--bg-band-strong) text-(--text-on-band)'
+            : 'border-(--border-shelf) text-(--text-ink-body)'
+        "
         @click="mode = '2d'"
       >
         2D · force-graph
       </button>
       <button
         class="rounded-full border px-3 py-1 text-xs font-mono uppercase tracking-wider"
-        :class="mode === '3d' ? 'bg-stone-900 text-white' : 'border-stone-300 text-stone-600'"
+        :class="
+          mode === '3d'
+            ? 'bg-(--bg-band-strong) border-(--bg-band-strong) text-(--text-on-band)'
+            : 'border-(--border-shelf) text-(--text-ink-body)'
+        "
         @click="mode = '3d'"
       >
         3D · 3d-force-graph

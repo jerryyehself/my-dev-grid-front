@@ -26,8 +26,8 @@ describe('BaseTextarea 的字數（規格缺口 G3）', () => {
   })
 
   it('超過上限時講出超出幾個字，不只是變顏色', () => {
-    // 站上沒有 danger 色票,逼近與超出都只能用 --text-accent。
-    // 同色就分不出來,所以超出這件事要靠文字說出來,不是靠顏色。
+    // 逼近用強調色、超出用錯誤色(--text-error),但只靠顏色對色弱的人不夠,
+    // 所以超出這件事要靠文字說出來,顏色只是輔助。
     const wrapper = mountWith('十個字十個字', 5)
     expect(wrapper.text()).toContain('6 / 5')
     expect(wrapper.text()).toContain('超出 1 字')
