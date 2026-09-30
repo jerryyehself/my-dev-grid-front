@@ -29,7 +29,7 @@ const layout = computed(() => {
       <circle cx="6" cy="6" r="3" /><circle cx="18" cy="18" r="3" /><path d="M8.5 8.5 L11 11 M13 13 L15.5 15.5" stroke-dasharray="2 3" />
     </svg>
     <p class="text-[13px] font-semibold text-(--text-ink-main)">這兩個節點之間沒有路徑</p>
-    <p class="font-mono text-[11px] text-(--text-ink-body) opacity-75">圖上目前沒有任何一條邊能把它們連起來</p>
+    <p class="text-sm text-(--text-ink-body) opacity-75">圖上沒有任何一串關係能把它們連起來。</p>
   </div>
 
   <div v-else-if="path && path.found" class="overflow-x-auto rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-6 py-5">
@@ -67,19 +67,19 @@ const layout = computed(() => {
             :x="(station.x + layout.stations[i + 1]!.x) / 2"
             y="34"
             text-anchor="middle"
-            font-size="10"
+            font-size="11"
             letter-spacing="0.05em"
             fill="var(--text-ink-body)"
             font-family="ui-monospace, monospace"
           >
-            {{ (path.edges[i]!.predicate ?? '(未命名關聯)').toUpperCase() }} ▸
+            {{ (path.edges[i]!.predicate ?? '（未命名的關係）').toUpperCase() }} ▸
           </text>
           <text
             v-if="!path.edges[i]!.hasDefinedReverse"
             :x="(station.x + layout.stations[i + 1]!.x) / 2"
             y="60"
             text-anchor="middle"
-            font-size="9"
+            font-size="13"
             fill="var(--text-accent)"
             font-family="ui-monospace, monospace"
           >

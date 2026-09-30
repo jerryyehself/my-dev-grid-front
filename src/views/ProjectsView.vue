@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import { fetchProjects, type Project } from '@/api/projects'
@@ -26,7 +27,10 @@ onMounted(load)
 const { selectedTags, filterGroups, toggleTag, clearFilter, filteredProjects } =
   useProjectsFilter(projects)
 
-const selectedId = ref('')
+// 首頁近況板點某個專案會帶 ?project=<id> 過來，一進來就選那一筆；以前一律連到 /projects，
+// 點 isbn-scanner 卻看到清單第一筆的 idea-trigger
+const route = useRoute()
+const selectedId = ref(typeof route.query.project === 'string' ? route.query.project : '')
 const selected = computed(() => projects.value.find((p) => p.id === selectedId.value))
 
 // 篩選把目前選中的專案擠出清單時，自動切到篩選後清單的第一筆，不留一個選不到的空白詳情面板；
@@ -97,8 +101,8 @@ watch(
         </template>
       </div>
 
-      <div v-if="filteredProjects.length === 0" class="py-16 text-center text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
-        // NO_PROJECTS_FOUND
+      <div v-if="filteredProjects.length === 0" class="py-16 text-center text-sm text-(--text-ink-muted)">
+        沒有符合篩選條件的專案。
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-[280px_minmax(0,1fr)] border border-(--border-shelf) rounded-xl overflow-hidden bg-(--bg-paper-light)">

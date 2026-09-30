@@ -100,14 +100,14 @@ const pathResult = ref<GraphPathDto | null>(null)
           {{ selected.linkKind === 'inspiration' ? '同類別的關係' : '跨類別的關係' }}
         </p>
         <p class="text-(--text-ink-body) font-medium">{{ selected.sourceLabel }} → {{ selected.targetLabel }}</p>
-        <p class="text-(--text-ink-muted)">{{ selected.predicate ?? selected.label ?? '(未命名關聯)' }}</p>
+        <p class="text-(--text-ink-muted)">{{ selected.predicate ?? selected.label ?? '（未命名的關係）' }}</p>
       </template>
     </div>
 
     <!-- 給訪客的說明。原本這裡是開發筆記（技術驗證階段的欄位落差、3D 分層怎麼修的），2026-09-30
          使用者決定改成對應的說明 -->
     <p class="text-[14px] leading-relaxed text-(--text-ink-muted)">
-      這是完整版的互動圖譜：2D 可以拖曳節點，上方可以查兩個節點之間的路徑；3D 把文件、技術、實作分成上下三層。節點大小代表關聯數。首頁的<RouterLink to="/" class="text-(--text-accent) hover:underline">知識網路</RouterLink>是只看不操作的精簡版。
+      這是完整版的互動圖譜：2D 可以拖曳節點，上方可以查兩個節點之間的路徑；3D 把文件、技術、實作分成上下三層。節點大小代表關係數。首頁的<RouterLink to="/" class="text-(--text-accent) hover:underline">知識網路</RouterLink>是精簡版：可以點節點、切換顏色，但不能拖曳縮放，也沒有路徑查詢。
     </p>
   </div>
 </template>

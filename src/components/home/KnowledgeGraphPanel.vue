@@ -537,8 +537,8 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
       popover.title = `${String(s)} ↔ ${String(t)}`
       popover.rows = [`透過共同的「${viaLabels}」間接相關`, '這是推導出來的，不是登記的關係']
     } else {
-      popover.kind = 'Relation'
-      popover.title = l.predicate ?? '(未命名關聯)'
+      popover.kind = '登記的關係'
+      popover.title = l.predicate ?? '（未命名的關係）'
       popover.rows = [String(s), `→ ${String(t)}`]
     }
   }
@@ -962,7 +962,7 @@ onUnmounted(() => {
         >
           ×
         </button>
-        <div class="font-mono text-[11px] uppercase tracking-[0.08em] text-(--text-ink-muted) mb-1">
+        <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-1">
           {{ popover.kind }}
         </div>
         <h3 class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">{{ popover.title }}</h3>
@@ -976,7 +976,7 @@ onUnmounted(() => {
          決定改成對應的說明；技術細節留在程式碼註解跟 issue #24 -->
     <ul class="mt-3 flex flex-col gap-1 text-[14px] leading-relaxed text-(--text-ink-muted)">
       <li><b class="text-(--text-ink-body)">顏色</b>：文件、技術、實作三大類。切到「依建立時間」改用時間色階；目前只有專案有建立時間，其他節點顯示灰色。</li>
-      <li><b class="text-(--text-ink-body)">大小</b>：關聯越多的節點越大。</li>
+      <li><b class="text-(--text-ink-body)">大小</b>：關係越多的節點越大。</li>
       <li><b class="text-(--text-ink-body)">線</b>：實線是目錄裡登記的關係；虛線是推導出來的——兩個同類節點共用越多技術，虛線越明顯，但它不是登記的關係。</li>
       <li><b class="text-(--text-ink-body)">圓框</b>：三大類各自的範圍，重疊的地方就是彼此相關的節點。</li>
       <li>點節點看詳細資料。想拖曳節點、查兩點之間的路徑，到<RouterLink to="/graph" class="text-(--text-accent) hover:underline">圖譜頁</RouterLink>。</li>

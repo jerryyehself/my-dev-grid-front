@@ -86,7 +86,7 @@ onMounted(async () => {
           <RouterLink
             v-for="p in projects"
             :key="p.id"
-            to="/projects"
+            :to="{ path: '/projects', query: { project: p.id } }"
             class="flex items-center justify-between gap-3 px-[18px] py-3.5 border-b border-(--border-shelf) last:border-b-0 hover:bg-(--bg-folder) transition-colors"
           >
             <div class="min-w-0">
