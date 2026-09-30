@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ref } from 'vue'
-import { useProjectsFilter } from './useProjectsFilter'
+import { orderedTechniques, useProjectsFilter } from './useProjectsFilter'
 import type { Project } from '@/api/projects'
 
 function fakeProject(overrides: Partial<Project> = {}): Project {
@@ -88,8 +88,8 @@ describe('useProjectsFilter', () => {
     const { filterGroups } = useProjectsFilter(ref(projects))
 
     expect(filterGroups.value.map((g) => [g.label, g.tags.map((t) => t.label)])).toEqual([
-      ['語言', ['PHP']],
       ['框架', ['laravel', 'Vue']],
+      ['語言', ['PHP']],
       ['套件工具', ['appscript']],
     ])
   })
@@ -146,5 +146,28 @@ describe('useProjectsFilter', () => {
     const { filterGroups } = useProjectsFilter(ref(projects))
 
     expect(filterGroups.value.map((g) => g.label)).toEqual(['其他'])
+  })
+
+  it('同一類裡用得多的排前面，同樣多的照名稱', () => {
+    const lang = (name: string) => ({ name, version: null, category: 'language' })
+    const projects = [
+      fakeProject({ id: 'a', techniques: [lang('Shell'), lang('PHP')] }),
+      fakeProject({ id: 'b', techniques: [lang('PHP'), lang('CSS')] }),
+    ]
+    const { filterGroups } = useProjectsFilter(ref(projects))
+
+    expect(filterGroups.value[0]!.tags.map((t) => t.label)).toEqual(['PHP', 'CSS', 'Shell'])
+  })
+
+  it('orderedTechniques 照篩選器的分類順序排，框架在前', () => {
+    const p = fakeProject({
+      techniques: [
+        { name: 'json', version: null, category: 'packagetool' },
+        { name: 'PHP', version: null, category: 'language' },
+        { name: 'Vue', version: '3', category: 'framework' },
+        { name: 'Blade', version: null, category: 'language' },
+      ],
+    })
+    expect(orderedTechniques(p).map((t) => t.name)).toEqual(['Vue', 'Blade', 'PHP', 'json'])
   })
 })

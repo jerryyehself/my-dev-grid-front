@@ -11,11 +11,24 @@ const CATEGORY_LABEL: Record<string, string> = {
   environment: '執行環境',
   assistant: 'AI 工具',
 }
-const CATEGORY_ORDER = ['語言', '框架', '套件工具', '執行環境', 'AI 工具', '其他']
+// 框架排第一：對讀者來說「用 Vue、Laravel 做的」比「用了 Blade、Procfile」重要，
+// 專案詳情裡的技術標籤也照同一個順序（模擬讀者審查 2026-09-30：版本號在框架上，排在後面會被埋掉）
+const CATEGORY_ORDER = ['框架', '語言', '套件工具', '執行環境', 'AI 工具', '其他']
+const categoryRank = (category: string) => {
+  const i = CATEGORY_ORDER.indexOf(CATEGORY_LABEL[category] ?? '其他')
+  return i === -1 ? CATEGORY_ORDER.length : i
+}
 
 // 示範資料快照只有 tags、沒有 techniques，這時每個 tag 當成一個分類不明的技術
 const techniquesOf = (p: Project): ProjectTechnique[] =>
   p.techniques ?? p.tags.map((tag) => ({ name: tag, version: null, category: '' }))
+
+/** 專案詳情裡的技術標籤：照篩選器的分類順序排，同一類裡照名稱 */
+export function orderedTechniques(p: Project): ProjectTechnique[] {
+  return [...techniquesOf(p)].sort(
+    (a, b) => categoryRank(a.category) - categoryRank(b.category) || a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }),
+  )
+}
 
 // projects 收 Ref 而不是純陣列：專案清單現在是非同步從 API 載入，
 // 用 Ref 才能在資料到達後讓底下這些 computed 自動重新計算。
@@ -46,7 +59,10 @@ export function useProjectsFilter(projects: Ref<Project[]>) {
     }
     return CATEGORY_ORDER.filter((label) => byCategory[label]?.length).map((label) => ({
       label,
-      tags: byCategory[label]!.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })).map((name) => ({
+      // 用得多的排前面，同樣多的照名稱：字母序會把 PHP、JavaScript 這種主力埋在中間
+      tags: byCategory[label]!
+        .sort((a, b) => techniqueStats.value.get(b)!.count - techniqueStats.value.get(a)!.count || a.localeCompare(b, 'en', { sensitivity: 'base' }))
+        .map((name) => ({
         label: name,
         count: techniqueStats.value.get(name)!.count,
         selected: selectedTags.value.has(name),
