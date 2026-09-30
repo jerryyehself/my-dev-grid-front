@@ -11,19 +11,19 @@
 
     <div class="flex items-center justify-between gap-4 mb-7">
       <BackToArticlesLink class="inline-flex" />
-      <!-- 編輯頁的入口。D-56 落地後 /articles/:id/edit 是 requiresAuth 路由，
-           未登入點進去會被導去登入頁——連結本身不因登入狀態隱藏，見 ArticlesView.vue
-           同一類連結的說明。 -->
-      <router-link
-        :to="{ name: 'article-editor', params: { id: article.id } }"
-        class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>
-        編輯
-      </router-link>
+      <!-- 編輯頁的入口，只有登入後才顯示（AuthOnly.vue 說明為什麼）。 -->
+      <AuthOnly>
+        <router-link
+          :to="{ name: 'article-editor', params: { id: article.id } }"
+          class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+          編輯
+        </router-link>
+      </AuthOnly>
     </div>
 
     <div class="border-b border-(--border-shelf) pb-6 mb-8">
@@ -133,6 +133,7 @@ import { computed, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchArticleOrDemo, fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
+import AuthOnly from '@/components/AuthOnly.vue'
 import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'

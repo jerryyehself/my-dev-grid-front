@@ -11,6 +11,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
+import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 
@@ -99,20 +100,21 @@ const goToArticle = (id: number) => {
 <template>
   <div class="w-full">
     <div class="flex items-center justify-between gap-4 mb-6">
-      <!-- 管理頁入口。D-56 落地後 /articles/manage 本身已經是 requiresAuth 路由，
-           未登入點進去會被導去登入頁——這裡刻意不因為登入狀態隱藏連結本身,
-           見到「管理」但點進去先被要求登入,是常見且合理的模式,不是假訊號。 -->
-      <router-link
-        :to="{ name: 'article-manage' }"
-        class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-        管理
-      </router-link>
-      <div class="inline-flex rounded-full border border-(--border-shelf) p-0.5 gap-0.5">
+      <!-- 管理頁入口，只有登入後才顯示（AuthOnly.vue 說明為什麼）。 -->
+      <AuthOnly>
+        <router-link
+          :to="{ name: 'article-manage' }"
+          class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+          管理
+        </router-link>
+      </AuthOnly>
+      <!-- ml-auto：沒登入時左邊的「管理」不存在，justify-between 只剩一個子元素會把切換鈕擠到左邊 -->
+      <div class="ml-auto inline-flex rounded-full border border-(--border-shelf) p-0.5 gap-0.5">
         <button
           type="button"
           class="px-4 py-1.5 rounded-full font-mono text-[11px] tracking-wider font-bold transition-colors cursor-pointer"
