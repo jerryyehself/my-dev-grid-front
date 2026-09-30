@@ -30,6 +30,8 @@ document.documentElement.classList.add('palette-navy-v2')
 
 `navy-v2.css` 裡標「新增提案」的 token（`--bg-band-strong`、`--text-on-band`、`--accent-brass`、`--accent-secondary`、`--cat-fill-*`）已經討論過並採用（D-59），現在是 `variables.css` 的正式 token，About 頁在用。
 
+**選中色 `--bg-selected`／`--text-on-selected`（2026-09-30 追加，D-66）**：「幾選一」切換鈕（`BaseSegmented`）選中時的底色與字色。淺色主題是藏青 `#162541`／`#e8e3dd`（12:1），深色主題改成黃銅 `#d7ac66`／`#0d1529`（8.6:1）：深色主題的頁面底色本身就是藏青，藏青實心會融進背景。值跟既有 token 相同，但照 `variables.css` 的規則分開命名，不互相引用。
+
 **錯誤色 `--text-error`（同日追加）**：`gen2.mjs` 對錯誤訊息會出現的三種底色（卡紙、淡藏青、卡片）中對比最差的那一個解到 5:1，另外要求跟 `--text-accent` 的 OKLab 距離 ≥ 0.1——表單欄位標籤是強調色、錯誤訊息就在正下方，太近就不顯眼。色相 28～44、彩度 0.17～0.21 掃過一輪，淺色主題只有彩度 0.21 過得了，取餘裕最大的色相 28：淺色 `#c70d12`、深色 `#e57d71`。登入頁原本寫死的 `text-red-700`、以及借用 `--text-accent` 的 18 處錯誤訊息都改用它。
 
 ## 怎麼產生的
