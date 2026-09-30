@@ -1,14 +1,14 @@
 # my-dev-grid-frontend
 
-用 Vue 3 + Vite 開發的個人網站。
+用 Vue 3 + Vite 開發的個人網站，網址 `jerrylib.com`（部署在 Cloudflare，正式公開前用 Cloudflare Access 鎖住）。
 
 ## 視覺設計稿
 
-目前實作照著這份 Claude Design 畫布走(五個頁面的版面結構重新設計,主題色票沿用既有 token):
+五個頁面的版面結構最早照 **[My Dev Grid Site Redesign](https://claude.ai/code/artifact/41b6b24a-8dbd-4f19-a366-ed14221f202b)** 這份 Claude Design 畫布做。之後有幾項全站改動已經取代它：配色換成藏青第二版（D-59），標題字型換成 Noto Serif TC、字標換成 Libre Caslon（D-60），About 頁照另一份 E 版設計稿重寫。網站 icon、選中狀態、字級這類全站比較，收在另一份 canvas。
 
-**[My Dev Grid Site Redesign](https://claude.ai/code/artifact/41b6b24a-8dbd-4f19-a366-ed14221f202b)**
+哪份設計稿現在還算數、各自管哪一塊，以 `my-dev-grid-skills` 的 [`docs/design-artifacts.md`](https://github.com/jerryyehself/my-dev-grid-skills/blob/main/docs/design-artifacts.md) 為準。改版面／字體／共用元件前先查那裡，確認是刻意偏離，還是單純沒對齊。
 
-改版面/字體/共用元件前,先跟這份對一下,確認是刻意偏離(例如某段文案改用真實內容取代設計稿的示範文案)還是單純沒對齊。
+網站 icon 與社群分享圖由 `design/icon/build.mjs` 產生（見 `design/icon/README.md`），輸出在 `public/`。
 
 **設計稿 `<style>` 區塊裡的 class 就是那份設計的共用元件定義**(`.lbl`、`.hint`、`.fld`、`.chip` 這類)。要為同樣的角色抽共用元件時,數值從那裡拿,不要從既有程式碼逆推——既有程式碼可能已經漂移了,逆推會把漂移一起保留下來,還給它一個具名元件的權威。實際踩過:小標元件當初讀了兩個彼此不一致的頁面,做出設計稿沒有的兩種字距,還附上一套設計稿從沒講過的理由。細節見 `my-dev-grid-skills` 的 `mockup-fidelity` skill。
 
@@ -23,13 +23,13 @@
     - 標籤換行: 用 `flex-wrap` 搭配 `min-width: 0` 避免浮動對齊問題
   - PR: [#47](https://github.com/jerryyehself/my-dev-grid-front/pull/47)
 
-其他相關設計稿(較早期草稿、Home 頁參考等)、每一份的現況/是否還算數,見 `my-dev-grid-skills` 的 [`docs/design-artifacts.md`](https://github.com/jerryyehself/my-dev-grid-skills/blob/main/docs/design-artifacts.md)——那份是持續維護的活索引,這裡不重複列。
+其他設計稿不在這裡重複列，見上面的 `design-artifacts.md`。
 
 ## 共用元件
 
 `src/components/` 底下只用 Vue 官方慣例的兩個前綴,不發明第三種:
 
-- **`Base*`** — 沒有商業邏輯、到處可重用的呈現元件。設計決定要變成共用的東西時放這裡,而不是每個 view 各自重寫一次。目前有 `BaseButton` / `BaseCard` / `BaseTag` / `BaseInput` / `BaseTextarea` / `BaseField` / `BaseEyebrow` / `BaseHint` / `BaseLoadingBlock`。
+- **`Base*`** — 沒有商業邏輯、到處可重用的呈現元件。設計決定要變成共用的東西時放這裡,而不是每個 view 各自重寫一次。目前有 `BaseButton` / `BaseCard` / `BaseTag` / `BaseInput` / `BaseTextarea` / `BaseSelect` / `BaseField` / `BaseEyebrow` / `BaseHint` / `BaseLoadingBlock` / `BaseSegmented`（全站統一的「幾選一」切換，D-66）/ `BaseStatTile`。
 - **`The*`** — 每頁只會出現一次的元件(`TheNavbar`)。
 
 新需求先看能不能變成既有元件的 variant(`BaseCard` 的 `card`/`panel`、`BaseButton` 的 `primary`/`ghost`/`tab`/`page`/`add`),而不是再開一個名字不同、長得幾乎一樣的元件。
@@ -40,7 +40,11 @@
 
 ## 後端串接與登入
 
-打 [`my-dev-grid`](https://github.com/jerryyehself/my-dev-grid)（Laravel）的公開 API（`VITE_API_BASE_URL`，預設 `http://localhost:8000/api`），讀（`index`／`show`）不用登入，寫入用 Sanctum **API token**（`POST /auth/login`，`useAuthStore` 存記憶體，不落 `localStorage`——整頁重新整理就會登出，是刻意的取捨，理由見 `useAuthStore.ts` 的註解）。之所以是 token 模式不是 SPA session cookie，是因為跨 origin、沒有共用根網域可以讓瀏覽器帶 cookie（D-56，`my-dev-grid-skills/docs/decision-register.md`）。
+打 [`my-dev-grid`](https://github.com/jerryyehself/my-dev-grid)（Laravel）的公開 API（`VITE_API_BASE_URL`，預設 `http://localhost:8000/api`）。讀（`index`／`show`）不用登入。寫入用 Sanctum **API token**：帳號密碼走 `POST /auth/login`；Google／LINE 走後端的 `/auth/token/{provider}/redirect`，登入後帶著 token 導回 `/auth/callback`。token 由 `useAuthStore` 存在記憶體，不落 `localStorage`，整頁重新整理就會登出。這是刻意的取捨，理由見 `useAuthStore.ts` 的註解。
+
+用 token 模式、不用 SPA session cookie，是因為前後端跨 origin（D-56，`my-dev-grid-skills/docs/decision-register.md`）。前端已經在 `jerrylib.com`；等後端也掛上同網域的子網域，才重新評估 cookie 模式。
+
+**正式站上沒有登入按鈕**（D-63）。「登入」只在本機 `npm run dev` 顯示；要登入就直接開 `/login`。管理、編輯、新增這些寫入入口包在 `AuthOnly` 元件裡，登入後才出現。
 
 ### 管理頁面
 
@@ -61,10 +65,19 @@
 **不用 `v-html`**,三個理由:
 
 1. 站內連結要是真的 `<RouterLink>`。`v-html` 塞進去的 `<a>` 是原生連結,點下去整頁重新載入,SPA 的路由與捲動位置全部重來
-2. 樣式直接沿用站上既有的 token 與 `//` 前綴標題,不用再寫一份 `.prose` 把同一組值定義第二次
+2. 樣式直接沿用站上既有的 token,不用再寫一份 `.prose` 把同一組值定義第二次
 3. 不需要消毒器。實測 `marked`(13.1KB) + `dompurify`(11.1KB) = 24.2KB,比 `unified` + `remark-parse` 的 20.6KB 還大
 
 標題的 `id` 與「本文結構」目錄的 `href` 都來自 `components/markdown/headings.ts` 的 `extractHeadings()`——**只有這一個來源**。兩邊各自算 slug 會漂移,而漂移的症狀是「點目錄沒反應」,不會有任何錯誤訊息。
+
+## 分支與部署
+
+- `main` 接 Cloudflare 的正式部署，push 到 `main` 就會更新正式站。
+- `develop` 是整合分支。feature 分支從 `develop` 分出、PR 對 `develop`。要上線時才由 `develop` 開 PR 進 `main`，用 merge commit 合併（D-62）。
+- CI（`.github/workflows/ci.yml`）在兩個分支的 PR 都會跑 lint／type-check／test／build。
+- Cloudflare 也會替每個分支建一份預覽部署。SPA 的路由 fallback 設在 `wrangler.jsonc` 的 `assets.not_found_handling`，不要用 `public/_redirects`（會觸發無限迴圈，原因見檔案裡的註解）。
+
+Cloudflare 這邊的完整設定（網域、Access 鎖定、預覽部署）見 `daily-claude-summary` 的 `reports/cloudflare-workers-spa-deployment-guide.md`。
 
 ## 建議的 IDE 設定
 
@@ -103,6 +116,12 @@ npm run dev
 
 ```sh
 npm run build
+```
+
+### 單元測試
+
+```sh
+npm run test:unit
 ```
 
 ### 用 [ESLint](https://eslint.org/) 檢查
