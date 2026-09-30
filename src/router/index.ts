@@ -32,7 +32,7 @@ const router = createRouter({
       meta: {
         tag: 'Home',
         title: 'IN / ARCHIVE',
-        subtitle: '正在孵化的想法，以及最近的輸入與輸出動態',
+        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結',
       },
     },
     {
@@ -70,7 +70,7 @@ const router = createRouter({
       meta: {
         tag: 'Articles',
         title: 'My Articles',
-        subtitle: '自己記錄',
+        subtitle: '開發筆記與技術文章',
       },
     },
     {
