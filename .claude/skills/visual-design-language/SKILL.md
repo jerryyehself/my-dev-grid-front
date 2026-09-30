@@ -292,6 +292,13 @@ Copy rules checked in the same pass:
   Relations in the catalogue are 直接關係 and computed ones are 間接關聯.
   The earlier 登記的關係 was dropped: the user asked what it meant.
   The categories are 類別/三大類, never 型別.
+- Graph line style follows the same split. 直接關係 is a solid `--edge-real`
+  line on every graph. 間接關聯 is a dashed `--accent-secondary` line, home
+  graph only. It was a paler gray dash first, but a reader review measured
+  almost no visible change when the switch was turned on, so it now has its
+  own color. Hover stays `--text-accent`, so the two never collide.
+- Don't tell touch users to hover. Hover-only hints ("滑到節點上…") sit in a
+  `[@media(hover:hover)]` span.
 
 Sources, and which parts are judgment:
 - **11px label floor**: sourced. Apple HIG sets 11pt as the minimum text

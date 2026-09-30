@@ -212,8 +212,11 @@ onMounted(async () => {
     })
     .linkWidth((l) => {
       if (hoveredNodeId && linkTouchesHovered(l)) return 2.2
-      return 0.6
+      return 1
     })
+    // 套件預設的線條不透明度是 0.2，疊在深淺兩種背景上幾乎看不到線（2026-09-30 模擬讀者審查）。
+    // 淡化靠上面 linkColor 的 blendTowardBg 處理，這裡整體拉高
+    .linkOpacity(0.85)
     // hover 到的鄰居邊加上沿線飄動的粒子當提示。以前同類別的邊平常也有粒子（模擬 2D 的虛線），
     // 2026-09-30 同類別跟跨類別統一成同一種直接關係之後拿掉
     .linkDirectionalParticles((l) => (hoveredNodeId && linkTouchesHovered(l) ? 5 : 0))

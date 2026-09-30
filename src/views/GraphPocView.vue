@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { useRoute, RouterLink } from 'vue-router'
@@ -30,6 +30,17 @@ const isDemoData = ref(false)
 const selected = ref<GraphPocSelection | null>(null)
 // 點到的節點連去哪（文章頁、外部網址、專案頁；技術沒有頁面）。規則跟首頁知識網路的彈窗共用
 const selectedLink = computed(() => (selected.value?.kind === 'node' ? graphNodeLink(selected.value) : null))
+
+// 詳情卡在圖譜跟圖例下面，畫布一個螢幕高，點下去之後卡片常常在畫面外，讀者以為點了沒反應
+// （2026-09-30 模擬讀者審查實測）。選中就把卡片捲進畫面；已經看得到就不動（block: 'nearest'），
+// 使用者設了減少動態效果就直接跳過去，不做平滑捲動。
+const detailCard = ref<HTMLElement>()
+watch(selected, async (sel) => {
+  if (!sel) return
+  await nextTick()
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  detailCard.value?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' })
+})
 const domainLabel: Record<GraphNodeType, string> = {
   documentation: '文件',
   technique: '技術',
@@ -69,22 +80,24 @@ const pathResult = ref<GraphPathDto | null>(null)
       <span class="flex items-center gap-1.5"
         ><span class="w-4 h-0 border-t border-(--edge-real)"></span>直接關係</span
       >
-      <span class="ml-auto">{{
-        mode === '2d'
-          ? '滑到節點上看相連的節點・點節點看內容・點連線看是什麼關係・拖曳節點調整位置'
-          : '點節點看內容・點連線看是什麼關係・左鍵拖曳旋轉・滾輪縮放・右鍵平移'
-      }}</span>
+      <!-- 「滑到節點上」在觸控裝置沒有意義，只在能 hover 的裝置顯示 -->
+      <span v-if="mode === '2d'" class="ml-auto"
+        ><span class="hidden [@media(hover:hover)]:inline">滑到節點上看相連的節點・</span
+        >點節點看內容・點連線看是什麼關係・拖曳節點調整位置</span
+      >
+      <span v-else class="ml-auto">點節點看內容・點連線看是什麼關係・左鍵拖曳旋轉・滾輪縮放・右鍵平移</span>
     </div>
 
     <!-- 點節點/點連線的詳情面板——GraphPocSelection 是共同格式（見 graphPocData.ts），
          2D/3D 兩版共用同一個面板,不用各自另外刻一份。 -->
     <div
       v-if="selected"
-      class="relative text-[14px] leading-relaxed border border-(--border-shelf) rounded-xl px-4 py-3 bg-(--bg-paper-light)"
+      ref="detailCard"
+      class="relative scroll-mb-4 text-[14px] leading-relaxed border border-(--border-shelf) rounded-xl px-4 py-3 bg-(--bg-paper-light)"
     >
       <button
         type="button"
-        class="absolute top-2 right-3 text-(--text-ink-muted) hover:text-(--text-ink-body) cursor-pointer"
+        class="absolute top-1 right-1 w-9 h-9 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) cursor-pointer"
         aria-label="關閉"
         @click="selected = null"
       >
@@ -97,7 +110,7 @@ const pathResult = ref<GraphPathDto | null>(null)
         <RouterLink
           v-if="selectedLink?.kind === 'internal'"
           :to="selectedLink.to"
-          class="inline-block mt-1 text-(--text-accent) hover:underline"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-(--text-accent) hover:underline"
           >{{ selectedLink.text }}</RouterLink
         >
         <a
@@ -105,7 +118,7 @@ const pathResult = ref<GraphPathDto | null>(null)
           :href="selectedLink.href"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-block mt-1 text-(--text-accent) hover:underline"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-(--text-accent) hover:underline"
           >{{ selectedLink.text }}</a
         >
       </template>
@@ -119,7 +132,7 @@ const pathResult = ref<GraphPathDto | null>(null)
     <!-- 給訪客的說明。原本這裡是開發筆記（技術驗證階段的欄位落差、3D 分層怎麼修的），2026-09-30
          使用者決定改成對應的說明 -->
     <p class="text-[14px] leading-relaxed text-(--text-ink-muted)">
-      這是完整版的互動圖譜：2D 可以拖曳節點，上方可以查兩個節點之間的路徑；3D 把文件、技術、實作分成上下三層。節點大小代表關係數。首頁的<RouterLink to="/" class="text-(--text-accent) hover:underline">知識網路</RouterLink>是精簡版：可以點節點、切換顏色，但不能拖曳縮放，也沒有路徑查詢。
+      這是完整版的互動圖譜：2D 可以拖曳節點，上方可以查兩個節點之間的路徑；3D 把文件、技術、實作分成上下三層。節點大小代表關係數。首頁的<RouterLink to="/" class="text-(--text-accent) hover:underline">知識網路</RouterLink>是精簡版：可以點節點、切換顏色，但不能拖曳縮放，也沒有路徑查詢；另外只有首頁可以打開「間接關聯」，用虛線標出連到相同節點的同類節點，這裡只畫直接關係。
     </p>
   </div>
 </template>

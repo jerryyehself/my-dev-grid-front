@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseButton from '@/components/BaseButton.vue'
@@ -53,6 +53,18 @@ watch(
   },
   { immediate: true },
 )
+
+// 從首頁近況板或圖譜連過來（帶 ?project／?implementation）時，選中的那筆可能在清單盒子的捲動
+// 範圍外，讀者看不出哪一筆被選了（2026-09-30 模擬讀者審查）。資料載入、選定之後捲一次就好，
+// 之後使用者自己在清單裡點的不動
+let pendingScrollToSelected = Boolean(route.query.project || route.query.implementation)
+const listBox = ref<HTMLElement>()
+watch([selectedId, filteredProjects], async () => {
+  if (!pendingScrollToSelected || !selectedId.value || !filteredProjects.value.length) return
+  pendingScrollToSelected = false
+  await nextTick()
+  listBox.value?.querySelector<HTMLElement>('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' })
+})
 </script>
 
 <template>
@@ -119,11 +131,12 @@ watch(
              詳情面板擠到很下面；桌面版原本 md:max-h-none 讓清單自然展開，但跟首頁近況板
              改成固定高度後不一致，改成兩種寬度都套同一個高度上限，全站「清單裝在固定
              高度盒子裡」的慣例統一 -->
-        <div class="max-h-80 overflow-y-auto border-b md:border-b-0 md:border-r border-(--border-shelf)">
+        <div ref="listBox" class="max-h-80 overflow-y-auto border-b md:border-b-0 md:border-r border-(--border-shelf)">
           <button
             v-for="proj in filteredProjects"
             :key="proj.id"
             type="button"
+            :aria-current="selectedId === proj.id ? 'true' : undefined"
             class="w-full text-left px-4.5 py-4 border-b border-(--border-shelf) last:border-b-0 transition-colors cursor-pointer"
             :class="
               selectedId === proj.id
