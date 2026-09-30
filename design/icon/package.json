@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "description": "網站 icon 與社群分享圖的產生腳本，只在這個目錄裝依賴，不進前端專案本身",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "opentype.js": "2.0.0",
+    "playwright": "1.56.1"
+  }
+}
