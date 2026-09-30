@@ -105,7 +105,7 @@ export function deleteArticle(id: number): Promise<{ message: string }> {
 // 後者內容偏內部協作/交接細節（session id、hook 腳本內部機制等），不適合當公開文章
 // 的填充內容。body 沒有另外加揭露句——D-57 的摘要就是抓 body 第一段，加一句每篇
 // 都一樣的揭露文字只會蓋掉這三篇本來就有意義的摘要；`isDemo` 已經讓畫面在頁面層級
-// 顯示 DEMO_DATA 橫幅，不需要每篇內文再重複講一次。
+// 顯示「示範資料」提示，不需要每篇內文再重複講一次。
 import articlesDemoFixture from '@/data/articlesDemoFixture.json'
 
 export async function fetchArticlesOrDemo(): Promise<{ articles: ArticleDto[]; isDemo: boolean }> {

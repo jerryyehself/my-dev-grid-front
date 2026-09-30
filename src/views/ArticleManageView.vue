@@ -119,16 +119,6 @@ async function handleDelete(a: ArticleDto) {
       </router-link>
     </div>
 
-    <!-- 未登入才需要說明,登入後按鈕本身就會動,不用額外文字解釋 -->
-    <p
-      v-if="!canWrite"
-      class="border border-dashed border-(--border-shelf) rounded-[6px] bg-(--bg-folder) px-4 py-3 text-[12.5px] leading-6 text-(--text-ink-body)"
-    >
-      <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-(--text-accent) font-bold">
-        尚未登入
-      </span>
-      ——新增與刪除文章需要先登入。
-    </p>
 
     <BaseLoadingBlock v-if="!ready && !loadError" height="240px">載入中…</BaseLoadingBlock>
     <BaseLoadingBlock v-else-if="loadError" height="240px" tone="error">

@@ -328,7 +328,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <BaseLoadingBlock v-if="loading" height="520px">// LOADING_GRAPH...</BaseLoadingBlock>
+  <BaseLoadingBlock v-if="loading" height="520px">圖譜載入中…</BaseLoadingBlock>
   <BaseLoadingBlock v-else-if="error" height="520px" tone="error">{{ error }}</BaseLoadingBlock>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->
@@ -339,7 +339,7 @@ onUnmounted(() => {
       class="absolute inset-0 flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
       :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
     >
-      <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">// 節點排列中...</span>
+      <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">節點排列中…</span>
     </div>
   </div>
 </template>

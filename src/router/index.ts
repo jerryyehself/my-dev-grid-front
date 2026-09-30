@@ -31,7 +31,7 @@ const router = createRouter({
       component: () => import('@/views/HomeView.vue'),
       meta: {
         tag: 'Home',
-        title: 'IN ARCHIVE',
+        title: 'IN / ARCHIVE',
         subtitle: '正在孵化的想法，以及最近的輸入與輸出動態。',
       },
     },
@@ -112,10 +112,11 @@ const router = createRouter({
       name: 'article-detail',
       component: () => import('@/views/ArticleDetailView.vue'),
       meta: {
-        // title 只是文章載入前的佔位，載入後 ArticleDetailView 用 siteMeta.ts 的 pageTitleOverride
-        // 換成真正的文章標題（不直接改這裡的 meta，原因見 siteMeta.ts）。tag 是固定值，直接寫在這
+        // title 留空：載入後 ArticleDetailView 用 siteMeta.ts 的 pageTitleOverride 換成真正的文章標題
+        // （不直接改這裡的 meta，原因見 siteMeta.ts）。以前寫「Article Detail」當佔位，載入前會在分頁
+        // 標題跟捲動追蹤列閃一下；留空時分頁標題退回站名。tag 是固定值，直接寫在這
         tag: 'ARTICLES',
-        title: 'Article Detail',
+        title: '',
         subtitle: '深入閱讀',
         hideHeader: true,
       },
@@ -246,7 +247,7 @@ const router = createRouter({
       meta: {
         tag: 'Knowledge Graph',
         title: '知識圖譜',
-        subtitle: '文件、技巧與實作之間的連結,2D 與 3D 兩種檢視',
+        subtitle: '文件、技術與實作之間的連結，2D 與 3D 兩種檢視',
       },
     },
   ],

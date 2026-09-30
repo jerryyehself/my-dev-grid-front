@@ -6,7 +6,7 @@ import { fetchProjectsOrDemo, type Project } from '@/api/projects'
 import { fetchArticles, type ArticleDto } from '@/api/articles'
 
 // 首頁「近況板」：左欄「近期專案」用真實 fetchProjectsOrDemo() 資料（跟 KnowledgeGraphPanel
-// 同一套「正常打 API、連不上才退回存好的快照＋顯示 DEMO_DATA」誠實 fallback），右欄「近期文章」
+// 同一套「正常打 API、連不上才退回存好的快照＋顯示「示範資料」提示」誠實 fallback），右欄「近期文章」
 // 打真的 /api/documentations——**這裡原本讀 src/data/articles.ts，註解宣稱那是「網站本來就有
 // 的真實文章清單」，但那份檔案其實是純假資料，後台編輯器新增的文章從來不會出現在這裡。**
 // 2026-09-23 改成真的 API：只列 status===1（已發布），跟 ArticlesView.vue 同一個規則。
@@ -76,7 +76,7 @@ onMounted(async () => {
         </h3>
 
         <div v-if="projectsLoading" class="h-[140px] flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
-          // LOADING_PROJECTS...
+          專案載入中…
         </div>
 
         <!-- 固定高度＋內部捲動：清單一長「近況板」本身就會被撐得很長，跟 /projects
@@ -103,7 +103,7 @@ onMounted(async () => {
         </div>
 
         <p v-if="!projectsLoading && isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mt-2">
-          // DEMO_DATA（連不上後端，顯示的是存好的資料快照，不是即時資料）
+          示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
         </p>
 
         <RouterLink to="/projects" class="inline-block mt-2.5 font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted) hover:text-(--text-accent)">
