@@ -143,7 +143,7 @@
                 title="這篇文章"
                 end
               />
-              <RelationArrow label="用在" predicate="uses" />
+              <RelationArrow label="用在" predicate="usedBy" />
               <EntryChip
                 :code="CLASSES.impl.code"
                 :label="CLASSES.impl.name"
@@ -170,7 +170,8 @@
     </section>
 
     <!-- ④ CLASS NUMBERS：三大類與它們之間的述詞。述詞以後端 RelationSeeder 為準
-         （文件→技術 specs、文件→實作 documents、技術→實作 uses，技術當主詞是本專案慣例） -->
+         （文件→技術 specs、文件→實作 documents、技術→實作 usedBy。usedBy 是「實作 uses 技術」的反向；
+         2026-09-30 以前後端把這一對定義反了，技術→實作叫 uses） -->
     <section
       class="bg-(--bg-band-strong) pt-16 pb-16 lg:pt-24 lg:pb-[104px]"
       style="
@@ -510,7 +511,7 @@ const CLASS_RELATIONS = [
     from: '技術',
     to: '實作',
     label: '用在',
-    predicates: 'uses / used',
+    predicates: 'usedBy / uses',
     pos: { left: '69.30%', top: '50%' },
   },
 ]

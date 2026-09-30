@@ -141,105 +141,105 @@
     {
       "source": "technique-1",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-2",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-3",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-4",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-5",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-6",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-7",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-8",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-9",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-10",
       "target": "implementation-1",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-2",
       "target": "implementation-2",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-11",
       "target": "implementation-2",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-7",
       "target": "implementation-2",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-12",
       "target": "implementation-2",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
     {
       "source": "technique-6",
       "target": "implementation-2",
-      "predicate": "uses",
+      "predicate": "usedBy",
       "label": "uses",
       "relation_id": 4
     },
