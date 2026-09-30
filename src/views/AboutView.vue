@@ -202,8 +202,11 @@
           </h2>
         </div>
 
-        <!-- 桌機：三張分類卡排成三角形，連線是雙向箭頭。座標照設計稿的 1088×470 畫框換算成百分比，
-             窄一點的桌機（1024 起）等比例縮 -->
+        <!-- 桌機：三張分類卡排成三角形。座標照設計稿的 1088×470 畫框換算成百分比，
+             窄一點的桌機（1024 起）等比例縮。
+             連線是單向箭頭，從主詞指向受詞，標的是那個方向的述詞。設計稿畫的是雙向箭頭加「specs / specifiedBy」，
+             但「寫到」「用在」只讀得通一個方向，雙向箭頭看不出哪個名字是哪個方向——後端的 uses 就是這樣
+             被讀反的（2026-09-30 使用者決定拆成單向，ER model 概念圖同一天也改了）。反方向在上面「從兩頭看」 -->
         <div class="hidden lg:block relative w-full max-w-[1088px] aspect-[1088/470] self-center">
           <svg
             viewBox="0 0 1088 470"
@@ -226,7 +229,6 @@
             <g
               stroke="currentColor"
               stroke-width="2"
-              marker-start="url(#about-class-arrow)"
               marker-end="url(#about-class-arrow)"
             >
               <line x1="203" y1="346" x2="466" y2="124" />
@@ -243,7 +245,7 @@
           />
           <RelationLabel
             v-for="r in CLASS_RELATIONS"
-            :key="r.predicates"
+            :key="r.predicate"
             :relation="r"
             class="absolute -translate-x-1/2 -translate-y-1/2"
             :style="{ left: r.pos.left, top: r.pos.top }"
@@ -258,10 +260,10 @@
           <ul class="m-0 p-0 list-none flex flex-col gap-3">
             <li
               v-for="r in CLASS_RELATIONS"
-              :key="r.predicates"
+              :key="r.predicate"
               class="flex flex-wrap items-center gap-3"
             >
-              <span class="text-[15px] text-(--text-on-band)">{{ r.from }} ↔ {{ r.to }}</span>
+              <span class="text-[15px] text-(--text-on-band)">{{ r.from }} → {{ r.to }}</span>
               <RelationLabel :relation="r" />
             </li>
           </ul>
@@ -272,7 +274,7 @@
           :style="{ borderColor: mix('--text-on-band', 18) }"
         >
           <span class="text-[16px] text-(--text-on-band)">
-            三類之間的關係都是雙向登記的。實際的每一筆資料和連結，在知識圖譜裡看。
+            每條關係都有反方向：文件「寫到」技術，反過來就是技術「被寫到」。實際的每一筆資料和連結，在知識圖譜裡看。
           </span>
           <router-link
             to="/graph"
@@ -497,21 +499,21 @@ const CLASS_RELATIONS = [
     from: '文件',
     to: '技術',
     label: '寫到',
-    predicates: 'specs / specifiedBy',
+    predicate: 'specs',
     pos: { left: '30.70%', top: '50%' },
   },
   {
     from: '文件',
     to: '實作',
     label: '記錄',
-    predicates: 'documents / documentedBy',
+    predicate: 'documents',
     pos: { left: '50%', top: '87.45%' },
   },
   {
     from: '技術',
     to: '實作',
     label: '用在',
-    predicates: 'usedBy / uses',
+    predicate: 'usedBy',
     pos: { left: '69.30%', top: '50%' },
   },
 ]
@@ -686,7 +688,7 @@ const RelationLabel = defineComponent({
           h(
             'span',
             { class: [MONO, 'text-[13px] text-(--accent-brass)'] },
-            props.relation.predicates,
+            props.relation.predicate,
           ),
         ],
       )
