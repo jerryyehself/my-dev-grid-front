@@ -138,6 +138,7 @@ import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { extractHeadings } from '@/components/markdown/headings'
+import { pageTitleOverride } from '@/siteMeta'
 
 const route = useRoute()
 const articleId = computed(() => Number(route.params.id))
@@ -185,13 +186,10 @@ const intro = computed(() => (article.value ? excerptOf(article.value.body ?? ''
 /** 本文結構側欄。跟 MarkdownBody 內部用的是同一個 extractHeadings，slug 不會分岔。 */
 const headings = computed(() => (article.value ? extractHeadings(article.value.body ?? '') : []))
 
-// route.meta 的 tag/title 只是掛載前的靜態佔位，這裡掛載後改寫成真正的文章標題，
-// 讓捲動追蹤列（MainLayout）顯示的內容跟頁面上真正的文章標題一致，不是寫死的「Article Detail」
+// 載入後把捲動追蹤列（MainLayout）跟瀏覽器分頁的標題換成真正的文章標題，不是路由設定裡的
+// 佔位「Article Detail」。以前是直接改 route.meta，畫面不會跟著更新，原因見 siteMeta.ts
 watchEffect(() => {
-  if (article.value) {
-    route.meta.tag = 'ARTICLES'
-    route.meta.title = article.value.title
-  }
+  if (article.value) pageTitleOverride.value = article.value.title
 })
 
 const currentIndex = computed(() => {
