@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// 章節/欄位小標:等寬字、大寫、寬字距的那一行「// SOMETHING」。
+// 章節/欄位小標:等寬字、大寫、寬字距的那一行。原本前面加「// 」，2026-09-30 使用者決定拿掉——
+// 閱讀頁面早就不用 //（PR #86），留在後台跟本體論頁反而不一致。
 //
 // 數值以設計稿 artifact MxnbUbQypR2ZQdZugRGxCi 的 .lbl 為準,不是照既有程式碼逆推:
 //   .lbl { font-mono; 11px; uppercase; letter-spacing:0.24em; bold; --text-accent }
@@ -26,6 +27,6 @@ withDefaults(
       size === 'field' ? 'text-[10px]' : 'text-[11px]',
     ]"
   >
-    // <slot />
+    <slot />
   </div>
 </template>

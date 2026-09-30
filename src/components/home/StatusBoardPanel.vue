@@ -143,15 +143,10 @@ onMounted(async () => {
       </div>
     </div>
 
-    <p class="mt-4 text-[12px] leading-relaxed text-(--text-ink-muted) border border-dashed border-(--border-shelf) rounded-xl px-4 py-3">
-      <b class="text-(--text-ink-body)">這版範圍比原設計稿窄：</b>Claude Design 稿（<a
-        href="https://claude.ai/code/artifact/4492caf5-9224-4786-a3b7-b40f48a284b1"
-        target="_blank"
-        rel="noopener"
-        class="text-(--text-accent) hover:underline"
-        >近期焦點</a
-      >）原本還有一欄「其他孵化中」的點子清單（擱置中／待評估／觀察中），但那是設計稿作者當時記下的個人待辦，<code>my-dev-grid</code>
-      後端沒有任何欄位能誠實地餵出這種「想法孵化階段」資料，所以這版先不做這欄，只留下真的查得到的兩件事：專案維護狀態、已發布文章。
+    <!-- 給訪客的讀法說明。原本這裡是開發筆記（比設計稿少了哪一欄、為什麼），2026-09-30 使用者
+         決定改成對應的說明；那段取捨的紀錄在 design-artifacts.md「近期焦點」那一列 -->
+    <p class="mt-4 text-[12px] leading-relaxed text-(--text-ink-muted)">
+      專案取自 GitHub 上的公開 repo，右側標籤是維護狀態（Active／Archived）；文章只列已發布的。
     </p>
   </section>
 </template>

@@ -100,24 +100,10 @@ const pathResult = ref<GraphPathDto | null>(null)
       </template>
     </div>
 
-    <!-- 未完成品標註：跟首頁 KnowledgeGraphPanel.vue 底部同一種 border-dashed 說明框，
-         誠實講清楚這頁哪裡是真資料、哪裡只是技術驗證階段留下的近似值 -->
-    <p class="text-[12px] leading-relaxed text-(--text-ink-muted) border border-dashed border-(--border-shelf) rounded-xl px-4 py-3">
-      <b class="text-(--text-ink-body)">這頁不是完成品：</b>2D／3D 兩版都吃真實
-      <code>/api/graph</code> 資料，但欄位形狀是當初「靈感筆記本」情境設計的，套到現在
-      documentation/technique/implementation 的本體論上有落差——<code>weight</code>
-      用節點 degree 正規化代替，是還算合理的代理指標。配色（依型別的
-      <code>--node-doc</code>/<code>--node-tech</code>/<code>--node-impl</code>）、hover/點擊互動、上面的圖例、
-      3D 版的三層 Z 軸分層，2026-09-14 起都已經補齊——3D
-      版原本靠已知會全部回傳 0 的 <code>daysSinceAccessed</code> 做 Z 軸縱深，三層節點其實疊在同一個
-      z=0 平面上，看不出「三層」；改成直接依 documentation/technique/implementation
-      三個型別各自固定一個 Z 帶（配上畫布裡的半透明色板＋浮動文字標籤），才是真的三層疊圖，不是同一平面。
-      仍然沒對齊的地方：「同型別關聯」這個邊分類單純是「這條邊來自哪張關聯表」的技術區分（pivot 表 vs
-      entity_relations），不是原始 POC 設計裡真的語意上的推薦/靈感連結。配色/邊樣式的 CSS token
-      跟首頁
-      <code>KnowledgeGraphPanel.vue</code> 共用，會跟著全站深色模式切換。首頁的
-      <RouterLink to="/" class="text-(--text-accent) hover:underline">知識網路</RouterLink>
-      小工具是重新對齊本體論、可以上線的正式版，這頁保留下來純粹是技術驗證階段的歷史產物。
+    <!-- 給訪客的說明。原本這裡是開發筆記（技術驗證階段的欄位落差、3D 分層怎麼修的），2026-09-30
+         使用者決定改成對應的說明 -->
+    <p class="text-[12px] leading-relaxed text-(--text-ink-muted)">
+      這是完整版的互動圖譜：2D 可以拖曳節點，上方可以查兩個節點之間的路徑；3D 把文件、技術、實作分成上下三層。節點大小代表關聯數。首頁的<RouterLink to="/" class="text-(--text-accent) hover:underline">知識網路</RouterLink>是只看不操作的精簡版。
     </p>
   </div>
 </template>
