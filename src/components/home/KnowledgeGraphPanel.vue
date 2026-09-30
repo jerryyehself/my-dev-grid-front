@@ -972,21 +972,14 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <p class="mt-3 text-[12px] leading-relaxed text-(--text-ink-muted) border border-dashed border-(--border-shelf) rounded-xl px-4 py-3">
-      <b class="text-(--text-ink-body)">「依建立時間」不是完成品：</b>色階仿 VOSviewer 2018 年後的預設（viridis，取代彩虹色階），但目前資料庫只有
-      Implementation 有真實的 <code>git_repo_created_at</code>，Technique／Documentation 完全沒有對應的時間欄位，誠實顯示成灰色「無資料」，不是編一個假時間頂替；而且這個欄位是「repo
-      建立時間」不是「最近活動時間」，還不是真正的「熱度」，issue #24 補上活動時間欄位後才能換成真正的熱度分數。
-      節點大小＝真實關聯數（degree），不是編出來的權重；圖上的虛線是「推導關聯」——同型別的兩個節點（例如兩個
-      Implementation）共用夠多項 Technique 時，就算兩者間接相關並補一條虛線，共用越多虛線越明顯，這是算出來的
-      （bipartite network projection），不是資料庫裡真的有這筆關聯；已經有真實關聯（例如下面的
-      <code>descendantOf</code>/<code>accompanies</code>/<code>precedes</code>）的配對不會重複疊一條虛線。首頁先行試作，
-      <RouterLink to="/graph" class="text-(--text-accent) hover:underline">/graph</RouterLink> 頁完整版暫時不畫。
-      目前 16 個公開 repo 裡有 15 個已經有真實 technique 資料（只有 <code>idea-trigger</code> 目前完全沒有語言／topics
-      資料，暫時歸類不出技術）；三層各自的虛線圓框，是各型別的節點各自跑一套獨立佈局、彼此不受節點數量差距干擾，
-      三個圓框的中心點都對齊在同一條斜向的軸線上（圖上那條較明顯的虛線）並刻意讓大部分範圍互相重疊——這條軸線貫穿
-      三層的共用中心，才是「疊圖」而不是分開排列；跨型別的真實關聯（<code>specs</code>/<code>uses</code>
-      這類）會把相關節點的位置進一步拉近，讓「文件－技術－實作」在重疊區裡對齊，這才是三層疊圖的重點，不只是各自跑各自的。
-      拖曳互動留給 <RouterLink to="/graph" class="text-(--text-accent) hover:underline">/graph</RouterLink> 頁深挖，首頁只看不操作。
-    </p>
+    <!-- 給訪客的讀法說明。原本這裡是開發筆記（色階出處、欄位缺口、佈局演算法），2026-09-30 使用者
+         決定改成對應的說明；技術細節留在程式碼註解跟 issue #24 -->
+    <ul class="mt-3 flex flex-col gap-1 text-[12px] leading-relaxed text-(--text-ink-muted)">
+      <li><b class="text-(--text-ink-body)">顏色</b>：文件、技術、實作三大類。切到「依建立時間」改用時間色階；目前只有專案有建立時間，其他節點顯示灰色。</li>
+      <li><b class="text-(--text-ink-body)">大小</b>：關聯越多的節點越大。</li>
+      <li><b class="text-(--text-ink-body)">線</b>：實線是目錄裡登記的關係；虛線是推導出來的——兩個同類節點共用越多技術，虛線越明顯，但它不是登記的關係。</li>
+      <li><b class="text-(--text-ink-body)">圓框</b>：三大類各自的範圍，重疊的地方就是彼此相關的節點。</li>
+      <li>點節點看詳細資料。想拖曳節點、查兩點之間的路徑，到<RouterLink to="/graph" class="text-(--text-accent) hover:underline">圖譜頁</RouterLink>。</li>
+    </ul>
   </section>
 </template>
