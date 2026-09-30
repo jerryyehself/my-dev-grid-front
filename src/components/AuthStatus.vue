@@ -28,14 +28,14 @@ async function handleLogout() {
   <div class="flex items-center gap-2">
     <span
       v-if="auth.isAuthenticated"
-      class="text-[10px] font-mono tracking-[0.1em] text-(--text-nav-footer) opacity-60 truncate max-w-[100px]"
+      class="text-[11px] font-mono tracking-[0.1em] text-(--text-nav-footer) opacity-60 truncate max-w-[100px]"
     >
       {{ auth.user?.name ?? auth.user?.email }}
     </span>
     <button
       v-if="auth.isAuthenticated"
       type="button"
-      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
+      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[11px] font-mono tracking-[0.15em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
       @click="handleLogout"
     >
       登出
@@ -43,7 +43,7 @@ async function handleLogout() {
     <router-link
       v-else-if="showLoginEntry"
       to="/login"
-      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
+      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[11px] font-mono tracking-[0.15em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
     >
       登入
     </router-link>

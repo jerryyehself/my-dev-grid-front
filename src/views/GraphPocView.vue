@@ -49,7 +49,7 @@ const pathResult = ref<GraphPathDto | null>(null)
     <GraphPoc2D v-if="mode === '2d'" :highlight-path="pathResult" @select="selected = $event" @demo="isDemoData = $event" />
     <GraphPoc3D v-else @select="selected = $event" @demo="isDemoData = $event" />
 
-    <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest">
+    <p v-if="isDemoData" class="text-[14px] text-(--text-accent)">
       示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
     </p>
 
@@ -61,7 +61,7 @@ const pathResult = ref<GraphPathDto | null>(null)
          描述配色的散文，讓「這個顏色/這條線代表什麼」有真的視覺對照可查，不用
          自己記文字說明。3D 版另外在畫布裡疊了三片色板 + 浮動文字標籤標示三層，
          這裡的色點圖例同一套顏色，兩邊對得起來。 -->
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-(--text-ink-muted)">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-(--text-ink-muted)">
       <GraphLegendDots />
       <span class="flex items-center gap-1.5"
         ><span class="w-4 h-0 border-t border-(--edge-real)"></span>跨型別真實關聯</span
@@ -76,7 +76,7 @@ const pathResult = ref<GraphPathDto | null>(null)
          2D/3D 兩版共用同一個面板,不用各自另外刻一份。 -->
     <div
       v-if="selected"
-      class="relative text-[12.5px] leading-relaxed border border-(--border-shelf) rounded-xl px-4 py-3 bg-(--bg-paper-light)"
+      class="relative text-[14px] leading-relaxed border border-(--border-shelf) rounded-xl px-4 py-3 bg-(--bg-paper-light)"
     >
       <button
         type="button"
@@ -102,7 +102,7 @@ const pathResult = ref<GraphPathDto | null>(null)
 
     <!-- 給訪客的說明。原本這裡是開發筆記（技術驗證階段的欄位落差、3D 分層怎麼修的），2026-09-30
          使用者決定改成對應的說明 -->
-    <p class="text-[12px] leading-relaxed text-(--text-ink-muted)">
+    <p class="text-[14px] leading-relaxed text-(--text-ink-muted)">
       這是完整版的互動圖譜：2D 可以拖曳節點，上方可以查兩個節點之間的路徑；3D 把文件、技術、實作分成上下三層。節點大小代表關聯數。首頁的<RouterLink to="/" class="text-(--text-accent) hover:underline">知識網路</RouterLink>是只看不操作的精簡版。
     </p>
   </div>

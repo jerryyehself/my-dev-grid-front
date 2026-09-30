@@ -15,7 +15,7 @@
       <AuthOnly>
         <router-link
           :to="{ name: 'article-editor', params: { id: article.id } }"
-          class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+          class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -54,7 +54,7 @@
             :to="{ name: 'article-detail', params: { id: previousArticle.id } }"
             class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors hover:border-(--text-accent)/40"
           >
-            <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+            <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               &lt;&lt; PREV
             </div>
             <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
@@ -67,7 +67,7 @@
             :to="{ name: 'article-detail', params: { id: nextArticle.id } }"
             class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors hover:border-(--text-accent)/40"
           >
-            <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+            <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               NEXT &gt;&gt;
             </div>
             <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
@@ -80,7 +80,7 @@
       <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
       <div class="lg:sticky lg:top-24 flex flex-col gap-8">
         <div v-if="headings.length">
-          <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+          <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
             本文結構
           </div>
           <!-- slug 從 extractHeadings 來，跟 MarkdownBody 渲染標題時用的是同一份，
@@ -100,7 +100,7 @@
         </div>
 
         <div v-if="article.implementations.length">
-          <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+          <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
             Related Projects
           </div>
           <div class="flex flex-col gap-2">

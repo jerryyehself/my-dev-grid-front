@@ -91,18 +91,18 @@ onMounted(async () => {
           >
             <div class="min-w-0">
               <div class="text-[14px] font-semibold text-(--text-ink-main) truncate">{{ p.title }}</div>
-              <div v-if="p.tags.length" class="text-[11.5px] text-(--text-ink-muted) truncate">
+              <div v-if="p.tags.length" class="text-[12.5px] text-(--text-ink-muted) truncate">
                 {{ p.tags.slice(0, 4).join(' · ') }}
               </div>
             </div>
             <BaseTag v-if="p.status" :tone="tagTone(p.statusType)" class="shrink-0">{{ p.status }}</BaseTag>
           </RouterLink>
-          <p v-if="!projects.length" class="px-[18px] py-4 text-[12.5px] text-(--text-ink-muted)">
+          <p v-if="!projects.length" class="px-[18px] py-4 text-[14px] text-(--text-ink-muted)">
             目前沒有可顯示的專案。
           </p>
         </div>
 
-        <p v-if="!projectsLoading && isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mt-2">
+        <p v-if="!projectsLoading && isDemoData" class="text-[14px] text-(--text-accent) mt-2">
           示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
         </p>
 
@@ -127,12 +127,12 @@ onMounted(async () => {
             :to="{ name: 'article-detail', params: { id: a.id } }"
             class="block px-[18px] py-3 border-b border-(--border-shelf) last:border-b-0 hover:bg-(--bg-folder) transition-colors"
           >
-            <div class="flex items-center gap-2 mb-1 font-mono text-[10px]">
+            <div class="flex items-center gap-2 mb-1 font-mono text-[11px]">
               <span class="text-(--text-ink-muted) tabular-nums">{{ articleDate(a) }}</span>
             </div>
-            <div class="text-[12.5px] leading-snug text-(--text-ink-body)">{{ a.title }}</div>
+            <div class="text-[14px] leading-snug text-(--text-ink-body)">{{ a.title }}</div>
           </RouterLink>
-          <p v-if="!articlesLoading && !recentArticles.length" class="px-[18px] py-4 text-[12.5px] text-(--text-ink-muted)">
+          <p v-if="!articlesLoading && !recentArticles.length" class="px-[18px] py-4 text-[14px] text-(--text-ink-muted)">
             目前沒有已發布的文章。
           </p>
         </div>
@@ -145,7 +145,7 @@ onMounted(async () => {
 
     <!-- 給訪客的讀法說明。原本這裡是開發筆記（比設計稿少了哪一欄、為什麼），2026-09-30 使用者
          決定改成對應的說明；那段取捨的紀錄在 design-artifacts.md「近期焦點」那一列 -->
-    <p class="mt-4 text-[12px] leading-relaxed text-(--text-ink-muted)">
+    <p class="mt-4 text-[14px] leading-relaxed text-(--text-ink-muted)">
       專案取自 GitHub 上的公開 repo，右側標籤是維護狀態（Active／Archived）；文章只列已發布的。
     </p>
   </section>

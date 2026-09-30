@@ -881,7 +881,7 @@ onUnmounted(() => {
       <b class="text-(--text-ink-main) tabular-nums">{{ stats.edges }}</b> 條已實現的關聯串成的知識網路。
     </p>
 
-    <p v-if="!loading && isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-2">
+    <p v-if="!loading && isDemoData" class="text-[14px] text-(--text-accent) mb-2">
       示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
     </p>
 
@@ -907,7 +907,7 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <div v-if="!loading && colorMode === 'type'" class="flex flex-wrap items-center gap-4 text-[12px] text-(--text-ink-muted) mb-3">
+    <div v-if="!loading && colorMode === 'type'" class="flex flex-wrap items-center gap-4 text-[13px] text-(--text-ink-muted) mb-3">
       <GraphLegendDots />
       <span class="flex items-center gap-1.5"
         ><span class="w-4 h-0 border-t border-dashed border-(--text-ink-muted)"></span>推導關聯（非真實邊）</span
@@ -962,7 +962,7 @@ onUnmounted(() => {
         >
           ×
         </button>
-        <div class="font-mono text-[10.5px] uppercase tracking-[0.08em] text-(--text-ink-muted) mb-1">
+        <div class="font-mono text-[11px] uppercase tracking-[0.08em] text-(--text-ink-muted) mb-1">
           {{ popover.kind }}
         </div>
         <h3 class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">{{ popover.title }}</h3>
@@ -974,7 +974,7 @@ onUnmounted(() => {
 
     <!-- 給訪客的讀法說明。原本這裡是開發筆記（色階出處、欄位缺口、佈局演算法），2026-09-30 使用者
          決定改成對應的說明；技術細節留在程式碼註解跟 issue #24 -->
-    <ul class="mt-3 flex flex-col gap-1 text-[12px] leading-relaxed text-(--text-ink-muted)">
+    <ul class="mt-3 flex flex-col gap-1 text-[14px] leading-relaxed text-(--text-ink-muted)">
       <li><b class="text-(--text-ink-body)">顏色</b>：文件、技術、實作三大類。切到「依建立時間」改用時間色階；目前只有專案有建立時間，其他節點顯示灰色。</li>
       <li><b class="text-(--text-ink-body)">大小</b>：關聯越多的節點越大。</li>
       <li><b class="text-(--text-ink-body)">線</b>：實線是目錄裡登記的關係；虛線是推導出來的——兩個同類節點共用越多技術，虛線越明顯，但它不是登記的關係。</li>

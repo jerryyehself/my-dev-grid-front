@@ -258,6 +258,33 @@ research pass and confirmed already correct — no change. (Superseded
 2026-09-29 by D-60: Fraunces has no CJK glyphs, so Chinese headings were in
 fact rendering in each device's fallback serif; headings moved to Noto Serif TC.)
 
+## Typography — small-text floors (visitor-facing pages)
+
+Set 2026-09-30 after the user found the home page text too small. Before,
+full explanatory sentences sat at 12px and some labels at 9–10px.
+
+| Role | Floor | Examples |
+|---|---|---|
+| Running prose | 16px (see above) | article body, About paragraphs |
+| Full sentences a visitor reads | 14px (`text-sm`/`text-[14px]`) | page explanations, empty/error/demo-data notices, list-item titles |
+| Secondary sans text | 12px | tech-stack lines, legends, popover rows |
+| Mono uppercase labels | 11px | dates, `PROJ-` ids, status badges, field labels, nav pills |
+
+Sources, and which parts are judgment:
+- **11px label floor**: sourced. Apple HIG sets 11pt as the minimum text
+  size, and Material 3's smallest role (Label Small) is also 11px.
+- **14px sentence floor**: a design judgment, not a standard. Material 3's
+  Body Small is 12px, so 12px is not wrong per se. The call is that CJK
+  sentences at 12px are tiring to read. W3C clreq notes that small sizes
+  are hard to read because of the complex structure of Chinese characters,
+  but its numbers are for print.
+
+Scope: this covers the pages a visitor reaches (home, articles, article
+detail, projects, graph, layout and navbar). Admin forms keep the 10px
+values that `BaseHint`, `BaseEyebrow size="field"` and `BaseTextarea` took
+from the 文章編輯頁 mockup. That is a deliberate exception. It is not an
+oversight.
+
 ## Extending the token set
 
 New tokens are sometimes genuinely needed (e.g. a color for the knowledge
