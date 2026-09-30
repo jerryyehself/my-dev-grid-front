@@ -89,25 +89,13 @@
             <div :class="[MONO, 'font-bold text-[15px] text-(--text-ink-main)']">
               同一條關係，從兩頭看
             </div>
-            <div class="flex gap-2" role="group" aria-label="切換從哪一頭看這條關係">
-              <button
-                v-for="opt in DIRECTIONS"
-                :key="opt.value"
-                type="button"
-                :aria-pressed="dir === opt.value"
-                :class="[
-                  MONO,
-                  'min-h-11 px-[18px] rounded-[6px] text-[15px] font-bold cursor-pointer border transition-colors',
-                  dir === opt.value
-                    ? 'bg-(--bg-band-strong) border-(--bg-band-strong) text-(--text-on-band)'
-                    : 'bg-(--bg-paper-light) text-(--text-ink-main)',
-                ]"
-                :style="dir === opt.value ? undefined : { borderColor: mix('--text-ink-main', 35) }"
-                @click="dir = opt.value"
-              >
-                {{ opt.label }}
-              </button>
-            </div>
+            <!-- 全站統一的「幾選一」切換（D-66）；深色主題選中改成黃銅，原本的藏青實心在深色底上看不出來 -->
+            <BaseSegmented
+              v-model="dir"
+              :options="DIRECTIONS"
+              label="切換從哪一頭看這條關係"
+              size="md"
+            />
           </div>
 
           <div class="min-h-[224px] flex flex-col justify-center">
@@ -440,6 +428,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, defineComponent, h, type PropType } from 'vue'
+import BaseSegmented from '@/components/BaseSegmented.vue'
 import heroPhoto from '@/assets/about/card-catalog-hero.jpg'
 import drawerPhoto from '@/assets/about/catalog-drawer.jpg'
 

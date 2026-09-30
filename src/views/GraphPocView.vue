@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import BaseSegmented from '@/components/BaseSegmented.vue'
 import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { useRoute, RouterLink } from 'vue-router'
 import GraphPoc2D from '@/components/poc/GraphPoc2D.vue'
@@ -11,6 +12,10 @@ import type { GraphNodeType, GraphPathDto } from '@/api/graph'
 
 const route = useRoute()
 const mode = ref<'2d' | '3d'>(route.query.mode === '3d' ? '3d' : '2d')
+const MODES = [
+  { value: '2d', label: '2D · force-graph' },
+  { value: '3d', label: '3D · 3d-force-graph' },
+] as const
 
 // 2026-09-24：跟 Home 頁「知識網路」小工具（KnowledgeGraphPanel.vue）用同一套
 // DEMO_DATA 標示慣例——這頁原本連不上後端就直接顯示錯誤，沒有跟著補上 demo
@@ -36,30 +41,8 @@ const pathResult = ref<GraphPathDto | null>(null)
 
 <template>
   <div class="space-y-4">
-    <div class="flex items-center gap-2">
-      <button
-        class="rounded-full border px-3 py-1 text-xs font-mono uppercase tracking-wider"
-        :class="
-          mode === '2d'
-            ? 'bg-(--bg-band-strong) border-(--bg-band-strong) text-(--text-on-band)'
-            : 'border-(--border-shelf) text-(--text-ink-body)'
-        "
-        @click="mode = '2d'"
-      >
-        2D · force-graph
-      </button>
-      <button
-        class="rounded-full border px-3 py-1 text-xs font-mono uppercase tracking-wider"
-        :class="
-          mode === '3d'
-            ? 'bg-(--bg-band-strong) border-(--bg-band-strong) text-(--text-on-band)'
-            : 'border-(--border-shelf) text-(--text-ink-body)'
-        "
-        @click="mode = '3d'"
-      >
-        3D · 3d-force-graph
-      </button>
-    </div>
+    <!-- 全站統一的「幾選一」切換（D-66）；原本選中是藏青實心，深色主題會融進藏青底 -->
+    <BaseSegmented v-model="mode" :options="MODES" label="圖譜檢視方式" />
 
     <GraphPathSearch @result="pathResult = $event" />
 
