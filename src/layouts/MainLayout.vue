@@ -22,7 +22,7 @@
           <span class="w-[3px] h-4 rounded-[2px] bg-(--text-accent) shrink-0"></span>
           <span
             v-if="$slots.tag"
-            class="shrink-0 text-[10px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
+            class="shrink-0 text-[11px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
           >
             <slot name="tag"></slot>
           </span>

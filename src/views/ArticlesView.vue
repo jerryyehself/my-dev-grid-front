@@ -109,7 +109,7 @@ const goToArticle = (id: number) => {
       <AuthOnly>
         <router-link
           :to="{ name: 'article-manage' }"
-          class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+          class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
@@ -155,7 +155,7 @@ const goToArticle = (id: number) => {
           <div
             class="absolute -left-[24.5px] top-[7px] w-[7px] h-[7px] rounded-full bg-(--text-ink-muted)"
           ></div>
-          <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
+          <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article)[0] }}</span>
           </div>
@@ -209,7 +209,7 @@ const goToArticle = (id: number) => {
           class="p-5 sm:p-6 cursor-pointer hover:bg-(--bg-folder) transition-colors"
           @click="goToArticle(article.id)"
         >
-          <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
+          <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article).join(' / ') }}</span>
           </div>

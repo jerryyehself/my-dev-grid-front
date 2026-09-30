@@ -75,7 +75,7 @@ watch(
            https://claude.ai/code/artifact/17ede728-b7b3-4b2d-9f0c-7bdd3a1e0490。 -->
       <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 grid grid-cols-[64px_1fr] gap-x-3.5 gap-y-4 items-baseline">
         <template v-for="group in filterGroups" :key="group.label">
-          <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted)">
+          <div class="font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted)">
             {{ group.label }}
           </div>
           <div class="flex flex-wrap gap-1.5 min-w-0">
@@ -119,11 +119,11 @@ watch(
             "
             @click="selectedId = proj.id"
           >
-            <div class="flex items-center justify-between mb-1.5 font-mono text-[10px] text-(--text-ink-muted)">
+            <div class="flex items-center justify-between mb-1.5 font-mono text-[11px] text-(--text-ink-muted)">
               <span>{{ proj.id }}</span>
               <span
                 v-if="proj.statusType"
-                class="font-mono text-[9px] tracking-[0.05em] uppercase font-bold"
+                class="font-mono text-[11px] tracking-[0.05em] uppercase font-bold"
                 :class="proj.statusType === 'active' ? 'text-(--text-accent)' : 'text-(--text-ink-muted)'"
               >
                 {{ proj.status }}
@@ -133,13 +133,13 @@ watch(
               {{ proj.title }}
             </div>
           </button>
-          <div v-if="selectedTags.size > 0" class="px-4.5 py-4 font-mono text-[10px] text-(--text-ink-muted) opacity-60">
+          <div v-if="selectedTags.size > 0" class="px-4.5 py-4 font-mono text-[11px] text-(--text-ink-muted) opacity-60">
             {{ filteredProjects.length }} / {{ projects.length }} 個專案符合篩選
           </div>
         </div>
 
         <div v-if="selected" class="p-6 sm:p-8">
-          <div class="flex items-center justify-between mb-5 font-mono text-[10px] tracking-wider text-(--text-ink-muted)">
+          <div class="flex items-center justify-between mb-5 font-mono text-[11px] tracking-wider text-(--text-ink-muted)">
             <span>{{ selected.id }}</span>
             <BaseTag v-if="selected.statusType" :tone="selected.statusType === 'active' ? 'accent' : 'muted'">
               {{ selected.status }}
@@ -160,15 +160,15 @@ watch(
 
           <div class="pt-5 border-t border-(--border-shelf) grid grid-cols-3 gap-4">
             <div>
-              <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted) mb-1">Started</div>
+              <div class="font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted) mb-1">Started</div>
               <div class="text-[13px] text-(--text-ink-main)">{{ selected.started }}</div>
             </div>
             <div>
-              <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted) mb-1">Role</div>
+              <div class="font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted) mb-1">Role</div>
               <div class="text-[13px] text-(--text-ink-main)">{{ selected.role || '—' }}</div>
             </div>
             <div>
-              <div class="font-mono text-[9px] tracking-[0.15em] uppercase text-(--text-ink-muted) mb-1">Repo</div>
+              <div class="font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted) mb-1">Repo</div>
               <a
                 :href="`https://github.com/jerryyehself/${selected.repo}`"
                 target="_blank"
