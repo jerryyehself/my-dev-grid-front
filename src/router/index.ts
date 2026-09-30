@@ -70,7 +70,7 @@ const router = createRouter({
       meta: {
         tag: 'Articles',
         title: 'My Articles',
-        subtitle: '自己記錄',
+        subtitle: '開發筆記與技術文章',
       },
     },
     {
