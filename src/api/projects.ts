@@ -1,12 +1,23 @@
 import { apiGet } from './client'
 
+/** 專案用到的一個技術。版本是後端獨立的一筆技術（title 相同、version 填主版號，2026-09-30） */
+export interface ProjectTechnique {
+  name: string
+  version: string | null
+  /** 後端的技術子類 scope 名稱（language、framework、packagetool…），查不到時是空字串 */
+  category: string
+}
+
 export interface Project {
   id: string
   title: string
   status?: string
   statusType?: 'active' | 'archived'
   desc: string
+  /** 顯示用的標籤，帶版本（例如「Vue 3」） */
   tags: string[]
+  /** 篩選用。示範資料快照沒有這個欄位，篩選時退回用 tags */
+  techniques?: ProjectTechnique[]
   started: string
   repo: string
   role?: string
@@ -22,6 +33,9 @@ interface ScopeDto {
 
 interface TechniqueDto {
   title: string
+  version?: string | null
+  /** scope id */
+  type?: number
 }
 
 interface ImplementationDto {
@@ -34,19 +48,46 @@ interface ImplementationDto {
 }
 
 // Scope id 不是固定值（依 seed 順序而定），照 backend SaveReposDataService 自己
-// 的作法動態查表，不寫死魔數；同一個 session 內查過一次就快取起來。
-let projectScopeId: number | null = null
+// 的作法動態查表，不寫死魔數；同一個 session 內查過一次就快取起來。技術的分類（語言、框架…）
+// 也是 scope，同一張表一起留著
+let scopeNameById: Map<number, string> | null = null
+
+async function getScopeNames(): Promise<Map<number, string>> {
+  if (scopeNameById) return scopeNameById
+  const { data } = await apiGet<{ data: ScopeDto[] }>('/scopes')
+  scopeNameById = new Map(data.map((scope) => [scope.id, scope.name]))
+  return scopeNameById
+}
 
 async function getProjectScopeId(): Promise<number> {
-  if (projectScopeId !== null) return projectScopeId
-  const { data } = await apiGet<{ data: ScopeDto[] }>('/scopes')
-  const projectScope = data.find((scope) => scope.name === 'project')
-  if (!projectScope) {
-    throw new Error("Scope 'project' 不存在，無法過濾 Implementation")
-  }
-  projectScopeId = projectScope.id
-  return projectScopeId
+  const names = await getScopeNames()
+  for (const [id, name] of names) if (name === 'project') return id
+  throw new Error("Scope 'project' 不存在，無法過濾 Implementation")
 }
+
+/**
+ * 同一個專案可能同時連到「Vue」和「Vue 3」（升級前就有的邊會留著，見後端 last_seen_at）。
+ * 知道版本的時候只顯示有版本的那個，版本留空的那筆是多餘的；同名同版本的也只留一個。
+ */
+export function toProjectTechniques(raw: TechniqueDto[], scopeNames: Map<number, string>): ProjectTechnique[] {
+  const versioned = new Set(raw.filter((t) => t.version).map((t) => t.title.toLowerCase()))
+  const seen = new Set<string>()
+  const out: ProjectTechnique[] = []
+  for (const t of raw) {
+    if (!t.version && versioned.has(t.title.toLowerCase())) continue
+    const key = `${t.title.toLowerCase()}|${t.version ?? ''}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push({
+      name: t.title,
+      version: t.version ?? null,
+      category: (t.type != null && scopeNames.get(t.type)) || '',
+    })
+  }
+  return out
+}
+
+export const techniqueLabel = (t: ProjectTechnique): string => (t.version ? `${t.name} ${t.version}` : t.name)
 
 const toStartedYm = (dateStr: string | null): string => (dateStr ? dateStr.slice(0, 7).replace('-', '.') : '')
 
@@ -60,15 +101,17 @@ const toStatusType = (maintainStatus: boolean | null): 'active' | 'archived' | u
   return maintainStatus ? 'active' : 'archived'
 }
 
-const toProject = (raw: ImplementationDto, id: string): Project => {
+const toProject = (raw: ImplementationDto, id: string, scopeNames: Map<number, string>): Project => {
   const statusType = toStatusType(raw.maintain_status)
+  const techniques = toProjectTechniques(raw.techniques, scopeNames)
   return {
     id,
     title: raw.title,
     status: statusType === 'archived' ? 'Archived' : statusType === 'active' ? 'Active' : undefined,
     statusType,
     desc: raw.description ?? '',
-    tags: raw.techniques.map((t) => t.title),
+    tags: techniques.map(techniqueLabel),
+    techniques,
     started: toStartedYm(raw.git_repo_created_at),
     repo: raw.title,
     implementationId: raw.id,
@@ -79,6 +122,7 @@ const toProject = (raw: ImplementationDto, id: string): Project => {
 // scripts/sync-projects.mjs 的規則：依建立時間由新到舊排序，同一年內從 01 起算。
 export async function fetchProjects(): Promise<Project[]> {
   const scopeId = await getProjectScopeId()
+  const scopeNames = await getScopeNames()
   const { data } = await apiGet<{ data: ImplementationDto[] }>(`/implementations?type=${scopeId}`)
 
   const sorted = [...data].sort((a, b) => {
@@ -92,7 +136,7 @@ export async function fetchProjects(): Promise<Project[]> {
     const year = (raw.git_repo_created_at ?? '').slice(0, 4) || 'UNKNOWN'
     yearCounters[year] = (yearCounters[year] ?? 0) + 1
     const id = `PROJ-${year}-${String(yearCounters[year]).padStart(2, '0')}`
-    return toProject(raw, id)
+    return toProject(raw, id, scopeNames)
   })
 }
 

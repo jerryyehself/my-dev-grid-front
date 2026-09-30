@@ -1,64 +1,71 @@
 import { ref, computed, type Ref } from 'vue'
-import type { Project } from '@/api/projects'
+import type { Project, ProjectTechnique } from '@/api/projects'
 
-// tag → 分類對照表：GitHub topics 本身不帶語意，這份分類是手動維護的，
-// 不是自動推斷——新增專案帶新 tag 時要記得回來補一筆，不然會落到「其他」。
-const TAG_CATEGORY: Record<string, string> = {
-  Vue: '語言',
-  TypeScript: '語言',
-  php: '語言',
-  python: '語言',
-  laravel: '套件',
-  vue3: '套件',
-  vue: '套件',
-  tailwind: '套件',
-  nuxt3: '套件',
-  pinia: '套件',
-  vuetify: '套件',
-  'vueuse-core': '套件',
-  bootstrap5: '套件',
-  chartjs: '套件',
-  exceljs: '套件',
-  'html5-qrcode': '套件',
-  isbn3: '套件',
-  rdflib: '套件',
-  graphviz: '套件',
-  cheerio: '套件',
-  appscript: '環境',
-  linebot: '環境',
-  leetcode: '環境',
-  i18n: '其他',
-  json: '其他',
+// 分組照後端的技術子類（scope），不再手動維護 tag → 分類對照表。舊的對照表會漏（新 tag 一律
+// 掉進「其他」），也分錯過（Vue 被放在「語言」、laravel 放在「套件」）。2026-09-30 後端改成
+// 權威控制之後，類別以後端為準（使用者同意）。標籤最多四個字：左欄寬 64px，五個字會折行
+const CATEGORY_LABEL: Record<string, string> = {
+  language: '語言',
+  framework: '框架',
+  packagetool: '套件工具',
+  environment: '執行環境',
+  assistant: 'AI 工具',
 }
-const CATEGORY_ORDER = ['語言', '套件', '環境', '其他']
+// 框架排第一：對讀者來說「用 Vue、Laravel 做的」比「用了 Blade、Procfile」重要，
+// 專案詳情裡的技術標籤也照同一個順序（模擬讀者審查 2026-09-30：版本號在框架上，排在後面會被埋掉）
+const CATEGORY_ORDER = ['框架', '語言', '套件工具', '執行環境', 'AI 工具', '其他']
+const categoryRank = (category: string) => {
+  const i = CATEGORY_ORDER.indexOf(CATEGORY_LABEL[category] ?? '其他')
+  return i === -1 ? CATEGORY_ORDER.length : i
+}
+
+// 示範資料快照只有 tags、沒有 techniques，這時每個 tag 當成一個分類不明的技術
+const techniquesOf = (p: Project): ProjectTechnique[] =>
+  p.techniques ?? p.tags.map((tag) => ({ name: tag, version: null, category: '' }))
+
+/** 專案詳情裡的技術標籤：照篩選器的分類順序排，同一類裡照名稱 */
+export function orderedTechniques(p: Project): ProjectTechnique[] {
+  return [...techniquesOf(p)].sort(
+    (a, b) => categoryRank(a.category) - categoryRank(b.category) || a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }),
+  )
+}
 
 // projects 收 Ref 而不是純陣列：專案清單現在是非同步從 API 載入，
 // 用 Ref 才能在資料到達後讓底下這些 computed 自動重新計算。
 export function useProjectsFilter(projects: Ref<Project[]>) {
-  const tagCounts = computed(() => {
-    const counts: Record<string, number> = {}
+  // 篩選項以技術名稱為單位，不分版本：選「Vue」會找出用 Vue 2、Vue 3 或沒標版本的專案。
+  // 標籤本身（專案詳情裡那排）才顯示版本
+  const techniqueStats = computed(() => {
+    const stats = new Map<string, { count: number; category: string }>()
     for (const p of projects.value) {
-      for (const tag of p.tags) {
-        counts[tag] = (counts[tag] ?? 0) + 1
+      for (const name of new Set(techniquesOf(p).map((t) => t.name))) {
+        const category = techniquesOf(p).find((t) => t.name === name)?.category ?? ''
+        const entry = stats.get(name) ?? { count: 0, category }
+        entry.count += 1
+        entry.category ||= category
+        stats.set(name, entry)
       }
     }
-    return counts
+    return stats
   })
 
   const selectedTags = ref<Set<string>>(new Set())
 
   const filterGroups = computed(() => {
     const byCategory: Record<string, string[]> = {}
-    for (const tag of Object.keys(tagCounts.value)) {
-      const category = TAG_CATEGORY[tag] ?? '其他'
-      ;(byCategory[category] ??= []).push(tag)
+    for (const [name, { category }] of techniqueStats.value) {
+      const label = CATEGORY_LABEL[category] ?? '其他'
+      ;(byCategory[label] ??= []).push(name)
     }
-    return CATEGORY_ORDER.filter((category) => byCategory[category]?.length).map((category) => ({
-      label: category,
-      tags: byCategory[category]!.sort().map((tag) => ({
-        label: tag,
-        count: tagCounts.value[tag],
-        selected: selectedTags.value.has(tag),
+    return CATEGORY_ORDER.filter((label) => byCategory[label]?.length).map((label) => ({
+      label,
+      // 用得多的排前面，同樣多的照名稱：字母序會把 PHP、JavaScript 這種主力埋在中間
+      tags: byCategory[label]!
+        .sort((a, b) => techniqueStats.value.get(b)!.count - techniqueStats.value.get(a)!.count || a.localeCompare(b, 'en', { sensitivity: 'base' }))
+        .map((name) => ({
+        label: name,
+        count: techniqueStats.value.get(name)!.count,
+        selected: selectedTags.value.has(name),
       })),
     }))
   })
@@ -76,7 +83,7 @@ export function useProjectsFilter(projects: Ref<Project[]>) {
   // 篩選是 OR 邏輯：命中任一個選取的標籤就算，不要求同時符合所有分類
   const filteredProjects = computed(() => {
     if (selectedTags.value.size === 0) return projects.value
-    return projects.value.filter((p) => p.tags.some((tag) => selectedTags.value.has(tag)))
+    return projects.value.filter((p) => techniquesOf(p).some((t) => selectedTags.value.has(t.name)))
   })
 
   return { selectedTags, filterGroups, toggleTag, clearFilter, filteredProjects }

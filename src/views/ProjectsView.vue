@@ -3,8 +3,8 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseButton from '@/components/BaseButton.vue'
-import { fetchProjects, type Project } from '@/api/projects'
-import { useProjectsFilter } from '@/composables/useProjectsFilter'
+import { fetchProjects, techniqueLabel, type Project } from '@/api/projects'
+import { orderedTechniques, useProjectsFilter } from '@/composables/useProjectsFilter'
 
 const projects = ref<Project[]>([])
 const loading = ref(true)
@@ -34,6 +34,12 @@ const selectedId = ref(typeof route.query.project === 'string' ? route.query.pro
 // 圖譜節點連過來帶的是後端 id（?implementation=<id>），要等專案載入後才對得到顯示用編號
 const wantedImplementationId = Number(route.query.implementation) || null
 const selected = computed(() => projects.value.find((p) => p.id === selectedId.value))
+// 詳情裡的技術標籤：照篩選器的分類順序排；目前篩選中的技術加框，選了「Vue」就看得出這個專案用的是 Vue 3
+const selectedTechniqueTags = computed(() =>
+  selected.value
+    ? orderedTechniques(selected.value).map((t) => ({ label: techniqueLabel(t), matched: selectedTags.value.has(t.name) }))
+    : [],
+)
 
 // 篩選把目前選中的專案擠出清單時，自動切到篩選後清單的第一筆，不留一個選不到的空白詳情面板；
 // 資料還沒載入完成（filteredProjects/projects 都是空陣列）時先不設定，等 API 回來再選
@@ -80,17 +86,7 @@ watch([selectedId, filteredProjects], async () => {
     </div>
 
     <template v-else>
-      <div v-if="selectedTags.size > 0" class="flex justify-end mb-3">
-        <button
-          type="button"
-          class="font-mono text-[11px] text-(--text-accent) font-bold tracking-[0.05em] border-b border-(--text-accent) pb-0.5 cursor-pointer"
-          @click="clearFilter"
-        >
-          清除篩選 ×
-        </button>
-      </div>
-
-      <!-- 標籤篩選器：依語言／套件／環境／其他分組，跟下面的主從式列表共用同一份專案資料。
+      <!-- 標籤篩選器：依後端的技術類別分組（框架／語言／套件工具…），跟下面的主從式列表共用同一份專案資料。
            分類名稱、標籤區塊是同一個 grid row 的兩個 cell，items-baseline 讓名稱文字的基線
            對齊「標籤區塊第一行」文字的基線——這是瀏覽器內建的基線對齊計算，不是用 padding
            猜出來的數字，換幾行都準（之前 items-start + pt-1 那版本是用猜的，實測還是有落差）。
@@ -104,22 +100,43 @@ watch([selectedId, filteredProjects], async () => {
             {{ group.label }}
           </div>
           <div class="flex flex-wrap gap-1.5 min-w-0">
+            <!-- 專案數用獨立的小底色標記，不再是名稱後面接一個數字：專案標籤加上版本之後，
+                 「Vue 7」「Nuxt 1」會被讀成版本號，跟詳情裡的「Vue 3」「Nuxt 3」互相矛盾
+                 （2026-09-30 模擬讀者審查） -->
             <button
               v-for="tag in group.tags"
               :key="tag.label"
               type="button"
-              class="px-[11px] py-1 rounded-full font-mono text-[11px] border transition-colors cursor-pointer"
+              class="inline-flex items-center gap-1.5 pl-[11px] pr-1 py-[3px] rounded-full font-mono text-[11px] border transition-colors cursor-pointer"
               :class="
                 tag.selected
                   ? 'border-(--text-accent) text-(--text-accent) bg-(--bg-folder)'
                   : 'border-(--border-shelf) text-(--text-ink-body) hover:border-(--text-accent)/40'
               "
+              :aria-pressed="tag.selected"
+              :aria-label="`${tag.label}，${tag.count} 個專案`"
               @click="toggleTag(tag.label)"
             >
-              {{ tag.label }} <span class="opacity-55">{{ tag.count }}</span>
+              {{ tag.label }}
+              <span aria-hidden="true" class="rounded-full bg-(--bg-paper-dark) px-1.5 text-(--text-ink-muted) tabular-nums">{{
+                tag.count
+              }}</span>
             </button>
           </div>
         </template>
+        <!-- 說明與「清除篩選」放在面板最後一列：清除鈕原本在面板上方、選了才出現，會把整個面板往下推，
+             滑鼠底下的標籤跟著換掉 -->
+        <div class="col-span-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-3 border-t border-(--border-shelf)">
+          <p class="m-0 text-[13px] text-(--text-ink-muted)">小圓框裡是專案數。選一個技術會包含它的所有版本，例如選 Vue 也會找到用 Vue 3 的專案。</p>
+          <button
+            v-if="selectedTags.size > 0"
+            type="button"
+            class="font-mono text-[11px] text-(--text-accent) font-bold tracking-[0.05em] border-b border-(--text-accent) pb-0.5 cursor-pointer"
+            @click="clearFilter"
+          >
+            清除篩選 ×
+          </button>
+        </div>
       </div>
 
       <div v-if="filteredProjects.length === 0" class="py-16 text-center text-sm text-(--text-ink-muted)">
@@ -181,7 +198,12 @@ watch([selectedId, filteredProjects], async () => {
           </p>
 
           <div class="flex flex-wrap gap-2 font-mono text-[11px] mb-6">
-            <BaseTag v-for="tag in selected.tags" :key="tag">{{ tag }}</BaseTag>
+            <BaseTag
+              v-for="tag in selectedTechniqueTags"
+              :key="tag.label"
+              :class="tag.matched && 'outline outline-1 outline-(--text-accent) font-semibold'"
+              >{{ tag.label }}</BaseTag
+            >
           </div>
 
           <div class="pt-5 border-t border-(--border-shelf) grid grid-cols-3 gap-4">

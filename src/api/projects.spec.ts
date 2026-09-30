@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchProjects } from './projects'
+import { fetchProjects, toProjectTechniques } from './projects'
 
 const mockFetch = vi.fn()
 
@@ -60,6 +60,10 @@ describe('fetchProjects', () => {
         statusType: 'active',
         desc: '學習檔案前端',
         tags: ['Vue3', 'TypeScript'],
+        techniques: [
+          { name: 'Vue3', version: null, category: '' },
+          { name: 'TypeScript', version: null, category: '' },
+        ],
         started: '2026.06',
         repo: 'my-dev-grid-front',
         implementationId: 1,
@@ -109,5 +113,43 @@ describe('fetchProjects', () => {
       ['PROJ-2025-02', 'older-2025'],
       ['PROJ-2024-01', 'only-2024'],
     ])
+  })
+})
+
+describe('toProjectTechniques', () => {
+  const scopes = new Map([
+    [5, 'language'],
+    [9, 'framework'],
+  ])
+
+  it('標籤帶版本、分類換成後端的 scope 名稱', () => {
+    expect(
+      toProjectTechniques(
+        [
+          { title: 'Vue', version: '3', type: 9 },
+          { title: 'PHP', version: null, type: 5 },
+        ],
+        scopes,
+      ),
+    ).toEqual([
+      { name: 'Vue', version: '3', category: 'framework' },
+      { name: 'PHP', version: null, category: 'language' },
+    ])
+  })
+
+  it('同時有「Vue」和「Vue 3」時只留 Vue 3（升級前的邊還留著，但版本已經知道了）', () => {
+    const out = toProjectTechniques(
+      [
+        { title: 'Vue', version: null, type: 9 },
+        { title: 'Vue', version: '3', type: 9 },
+        { title: 'Vue', version: '2', type: 9 },
+      ],
+      scopes,
+    )
+    expect(out.map((t) => `${t.name} ${t.version}`)).toEqual(['Vue 3', 'Vue 2'])
+  })
+
+  it('查不到分類時留空字串，不猜', () => {
+    expect(toProjectTechniques([{ title: 'x', type: 999 }], scopes)).toEqual([{ name: 'x', version: null, category: '' }])
   })
 })
