@@ -128,6 +128,21 @@ real new semantic color (success/warning/error) only if a genuine tri-state or
 alert-level distinction shows up — two states that are really just
 "current" vs "past" don't need one.
 
+**Concrete example — `BaseSegmented.vue` (D-66, 2026-09-30)**: every
+one-of-N toggle on the site uses it — Articles 時間軸/分類夾, the home graph's
+節點顏色, `/graph` 2D/3D, About 從兩頭看, the article editor's 編輯/預覽 and
+草稿/已發布 (`stretch`), and the manage page's filter. Before it there were four
+looks for the same control (pill with a pale fill and wine text, pill with a
+solid wine fill, navy solid, square navy solid). Selected = `--bg-selected` /
+`--text-on-selected`: navy in the light theme, **brass in the dark theme**,
+because the dark theme's page ground *is* navy and a navy fill disappears into
+it. Unselected = transparent with a 35% ink border. Sizes: `sm` (toolbars) and
+`md` (44px, primary in-content toggle). Deliberately *not* using it: the
+navbar's active link (brass text + underline on the navy bar — a different
+context) and multi-select filter chips like the graph's 顯示層 (category
+colours carry meaning). A new one-of-N toggle reaches for `BaseSegmented`, not
+a fresh set of ternary classes. Comparison: canvas `8nZmo6sneYNdSEgfGHXst8`.
+
 **Where a shared component's values come from** (added 2026-09-16, after getting
 this wrong): when the role already exists in a design canvas's `<style>` block
 (`.lbl`, `.hint`, `.fld`, `.chip` in the article-editor canvas), that block is

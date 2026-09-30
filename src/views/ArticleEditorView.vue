@@ -24,6 +24,7 @@ import BaseField from '@/components/BaseField.vue'
 import BaseHint from '@/components/BaseHint.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseTextarea from '@/components/BaseTextarea.vue'
 import GraphLinkPicker from '@/components/article-editor/GraphLinkPicker.vue'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
@@ -69,6 +70,10 @@ const isEditing = computed(() => editingId.value !== null)
 const title = ref('')
 const body = ref('')
 const bodyMode = ref<'edit' | 'preview'>('edit')
+const BODY_MODES = [
+  { value: 'edit', label: '編輯' },
+  { value: 'preview', label: '預覽' },
+] as const
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const margins = ref<ArticleMarginNote[]>([])
 const tags = ref<string[]>([])
@@ -137,6 +142,19 @@ async function load() {
 }
 
 watch(() => route.fullPath, load, { immediate: true })
+
+// BaseSegmented 的值是字串，published 是布林，這裡轉一層；切換狀態也算「有改動」，跟原本一樣呼叫 touch()
+const PUBLISH_STATES = [
+  { value: 'draft', label: '草稿' },
+  { value: 'published', label: '已發布' },
+] as const
+const publishState = computed<'draft' | 'published'>({
+  get: () => (published.value ? 'published' : 'draft'),
+  set: (v) => {
+    published.value = v === 'published'
+    touch()
+  },
+})
 
 function touch() {
   dirty.value = true
@@ -442,22 +460,8 @@ const publish = () => saveWithStatus(true)
         <div class="flex flex-col gap-3">
           <BaseField label="Body 內文" :hint="`Markdown · ${body.length} 字`">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex gap-1 self-start border border-(--border-shelf) rounded-full p-[3px]">
-                <button
-                  v-for="m in (['edit', 'preview'] as const)"
-                  :key="m"
-                  type="button"
-                  class="rounded-full px-4 py-1.5 font-mono text-[10px] tracking-[0.14em] transition-colors duration-100 ease-out"
-                  :class="
-                    bodyMode === m
-                      ? 'bg-(--bg-folder) text-(--text-accent) font-bold'
-                      : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
-                  "
-                  @click="bodyMode = m"
-                >
-                  {{ m === 'edit' ? '編輯' : '預覽' }}
-                </button>
-              </div>
+              <!-- 全站統一的「幾選一」切換（D-66） -->
+              <BaseSegmented v-model="bodyMode" :options="BODY_MODES" label="內文顯示方式" class="self-start" />
 
               <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <input
@@ -772,22 +776,8 @@ const publish = () => saveWithStatus(true)
           </div>
           <div class="flex flex-col gap-1.5">
             <BaseHint>狀態</BaseHint>
-            <div class="flex gap-1 border border-(--border-shelf) rounded-full p-1">
-              <button
-                v-for="opt in [{ v: false, label: '草稿' }, { v: true, label: '已發布' }]"
-                :key="opt.label"
-                type="button"
-                class="flex-1 text-center font-mono text-[10px] tracking-[0.1em] py-1.5 rounded-full transition-colors duration-100 ease-out"
-                :class="
-                  published === opt.v
-                    ? 'bg-(--bg-folder) text-(--text-accent) font-bold'
-                    : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
-                "
-                @click="((published = opt.v), touch())"
-              >
-                {{ opt.label }}
-              </button>
-            </div>
+            <!-- 全站統一的「幾選一」切換（D-66）；側欄窄，撐滿寬度 -->
+            <BaseSegmented v-model="publishState" :options="PUBLISH_STATES" label="發布狀態" stretch />
             <BaseHint class="block leading-5">
               這個切換只影響下一次按「存草稿」／「發布」時要送哪個狀態，本身不會單獨觸發存檔。
             </BaseHint>

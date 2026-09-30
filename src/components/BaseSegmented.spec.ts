@@ -37,4 +37,12 @@ describe('BaseSegmented', () => {
     await wrapper.findAll('button')[1]!.trigger('click')
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['folder'])
   })
+
+  it('stretch：整組撐滿寬度、每顆等寬（編輯頁側欄的草稿／已發布）', () => {
+    const wrapper = mount(BaseSegmented, {
+      props: { options: OPTIONS, label: '發布狀態', modelValue: 'timeline', stretch: true },
+    })
+    expect(wrapper.find('[role="group"]').classes()).toContain('w-full')
+    wrapper.findAll('button').forEach((b) => expect(b.classes()).toContain('flex-1'))
+  })
 })
