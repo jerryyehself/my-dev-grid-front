@@ -14,6 +14,11 @@ export interface GraphNodeDto {
   // 只有 implementation 節點會有值（git_repo_created_at，來自 GitHub API）；
   // documentation/technique 完全沒有對應的時間欄位，後端一律回傳 null，不是漏傳。
   created_at: string | null
+  // 2026-09-30 後端加的：文章節點的子類（post 是自己寫的文章、sourcesite 是官方文件這類參考資料）
+  // 與外部網址，節點彈窗靠它決定連去哪（見 components/graphNodeLink.ts）。其他型別一律 null；
+  // 舊的示範資料快照沒有這兩個欄位，所以是 optional
+  subtype?: string | null
+  url?: string | null
 }
 
 export interface GraphEdgeDto {

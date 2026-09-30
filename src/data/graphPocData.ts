@@ -42,6 +42,8 @@ export interface GraphPocNode {
   tags: string[]
   domainType: GraphNodeType // documentation/technique/implementation，配色跟 3D Z 軸分層都靠這個
   daysSinceAccessed: number // 越大代表越久沒被打開，用於「退到背景」的判斷
+  subtype: string | null // 文章子類與網址：詳情卡的連結用（components/graphNodeLink.ts）
+  url: string | null
 }
 
 export interface GraphPocLink {
@@ -64,6 +66,8 @@ export interface GraphPocNodeSelection {
   domainType: GraphNodeType
   weight: number
   degree: number
+  subtype: string | null
+  url: string | null
 }
 export interface GraphPocLinkSelection {
   kind: 'link'
@@ -92,6 +96,8 @@ function toGraphPocNodes(nodes: GraphNodeDto[], edges: GraphEdgeDto[]): GraphPoc
     tags: [n.type],
     domainType: n.type,
     daysSinceAccessed: 0,
+    subtype: n.subtype ?? null,
+    url: n.url ?? null,
   }))
 }
 

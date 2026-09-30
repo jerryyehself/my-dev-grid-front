@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { useRoute, RouterLink } from 'vue-router'
@@ -9,6 +9,7 @@ import GraphPathSearch from '@/components/poc/GraphPathSearch.vue'
 import GraphPathDiagram from '@/components/poc/GraphPathDiagram.vue'
 import type { GraphPocSelection } from '@/data/graphPocData'
 import type { GraphNodeType, GraphPathDto } from '@/api/graph'
+import { graphNodeLink } from '@/components/graphNodeLink'
 
 const route = useRoute()
 const mode = ref<'2d' | '3d'>(route.query.mode === '3d' ? '3d' : '2d')
@@ -27,6 +28,8 @@ const isDemoData = ref(false)
 // （見 graphPocData.ts 的 GraphPocSelection 說明），這裡只管顯示，不用管是哪個
 // 元件、哪個渲染引擎點出來的。
 const selected = ref<GraphPocSelection | null>(null)
+// 點到的節點連去哪（文章頁、外部網址、專案頁；技術沒有頁面）。規則跟首頁知識網路的彈窗共用
+const selectedLink = computed(() => (selected.value?.kind === 'node' ? graphNodeLink(selected.value) : null))
 const domainLabel: Record<GraphNodeType, string> = {
   documentation: '文件',
   technique: '技術',
@@ -64,10 +67,7 @@ const pathResult = ref<GraphPathDto | null>(null)
     <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-(--text-ink-muted)">
       <GraphLegendDots />
       <span class="flex items-center gap-1.5"
-        ><span class="w-4 h-0 border-t border-(--edge-real)"></span>跨類別的關係</span
-      >
-      <span class="flex items-center gap-1.5"
-        ><span class="w-4 h-0 border-t border-dashed border-(--text-accent)"></span>同類別的關係</span
+        ><span class="w-4 h-0 border-t border-(--edge-real)"></span>直接關係</span
       >
       <span class="ml-auto">{{
         mode === '2d'
@@ -91,14 +91,26 @@ const pathResult = ref<GraphPathDto | null>(null)
         ×
       </button>
       <template v-if="selected.kind === 'node'">
-        <p class="font-mono text-[11px] uppercase tracking-wider text-(--text-accent)">{{ domainLabel[selected.domainType] }}</p>
+        <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">{{ domainLabel[selected.domainType] }}</p>
         <p class="text-(--text-ink-body) font-medium">{{ selected.label }}</p>
-        <p class="text-(--text-ink-muted)">共 {{ selected.degree }} 條登記的關係</p>
+        <p class="text-(--text-ink-muted)">共 {{ selected.degree }} 條直接關係</p>
+        <RouterLink
+          v-if="selectedLink?.kind === 'internal'"
+          :to="selectedLink.to"
+          class="inline-block mt-1 text-(--text-accent) hover:underline"
+          >{{ selectedLink.text }}</RouterLink
+        >
+        <a
+          v-else-if="selectedLink?.kind === 'external'"
+          :href="selectedLink.href"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-block mt-1 text-(--text-accent) hover:underline"
+          >{{ selectedLink.text }}</a
+        >
       </template>
       <template v-else>
-        <p class="font-mono text-[11px] uppercase tracking-wider text-(--text-accent)">
-          {{ selected.linkKind === 'inspiration' ? '同類別的關係' : '跨類別的關係' }}
-        </p>
+        <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">直接關係</p>
         <p class="text-(--text-ink-body) font-medium">{{ selected.sourceLabel }} → {{ selected.targetLabel }}</p>
         <p class="text-(--text-ink-muted)">{{ selected.predicate ?? selected.label ?? '（未命名的關係）' }}</p>
       </template>

@@ -31,6 +31,8 @@ const { selectedTags, filterGroups, toggleTag, clearFilter, filteredProjects } =
 // 點 isbn-scanner 卻看到清單第一筆的 idea-trigger
 const route = useRoute()
 const selectedId = ref(typeof route.query.project === 'string' ? route.query.project : '')
+// 圖譜節點連過來帶的是後端 id（?implementation=<id>），要等專案載入後才對得到顯示用編號
+const wantedImplementationId = Number(route.query.implementation) || null
 const selected = computed(() => projects.value.find((p) => p.id === selectedId.value))
 
 // 篩選把目前選中的專案擠出清單時，自動切到篩選後清單的第一筆，不留一個選不到的空白詳情面板；
@@ -38,6 +40,13 @@ const selected = computed(() => projects.value.find((p) => p.id === selectedId.v
 watch(
   filteredProjects,
   (list) => {
+    if (wantedImplementationId && !selectedId.value) {
+      const hit = projects.value.find((p) => p.implementationId === wantedImplementationId)
+      if (hit) {
+        selectedId.value = hit.id
+        return
+      }
+    }
     if (list.some((p) => p.id === selectedId.value)) return
     const fallback = list[0] ?? projects.value[0]
     if (fallback) selectedId.value = fallback.id
