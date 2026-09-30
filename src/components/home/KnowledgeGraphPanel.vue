@@ -525,7 +525,7 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
     const n = obj as SimNode
     popover.kind = typeLabel[n.domainType]
     popover.title = n.label
-    popover.rows = [`共 ${n.degree} 條真實關聯`]
+    popover.rows = [`共 ${n.degree} 條登記的關係`]
     if (n.createdAt) popover.rows.push(`repo 建立於 ${n.createdAt}`)
   } else {
     const l = obj as SimLink
@@ -535,10 +535,10 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
       const viaLabels = (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id).join('、')
       popover.kind = '推導關聯（虛線）'
       popover.title = `${String(s)} ↔ ${String(t)}`
-      popover.rows = [`透過共同的「${viaLabels}」間接相關`, '不是資料庫裡的真實關聯，是算出來的']
+      popover.rows = [`透過共同的「${viaLabels}」間接相關`, '這是推導出來的，不是登記的關係']
     } else {
-      popover.kind = 'Relation'
-      popover.title = l.predicate ?? '(未命名關聯)'
+      popover.kind = '登記的關係'
+      popover.title = l.predicate ?? '（未命名的關係）'
       popover.rows = [String(s), `→ ${String(t)}`]
     }
   }
@@ -745,7 +745,7 @@ async function boot() {
       const t = typeof l.target === 'object' ? l.target.label : l.target
       if (l.derived) {
         const viaLabels = (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id).join('、')
-        return `${s} ↔ ${t}（推導關聯：透過「${viaLabels}」間接相關，非資料庫真實邊）`
+        return `${s} ↔ ${t}（推導關聯：透過「${viaLabels}」間接相關，不是登記的關係）`
       }
       return `${l.predicate ?? '關聯'}：${s} → ${t}`
     })
@@ -867,7 +867,7 @@ onUnmounted(() => {
     :class="entered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
   >
     <div class="flex items-center justify-between gap-3 mb-2">
-      <h2 class="font-mono text-[11px] tracking-[0.2em] uppercase font-bold text-(--text-accent)">
+      <h2 class="text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">
         近期知識網路
       </h2>
     </div>
@@ -878,7 +878,7 @@ onUnmounted(() => {
         >{{ stats.tech }}</b
       >
       項技術、<b class="text-(--text-ink-main) tabular-nums">{{ stats.impl }}</b> 個實作，由
-      <b class="text-(--text-ink-main) tabular-nums">{{ stats.edges }}</b> 條已實現的關聯串成的知識網路。
+      <b class="text-(--text-ink-main) tabular-nums">{{ stats.edges }}</b> 條登記的關係串成的知識網路。
     </p>
 
     <p v-if="!loading && isDemoData" class="text-[14px] text-(--text-accent) mb-2">
@@ -886,18 +886,18 @@ onUnmounted(() => {
     </p>
 
     <div v-if="!loading" class="flex items-center gap-2 mb-2.5">
-      <span class="font-mono text-[11px] uppercase tracking-[0.08em] text-(--text-ink-muted)">節點顏色</span>
+      <span class="text-[13px] tracking-[0.05em] text-(--text-ink-muted)">節點顏色</span>
       <!-- 全站統一的「幾選一」切換（D-66）。下面的「顯示層」不換：它可以多選，顏色是分類色，有語意 -->
       <BaseSegmented v-model="colorMode" :options="COLOR_MODES" label="節點顏色" />
     </div>
 
     <div v-if="!loading" class="flex items-center gap-2 mb-2.5">
-      <span class="font-mono text-[11px] uppercase tracking-[0.08em] text-(--text-ink-muted)">顯示層</span>
+      <span class="text-[13px] tracking-[0.05em] text-(--text-ink-muted)">顯示層</span>
       <button
         v-for="type in (['documentation', 'technique', 'implementation'] as const)"
         :key="type"
         type="button"
-        class="rounded-full border px-3 py-1 font-mono text-[11.5px] cursor-pointer"
+        class="rounded-full border px-3 py-1 text-[13px] cursor-pointer"
         :class="typeFilter[type] ? 'text-(--bg-paper-light) border-transparent' : 'bg-(--bg-folder) text-(--text-ink-muted) border-(--border-shelf)'"
         :style="typeFilter[type] ? { background: `var(--node-${type === 'documentation' ? 'doc' : type === 'technique' ? 'tech' : 'impl'})` } : {}"
         :aria-pressed="typeFilter[type]"
@@ -910,9 +910,9 @@ onUnmounted(() => {
     <div v-if="!loading && colorMode === 'type'" class="flex flex-wrap items-center gap-4 text-[13px] text-(--text-ink-muted) mb-3">
       <GraphLegendDots />
       <span class="flex items-center gap-1.5"
-        ><span class="w-4 h-0 border-t border-dashed border-(--text-ink-muted)"></span>推導關聯（非真實邊）</span
+        ><span class="w-4 h-0 border-t border-dashed border-(--text-ink-muted)"></span>推導關聯</span
       >
-      <span class="ml-auto">hover 節點看直接鄰居・點節點看內容・點連線看關聯定義</span>
+      <span class="ml-auto">滑到節點上看相連的節點・點節點看內容・點連線看是什麼關係</span>
     </div>
     <div v-else-if="!loading" class="flex flex-wrap items-center gap-2.5 text-[11.5px] font-mono text-(--text-ink-muted) mb-3">
       <span>較舊</span>
@@ -944,7 +944,7 @@ onUnmounted(() => {
         class="absolute inset-0 z-[5] flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
         :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       >
-        <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">
+        <span class="text-[13px] text-(--text-ink-body)/70">
           節點排列中…
         </span>
       </div>
@@ -962,7 +962,7 @@ onUnmounted(() => {
         >
           ×
         </button>
-        <div class="font-mono text-[11px] uppercase tracking-[0.08em] text-(--text-ink-muted) mb-1">
+        <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-1">
           {{ popover.kind }}
         </div>
         <h3 class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">{{ popover.title }}</h3>
@@ -976,7 +976,7 @@ onUnmounted(() => {
          決定改成對應的說明；技術細節留在程式碼註解跟 issue #24 -->
     <ul class="mt-3 flex flex-col gap-1 text-[14px] leading-relaxed text-(--text-ink-muted)">
       <li><b class="text-(--text-ink-body)">顏色</b>：文件、技術、實作三大類。切到「依建立時間」改用時間色階；目前只有專案有建立時間，其他節點顯示灰色。</li>
-      <li><b class="text-(--text-ink-body)">大小</b>：關聯越多的節點越大。</li>
+      <li><b class="text-(--text-ink-body)">大小</b>：關係越多的節點越大。</li>
       <li><b class="text-(--text-ink-body)">線</b>：實線是目錄裡登記的關係；虛線是推導出來的——兩個同類節點共用越多技術，虛線越明顯，但它不是登記的關係。</li>
       <li><b class="text-(--text-ink-body)">圓框</b>：三大類各自的範圍，重疊的地方就是彼此相關的節點。</li>
       <li>點節點看詳細資料。想拖曳節點、查兩點之間的路徑，到<RouterLink to="/graph" class="text-(--text-accent) hover:underline">圖譜頁</RouterLink>。</li>

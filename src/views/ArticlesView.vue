@@ -8,15 +8,13 @@
 // summary：D-57，不是獨立欄位，取 body 第一段（見 excerptOf）。
 // 只列 status===1（已發布）——草稿不該出現在訪客看得到的清單。
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
 import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
-
-const router = useRouter()
 
 const ready = ref(false)
 const loadError = ref(false)
@@ -96,10 +94,6 @@ const folderArticles = computed(() => {
   if (!currentTag.value) return articles.value
   return articles.value.filter((article) => tagsOf(article).includes(currentTag.value))
 })
-
-const goToArticle = (id: number) => {
-  router.push({ name: 'article-detail', params: { id } })
-}
 </script>
 
 <template>
@@ -141,7 +135,7 @@ const goToArticle = (id: number) => {
           <div
             class="absolute -left-7 top-0.5 w-3 h-3 rounded-full bg-(--text-accent) ring-[3px] ring-(--bg-paper-light)"
           ></div>
-          <div class="font-mono text-xs tracking-wider font-bold text-(--text-accent)">
+          <div class="text-[13px] tracking-[0.05em] font-bold text-(--text-accent)">
             {{ group.month }}
           </div>
         </div>
@@ -149,8 +143,7 @@ const goToArticle = (id: number) => {
         <article
           v-for="article in group.articles"
           :key="article.id"
-          class="relative pb-6 cursor-pointer group"
-          @click="goToArticle(article.id)"
+          class="relative pb-6 group"
         >
           <div
             class="absolute -left-[24.5px] top-[7px] w-[7px] h-[7px] rounded-full bg-(--text-ink-muted)"
@@ -159,10 +152,17 @@ const goToArticle = (id: number) => {
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article)[0] }}</span>
           </div>
+          <!-- 標題是真的連結，::after 撐滿整列，整列都點得到：鍵盤能 Tab 到、能開新分頁、能複製網址。
+               以前是 <article @click>，只有滑鼠點得到 -->
           <h3
             class="text-base font-bold text-(--text-ink-main) mb-1.5 group-hover:text-(--text-accent) transition-colors"
           >
-            {{ article.title }}
+            <RouterLink
+              :to="{ name: 'article-detail', params: { id: article.id } }"
+              class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+            >
+              {{ article.title }}
+            </RouterLink>
           </h3>
           <p class="text-(--text-ink-body) text-sm leading-relaxed text-left sm:text-justify max-w-[620px]">
             {{ summaryOf(article) }}
@@ -180,7 +180,7 @@ const goToArticle = (id: number) => {
       >
         <div class="flex flex-nowrap gap-x-1 items-end">
           <BaseButton variant="tab" class="shrink-0" :active="!currentTag" @click="currentTag = ''">
-            All_Essays
+            全部
           </BaseButton>
 
           <BaseButton
@@ -206,14 +206,20 @@ const goToArticle = (id: number) => {
         <article
           v-for="article in folderArticles"
           :key="article.id"
-          class="p-5 sm:p-6 cursor-pointer hover:bg-(--bg-folder) transition-colors"
-          @click="goToArticle(article.id)"
+          class="relative p-5 sm:p-6 hover:bg-(--bg-folder) transition-colors"
         >
           <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article).join(' / ') }}</span>
           </div>
-          <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">{{ article.title }}</h3>
+          <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">
+            <RouterLink
+              :to="{ name: 'article-detail', params: { id: article.id } }"
+              class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+            >
+              {{ article.title }}
+            </RouterLink>
+          </h3>
           <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-left sm:text-justify max-w-[700px]">
             {{ summaryOf(article) }}
           </p>
@@ -221,9 +227,9 @@ const goToArticle = (id: number) => {
 
         <div
           v-if="folderArticles.length === 0"
-          class="py-16 text-center text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest"
+          class="py-16 text-center text-sm text-(--text-ink-muted)"
         >
-          // NO_DOCUMENTS_FOUND
+          這個分類還沒有文章。
         </div>
       </div>
     </div>

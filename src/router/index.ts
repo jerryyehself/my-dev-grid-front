@@ -32,7 +32,7 @@ const router = createRouter({
       meta: {
         tag: 'Home',
         title: 'IN / ARCHIVE',
-        subtitle: '正在孵化的想法，以及最近的輸入與輸出動態。',
+        subtitle: '正在孵化的想法，以及最近的輸入與輸出動態',
       },
     },
     {
@@ -42,7 +42,7 @@ const router = createRouter({
       meta: {
         tag: 'About',
         title: '私人藏書，公開目錄',
-        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結。',
+        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結',
         // About 頁自己畫了一個滿版橫幅當作大標題，跟 MainLayout 的通用表頭是同一件事，
         // 兩個都顯示會重複兩次，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
         hideHeader: true,

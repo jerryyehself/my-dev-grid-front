@@ -30,7 +30,7 @@
         <p
           class="mt-5 lg:mt-7 mb-0 max-w-[620px] text-[17px] lg:text-[19px] leading-[1.7] text-(--text-on-band)"
         >
-          文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結。
+          文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結
         </p>
       </div>
     </header>

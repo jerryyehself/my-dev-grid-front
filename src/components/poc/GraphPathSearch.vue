@@ -111,8 +111,8 @@ onMounted(async () => {
 <template>
   <div class="flex flex-col gap-2">
     <div class="flex flex-col gap-1">
-      <div class="eyebrow font-mono text-[11px] uppercase tracking-[0.2em] font-bold text-(--text-accent)">路徑查詢</div>
-      <p class="text-sm text-(--text-ink-body)">輸入起點與終點，找出兩者之間經過哪些節點與關係</p>
+      <div class="eyebrow text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">路徑查詢</div>
+      <p class="text-sm text-(--text-ink-body)">輸入起點與終點，找出兩者之間經過哪些節點與關係。</p>
     </div>
 
     <div v-if="loadError" class="text-sm text-(--text-error)">{{ loadError }}</div>
@@ -120,7 +120,7 @@ onMounted(async () => {
     <div class="flex items-start gap-3">
       <!-- 起點 -->
       <div class="relative flex-1">
-        <label class="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.1em] text-(--text-accent)">起點</label>
+        <label class="mb-1.5 block text-[13px] tracking-[0.05em] text-(--text-accent)">起點</label>
         <div
           v-if="startSelected"
           class="flex items-center gap-2 rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) px-3 py-[9px]"
@@ -171,7 +171,7 @@ onMounted(async () => {
             >
               <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
               <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
-              <span class="ml-auto font-mono text-[11px] uppercase tracking-[0.05em] text-(--text-accent) opacity-70">{{
+              <span class="ml-auto text-[13px] text-(--text-accent) opacity-70">{{
                 domainLabel[n.domainType]
               }}</span>
             </div>
@@ -179,7 +179,7 @@ onMounted(async () => {
           <!-- 還沒打字：依型別分組瀏覽，取代原本「不打字就完全空白」的下拉 -->
           <template v-else>
             <div v-for="group in startGroups" :key="group.type">
-              <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 font-mono text-[11px] uppercase tracking-[0.1em] text-(--text-accent) opacity-80">
+              <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 text-[13px] tracking-[0.05em] text-(--text-accent) opacity-80">
                 {{ group.label }}
               </div>
               <div
@@ -213,7 +213,7 @@ onMounted(async () => {
 
       <!-- 終點 -->
       <div class="relative flex-1">
-        <label class="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.1em] text-(--text-accent)">終點</label>
+        <label class="mb-1.5 block text-[13px] tracking-[0.05em] text-(--text-accent)">終點</label>
         <div
           v-if="endSelected"
           class="flex items-center gap-2 rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) px-3 py-[9px]"
@@ -264,7 +264,7 @@ onMounted(async () => {
             >
               <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
               <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
-              <span class="ml-auto font-mono text-[11px] uppercase tracking-[0.05em] text-(--text-accent) opacity-70">{{
+              <span class="ml-auto text-[13px] text-(--text-accent) opacity-70">{{
                 domainLabel[n.domainType]
               }}</span>
             </div>
@@ -272,7 +272,7 @@ onMounted(async () => {
           <!-- 還沒打字：依型別分組瀏覽，取代原本「不打字就完全空白」的下拉 -->
           <template v-else>
             <div v-for="group in endGroups" :key="group.type">
-              <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 font-mono text-[11px] uppercase tracking-[0.1em] text-(--text-accent) opacity-80">
+              <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 text-[13px] tracking-[0.05em] text-(--text-accent) opacity-80">
                 {{ group.label }}
               </div>
               <div

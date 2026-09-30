@@ -62,7 +62,7 @@ onMounted(async () => {
 <template>
   <section class="w-full">
     <div class="flex items-center justify-between gap-3 mb-2">
-      <h2 class="font-mono text-[11px] tracking-[0.2em] uppercase font-bold text-(--text-accent)">近況板</h2>
+      <h2 class="text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">近況板</h2>
     </div>
     <p class="text-sm text-(--text-ink-body) mb-4">目前維護中的專案，以及最近發布的文章。</p>
 
@@ -70,7 +70,7 @@ onMounted(async () => {
       <!-- 左欄：近期專案（真實 maintain_status，tiered accent/muted tag） -->
       <div>
         <h3
-          class="flex items-center gap-1.5 font-mono text-[12px] font-extrabold tracking-[0.05em] uppercase text-(--text-ink-muted) mb-2.5"
+          class="flex items-center gap-1.5 text-[13px] font-bold tracking-[0.05em] text-(--text-ink-muted) mb-2.5"
         >
           <span>近期專案</span>
         </h3>
@@ -86,7 +86,7 @@ onMounted(async () => {
           <RouterLink
             v-for="p in projects"
             :key="p.id"
-            to="/projects"
+            :to="{ path: '/projects', query: { project: p.id } }"
             class="flex items-center justify-between gap-3 px-[18px] py-3.5 border-b border-(--border-shelf) last:border-b-0 hover:bg-(--bg-folder) transition-colors"
           >
             <div class="min-w-0">
@@ -106,7 +106,7 @@ onMounted(async () => {
           示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
         </p>
 
-        <RouterLink to="/projects" class="inline-block mt-2.5 font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted) hover:text-(--text-accent)">
+        <RouterLink to="/projects" class="inline-block mt-2.5 text-[13px] tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent)">
           所有專案 →
         </RouterLink>
       </div>
@@ -114,7 +114,7 @@ onMounted(async () => {
       <!-- 右欄：近期文章（真的打 /api/documentations，只列已發布） -->
       <div>
         <h3
-          class="flex items-center gap-1.5 font-mono text-[12px] font-extrabold tracking-[0.05em] uppercase text-(--text-ink-muted) mb-2.5"
+          class="flex items-center gap-1.5 text-[13px] font-bold tracking-[0.05em] text-(--text-ink-muted) mb-2.5"
         >
           <span>近期文章</span>
         </h3>
@@ -137,7 +137,7 @@ onMounted(async () => {
           </p>
         </div>
 
-        <RouterLink to="/articles" class="inline-block mt-2.5 font-mono text-[11px] tracking-[0.15em] uppercase text-(--text-ink-muted) hover:text-(--text-accent)">
+        <RouterLink to="/articles" class="inline-block mt-2.5 text-[13px] tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent)">
           所有文章 →
         </RouterLink>
       </div>

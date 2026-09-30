@@ -268,7 +268,23 @@ full explanatory sentences sat at 12px and some labels at 9–10px.
 | Running prose | 16px (see above) | article body, About paragraphs |
 | Full sentences a visitor reads | 14px (`text-sm`/`text-[14px]`) | page explanations, empty/error/demo-data notices, list-item titles |
 | Secondary sans text | 12px | tech-stack lines, legends, popover rows |
-| Mono uppercase labels | 11px | dates, `PROJ-` ids, status badges, field labels, nav pills |
+| Mono uppercase labels (Latin/digits only) | 11px | dates, `PROJ-` ids, status badges, `STARTED`/`ROLE` |
+| Chinese labels | 13px, tracking ≤ 0.05em | 節點顏色, 語言／套件, 起點／終點, 所有文章 →, nav 淺色／登入 |
+| Chinese section headings | 15px bold | 近期知識網路, 近況板, 路徑查詢 |
+
+The 11px floor was first applied to Chinese labels too. The user caught it
+the same day: 近期知識網路 at 11px was too small. The 11px/wide-tracking
+style is designed for uppercase Latin. Chinese has no uppercase, and wide
+tracking only pulls the characters apart. The mono font has no CJK glyphs
+either, so those labels were falling back to the system sans anyway.
+
+Copy rules checked in the same pass:
+- Page subtitles take no trailing 。. Explanatory sentences under a
+  section do.
+- Visitor-facing text avoids developer vocabulary: hover, 邊, 型別,
+  已實現, library names like `force-graph`, identifiers like `All_Essays`.
+  Registered relations are 登記的關係, and computed ones are 推導關聯.
+  The categories are 類別/三大類, never 型別.
 
 Sources, and which parts are judgment:
 - **11px label floor**: sourced. Apple HIG sets 11pt as the minimum text
