@@ -99,7 +99,7 @@
           </div>
 
           <div class="min-h-[224px] flex flex-col justify-center">
-            <!-- 從文章看：文件 —寫到→ 技術 -->
+            <!-- 從文章看：文件 —說明→ 技術 -->
             <div
               v-if="dir === 'forward'"
               class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-[3fr_5fr_3fr] sm:gap-x-7 sm:items-end"
@@ -111,17 +111,17 @@
                 title="這篇文章"
                 focus
               />
-              <RelationArrow label="寫到" predicate="specs" />
+              <RelationArrow label="說明" predicate="specs" />
               <EntryChip
                 :code="CLASSES.tech.code"
                 :label="CLASSES.tech.name"
                 :fill="CLASSES.tech.fill"
-                title="vue3"
+                title="Vue 3"
                 end
               />
             </div>
 
-            <!-- 從技術看：技術 —被寫到→ 文件、技術 —用在→ 實作。反向是兩條關係，所以是兩支箭頭 -->
+            <!-- 從技術看：技術 —被說明→ 文件、技術 —用在→ 實作。反向是兩條關係，所以是兩支箭頭 -->
             <div
               v-else
               class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-[3fr_5fr_3fr] sm:grid-rows-[auto_auto] sm:gap-x-7 sm:gap-y-[18px] sm:items-end"
@@ -131,11 +131,11 @@
                   :code="CLASSES.tech.code"
                   :label="CLASSES.tech.name"
                   :fill="CLASSES.tech.fill"
-                  title="vue3"
+                  title="Vue 3"
                   focus
                 />
               </div>
-              <RelationArrow label="被寫到" predicate="specifiedBy" />
+              <RelationArrow label="被說明" predicate="specifiedBy" />
               <EntryChip
                 :code="CLASSES.doc.code"
                 :label="CLASSES.doc.name"
@@ -205,7 +205,7 @@
         <!-- 桌機：三張分類卡排成三角形。座標照設計稿的 1088×470 畫框換算成百分比，
              窄一點的桌機（1024 起）等比例縮。
              連線是單向箭頭，從主詞指向受詞，標的是那個方向的述詞。設計稿畫的是雙向箭頭加「specs / specifiedBy」，
-             但「寫到」「用在」只讀得通一個方向，雙向箭頭看不出哪個名字是哪個方向——後端的 uses 就是這樣
+             但「說明」「用在」只讀得通一個方向，雙向箭頭看不出哪個名字是哪個方向——後端的 uses 就是這樣
              被讀反的（2026-09-30 使用者決定拆成單向，ER model 概念圖同一天也改了）。反方向在上面「從兩頭看」 -->
         <div class="hidden lg:block relative w-full max-w-[1088px] aspect-[1088/470] self-center">
           <svg
@@ -274,7 +274,7 @@
           :style="{ borderColor: mix('--text-on-band', 18) }"
         >
           <span class="text-[16px] text-(--text-on-band)">
-            每條關係都有反方向：文件「寫到」技術，反過來就是技術「被寫到」。實際的每一筆資料和連結，在知識圖譜裡看。
+            每條關係都有反方向：文件「說明」技術，反過來就是技術「被說明」。實際的每一筆資料和連結，在知識圖譜裡看。
           </span>
           <router-link
             to="/graph"
@@ -463,8 +463,8 @@ const DIRECTIONS: { value: Dir; label: string }[] = [
 const dir = ref<Dir>('forward')
 const sentence = computed(() =>
   dir.value === 'forward'
-    ? '從這篇文章，找到它寫到的技術：vue3。'
-    : '從 vue3 反查，列出寫到它的文章、用到它的專案，這篇也在裡面。',
+    ? '從這篇文章，找到它說明的技術：Vue 3。'
+    : '從 Vue 3 反查，列出說明它的文章、用到它的專案，這篇也在裡面。',
 )
 
 const CLASSES = {
@@ -494,11 +494,14 @@ const CLASS_LIST = [CLASSES.doc, CLASSES.tech, CLASSES.impl]
 type ClassDef = (typeof CLASS_LIST)[number]
 
 // 標籤座標同樣是設計稿 1088×470 畫框裡的中心點換算成百分比
+// 動詞跟首頁知識網路連線的說明是同一套（graphRelationPhrase.ts）。specs 原本照設計稿譯「寫到」，
+// 2026-10-01 改成「說明」：資料裡 specs 的主詞是官方文件網站，意思是「這份文件是這個技術的說明」，
+// 「寫到」是文章提到某技術，是另一種關係。完整的述詞對照表要先查來源詞彙，還沒做（D-73）
 const CLASS_RELATIONS = [
   {
     from: '文件',
     to: '技術',
-    label: '寫到',
+    label: '說明',
     predicate: 'specs',
     pos: { left: '30.70%', top: '50%' },
   },

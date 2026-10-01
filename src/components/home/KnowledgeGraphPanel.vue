@@ -4,6 +4,7 @@ import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseSwitch from '@/components/BaseSwitch.vue'
 import { graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
+import { relationPhrase } from '@/components/graphRelationPhrase'
 import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { RouterLink } from 'vue-router'
 import ForceGraph, { type NodeObject, type LinkObject } from 'force-graph'
@@ -555,10 +556,12 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
       popover.kind = '間接關聯（虛線）'
       popover.title = `${String(s)} ↔ ${String(t)}`
       popover.rows = [`兩邊都連到「${viaLabels}」`, '這是推算出來的，不是直接關係']
-    } else {
+    } else if (typeof l.source === 'object' && typeof l.target === 'object') {
+      // 不顯示英文述詞：用兩端的類別講成一句話（見 graphRelationPhrase.ts）
+      const phrase = relationPhrase(l.source, l.target)
       popover.kind = '直接關係'
-      popover.title = l.predicate ?? '（未命名的關係）'
-      popover.rows = [String(s), `→ ${String(t)}`]
+      popover.title = phrase.sentence
+      popover.rows = phrase.note ? [phrase.note] : []
     }
   }
   // force-graph 的 onNodeClick/onLinkClick 回呼給的 MouseEvent 是套件內部處理過的，
@@ -779,7 +782,9 @@ async function boot() {
         const viaLabels = (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id).join('、')
         return `${s} ↔ ${t}：間接關聯，兩邊都連到「${viaLabels}」（推算出來的，不是直接關係）`
       }
-      return `${l.predicate ?? '關聯'}：${s} → ${t}`
+      if (typeof l.source !== 'object' || typeof l.target !== 'object') return ''
+      const phrase = relationPhrase(l.source, l.target)
+      return phrase.note ? `${phrase.sentence}：${phrase.note}` : phrase.sentence
     })
     // 箭頭只在 hover 到端點節點時才畫：平常畫面線本來就密，箭頭常駐反而是
     // 雜訊；「這條線有沒有方向」是 hover 想細看某個節點關聯時才需要的資訊，
