@@ -60,6 +60,7 @@ When a new term is settled with the user, add a row here **and** a decision-regi
 ## Formats
 
 **Page subtitle** (the line under a page title)
+- **Only where the page's purpose isn't evident from its content** (the user, 2026-10-01, D-83). List pages whose content shows what they are — `/articles`, `/projects` — get no subtitle; the home page and `/graph` keep theirs. A page with no subtitle must still show some Chinese text above the fold (a count line, an empty state).
 - Describes what the page holds. **No usage instructions** — the controls are visible already
   (the user rejected 「…，可以用技術篩選」, 2026-10-01).
 - Put the information-carrying words first: "if users see only the first 2 words, they should

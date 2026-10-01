@@ -126,8 +126,13 @@ const folderArticles = computed(() => {
     <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
       示範資料（連不上後端，顯示的是填充內容，不是真的文章）
     </p>
+    <!-- 一篇已發布的文章都沒有時，兩種排列都只剩空白；頁面拿掉副標後連一句中文都沒有（D-83），
+         補一句空狀態 -->
+    <p v-if="timelineGroups.length === 0" class="py-16 text-center text-sm text-(--text-ink-muted)">
+      還沒有發布的文章。
+    </p>
     <!-- 時間軸：依日期線性掃視 -->
-    <div v-if="viewMode === 'timeline'" class="relative pl-7">
+    <div v-else-if="viewMode === 'timeline'" class="relative pl-7">
       <div class="absolute left-[5px] top-1.5 bottom-1.5 w-0.5 bg-(--border-shelf)"></div>
 
       <template v-for="group in timelineGroups" :key="group.month">
