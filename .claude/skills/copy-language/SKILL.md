@@ -67,12 +67,16 @@ When a new term is settled with the user, add a row here **and** a decision-regi
 - Full sentences, end with 。 (D-68). Explain what the reader is looking at and how to read it
   (colour, size, lines), not how it was built (D-76).
 
-**Admin and interactive microcopy** (patterns from `design:ux-copy`)
-- Buttons: start with a verb, name the outcome (「儲存草稿」, not 「送出」).
+**Admin pages** (article manage/editor, ontology edit pages — behind login)
+- **Functional wording is fine; the voice rules above don't apply.** The author is the only user
+  for now. The user, 2026-10-01: 「後台文案可以隨意或功能性一點 反正現在只有自己用」 (D-81).
+  No ux-review pass needed for admin-only copy (D-69 covers visitor-facing copy).
+- Settled terms (the table above) still apply, so the same thing isn't named two ways.
+- Revisit if anyone else gets an account.
+
+**Interactive microcopy on visitor pages** (patterns from `design:ux-copy`)
 - Errors: what happened + why + what to do (「文章清單載入失敗，重新整理再試一次。」 already follows it).
 - Empty states: what this is + why it's empty + how to start, when there is a way to start.
-- Confirmations: name the action and its consequence (「刪除這篇文章？刪除後無法復原」), label buttons
-  with the action, not 確定/取消.
 
 ## Claims must match the data
 
