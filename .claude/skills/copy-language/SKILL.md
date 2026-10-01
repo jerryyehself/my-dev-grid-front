@@ -100,7 +100,7 @@ the plugin itself was not installed.)
   2026-10-01, D-82). A metaphor that suits the reader and the page is welcome (the catalogue
   imagery works because the site really is one). Anything about the projects — what was built,
   what it used, what role, what result — must be literal and true: no metaphor standing in for
-  a fact, no invented example (see "Claims must match the data").
+  a fact, no invented example (see "Claims must match the data"). Real case, 2026-10-01: a reviewer suggested 「我一筆一筆記下來」 for About, but the backend's GitHub sync creates the technique–project (`uses`) and `specs` links automatically, so "I recorded each one" would be false.
 
 ## Process
 
