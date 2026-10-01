@@ -34,6 +34,27 @@ const selectedId = ref(typeof route.query.project === 'string' ? route.query.pro
 // 圖譜節點連過來帶的是後端 id（?implementation=<id>），要等專案載入後才對得到顯示用編號
 const wantedImplementationId = Number(route.query.implementation) || null
 const selected = computed(() => projects.value.find((p) => p.id === selectedId.value))
+// 沒帶 ?project／?implementation、讀者也還沒自己點的時候，詳情顯示的是清單第一筆（最新的專案）。
+// 以前沒有任何說明，讀者看不出為什麼是這一筆（模擬讀者審查）
+const userPicked = ref(Boolean(route.query.project || route.query.implementation))
+const isAutoSelected = computed(() => !userPicked.value && selected.value?.id === filteredProjects.value[0]?.id)
+// 篩選中的第一筆是「符合篩選裡最新的」，不一定是全部裡最新的（模擬讀者審查抓到標錯）
+const autoSelectedLabel = computed(() => (selectedTags.value.size > 0 ? '符合篩選的最新一筆' : '最新的專案'))
+
+// 手機版篩選面板預設收合：16 個專案的技術標籤展開後將近 700px，會把清單擠出第一屏
+// （模擬讀者審查）。桌機寬度一律展開，這個開關只在 md 以下出現
+const filterOpen = ref(false)
+const selectedTagList = computed(() => [...selectedTags.value])
+
+// 手機版清單和詳情上下堆疊，點了清單看不到詳情換了；點完捲到詳情。桌機兩欄並排，不捲
+const detailBox = ref<HTMLElement>()
+const pick = async (id: string) => {
+  selectedId.value = id
+  userPicked.value = true
+  if (window.matchMedia('(min-width: 768px)').matches) return
+  await nextTick()
+  detailBox.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 // 詳情裡的技術標籤：照篩選器的分類順序排；目前篩選中的技術加框，選了「Vue」就看得出這個專案用的是 Vue 3
 const selectedTechniqueTags = computed(() =>
   selected.value
@@ -94,7 +115,23 @@ watch([selectedId, filteredProjects], async () => {
            min-width:auto 撐開成內容原始寬度，標籤不會在格線寬度內換行、直接溢出。
            2026-09-13 用 Claude Design 畫布先確認過真實標籤內容換行後的對齊效果，見
            https://claude.ai/code/artifact/17ede728-b7b3-4b2d-9f0c-7bdd3a1e0490。 -->
-      <div class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 grid grid-cols-[64px_1fr] gap-x-3.5 gap-y-4 items-baseline">
+      <button
+        type="button"
+        class="md:hidden w-full mb-3 flex items-center justify-between gap-3 border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-4 py-3 text-left cursor-pointer"
+        :aria-expanded="filterOpen"
+        aria-controls="project-filter-panel"
+        @click="filterOpen = !filterOpen"
+      >
+        <span class="text-[14px] text-(--text-ink-main)">
+          依技術篩選<span v-if="selectedTags.size > 0" class="text-(--text-accent)">：{{ selectedTagList.join('、') }}</span>
+        </span>
+        <span aria-hidden="true" class="font-mono text-[13px] text-(--text-ink-muted)">{{ filterOpen ? '收合 ▴' : '展開 ▾' }}</span>
+      </button>
+      <div
+        id="project-filter-panel"
+        class="border border-(--border-shelf) rounded-[10px] bg-(--bg-paper-light) px-[22px] py-[18px] mb-5 md:grid grid-cols-[64px_1fr] gap-x-3.5 gap-y-4 items-baseline"
+        :class="filterOpen ? 'grid' : 'hidden'"
+      >
         <template v-for="group in filterGroups" :key="group.label">
           <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted)">
             {{ group.label }}
@@ -139,16 +176,25 @@ watch([selectedId, filteredProjects], async () => {
         </div>
       </div>
 
+      <!-- 筆數放在清單盒子外面：以前只在篩選時出現，而且排在捲動區最底下，要捲到底才看得到
+           （模擬讀者審查） -->
+      <p v-if="filteredProjects.length > 0" class="m-0 mb-2 text-[13px] text-(--text-ink-muted)" aria-live="polite">
+        <template v-if="selectedTags.size > 0">{{ filteredProjects.length }} / {{ projects.length }} 個專案符合篩選，</template>
+        <template v-else>{{ projects.length }} 個專案，</template>由新到舊排列
+      </p>
       <div v-if="filteredProjects.length === 0" class="py-16 text-center text-sm text-(--text-ink-muted)">
         沒有符合篩選條件的專案。
       </div>
 
+
       <div v-else class="grid grid-cols-1 md:grid-cols-[280px_minmax(0,1fr)] border border-(--border-shelf) rounded-xl overflow-hidden bg-(--bg-paper-light)">
-        <!-- 清單固定 max-h-80＋內部捲動：手機版是因為跟詳情面板上下堆疊，清單一長會把
+        <!-- 手機版高度刻意切在第四筆的一半（262px，每筆約 75px），露出半筆讓人看得出盒子可以往下捲；
+             剛好整數筆時讀者以為清單只有四筆（2026-10-01 模擬讀者審查）。
+             清單固定 max-h-80＋內部捲動：手機版是因為跟詳情面板上下堆疊，清單一長會把
              詳情面板擠到很下面；桌面版原本 md:max-h-none 讓清單自然展開，但跟首頁近況板
              改成固定高度後不一致，改成兩種寬度都套同一個高度上限，全站「清單裝在固定
              高度盒子裡」的慣例統一 -->
-        <div ref="listBox" class="max-h-80 overflow-y-auto border-b md:border-b-0 md:border-r border-(--border-shelf)">
+        <div ref="listBox" class="max-h-[262px] md:max-h-80 overflow-y-auto border-b md:border-b-0 md:border-r border-(--border-shelf)">
           <button
             v-for="proj in filteredProjects"
             :key="proj.id"
@@ -160,7 +206,7 @@ watch([selectedId, filteredProjects], async () => {
                 ? 'bg-(--bg-active-row) border-l-[3px] border-l-(--text-accent)'
                 : 'border-l-[3px] border-l-transparent hover:bg-(--bg-folder)/60'
             "
-            @click="selectedId = proj.id"
+            @click="pick(proj.id)"
           >
             <div class="flex items-center justify-between mb-1.5 font-mono text-[11px] text-(--text-ink-muted)">
               <span>{{ proj.id }}</span>
@@ -176,14 +222,11 @@ watch([selectedId, filteredProjects], async () => {
               {{ proj.title }}
             </div>
           </button>
-          <div v-if="selectedTags.size > 0" class="px-4.5 py-4 font-mono text-[11px] text-(--text-ink-muted) opacity-60">
-            {{ filteredProjects.length }} / {{ projects.length }} 個專案符合篩選
-          </div>
         </div>
 
-        <div v-if="selected" class="p-6 sm:p-8">
+        <div v-if="selected" ref="detailBox" class="p-6 sm:p-8 scroll-mt-20">
           <div class="flex items-center justify-between mb-5 font-mono text-[11px] tracking-wider text-(--text-ink-muted)">
-            <span>{{ selected.id }}</span>
+            <span>{{ selected.id }}<span v-if="isAutoSelected" class="ml-2 font-sans text-[13px] tracking-normal text-(--text-ink-body)">· {{ autoSelectedLabel }}</span></span>
             <BaseTag v-if="selected.statusType" :tone="selected.statusType === 'active' ? 'accent' : 'muted'">
               {{ selected.status }}
             </BaseTag>
