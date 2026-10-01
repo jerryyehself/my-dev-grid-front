@@ -35,8 +35,8 @@ import { useTheme } from '@/composables/useTheme'
 // 左上（最靠後）、Technique 不位移（在共用中心本身）、Implementation 位移到
 // 右下（最靠前）。位移量刻意遠小於每一層自己的節點範圍半徑，讓三層的節點雲
 // 大部分互相重疊——這才是「疊」在一起，不是分開排列；三個位移後的中心點連
-// 成一條直線，恰好通過共用中心，這條線就是概念上的 Z 軸，onRenderFramePre
-// 裡會把這條軸線實際畫出來，不是只讓使用者腦補。這是 2D canvas 上模擬「疊
+// 成一條直線，恰好通過共用中心，這條線就是概念上的 Z 軸（2026-10-01 起不再
+// 實際畫出來，只留排版，見 onRenderFramePre 的註解）。這是 2D canvas 上模擬「疊
 // 圖」的視覺手法，不是真的 3D（專案的 /graph 頁另外有 GraphPoc3D.vue 可做
 // 真的 3D，這裡刻意選 2D 的堆疊視覺，跟使用者確認過，見 D 版對話）。
 //
@@ -553,7 +553,7 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
     const t = typeof l.target === 'object' ? l.target.label : l.target
     if (l.derived) {
       const viaLabels = (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id).join('、')
-      popover.kind = '間接關聯（虛線）'
+      popover.kind = '間接關聯'
       popover.title = `${String(s)} ↔ ${String(t)}`
       popover.rows = [`兩邊都連到「${viaLabels}」`, '這是推算出來的，不是直接關係']
     } else if (typeof l.source === 'object' && typeof l.target === 'object') {
@@ -672,8 +672,9 @@ async function boot() {
     // 得見的設計，不用再腦補；型別是哪個看圓框顏色對照上面的色彩圖例就知道，
     // 不用在圓框旁邊另外浮一行文字——這行字先前跟節點 label 疊在同一個擁擠
     // 區，使用者反應「太混亂」，拿掉這個重複資訊來源比在旁邊硬塞文字更乾淨。
-    // 貫穿三層中心的那條對角線再疊上去，這條線才是「Z 軸」本身的視覺化
-    // （見檔頭註解的等角疊層說明）。
+    // 原本還有一條貫穿三層中心的黃銅色虛線（「Z 軸」），2026-10-01 使用者決定
+    // 拿掉：訪客看不懂、跟 hover 的 accent 撞色、畫面已經有圓框和間接關聯兩種
+    // 虛線。只拿掉畫線，三層沿對角線錯開的排版（depthOffset）不變。
     .onRenderFramePre((ctx) => {
       if (!layerTargetsCache) return
       for (const type of DEPTH_ORDER) {
@@ -688,24 +689,6 @@ async function boot() {
         ctx.setLineDash([])
         ctx.restore()
       }
-      // 貫穿三層共用中心的軸線：從最靠後那層的中心點畫到最靠前那層的中心點
-      // （兩端各延伸一小段，讓軸線露出圓框外，看得出它真的貫穿整疊），這條
-      // 線就是使用者要的「Z 軸」本身，不是只靠三個圓框重疊隱含。
-      const back = layerTargetsCache[DEPTH_ORDER[0]!]
-      const front = layerTargetsCache[DEPTH_ORDER[DEPTH_ORDER.length - 1]!]
-      const dx = front.cx - back.cx
-      const dy = front.cy - back.cy
-      const len = Math.hypot(dx, dy) || 1
-      const ext = 34
-      ctx.save()
-      ctx.beginPath()
-      ctx.moveTo(back.cx - (dx / len) * ext, back.cy - (dy / len) * ext)
-      ctx.lineTo(front.cx + (dx / len) * ext, front.cy + (dy / len) * ext)
-      ctx.setLineDash([3, 4])
-      ctx.lineWidth = 1.5
-      ctx.strokeStyle = withAlpha(css('--text-accent'), 0.5)
-      ctx.stroke()
-      ctx.restore()
     })
     .nodeCanvasObjectMode(() => 'replace')
     .nodeCanvasObject((n, ctx, globalScale) => {
