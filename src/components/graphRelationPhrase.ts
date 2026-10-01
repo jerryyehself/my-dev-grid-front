@@ -41,7 +41,7 @@ export function relationPhrase(a: PhraseNode, b: PhraseNode): RelationPhrase {
     }
   }
   return {
-    sentence: `${a.label} 與 ${b.label}`,
+    sentence: `「${a.label}」與「${b.label}」`,
     note: a.domainType === b.domainType ? `兩個${TYPE_LABEL[a.domainType]}之間的關係` : null,
   }
 }

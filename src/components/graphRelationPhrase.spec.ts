@@ -25,7 +25,7 @@ describe('relationPhrase', () => {
 
   it('同類之間不放動詞，補一句是哪一類之間的關係', () => {
     expect(relationPhrase(tech, { domainType: 'technique', label: 'JavaScript' })).toEqual({
-      sentence: 'Vue 與 JavaScript',
+      sentence: '「Vue」與「JavaScript」',
       note: '兩個技術之間的關係',
     })
   })

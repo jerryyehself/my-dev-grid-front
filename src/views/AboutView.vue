@@ -73,7 +73,7 @@
           <p
             class="lg:col-start-7 lg:col-span-6 m-0 lg:mt-[34px] text-[17px] lg:text-[18px] leading-[1.75] text-(--text-ink-main)"
           >
-            每篇文章、每項技術、每個專案都登記在目錄裡，彼此的關係也一起登記，而且兩頭都算數：從一篇文章，能找到它寫了哪些技術；從一項技術，也能反查它出現在哪些文章和專案。
+            每篇文章、每項技術、每個專案都登記在目錄裡，彼此的關係也一起登記，而且兩頭都算數：從一篇文章，能找到它說明的技術；從一項技術，也能反查說明它的文章，和用到它的專案。
           </p>
         </div>
 
@@ -143,6 +143,17 @@
                 title="這篇文章"
                 end
               />
+              <!-- 手機直排時兩支箭頭上下疊，第二支看起來像從「這篇文章」出發（模擬讀者審查 2026-10-01），
+                   所以手機版在「用在」前面再放一次 Vue 3；桌機版 Vue 3 跨兩列，兩支箭頭共用同一個起點 -->
+              <div class="sm:hidden mt-3">
+                <EntryChip
+                  :code="CLASSES.tech.code"
+                  :label="CLASSES.tech.name"
+                  :fill="CLASSES.tech.fill"
+                  title="Vue 3"
+                  focus
+                />
+              </div>
               <RelationArrow label="用在" predicate="usedBy" />
               <EntryChip
                 :code="CLASSES.impl.code"
@@ -463,8 +474,8 @@ const DIRECTIONS: { value: Dir; label: string }[] = [
 const dir = ref<Dir>('forward')
 const sentence = computed(() =>
   dir.value === 'forward'
-    ? '從這篇文章，找到它說明的技術：Vue 3。'
-    : '從 Vue 3 反查，列出說明它的文章、用到它的專案，這篇也在裡面。',
+    ? '從這篇文章，找到它說明的技術：Vue\u00a03。'
+    : '從 Vue\u00a03 反查，列出說明它的文章、用到它的專案，這篇也在裡面。',
 )
 
 const CLASSES = {
