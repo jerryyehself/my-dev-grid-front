@@ -299,6 +299,12 @@ Copy rules checked in the same pass:
   own color. Hover stays `--text-accent`, so the two never collide.
 - Don't tell touch users to hover. Hover-only hints ("滑到節點上…") sit in a
   `[@media(hover:hover)]` span.
+- Relation arrows are one-way. One arrow per direction, pointing from subject
+  to object, labelled with that direction's predicate. Never draw a
+  double-headed arrow labelled "specs / specifiedBy": nobody can tell which
+  name goes with which direction. The backend's `uses` was defined backwards
+  for months and got misread exactly this way (2026-09-30, user decision; the
+  ER model diagram and the About class diagram were both changed).
 
 Sources, and which parts are judgment:
 - **11px label floor**: sourced. Apple HIG sets 11pt as the minimum text

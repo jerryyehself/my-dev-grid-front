@@ -73,7 +73,7 @@
           <p
             class="lg:col-start-7 lg:col-span-6 m-0 lg:mt-[34px] text-[17px] lg:text-[18px] leading-[1.75] text-(--text-ink-main)"
           >
-            每篇文章、每項技術、每個專案都登記在目錄裡，彼此的關係也一起登記，而且兩頭都算數：從一篇文章，能找到它寫了哪些技術；從一項技術，也能反查它出現在哪些文章和專案。
+            每篇文章、每項技術、每個專案都登記在目錄裡，彼此的關係也一起登記，而且兩頭都算數：從一篇文章，能找到它說明的技術；從一項技術，也能反查說明它的文章，和用到它的專案。
           </p>
         </div>
 
@@ -99,7 +99,7 @@
           </div>
 
           <div class="min-h-[224px] flex flex-col justify-center">
-            <!-- 從文章看：文件 —寫到→ 技術 -->
+            <!-- 從文章看：文件 —說明→ 技術 -->
             <div
               v-if="dir === 'forward'"
               class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-[3fr_5fr_3fr] sm:gap-x-7 sm:items-end"
@@ -111,17 +111,17 @@
                 title="這篇文章"
                 focus
               />
-              <RelationArrow label="寫到" predicate="specs" />
+              <RelationArrow label="說明" predicate="specs" />
               <EntryChip
                 :code="CLASSES.tech.code"
                 :label="CLASSES.tech.name"
                 :fill="CLASSES.tech.fill"
-                title="vue3"
+                title="Vue 3"
                 end
               />
             </div>
 
-            <!-- 從技術看：技術 —被寫到→ 文件、技術 —用在→ 實作。反向是兩條關係，所以是兩支箭頭 -->
+            <!-- 從技術看：技術 —被說明→ 文件、技術 —用在→ 實作。反向是兩條關係，所以是兩支箭頭 -->
             <div
               v-else
               class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-[3fr_5fr_3fr] sm:grid-rows-[auto_auto] sm:gap-x-7 sm:gap-y-[18px] sm:items-end"
@@ -131,11 +131,11 @@
                   :code="CLASSES.tech.code"
                   :label="CLASSES.tech.name"
                   :fill="CLASSES.tech.fill"
-                  title="vue3"
+                  title="Vue 3"
                   focus
                 />
               </div>
-              <RelationArrow label="被寫到" predicate="specifiedBy" />
+              <RelationArrow label="被說明" predicate="specifiedBy" />
               <EntryChip
                 :code="CLASSES.doc.code"
                 :label="CLASSES.doc.name"
@@ -143,7 +143,18 @@
                 title="這篇文章"
                 end
               />
-              <RelationArrow label="用在" predicate="uses" />
+              <!-- 手機直排時兩支箭頭上下疊，第二支看起來像從「這篇文章」出發（模擬讀者審查 2026-10-01），
+                   所以手機版在「用在」前面再放一次 Vue 3；桌機版 Vue 3 跨兩列，兩支箭頭共用同一個起點 -->
+              <div class="sm:hidden mt-3">
+                <EntryChip
+                  :code="CLASSES.tech.code"
+                  :label="CLASSES.tech.name"
+                  :fill="CLASSES.tech.fill"
+                  title="Vue 3"
+                  focus
+                />
+              </div>
+              <RelationArrow label="用在" predicate="usedBy" />
               <EntryChip
                 :code="CLASSES.impl.code"
                 :label="CLASSES.impl.name"
@@ -170,7 +181,8 @@
     </section>
 
     <!-- ④ CLASS NUMBERS：三大類與它們之間的述詞。述詞以後端 RelationSeeder 為準
-         （文件→技術 specs、文件→實作 documents、技術→實作 uses，技術當主詞是本專案慣例） -->
+         （文件→技術 specs、文件→實作 documents、技術→實作 usedBy。usedBy 是「實作 uses 技術」的反向；
+         2026-09-30 以前後端把這一對定義反了，技術→實作叫 uses） -->
     <section
       class="bg-(--bg-band-strong) pt-16 pb-16 lg:pt-24 lg:pb-[104px]"
       style="
@@ -201,8 +213,11 @@
           </h2>
         </div>
 
-        <!-- 桌機：三張分類卡排成三角形，連線是雙向箭頭。座標照設計稿的 1088×470 畫框換算成百分比，
-             窄一點的桌機（1024 起）等比例縮 -->
+        <!-- 桌機：三張分類卡排成三角形。座標照設計稿的 1088×470 畫框換算成百分比，
+             窄一點的桌機（1024 起）等比例縮。
+             連線是單向箭頭，從主詞指向受詞，標的是那個方向的述詞。設計稿畫的是雙向箭頭加「specs / specifiedBy」，
+             但「說明」「用在」只讀得通一個方向，雙向箭頭看不出哪個名字是哪個方向——後端的 uses 就是這樣
+             被讀反的（2026-09-30 使用者決定拆成單向，ER model 概念圖同一天也改了）。反方向在上面「從兩頭看」 -->
         <div class="hidden lg:block relative w-full max-w-[1088px] aspect-[1088/470] self-center">
           <svg
             viewBox="0 0 1088 470"
@@ -225,7 +240,6 @@
             <g
               stroke="currentColor"
               stroke-width="2"
-              marker-start="url(#about-class-arrow)"
               marker-end="url(#about-class-arrow)"
             >
               <line x1="203" y1="346" x2="466" y2="124" />
@@ -242,7 +256,7 @@
           />
           <RelationLabel
             v-for="r in CLASS_RELATIONS"
-            :key="r.predicates"
+            :key="r.predicate"
             :relation="r"
             class="absolute -translate-x-1/2 -translate-y-1/2"
             :style="{ left: r.pos.left, top: r.pos.top }"
@@ -257,10 +271,10 @@
           <ul class="m-0 p-0 list-none flex flex-col gap-3">
             <li
               v-for="r in CLASS_RELATIONS"
-              :key="r.predicates"
+              :key="r.predicate"
               class="flex flex-wrap items-center gap-3"
             >
-              <span class="text-[15px] text-(--text-on-band)">{{ r.from }} ↔ {{ r.to }}</span>
+              <span class="text-[15px] text-(--text-on-band)">{{ r.from }} → {{ r.to }}</span>
               <RelationLabel :relation="r" />
             </li>
           </ul>
@@ -271,7 +285,7 @@
           :style="{ borderColor: mix('--text-on-band', 18) }"
         >
           <span class="text-[16px] text-(--text-on-band)">
-            三類之間的關係都是雙向登記的。實際的每一筆資料和連結，在知識圖譜裡看。
+            每條關係都有反方向：文件「說明」技術，反過來就是技術「被說明」。實際的每一筆資料和連結，在知識圖譜裡看。
           </span>
           <router-link
             to="/graph"
@@ -460,8 +474,8 @@ const DIRECTIONS: { value: Dir; label: string }[] = [
 const dir = ref<Dir>('forward')
 const sentence = computed(() =>
   dir.value === 'forward'
-    ? '從這篇文章，找到它寫到的技術：vue3。'
-    : '從 vue3 反查，列出寫到它的文章、用到它的專案，這篇也在裡面。',
+    ? '從這篇文章，找到它說明的技術：Vue\u00a03。'
+    : '從 Vue\u00a03 反查，列出說明它的文章、用到它的專案，這篇也在裡面。',
 )
 
 const CLASSES = {
@@ -491,26 +505,29 @@ const CLASS_LIST = [CLASSES.doc, CLASSES.tech, CLASSES.impl]
 type ClassDef = (typeof CLASS_LIST)[number]
 
 // 標籤座標同樣是設計稿 1088×470 畫框裡的中心點換算成百分比
+// 動詞跟首頁知識網路連線的說明是同一套（graphRelationPhrase.ts）。specs 原本照設計稿譯「寫到」，
+// 2026-10-01 改成「說明」：資料裡 specs 的主詞是官方文件網站，意思是「這份文件是這個技術的說明」，
+// 「寫到」是文章提到某技術，是另一種關係。完整的述詞對照表要先查來源詞彙，還沒做（D-73）
 const CLASS_RELATIONS = [
   {
     from: '文件',
     to: '技術',
-    label: '寫到',
-    predicates: 'specs / specifiedBy',
+    label: '說明',
+    predicate: 'specs',
     pos: { left: '30.70%', top: '50%' },
   },
   {
     from: '文件',
     to: '實作',
     label: '記錄',
-    predicates: 'documents / documentedBy',
+    predicate: 'documents',
     pos: { left: '50%', top: '87.45%' },
   },
   {
     from: '技術',
     to: '實作',
     label: '用在',
-    predicates: 'uses / used',
+    predicate: 'usedBy',
     pos: { left: '69.30%', top: '50%' },
   },
 ]
@@ -685,7 +702,7 @@ const RelationLabel = defineComponent({
           h(
             'span',
             { class: [MONO, 'text-[13px] text-(--accent-brass)'] },
-            props.relation.predicates,
+            props.relation.predicate,
           ),
         ],
       )
