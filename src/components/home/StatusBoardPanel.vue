@@ -142,11 +142,7 @@ onMounted(async () => {
         </RouterLink>
       </div>
     </div>
-
-    <!-- 給訪客的讀法說明。原本這裡是開發筆記（比設計稿少了哪一欄、為什麼），2026-09-30 使用者
-         決定改成對應的說明；那段取捨的紀錄在 design-artifacts.md「近期焦點」那一列 -->
-    <p class="mt-4 text-[14px] leading-relaxed text-(--text-ink-muted)">
-      專案右側的標籤是 repo 在 GitHub 上有沒有封存（Active／Archived）；文章只列已發布的。
-    </p>
+    <!-- 這裡原本有一行讀法說明（Active／Archived 是 GitHub 封存狀態、文章只列已發布），
+         2026-10-01 使用者決定整句拿掉：用語是開發者的，「只列已發布」也是給開發者看的資訊 -->
   </section>
 </template>
