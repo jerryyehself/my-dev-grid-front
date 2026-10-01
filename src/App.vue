@@ -46,7 +46,9 @@ watchEffect(() => {
       {{ pageTitle }}
     </template>
 
-    <template #description>
+    <!-- 沒有副標的頁面整個 slot 不傳，MainLayout 的 v-if="$slots.description" 才不會留一個空段落。
+         內容本身看得出用途的頁面（文章、專案清單）不放副標（D-83） -->
+    <template v-if="pageSubtitle" #description>
       {{ pageSubtitle }}
     </template>
 

@@ -114,7 +114,8 @@ const folderArticles = computed(() => {
       </AuthOnly>
       <!-- ml-auto：沒登入時左邊的「管理」不存在，justify-between 只剩一個子元素會把切換鈕擠到左邊。
            全站統一的「幾選一」切換（D-66） -->
-      <BaseSegmented v-model="viewMode" :options="VIEW_MODES" label="文章排列方式" class="ml-auto" />
+      <!-- 沒有文章時不顯示排列切換：空頁面上兩顆沒有東西可排的按鈕只會讓人困惑（模擬讀者審查，D-83） -->
+      <BaseSegmented v-if="articles.length > 0" v-model="viewMode" :options="VIEW_MODES" label="文章排列方式" class="ml-auto" />
     </div>
 
     <BaseLoadingBlock v-if="!ready && !loadError" height="240px">載入中…</BaseLoadingBlock>
@@ -126,8 +127,13 @@ const folderArticles = computed(() => {
     <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
       示範資料（連不上後端，顯示的是填充內容，不是真的文章）
     </p>
+    <!-- 一篇已發布的文章都沒有時，兩種排列都只剩空白；頁面拿掉副標後連一句中文都沒有（D-83），
+         補一句空狀態 -->
+    <p v-if="timelineGroups.length === 0" class="py-12 text-center text-[15px] text-(--text-ink-body)">
+      還沒有發布的文章，寫好的文章會依日期排在這裡。
+    </p>
     <!-- 時間軸：依日期線性掃視 -->
-    <div v-if="viewMode === 'timeline'" class="relative pl-7">
+    <div v-else-if="viewMode === 'timeline'" class="relative pl-7">
       <div class="absolute left-[5px] top-1.5 bottom-1.5 w-0.5 bg-(--border-shelf)"></div>
 
       <template v-for="group in timelineGroups" :key="group.month">
