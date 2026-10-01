@@ -1,0 +1,126 @@
+/* 複製自 src/assets/css/variables.css（develop，2026-10-01）——mockup 專用，不要回頭改這份當真值。 */
+/* ==========================================================================
+   全站配色：藏青第二版（decision-register D-59，2026-09-29）
+   卡紙底 60%／藏青 30%（導覽列、色帶、淡藏青卡片）／酒紅 10%，黃銅當第三色。
+   色值不是手調的：由 design/palettes/tools/ 的腳本用 Leonardo 依目標對比反推、
+   culori 補明度、dataviz 的 validate_palette.js 驗證節點分類色，兩個主題各算一次。
+   產生方式、每組文字/底色的對比結果見 design/palettes/README.md 與 palettes.json（B2）。
+   要改色請改腳本的種子色再重跑，不要直接改這裡的數字——改一個值就會破壞整組的對比驗證。
+
+   取代的舊配色：淺色「米白＋磚紅」（#fcfaf2／#b45309，就是 AI 生成設計最常見的樣板，
+   而且 #b45309 在 --bg-paper-dark 上只有 4.40:1，小字沒過 AA）、深色 Gruvbox。
+   ========================================================================== */
+
+/* 📚 1. 淺色主題 */
+:root,
+.theme-library {
+    /* 📄 紙張底色 */
+    --bg-paper-light: #f6f5f2;
+    --bg-paper-dark: #e4ebf5;
+
+    /* 導覽列與頁尾（藏青書脊） */
+    --bg-nav-footer: #162541;
+    --text-nav-footer: #e8e3dd;
+    --text-nav-hover: #c99a4d;
+
+    /* 🎛️ 導覽列毛玻璃（跟配色無關的控制值） */
+    --nav-bg-opacity: 0.65;
+    /* 調整此數值控制透明度 (0.0 到 1.0) */
+    --nav-blur: 12px;
+    /* 調整此數值控制毛玻璃模糊度 (0px 代表關閉) */
+
+    /* ✒️ 文字與線條 */
+    --text-ink-main: #202839;
+    --text-ink-body: #3e4758;
+    --text-ink-muted: #596273;
+    --text-accent: #922e39;
+    /* 酒紅：淺色主題的強調色 */
+    --border-shelf: rgba(22, 37, 65, 0.14);
+    --bg-folder: #eaeff8;
+    /* 淡藏青卡片底 */
+    --bg-active-row: rgba(146, 46, 57, 0.08);
+    /* Projects 選中列專用的極淡 accent 透染，語意跟 --bg-folder 不同、不能借用 */
+    --focus-ring: rgba(146, 46, 57, 0.16);
+    /* 輸入框聚焦時的外暈 */
+
+    /* 🕸️ 知識圖譜分類色：validate_palette.js --pairs all 驗證過（節點-連結圖任兩型都可能相鄰） */
+    --node-doc: #a33949;
+    --node-tech: #009393;
+    --node-impl: #534294;
+    --edge-real: #6d7686;
+    --overlay-nodata: #adb1b7;
+    --canvas-bg: #e4ebf5;
+    --canvas-dot: rgba(22, 37, 65, 0.1);
+    --node-shadow: rgba(22, 37, 65, 0.24);
+
+    /* 🧱 內容區的色帶與第三色（D-59 新增）。
+       淺色主題裡 --bg-band-strong/--text-on-band 跟導覽列同值、--accent-brass 跟 --text-nav-hover 同值，
+       但語意不同（內容區色帶 vs 導覽列），分開命名才能各自調整，不要改成互相引用。 */
+    --bg-band-strong: #162541;
+    --text-on-band: #e8e3dd;
+    --accent-brass: #c99a4d;
+    /* 黃銅：字標斜線、色帶上的強調、框線 */
+    --accent-secondary: #8d651e;
+    /* 第二強調色：淺色主題是深黃銅，深色主題反過來是淡酒紅 */
+    /* 放白字的分類號色塊（0000／1000／2000）。跟 --node-* 分開：這組是針對白字 4.5:1 驗證的，
+       兩個主題同值 */
+    --cat-fill-doc: #b34f57;
+    --cat-fill-tech: #007d7d;
+    --cat-fill-impl: #7264b3;
+
+    /* 🔘 「幾選一」切換的選中狀態（D-66，2026-09-30），只給 BaseSegmented 用。淺色主題是藏青實心，
+       深色主題改黃銅：深色主題的頁面底色本身就是藏青，藏青實心會融進背景。
+       選中文字對比：淺色 12:1、深色 8.6:1 */
+    --bg-selected: #162541;
+    --text-on-selected: #e8e3dd;
+
+    /* ⚠️ 錯誤訊息（2026-09-29 追加）：表單欄位錯誤、載入失敗、登入錯誤。
+       跟 --text-accent 刻意分開——欄位標籤是強調色，錯誤就在它正下方，顏色太近就不顯眼
+       （腳本要求兩者 OKLab ΔE ≥ 0.1）。對卡紙底、淡藏青底、卡片底都 ≥ 5:1 */
+    --text-error: #c70d12;
+}
+
+/* 🕯️ 2. 深色主題（class 名稱沿用 .theme-terminal，useTheme 與測試都靠它） */
+.theme-terminal {
+    --bg-paper-light: #1d232d;
+    --bg-paper-dark: #0d1529;
+
+    --bg-nav-footer: #040a1a;
+    --text-nav-footer: #cec9c3;
+    --text-nav-hover: #b38637;
+
+    --nav-bg-opacity: 0.95;
+    --nav-blur: 0px;
+
+    --text-ink-main: #e8edf6;
+    --text-ink-body: #c8ced9;
+    --text-ink-muted: #99a0ad;
+    --text-accent: #d7ac66;
+    /* 深色主題改用黃銅當強調色 */
+    --border-shelf: rgba(179, 134, 55, 0.2);
+    --bg-folder: #1e2c44;
+    --bg-active-row: rgba(215, 172, 102, 0.12);
+    --focus-ring: rgba(215, 172, 102, 0.22);
+
+    --node-doc: #ad4251;
+    --node-tech: #00a7a7;
+    --node-impl: #8071c8;
+    --edge-real: #6c7585;
+    --overlay-nodata: #3f4247;
+    --canvas-bg: #0d1529;
+    --canvas-dot: rgba(179, 134, 55, 0.1);
+    --node-shadow: rgba(0, 0, 0, 0.5);
+
+    --bg-band-strong: #0d1529;
+    --text-on-band: #d6d2cb;
+    --accent-brass: #b38637;
+    --accent-secondary: #cd7e83;
+    --cat-fill-doc: #b34f57;
+    --cat-fill-tech: #007d7d;
+    --cat-fill-impl: #7264b3;
+
+    --bg-selected: #d7ac66;
+    --text-on-selected: #0d1529;
+
+    --text-error: #e57d71;
+}

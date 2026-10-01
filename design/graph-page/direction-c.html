@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/graph 方向 C：目錄索引＋局部圖</title>
+<!--
+  方向 C「目錄索引＋局部圖」（catalogue index + focus graph）
+  - 左邊是全部 18 筆的索引，依三大類分組，每筆右邊是它有幾條直接關係（像書後索引的頁碼）。
+    索引就是這個網站本來的樣子（一份目錄），也是圖的文字版：手機、螢幕閱讀器、不想拖圖的人都能用
+  - 點索引或點圖上的節點 = 聚焦：圖只亮這個節點和相連的節點（「範圍」可切 1 層／2 層／全部，
+    參考 Obsidian 的 local graph）
+  - 路徑查詢：上方一條「從…到…」，也可以從聚焦卡直接「設為起點／終點」
+  - 手機：圖在上、聚焦卡、再來是完整索引（可以完全不碰圖就讀完整份目錄）
+  網址參數：?theme=dark、?state=path、?view=3d
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@700&family=Noto+Serif+TC:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">
+<link rel="stylesheet" href="shared/tokens.css">
+<link rel="stylesheet" href="shared/chrome.css">
+<style>
+  :root { --content-w: 1200px; }
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
+  .index { border: 1px solid var(--border-shelf); border-radius: 12px; background: var(--bg-paper-light); }
+  .index .ihead { padding: 14px 16px 10px; border-bottom: 1px solid var(--border-shelf); display: grid; gap: 10px; }
+  .index .ihead .t { display: flex; align-items: baseline; justify-content: space-between; }
+  .index .field { min-height: 36px; }
+  .grp { padding: 8px 0 6px; }
+  .grp + .grp { border-top: 1px solid var(--border-shelf); }
+  .grp h3 { margin: 4px 16px 4px; font-size: 13px; letter-spacing: .05em; font-weight: 700; color: var(--text-ink-main); display: flex; align-items: center; gap: 8px; }
+  .grp h3 .n { font-weight: 400; color: var(--text-ink-muted); }
+  .entry { display: flex; align-items: baseline; gap: 6px; padding: 5px 16px; font-size: 14px; color: var(--text-ink-body); }
+  .entry .name { white-space: nowrap; }
+  .entry .lead { flex: 1; border-bottom: 1px dotted color-mix(in srgb, var(--text-ink-muted) 55%, transparent); transform: translateY(-4px); min-width: 12px; }
+  .entry .cnt { font-family: var(--font-stamp); font-size: 13px; color: var(--text-ink-muted); font-variant-numeric: tabular-nums; }
+  .entry.on { background: var(--bg-active-row); color: var(--text-ink-main); font-weight: 600; }
+  .entry.on .cnt { color: var(--text-accent); }
+  .entry.near .name { color: var(--text-ink-main); }
+  .entry .stop { display: none; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; font-family: var(--font-mono); align-items: center; justify-content: center; background: var(--text-accent); color: var(--bg-paper-light); margin-left: -2px; }
+  [data-state="path"] .entry.onpath .stop { display: inline-flex; }
+  [data-state="path"] .entry.onpath { background: var(--bg-active-row); color: var(--text-ink-main); font-weight: 600; }
+  [data-state="path"] .entry.on:not(.onpath) { background: none; font-weight: 400; }
+  .entry .dot { align-self: center; }
+  .ifoot { padding: 10px 16px 12px; border-top: 1px solid var(--border-shelf); font-size: 13px; color: var(--text-ink-muted); }
+
+  .controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+  .controls .grow { flex: 1; }
+  .pathbar { display: grid; grid-template-columns: auto 1fr 28px 1fr; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .pathbar .field { min-height: 38px; }
+  .swap { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-shelf); display: inline-flex; align-items: center; justify-content: center; color: var(--text-ink-body); background: var(--bg-paper-light); }
+  .stage { height: 520px; }
+  .zoom { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; padding: 4px; }
+  .zoom .icon-btn + .icon-btn { border-top: 1px solid var(--border-shelf); border-radius: 0; }
+  .keyline { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--text-ink-body); background: color-mix(in srgb, var(--canvas-bg) 85%, transparent); padding: 4px 8px; border-radius: 8px; }
+  .keyline span { display: inline-flex; align-items: center; gap: 6px; }
+  .focus { margin-top: 14px; border: 1px solid var(--border-shelf); border-radius: 12px; background: var(--bg-paper-light); padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; }
+  .focus .title { font-size: 18px; font-weight: 700; color: var(--text-ink-main); margin: 0; }
+  .focus ul { grid-column: 1 / -1; list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .focus li { font-size: 13px; color: var(--text-ink-body); border-top: 1px solid var(--border-shelf); padding-top: 8px; }
+  .focus li .pred { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--text-ink-muted); margin-top: 2px; }
+  .focus .acts { display: flex; gap: 8px; align-items: flex-start; }
+  .btn { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--text-ink-main) 35%, transparent); font-size: 13px; color: var(--text-ink-main); white-space: nowrap; }
+  .pathcard { margin-top: 14px; border: 1px solid var(--border-shelf); border-radius: 12px; background: var(--bg-paper-light); padding: 14px 16px; }
+  .pathcard .route { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; }
+  .below { margin-top: 18px; display: grid; gap: 8px; }
+  .note { font-size: 14px; line-height: 1.6; color: var(--text-ink-muted); margin: 0; }
+  [data-state="path"] .explore-only, [data-state="explore"] .path-only { display: none !important; }
+  [data-view="3d"] .two-d-only, [data-view="2d"] .three-d-only { display: none !important; }
+  .m-only { display: none; }
+  @media (max-width: 767px) {
+    .layout { display: flex; flex-direction: column; gap: 14px; }
+    .index { order: 2; }
+    .main { order: 1; width: 100%; }
+    .stage { height: 380px; margin: 0 -16px; border-radius: 0; border-left: 0; border-right: 0; }
+    .pathbar { grid-template-columns: 1fr 28px 1fr; }
+    .pathbar .lbl-accent { display: none; }
+    .focus { grid-template-columns: 1fr; }
+    .focus ul { grid-template-columns: 1fr; }
+    .keyline { display: none; }
+    .m-only { display: flex; }
+    .pathcard .route { display: block; }
+  }
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<div id="page-head"></div>
+<main class="content">
+  <div class="layout">
+    <aside class="index">
+      <div class="ihead">
+        <div class="t"><h2 class="section-h">目錄索引</h2><span class="lbl">18 筆・右邊是關係數</span></div>
+        <div class="field empty" id="ff">找節點</div>
+      </div>
+      <div id="groups"></div>
+      <div class="ifoot">點一筆，圖上只亮它和相連的節點。</div>
+    </aside>
+
+    <div class="main">
+      <div class="controls">
+        <span id="seg"></span>
+        <span class="lbl two-d-only">範圍</span>
+        <span class="two-d-only" id="depth"></span>
+        <span class="grow"></span>
+        <span class="demo-badge">示範資料</span>
+      </div>
+      <div class="pathbar">
+        <span class="lbl-accent">路徑</span>
+        <div class="field explore-only empty" id="f1">從…</div>
+        <div class="field path-only"><span class="dot documentation"></span>PHP 官方文件<span class="x">×</span></div>
+        <span class="swap" id="sw" aria-label="交換起訖點"></span>
+        <div class="field explore-only empty" id="f2">到…</div>
+        <div class="field path-only"><span class="dot implementation"></span>my-dev-grid-front<span class="x">×</span></div>
+      </div>
+
+      <div class="stage">
+        <svg class="graph" id="g"></svg>
+        <div class="zoom float-card">
+          <span class="icon-btn" aria-label="放大" id="z1"></span>
+          <span class="icon-btn" aria-label="縮小" id="z2"></span>
+          <span class="icon-btn" aria-label="顯示全部" id="z3"></span>
+        </div>
+        <div class="keyline">
+          <span><span class="dot documentation"></span>文件</span>
+          <span><span class="dot technique"></span>技術</span>
+          <span><span class="dot implementation"></span>實作</span>
+          <span><span id="k-arrow"></span>直接關係</span>
+          <span><span id="k-size"></span>關係越多越大</span>
+        </div>
+      </div>
+
+      <div class="focus explore-only">
+        <div>
+          <div class="lbl">技術・聚焦中</div>
+          <p class="title">PHP</p>
+          <p class="sentence">3 條直接關係，連到 3 個節點。</p>
+        </div>
+        <div class="acts"><span class="btn">設為起點</span><span class="btn">設為終點</span></div>
+        <ul>
+          <li>「PHP 官方文件」說明「PHP」<span class="pred">specs</span></li>
+          <li>「PHP」用在「my-dev-grid」<span class="pred">usedBy</span></li>
+          <li>「laravel」與「PHP」<span class="pred">requires</span></li>
+        </ul>
+      </div>
+
+      <div class="pathcard path-only">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px"><h2 class="section-h">路徑</h2><span class="lbl">5 個節點、4 段關係</span></div>
+        <div id="route"></div>
+      </div>
+
+      <div class="below">
+        <p class="sentence muted two-d-only" style="font-size:13px"><span>滑到節點上看相連的節點・</span>點節點聚焦・拖曳節點調整位置</p>
+        <p class="note">每個點是目錄裡的一筆：顏色分文件、技術、實作三大類，直接關係越多點越大。每條實線是一筆直接關係，箭頭是關係的方向，例如文件說明技術、技術用在實作。首頁的<a href="#">知識網路</a>是精簡版，可以打開「間接關聯」；這裡只畫直接關係。</p>
+        <p class="note" style="color:var(--text-accent)">示範資料：連不上後端，顯示的是存好的資料快照，不是即時資料。</p>
+      </div>
+    </div>
+  </div>
+</main>
+<div id="footer"></div>
+
+<script src="shared/chrome.js"></script>
+<script src="shared/graph-data.js"></script>
+<script src="shared/mock-graph.js"></script>
+<script>
+  renderChrome()
+  const mobile = innerWidth < 768
+  document.getElementById('seg').innerHTML = SEG(MOCK.view)
+  document.getElementById('depth').innerHTML = `<div class="seg" role="group" aria-label="範圍"><span class="on">相連 1 層</span><span>2 層</span><span>全部</span></div>`
+  for (const id of ['f1', 'f2', 'ff']) document.getElementById(id).insertAdjacentHTML('afterbegin', SEARCH_ICON)
+  document.getElementById('sw').innerHTML = SWAP_ICON
+  document.getElementById('z1').innerHTML = ICON.plus
+  document.getElementById('z2').innerHTML = ICON.minus
+  document.getElementById('z3').innerHTML = ICON.fit
+  document.getElementById('k-arrow').innerHTML = ARROW_KEY
+  document.getElementById('k-size').innerHTML = SIZE_KEY
+  document.getElementById('route').innerHTML = routeHTML()
+
+  // 索引：三大類分組，組內依關係數由多到少
+  const focusId = 'technique-1'
+  const near = GRAPH_NEIGHBORS[focusId]
+  let html = ''
+  for (const t of ['documentation', 'technique', 'implementation']) {
+    const items = GRAPH.nodes.filter((n) => n.type === t).sort((a, b) => b.degree - a.degree || a.label.localeCompare(b.label))
+    html += `<div class="grp"><h3><span class="dot ${t}"></span>${TYPE_LABEL[t]}<span class="n">${items.length}</span></h3>`
+    for (const n of items) {
+      const k = PATH.indexOf(n.id)
+      const cls = [n.id === focusId ? 'on' : '', near.has(n.id) ? 'near' : '', k >= 0 ? 'onpath' : ''].join(' ')
+      html += `<div class="entry ${cls}"><span class="stop">${k + 1}</span><span class="name">${n.label}</span><span class="lead"></span><span class="cnt">${n.degree}</span></div>`
+    }
+    html += '</div>'
+  }
+  document.getElementById('groups').innerHTML = html
+
+  const svg = document.getElementById('g')
+  const W = svg.clientWidth
+  const opts = mobile ? { pad: { l: 24, r: 24, t: 40, b: 30 }, scaleMax: 1.3 } : { pad: { l: 90, r: 90, t: 40, b: 60 }, scaleMax: 2.1 }
+  opts.reserve = [{ x0: W - 64, y0: 0, x1: W, y1: 150 }]
+  if (MOCK.view === '3d') opts.mode = '3d'
+  else if (MOCK.state === 'path') opts.path = PATH
+  else opts.focus = { id: focusId, depth: 1 }
+  drawGraph(svg, opts)
+</script>
+</body>
+</html>

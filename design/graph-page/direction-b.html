@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/graph 方向 B：圖＋側欄</title>
+<!--
+  方向 B「圖＋側欄」（explorer with side panel）
+  - 畫布左、側欄右（340px），像 Neo4j Bloom、Gephi Lite：圖專心當圖，文字都在側欄
+  - 側欄三段，用細線分隔（站上「線條分隔、不靠陰影」的規則）：
+      路徑查詢（起訖點直排，結果也直排在同一段）→ 選取的節點（列出每一條直接關係）→ 圖例（顯示層＋線、箭頭、大小）
+  - 圖例的三個類別直接當「顯示層」開關，跟首頁同一個控制
+  - 手機：側欄三段改成畫布下面的三張卡
+  網址參數：?theme=dark、?state=path、?view=3d
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@700&family=Noto+Serif+TC:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">
+<link rel="stylesheet" href="shared/tokens.css">
+<link rel="stylesheet" href="shared/chrome.css">
+<style>
+  :root { --content-w: 1200px; }
+  .topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+  .topbar .sentence { flex: 1; min-width: 0; }
+  .explorer { display: grid; grid-template-columns: 1fr 340px; height: 640px; border: 1px solid var(--border-shelf); border-radius: 12px; overflow: hidden; box-shadow: var(--stage-shadow); }
+  .explorer .stage { border: 0; border-radius: 0; box-shadow: none; height: 100%; }
+  .zoom { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; padding: 4px; }
+  .zoom .icon-btn + .icon-btn { border-top: 1px solid var(--border-shelf); border-radius: 0; }
+  .canvas-hint { position: absolute; left: 14px; bottom: 12px; font-size: 13px; color: var(--text-ink-muted); }
+  .panel { background: var(--bg-paper-light); border-left: 1px solid var(--border-shelf); overflow: auto; display: flex; flex-direction: column; }
+  .panel section { padding: 16px 18px; }
+  .panel section + section { border-top: 1px solid var(--border-shelf); }
+  .panel .sec-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+  .fields { display: grid; gap: 6px; }
+  .fields .row { display: grid; grid-template-columns: 36px 1fr; align-items: center; gap: 8px; }
+  .fields .field { min-height: 38px; }
+  .fields .swaprow { display: flex; justify-content: flex-end; margin: -2px 0; }
+  .swap { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-shelf); display: inline-flex; align-items: center; justify-content: center; color: var(--text-ink-body); background: var(--bg-paper-light); }
+  .node-title { font-size: 18px; font-weight: 700; color: var(--text-ink-main); margin: 2px 0 4px; }
+  .rels { list-style: none; margin: 10px 0 0; padding: 0; display: grid; }
+  .rels li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-ink-body); padding: 7px 0; border-top: 1px solid var(--border-shelf); }
+  .rels li:first-child { border-top: 0; }
+  .rels .pred { font-family: var(--font-mono); font-size: 11px; color: var(--text-ink-muted); margin-left: auto; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 13px; color: #fff; }
+  /* 用 --cat-fill-*（對白字驗證過 4.5:1，兩個主題同值），不用 --node-*：首頁「顯示層」的字是 --bg-paper-light，深色主題下文件那顆對比不夠 */
+  .chip .n { font-variant-numeric: tabular-nums; opacity: .85; }
+  .chip.documentation { background: var(--cat-fill-doc); } .chip.technique { background: var(--cat-fill-tech); } .chip.implementation { background: var(--cat-fill-impl); }
+  .keys { display: grid; gap: 8px; font-size: 13px; color: var(--text-ink-body); }
+  .keys div { display: flex; align-items: center; gap: 8px; }
+  .keys .cap { color: var(--text-ink-muted); }
+  .below { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 18px; }
+  .note { font-size: 14px; line-height: 1.6; color: var(--text-ink-muted); margin: 0; }
+  [data-state="path"] .explore-only, [data-state="explore"] .path-only { display: none !important; }
+  [data-view="3d"] .two-d-only, [data-view="2d"] .three-d-only { display: none !important; }
+  @media (max-width: 767px) {
+    .explorer { display: block; height: auto; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
+    .explorer .stage { height: 400px; margin: 0 -16px; border-top: 1px solid var(--border-shelf); border-bottom: 1px solid var(--border-shelf); }
+    .panel { border: 0; background: none; gap: 12px; margin-top: 14px; overflow: visible; }
+    .panel section { border: 1px solid var(--border-shelf) !important; border-radius: 12px; background: var(--bg-paper-light); }
+    .panel .legend-sec { order: 3; } .panel .sel-sec { order: 1; } .panel .path-sec { order: 2; }
+    [data-state="path"] .panel .path-sec { order: 0; }
+    .fields { grid-template-columns: 1fr 28px 1fr; align-items: end; }
+    .fields .row { grid-template-columns: 1fr; gap: 4px; }
+    .fields .swaprow { margin: 0 0 5px; }
+    .canvas-hint { display: none; }
+    .below { grid-template-columns: 1fr; gap: 12px; }
+    .topbar .sentence { flex-basis: 100%; order: 2; }
+  }
+</style>
+</head>
+<body>
+<div id="nav"></div>
+<div id="page-head"></div>
+<main class="content">
+  <div class="topbar">
+    <span id="seg"></span>
+    <p class="sentence"><span class="num">4</span> 份文件、<span class="num">12</span> 項技術、<span class="num">2</span> 個實作，由 <span class="num">20</span> 條直接關係串成。</p>
+    <span class="demo-badge">示範資料</span>
+  </div>
+
+  <div class="explorer">
+    <div class="stage">
+      <svg class="graph" id="g"></svg>
+      <div class="zoom float-card">
+        <span class="icon-btn" aria-label="放大" id="z1"></span>
+        <span class="icon-btn" aria-label="縮小" id="z2"></span>
+        <span class="icon-btn" aria-label="顯示全部" id="z3"></span>
+      </div>
+      <div class="canvas-hint two-d-only"><span>滑到節點上看相連的節點・</span>點節點看內容・拖曳節點調整位置</div>
+      <div class="canvas-hint three-d-only">點節點看內容・拖曳旋轉・滾輪縮放</div>
+    </div>
+
+    <aside class="panel">
+      <section class="path-sec">
+        <div class="sec-head"><h2 class="section-h">路徑查詢</h2><span class="lbl path-only">5 個節點、4 段關係</span></div>
+        <p class="sentence explore-only" style="margin-bottom:10px">選兩個節點，找出中間經過哪些關係。</p>
+        <div class="fields">
+          <div class="row"><span class="lbl-accent">起點</span>
+            <div class="field explore-only empty" id="f1">輸入節點名稱</div>
+            <div class="field path-only"><span class="dot documentation"></span>PHP 官方文件<span class="x">×</span></div>
+          </div>
+          <div class="swaprow"><span class="swap" id="sw" aria-label="交換起訖點"></span></div>
+          <div class="row"><span class="lbl-accent">終點</span>
+            <div class="field explore-only empty" id="f2">輸入節點名稱</div>
+            <div class="field path-only"><span class="dot implementation"></span>my-dev-grid-front<span class="x">×</span></div>
+          </div>
+        </div>
+        <div class="path-only" style="margin-top:14px" id="route"></div>
+      </section>
+
+      <section class="sel-sec explore-only">
+        <div class="sec-head"><h2 class="section-h">選取的節點</h2><span class="icon-btn" style="width:28px;height:28px" aria-label="取消選取">×</span></div>
+        <div class="lbl">技術</div>
+        <div class="node-title">PHP</div>
+        <p class="sentence">3 條直接關係</p>
+        <ul class="rels">
+          <li><span class="dot documentation"></span>「PHP 官方文件」說明「PHP」<span class="pred">specs</span></li>
+          <li><span class="dot implementation"></span>「PHP」用在「my-dev-grid」<span class="pred">usedBy</span></li>
+          <li><span class="dot technique"></span>「laravel」與「PHP」<span class="pred">requires</span></li>
+        </ul>
+      </section>
+
+      <section class="legend-sec" style="margin-top:auto">
+        <div class="sec-head"><h2 class="section-h">圖例</h2><span class="lbl">點類別可以只看那一類</span></div>
+        <div class="chips">
+          <span class="chip documentation" aria-pressed="true">文件 <span class="n">4</span></span>
+          <span class="chip technique" aria-pressed="true">技術 <span class="n">12</span></span>
+          <span class="chip implementation" aria-pressed="true">實作 <span class="n">2</span></span>
+        </div>
+        <div class="keys">
+          <div><span id="k-arrow"></span>直接關係，箭頭是關係的方向<span class="cap" style="margin-left:auto">20</span></div>
+          <div><span id="k-size"></span><span class="cap">直接關係越多，節點越大</span></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="below">
+    <ul class="howto">
+      <li><b>顏色</b>：文件、技術、實作三大類。</li>
+      <li><b>線</b>：每條實線是一筆直接關係，也就是目錄裡記下來的；箭頭從文件指向技術、從技術指向實作。</li>
+    </ul>
+    <div style="display:grid;gap:8px">
+      <p class="note">3D 把三大類分成上下三層。首頁的<a href="#">知識網路</a>是精簡版，可以打開「間接關聯」；這裡只畫直接關係。</p>
+      <p class="note" style="color:var(--text-accent)">示範資料：連不上後端，顯示的是存好的資料快照，不是即時資料。</p>
+    </div>
+  </div>
+</main>
+<div id="footer"></div>
+
+<script src="shared/chrome.js"></script>
+<script src="shared/graph-data.js"></script>
+<script src="shared/mock-graph.js"></script>
+<script>
+  renderChrome()
+  const mobile = innerWidth < 768
+  document.getElementById('seg').innerHTML = SEG(MOCK.view)
+  for (const id of ['f1', 'f2']) document.getElementById(id).insertAdjacentHTML('afterbegin', SEARCH_ICON)
+  document.getElementById('sw').innerHTML = SWAP_ICON
+  document.getElementById('z1').innerHTML = ICON.plus
+  document.getElementById('z2').innerHTML = ICON.minus
+  document.getElementById('z3').innerHTML = ICON.fit
+  document.getElementById('k-arrow').innerHTML = ARROW_KEY
+  document.getElementById('k-size').innerHTML = SIZE_KEY
+  document.getElementById('route').innerHTML = routeHTML()
+  const opts = mobile ? { pad: { l: 24, r: 24, t: 40, b: 30 }, scaleMax: 1.3 } : { pad: { l: 70, r: 90, t: 40, b: 50 }, scaleMax: 2.1 }
+  { const W = document.getElementById('g').clientWidth; opts.reserve = [{ x0: W - 64, y0: 0, x1: W, y1: 150 }] }
+  if (MOCK.view === '3d') opts.mode = '3d'
+  else if (MOCK.state === 'path') opts.path = PATH
+  else opts.selected = 'technique-1'
+  drawGraph(document.getElementById('g'), opts)
+</script>
+</body>
+</html>

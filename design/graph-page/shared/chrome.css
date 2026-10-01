@@ -1,0 +1,124 @@
+/* /graph 改版 mockup 共用的站台外框（導覽列、頁首、頁尾）與共用元件外觀。
+   值照抄自 TheNavbar.vue、MainLayout.vue、BaseSegmented.vue、BaseInput.vue、base.css、
+   KnowledgeGraphPanel.vue（develop，2026-10-01）。只是畫稿用的靜態近似，不是實作。 */
+
+:root {
+  --font-serif: 'Noto Serif TC', Georgia, 'Times New Roman', serif;
+  --font-wordmark: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
+  --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-stamp: 'Courier Prime', ui-monospace, monospace;
+  --stage-shadow: 0 12px 32px color-mix(in srgb, var(--bg-nav-footer) 14%, transparent);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background-color: var(--bg-paper-light); }
+body {
+  background-image: linear-gradient(to bottom, var(--bg-paper-light), var(--bg-paper-dark));
+  color: var(--text-ink-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.theme-terminal body {
+  background-image:
+    radial-gradient(ellipse at center, var(--bg-paper-dark) 0%, var(--bg-paper-light) 75%),
+    repeating-linear-gradient(to bottom,
+      color-mix(in srgb, var(--accent-brass) 3%, transparent) 0px,
+      color-mix(in srgb, var(--accent-brass) 3%, transparent) 1px,
+      transparent 1px, transparent 3px);
+  font-family: var(--font-mono);
+}
+a { color: var(--text-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font: inherit; color: inherit; }
+
+/* ── 導覽列 ───────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 50; width: 100%;
+  background: var(--bg-nav-footer);
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.025) 0, rgba(255,255,255,.025) 1px, transparent 1px, transparent 7px);
+  border-bottom: 1px solid rgba(0,0,0,.3);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,.1);
+}
+.nav-inner { height: 64px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono); font-size: 12px; }
+.wordmark { font-family: var(--font-wordmark); font-weight: 700; font-size: 26px; letter-spacing: .06em; color: var(--text-nav-footer); white-space: nowrap; }
+.wordmark .slash { color: var(--accent-brass); margin: 0 .28em; }
+.nav-links { display: flex; gap: 24px; height: 100%; }
+.nav-links span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; height: 100%; color: var(--text-nav-footer); opacity: .7; font-weight: 600; letter-spacing: .1em; }
+.nav-links span.on { color: var(--text-nav-hover); opacity: 1; }
+.nav-links span::after { content: ''; width: 18px; height: 3px; border-radius: 2px 2px 0 0; background: var(--text-nav-hover); transform: scaleX(0); }
+.nav-links span.on::after { transform: scaleX(1); }
+.nav-right { display: flex; gap: 12px; align-items: center; color: var(--text-nav-footer); font-size: 13px; }
+.nav-right .pill { padding: 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--text-nav-footer) 20%, transparent); }
+.burger { display: none; width: 20px; height: 14px; position: relative; }
+.burger i { position: absolute; left: 0; width: 20px; height: 1.5px; background: var(--text-nav-footer); }
+.burger i:nth-child(1) { top: 0; } .burger i:nth-child(2) { top: 6px; } .burger i:nth-child(3) { bottom: 0; }
+
+/* ── 頁首（MainLayout 的通用表頭：tag／標題／副標，D-76、D-83 保留） ── */
+.page-head { max-width: var(--content-w, 1024px); margin: 0 auto; padding: 32px 24px 16px; display: flex; flex-direction: column; gap: 8px; }
+.page-tag { font-family: var(--font-mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; color: var(--text-accent); }
+.page-title { font-family: var(--font-serif); font-weight: 900; font-size: 34px; line-height: 1.25; margin: 0; color: var(--text-ink-main); }
+.page-sub { margin: 4px 0 0; font-size: 14px; color: var(--text-ink-muted); }
+main.content { max-width: var(--content-w, 1024px); margin: 0 auto; padding: 16px 24px 32px; }
+.footer { max-width: var(--content-w, 1024px); margin: 0 auto; padding: 24px; border-top: 1px solid var(--border-shelf); text-align: center; font-size: 12px; color: var(--text-ink-muted); font-family: var(--font-mono); }
+
+/* ── 共用元件外觀 ─────────────────────── */
+/* BaseSegmented：選中＝--bg-selected（淺色藏青／深色黃銅），未選＝透明＋35% 墨色框 */
+.seg { display: inline-flex; gap: 6px; }
+.seg span { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 0 12px; font-family: var(--font-stamp); font-weight: 700; font-size: 13px; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--text-ink-main) 35%, transparent); color: var(--text-ink-main); line-height: 1; }
+.seg span.on { background: var(--bg-selected); border-color: var(--bg-selected); color: var(--text-on-selected); }
+.seg.md span { min-height: 44px; padding: 0 18px; font-size: 15px; }
+
+/* 中文標籤 13px、字距 ≤ .05em（D-68） */
+.lbl { font-size: 13px; letter-spacing: .05em; color: var(--text-ink-muted); }
+.lbl-accent { font-size: 13px; letter-spacing: .05em; color: var(--text-accent); }
+.section-h { font-size: 15px; letter-spacing: .08em; font-weight: 700; color: var(--text-accent); margin: 0; }
+.sentence { font-size: 14px; line-height: 1.6; color: var(--text-ink-body); margin: 0; }
+.muted { color: var(--text-ink-muted); }
+.num { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text-ink-main); }
+
+/* BaseInput（路徑查詢的起訖點） */
+.field { display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; min-height: 40px; padding: 0 12px; border: 1px solid var(--border-shelf); border-radius: 10px; background: var(--bg-paper-light); font-size: 13px; color: var(--text-ink-main); }
+.field.empty { color: color-mix(in srgb, var(--text-ink-muted) 75%, transparent); }
+.field .x { margin-left: auto; color: var(--text-accent); opacity: .6; font-size: 15px; }
+.field svg { flex: none; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot.documentation { background: var(--node-doc); } .dot.technique { background: var(--node-tech); } .dot.implementation { background: var(--node-impl); }
+
+/* 圖譜畫布：跟首頁 KnowledgeGraphPanel 的 .kg-stage 同一套（點陣底、圓角、陰影） */
+.stage { position: relative; border: 1px solid var(--border-shelf); border-radius: 12px; overflow: hidden; background-color: var(--canvas-bg); background-image: radial-gradient(var(--canvas-dot) 1.3px, transparent 1.3px); background-size: 22px 22px; box-shadow: var(--stage-shadow); }
+.stage svg.graph { display: block; width: 100%; height: 100%; }
+
+/* 浮在畫布上的卡片（首頁 popover 同一套：卡紙底、細框、陰影） */
+.float-card { background: var(--bg-paper-light); border: 1px solid var(--border-shelf); border-radius: 12px; box-shadow: var(--stage-shadow); }
+.icon-btn { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--text-ink-body); }
+.demo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; color: var(--text-accent); border: 1px solid color-mix(in srgb, var(--text-accent) 40%, transparent); background: color-mix(in srgb, var(--bg-paper-light) 85%, transparent); }
+
+/* 圖例裡的線、箭頭、大小樣本 */
+.key-line { display: inline-block; width: 22px; height: 0; border-top: 1.5px solid var(--edge-real); vertical-align: middle; }
+.key-arrow { display: inline-block; width: 22px; height: 10px; vertical-align: middle; }
+
+/* 路徑結果：直排的站點清單（每一段寫成一句關係，取代原本會被切掉的橫排路線圖） */
+.route { list-style: none; margin: 0; padding: 0; }
+.route li { position: relative; padding-left: 26px; }
+.route li.stop { font-size: 14px; font-weight: 600; color: var(--text-ink-main); min-height: 24px; display: flex; align-items: center; gap: 8px; }
+.route li.stop::before { content: ''; position: absolute; left: 4px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--c, var(--node-tech)); box-shadow: 0 0 0 2.5px var(--text-accent); }
+.route li.hop { font-size: 13px; color: var(--text-ink-muted); padding-top: 4px; padding-bottom: 4px; }
+.route li.hop::before { content: ''; position: absolute; left: 9px; top: -4px; bottom: -4px; width: 2.5px; background: var(--text-accent); }
+.route .pred { font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em; opacity: .8; margin-left: 4px; }
+.route-type { margin-left: auto; font-size: 13px; font-weight: 400; color: var(--text-ink-muted); }
+
+/* 頁面上的讀法說明（首頁「顏色／大小／線」清單同一種寫法） */
+.howto { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; line-height: 1.6; color: var(--text-ink-muted); }
+.howto b { color: var(--text-ink-body); }
+
+@media (max-width: 767px) {
+  .nav-inner { padding: 0 16px; }
+  .wordmark { font-size: 20px; }
+  .nav-links, .nav-right { display: none; }
+  .burger { display: block; }
+  .page-head { padding: 24px 16px 12px; }
+  .page-title { font-size: 28px; }
+  main.content { padding: 12px 16px 32px; }
+}

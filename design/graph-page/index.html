@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/graph 改版方向總覽</title>
+<link rel="stylesheet" href="shared/tokens.css">
+<link rel="stylesheet" href="shared/chrome.css">
+<style>
+  body { padding: 32px 24px; }
+  h1 { font-family: var(--font-serif); font-weight: 900; margin: 0 0 6px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px; }
+  .card { border: 1px solid var(--border-shelf); border-radius: 12px; background: var(--bg-paper-light); padding: 14px; display: grid; gap: 10px; align-content: start; }
+  .card img { width: 100%; border: 1px solid var(--border-shelf); border-radius: 8px; }
+  .card h2 { margin: 0; font-size: 18px; }
+  .card p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-ink-body); }
+  .links { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<h1>/graph 改版：三個方向</h1>
+<p class="sentence">畫稿只看頁面結構、圖例、說明、控制項與配色；圖是用示範資料快照畫的靜態 SVG，不是力模擬。現況截圖在 <a href="audit/">audit/</a>。</p>
+<div class="grid">
+  <div class="card">
+    <h2>A　圖為主</h2>
+    <img src="direction-a-desktop-light.png" alt="方向 A 桌機淺色">
+    <p>畫布放大到 1200px 寬，2D/3D、路徑查詢、縮放、圖例都浮在圖上。點節點跳出首頁同款的卡片，路徑結果直排在右下角。</p>
+    <div class="links"><a href="direction-a.html">開啟</a><a href="direction-a.html?theme=dark">深色</a><a href="direction-a.html?state=path">路徑</a><a href="direction-a.html?view=3d">3D</a></div>
+  </div>
+  <div class="card">
+    <h2>B　圖＋側欄</h2>
+    <img src="direction-b-desktop-light.png" alt="方向 B 桌機淺色">
+    <p>圖在左、側欄在右：路徑查詢、選取的節點、圖例三段。文字都在側欄，圖上只留縮放。手機上三段變成圖下面的三張卡。</p>
+    <div class="links"><a href="direction-b.html">開啟</a><a href="direction-b.html?theme=dark">深色</a><a href="direction-b.html?state=path">路徑</a><a href="direction-b.html?view=3d">3D</a></div>
+  </div>
+  <div class="card">
+    <h2>C　目錄索引＋局部圖</h2>
+    <img src="direction-c-desktop-light.png" alt="方向 C 桌機淺色">
+    <p>左邊是全部 18 筆的索引（依三大類分組，右邊是關係數），點一筆就把圖聚焦在它和相連的節點。索引同時是圖的文字版。</p>
+    <div class="links"><a href="direction-c.html">開啟</a><a href="direction-c.html?theme=dark">深色</a><a href="direction-c.html?state=path">路徑</a><a href="direction-c.html?view=3d">3D</a></div>
+  </div>
+</div>
+</body>
+</html>
