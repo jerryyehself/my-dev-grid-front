@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 
-// 站名與瀏覽器分頁標題。站名先跟導覽列字標一致；網域叫 jerrylib，要不要改用它還沒決定
-// （2026-09-30），決定後改這裡，再同步 index.html 的 <title>、og:site_name、og:title。
+// 站名與瀏覽器分頁標題。站名跟導覽列字標一致，用 IN / ARCHIVE（D-32 定案；網域叫 jerrylib
+// 不影響站名）。要改的話改這裡，再同步 index.html 的 <title>、og:site_name、og:title。
 export const SITE_NAME = 'IN / ARCHIVE'
 
 /** 首頁與沒有頁面標題的路由用這個：多帶作者名，分頁上看得出是誰的網站。 */
