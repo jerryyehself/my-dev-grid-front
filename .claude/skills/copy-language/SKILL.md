@@ -6,7 +6,7 @@ description: This project's (my-dev-grid-front) copy language — the voice, the
 # Copy Language
 
 Status: **draft, 2026-10-01** — written by the main session from the site's live copy and the
-decision register; not yet reviewed by the user. Items marked **(to confirm)** are not rules yet.
+decision register; not yet reviewed by the user.
 
 Why this exists: copy decisions kept being made one page at a time with no shared reference, and
 the same mistakes recurred — `specs` shipped as 「寫到」 straight from a mockup (D-73), 「登記的關係」
@@ -37,6 +37,12 @@ Grounded in what the site already says (About, home), not invented:
 - **Specific over general.** A line that could sit on anyone's site (「做過的專案與技術」) is too plain
   even if correct. Prefer the detail only this site has.
 - **Short.** Fewest words that keep the meaning (ux-copy principle 2).
+- **Write for the reader's background** (the user, 2026-10-01). Visitors are the four readers
+  `mockup-fidelity:ux-review` already role-plays: a non-technical visitor, an engineer/recruiter
+  hunting for evidence, a junior developer, a library/information-science reader. Pick words all
+  four can read without help. Neither backend vocabulary nor library-science terms of art
+  (著錄, 登記) unless the sentence explains them. The user's test for 登記: as a backend
+  developer's site, it reads too stiff (「以一個後端而言是不是有點過於文謅謅」).
 
 ## Settled terms — check here before choosing a word
 
@@ -47,9 +53,7 @@ Grounded in what the site already says (About, home), not invented:
 | 類別, 三大類 | 型別 | D-68 |
 | Relation verbs from the two endpoint classes: 文件**說明**技術, 文件**記錄**實作, 技術**用在**實作 | per-predicate glosses; 「寫到」 for `specs` | D-73 (full table still open) |
 | Page titles as they are, English included (`My Articles`, `Production Artifacts`) | translating titles to Chinese | D-76 |
-
-**(to confirm)** About's body uses 登記 as a verb (「都登記在目錄裡」). D-70 dropped it as a *label*;
-whether the verb in a full sentence reads fine is unverified — ask before reusing it elsewhere.
+| 收在目錄裡, 一筆一筆記下來 (for "recorded in the catalogue") | 登記 on visitor pages | the user, 2026-10-01 (D-82) |
 
 When a new term is settled with the user, add a row here **and** a decision-register row.
 
@@ -92,8 +96,11 @@ the plugin itself was not installed.)
 - Tell touch users to hover.
 - Usage instructions in subtitles (above).
 - English predicate names on visitor pages outside the places D-73 allows.
-- **(to confirm)** Fake metaphors — imagery the page doesn't actually have (listed as a pending
-  editorial rule since 2026-09-29; the original wording mentions a drawer-style metaphor).
+- **Metaphors: fine where they fit, never in place of a fact about a project** (the user,
+  2026-10-01, D-82). A metaphor that suits the reader and the page is welcome (the catalogue
+  imagery works because the site really is one). Anything about the projects — what was built,
+  what it used, what role, what result — must be literal and true: no metaphor standing in for
+  a fact, no invented example (see "Claims must match the data").
 
 ## Process
 
