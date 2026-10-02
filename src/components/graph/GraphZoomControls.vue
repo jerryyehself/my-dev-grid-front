@@ -69,7 +69,7 @@ defineEmits<{ zoomIn: []; zoomOut: []; fit: []; help: [] }>()
 
       <span
         aria-hidden="true"
-        class="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 hidden group-hover:flex group-focus-visible:flex items-center gap-1.5 whitespace-nowrap rounded-md bg-(--bg-band-strong) px-2 py-1 text-[13px] text-(--text-on-band)"
+        class="pointer-events-none absolute right-full mr-2 top-1/2 -translate-y-1/2 hidden group-hover:flex group-focus-visible:flex items-center gap-1.5 whitespace-nowrap rounded-md bg-(--text-ink-main) px-2 py-1 text-[13px] text-(--bg-paper-light)"
       >
         {{ btn.label }}
         <kbd class="font-mono text-[12px] rounded border border-current/40 px-1 leading-tight">{{

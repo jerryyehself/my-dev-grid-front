@@ -173,6 +173,11 @@ function nodeColorFor(n: SimNode): string {
   return viridis(recencyScore(n.createdAt, OVERLAY_WINDOW_END))
 }
 
+// 點擊判定範圍比畫出來的圓大多少：滑鼠 2px；觸控為主的裝置 8px——節點半徑只有 5～14px，
+// 手指點邊緣很容易落空（D-87 觸控測試發現）
+const HIT_PAD =
+  typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches ? 8 : 2
+
 // 自由排版的向中心引力強度（見 boot() 裡的說明）
 const FREE_GRAVITY = 0.05
 
@@ -559,7 +564,11 @@ async function boot() {
     .backgroundColor('rgba(0,0,0,0)')
     .graphData({ nodes: simNodes, links: allLinks })
     .nodeId('id')
-    .nodeLabel((n) => `${TYPE_LABEL[n.domainType]} · ${n.label}`)
+    // 滑過的提示框（完整名稱，畫布上的名稱可能被截斷）。觸控不顯示：手指離開後提示框會一直
+    // 留在原地，而且點下去內容卡／詳情卡本來就有完整名稱。
+    .nodeLabel((n) =>
+      lastPointerType === 'touch' ? '' : `${TYPE_LABEL[n.domainType]} · ${n.label}`,
+    )
     // 三層各自的範圍畫成底圖（節點/邊之前先畫，才不會蓋到前景）：畫一圈該類別
     // 自己顏色的虛線圓框。原本還有一條貫穿三層中心的黃銅色虛線（「Z 軸」），2026-10-01
     // 使用者決定拿掉：訪客看不懂、跟 hover 的 accent 撞色。
@@ -625,7 +634,7 @@ async function boot() {
     .nodePointerAreaPaint((n, color, ctx) => {
       ctx.fillStyle = color
       ctx.beginPath()
-      ctx.arc(n.x ?? 0, n.y ?? 0, radiusFor(n) + 2, 0, 2 * Math.PI)
+      ctx.arc(n.x ?? 0, n.y ?? 0, radiusFor(n) + HIT_PAD, 0, 2 * Math.PI)
       ctx.fill()
     })
     .linkColor((l) => linkDisplayColor(l))
@@ -642,6 +651,7 @@ async function boot() {
     .linkLineDash((l) => (l.derived ? [5, 4] : null))
     .linkVisibility((l) => !l.derived || showIndirect.value)
     .linkLabel((l) => {
+      if (lastPointerType === 'touch') return ''
       const s = typeof l.source === 'object' ? l.source.label : l.source
       const t = typeof l.target === 'object' ? l.target.label : l.target
       if (l.derived) {
@@ -888,6 +898,15 @@ function onPointerDownCapture(e: PointerEvent) {
 // 剛好是哪個節點，它就一直被當成 hover 中而亮著。觸控的 hover 預覽只在手指按著時算數。
 let touchPointerDown = false
 let lastPointerType = 'mouse'
+// 滑鼠移出畫布：force-graph 只在畫布上聽 pointermove，游標離開時最後停的節點會一直被當成
+// hover 中而亮著（首頁原本就有這個問題），移出時清掉。
+function onPointerLeave(e: PointerEvent) {
+  if (e.pointerType === 'touch' || hoveredNodeId == null) return
+  hoveredNodeId = null
+  hoverPingStartTime = null
+  if (container.value) container.value.style.cursor = 'default'
+  forceRedraw()
+}
 function onPointerUpCapture(e: PointerEvent) {
   if (e.pointerType !== 'touch') return
   touchPointerDown = false
@@ -1049,6 +1068,7 @@ onUnmounted(() => {
       @pointerdown.capture="onPointerDownCapture"
       @pointerup.capture="onPointerUpCapture"
       @pointercancel.capture="onPointerUpCapture"
+      @pointerleave="onPointerLeave"
     >
       <span :id="descId" class="sr-only"
         >按問號鍵看操作說明。加號、減號縮放，方向鍵移動，0 全部置中。</span
@@ -1117,7 +1137,7 @@ onUnmounted(() => {
       >
         <span
           v-if="hint"
-          class="rounded-lg bg-(--bg-band-strong)/90 px-4 py-2 text-[14px] text-(--text-on-band)"
+          class="rounded-lg bg-(--text-ink-main)/90 px-4 py-2 text-[14px] text-(--bg-paper-light)"
           >{{ hint }}</span
         >
       </div>

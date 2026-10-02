@@ -49,32 +49,43 @@ const KEYS: { keys: string[]; text: string }[] = [
       </button>
     </div>
 
-    <h4 class="text-[13px] text-(--text-ink-muted) mb-1">鍵盤（先點一下圖，或用 Tab 移到圖上）</h4>
-    <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[14px] mb-3">
-      <template v-for="row in KEYS" :key="row.text">
-        <dt class="flex gap-1">
-          <kbd
-            v-for="k in row.keys"
-            :key="k"
-            class="min-w-6 text-center font-mono text-[12px] rounded border border-(--border-shelf) bg-(--bg-folder) px-1 py-px"
-            >{{ k }}</kbd
-          >
-        </dt>
-        <dd>{{ row.text }}</dd>
-      </template>
-    </dl>
+    <!-- 三段的順序：觸控裝置（pointer: coarse）把「觸控」排到最前面，其他裝置照鍵盤、滑鼠、觸控 -->
+    <div class="flex flex-col gap-3">
+      <section>
+        <h4 class="text-[13px] text-(--text-ink-muted) mb-1">
+          鍵盤（先點一下圖，或用 Tab 移到圖上）
+        </h4>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[14px]">
+          <template v-for="row in KEYS" :key="row.text">
+            <dt class="flex gap-1">
+              <kbd
+                v-for="k in row.keys"
+                :key="k"
+                class="min-w-6 whitespace-nowrap text-center font-mono text-[12px] rounded border border-(--border-shelf) bg-(--bg-folder) px-1 py-px"
+                >{{ k }}</kbd
+              >
+            </dt>
+            <dd>{{ row.text }}</dd>
+          </template>
+        </dl>
+      </section>
 
-    <h4 class="text-[13px] text-(--text-ink-muted) mb-1">滑鼠</h4>
-    <ul class="text-[14px] flex flex-col gap-0.5 mb-3">
-      <li>按住 {{ isMac ? '⌘' : 'Ctrl' }} 再滾動滾輪：縮放</li>
-      <li>拖曳空白處：移動畫面；拖曳節點：調整位置</li>
-      <li>點節點：固定亮起它的關係；點空白處或再點一次：取消</li>
-    </ul>
+      <section>
+        <h4 class="text-[13px] text-(--text-ink-muted) mb-1">滑鼠</h4>
+        <ul class="text-[14px] flex flex-col gap-0.5">
+          <li>按住 {{ isMac ? '⌘' : 'Ctrl' }} 再滾動滾輪：縮放</li>
+          <li>拖曳空白處：移動畫面；拖曳節點：調整位置</li>
+          <li>點節點：固定亮起它的關係；點空白處或再點一次：取消</li>
+        </ul>
+      </section>
 
-    <h4 class="text-[13px] text-(--text-ink-muted) mb-1">觸控</h4>
-    <ul class="text-[14px] flex flex-col gap-0.5">
-      <li>一指：捲動頁面、點選節點</li>
-      <li>兩指：移動畫面、縮放</li>
-    </ul>
+      <section class="[@media(pointer:coarse)]:order-first">
+        <h4 class="text-[13px] text-(--text-ink-muted) mb-1">觸控</h4>
+        <ul class="text-[14px] flex flex-col gap-0.5">
+          <li>一指：捲動頁面、點選節點</li>
+          <li>兩指：移動畫面、縮放</li>
+        </ul>
+      </section>
+    </div>
   </div>
 </template>

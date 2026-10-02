@@ -55,7 +55,7 @@ function onKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="absolute z-20 left-3 top-3 max-w-[calc(100%-1.5rem)]" @keydown="onKeydown">
+  <div class="absolute z-30 left-3 top-3 max-w-[calc(100%-1.5rem)]" @keydown="onKeydown">
     <button
       ref="toggleBtn"
       type="button"
