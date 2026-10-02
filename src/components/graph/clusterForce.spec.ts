@@ -18,7 +18,11 @@ describe('typeClusterForce', () => {
   })
 
   it('同一類別的拉力加總為零：不會讓整張圖漂移', () => {
-    const nodes = [mk(0, 0, 'implementation'), mk(30, 5, 'implementation'), mk(-7, 40, 'implementation')]
+    const nodes = [
+      mk(0, 0, 'implementation'),
+      mk(30, 5, 'implementation'),
+      mk(-7, 40, 'implementation'),
+    ]
     const f = typeClusterForce(() => 0.08)
     f.initialize(nodes)
     f(0.7)

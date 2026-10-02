@@ -21,7 +21,14 @@ function lerpColor(a: string, b: string, t: number): string {
 
 // VOSviewer 2018 起的預設色階換成了 viridis（放棄彩虹色階，見 CWTS 團隊
 // "Farewell rainbow!" 一文），這裡手刻同一組色階的簡化版本（6 個色點線性插值）。
-export const VIRIDIS_STOPS = ['#440154', '#414487', '#2a788e', '#22a884', '#7ad151', '#fde725'] as const
+export const VIRIDIS_STOPS = [
+  '#440154',
+  '#414487',
+  '#2a788e',
+  '#22a884',
+  '#7ad151',
+  '#fde725',
+] as const
 
 export function viridis(t: number): string {
   t = Math.max(0, Math.min(1, t))

@@ -86,7 +86,11 @@ export function layerTargets(
 }
 
 export function countByType(nodes: { domainType: GraphNodeType }[]): Record<GraphNodeType, number> {
-  const counts: Record<GraphNodeType, number> = { documentation: 0, technique: 0, implementation: 0 }
+  const counts: Record<GraphNodeType, number> = {
+    documentation: 0,
+    technique: 0,
+    implementation: 0,
+  }
   for (const n of nodes) counts[n.domainType]++
   return counts
 }
@@ -94,7 +98,10 @@ export function countByType(nodes: { domainType: GraphNodeType }[]): Record<Grap
 // 讓每一層的節點真的圍繞在自己那層的中心點附近(各自成一團可辨識的形狀)，
 // 而不是被跨類別的 link 力硬拉到別層去——溫和的向心力，強度不高，讓
 // charge/collide 在範圍內還是能自然撐開分佈，不會被拉成死板的一個點。
-export function layerGravityForce<N extends PositionedNode>(targetsFn: () => LayerTargets | undefined, strength: number) {
+export function layerGravityForce<N extends PositionedNode>(
+  targetsFn: () => LayerTargets | undefined,
+  strength: number,
+) {
   let nodes: N[] = []
   const force = (alpha: number) => {
     const targets = targetsFn()
@@ -162,7 +169,11 @@ export function clampToLayer(n: PositionedNode, target: LayerTarget, r: number) 
 
 // 邊界安全網：稀疏圖在多輪 tick 後可能被 charge 排斥力推出可視範圍之外。
 // 只對真的超出邊界的節點施加溫和回推力。
-export function boundaryForce<N extends PositionedNode>(widthFn: () => number, heightFn: () => number, padding: number) {
+export function boundaryForce<N extends PositionedNode>(
+  widthFn: () => number,
+  heightFn: () => number,
+  padding: number,
+) {
   let nodes: N[] = []
   const force = () => {
     const w = widthFn()

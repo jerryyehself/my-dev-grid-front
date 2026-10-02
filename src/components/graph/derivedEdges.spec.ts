@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { computeDerivedEdges, derivedStrength } from './derivedEdges'
 
-const n = (id: string, domainType: 'documentation' | 'technique' | 'implementation') => ({ id, domainType })
+const n = (id: string, domainType: 'documentation' | 'technique' | 'implementation') => ({
+  id,
+  domainType,
+})
 
 describe('computeDerivedEdges', () => {
   it('兩份文件連到同一項技術就推出一條間接關聯，via 記錄共同鄰居', () => {
@@ -16,7 +19,13 @@ describe('computeDerivedEdges', () => {
   })
 
   it('實作要共用至少 3 項技術才算', () => {
-    const nodes = [n('i1', 'implementation'), n('i2', 'implementation'), n('t1', 'technique'), n('t2', 'technique'), n('t3', 'technique')]
+    const nodes = [
+      n('i1', 'implementation'),
+      n('i2', 'implementation'),
+      n('t1', 'technique'),
+      n('t2', 'technique'),
+      n('t3', 'technique'),
+    ]
     const two = [
       { source: 't1', target: 'i1' },
       { source: 't1', target: 'i2' },
@@ -29,7 +38,12 @@ describe('computeDerivedEdges', () => {
   })
 
   it('技術之間不推導；已有真實同類關係的配對跳過', () => {
-    const nodes = [n('t1', 'technique'), n('t2', 'technique'), n('d1', 'documentation'), n('d2', 'documentation')]
+    const nodes = [
+      n('t1', 'technique'),
+      n('t2', 'technique'),
+      n('d1', 'documentation'),
+      n('d2', 'documentation'),
+    ]
     const links = [
       { source: 'd1', target: 't1' },
       { source: 'd2', target: 't1' },

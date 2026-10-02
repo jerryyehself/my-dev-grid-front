@@ -11,7 +11,11 @@
 
 export const LABEL_MAX_WIDTH_PX = 132
 
-export function truncateLabel(label: string, maxWidth: number, measure: (s: string) => number): string {
+export function truncateLabel(
+  label: string,
+  maxWidth: number,
+  measure: (s: string) => number,
+): string {
   if (measure(label) <= maxWidth) return label
   const chars = Array.from(label)
   let lo = 0

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, reactive, ref, useId, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import ForceGraph from 'force-graph'
 import { forceCollide, forceX, forceY } from 'd3-force'
@@ -13,6 +13,20 @@ import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './der
 import { typeClusterForce } from './clusterForce'
 import { fitTransform, type FitItem } from './fitView'
 import { LABEL_MAX_WIDTH_PX, placeLabels, truncateLabel, type LabelCandidate } from './labels'
+import GraphDisplaySettings from './GraphDisplaySettings.vue'
+import GraphLegend from './GraphLegend.vue'
+import GraphShortcutsHelp from './GraphShortcutsHelp.vue'
+import GraphZoomControls from './GraphZoomControls.vue'
+import {
+  MAX_ZOOM,
+  MIN_ZOOM,
+  centerForAnchor,
+  clampZoom,
+  isMacLike,
+  pinchView,
+  wheelZoomFactor,
+  type PinchStart,
+} from './viewMath'
 import {
   DEPTH_ORDER,
   clampToLayer,
@@ -24,16 +38,22 @@ import {
 } from './layeredLayout'
 
 // 共用的知識圖譜畫布（D-87）：首頁「近期知識網路」與 /graph 頁 2D 圖譜共用同一個元件，
-// 兩頁的差異用 props 表達，不複製程式碼。從首頁 KnowledgeGraphPanel.vue 抽出來（第一步：
-// 行為完全不變），排版選項、互動控制在後續步驟加上。
-// 純邏輯（推導邊、顏色、三層排版的力）放在同目錄的 .ts 模組，附 vitest 單元測試。
+// 兩頁的差異用 props 表達，不複製程式碼。從首頁 KnowledgeGraphPanel.vue 抽出來。
+// 純邏輯（推導邊、顏色、三層排版的力、框景、鏡頭換算）放在同目錄的 .ts 模組，附 vitest 單元測試。
+//
+// 互動（D-87 全部打開）：縮放、平移、全部置中、縮放按鈕、操作說明、拖曳節點、顯示設定（節點
+// 顏色／顯示層／間接關聯）、固定選取。畫布嵌在會捲動的頁面裡，所以手勢採「合作式」
+// （Google Maps cooperative gestures 的做法）：
+// - 滑鼠滾輪照常捲頁面，按住 Ctrl／⌘ 才縮放圖（觸控板捏合會帶 ctrlKey，也走這條）；
+//   沒按就在圖上浮一句提示。
+// - 滑鼠拖曳空白處平移，拖曳節點移動節點。
+// - 觸控：一指捲頁面、點選；兩指平移／縮放；一指在圖上拖動時浮提示。
+// force-graph 沒有合作模式：內建的 d3-zoom 只留滑鼠拖曳平移，滾輪與觸控都自己處理
+// （見 onWheel／onTouch*）。
 
 const props = withDefaults(
   defineProps<{
     data: GraphDto
-    colorMode: 'type' | 'overlay'
-    typeFilter: Record<GraphNodeType, boolean>
-    showIndirect: boolean
     /**
      * 'layered'：首頁原本的三層疊圖（三個類別各一個圓框、沿對角線錯開）；'free'：拿掉整套
      * 三層排版（向心力、圓框邊界力、夾回圓框、虛線圓框），只留一般力導向＋同類弱聚集。
@@ -44,6 +64,8 @@ const props = withDefaults(
     clusterStrength?: number
     /** 畫布高度（CSS px） */
     height?: number
+    /** 畫布的無障礙名稱（螢幕報讀器唸） */
+    label?: string
   }>(),
   // 同類聚集 0.08 的由來（2026-10-02 拿真實 60 節點資料、4 個亂數種子平均調過）：指標是
   // 「各類別節點到自己類別重心的平均距離 ÷ 全部節點到整體重心的平均距離」（越小越成團）跟
@@ -55,10 +77,24 @@ const props = withDefaults(
   //   0.12   0.91   0.92   0.86   0.68
   // 技術、實作被關係線綁著，幾乎不受影響；有感的是關係少的文件。0.04→0.08 文件明顯靠攏、
   // 連線只多拉長一點，0.12 起連線長度的代價變大、開始像 2026-09-14 拿掉的強力分區，所以取 0.08。
-  { layout: 'layered', clusterStrength: 0.08, height: 460 },
+  { layout: 'layered', clusterStrength: 0.08, height: 460, label: '知識圖譜' },
 )
 
-const emit = defineEmits<{ indirectCount: [count: number] }>()
+// 顯示設定（畫布自己管，兩頁一樣）：節點顏色模式、顯示層篩選、間接關聯開關。
+const colorMode = ref<'type' | 'overlay'>('type')
+const typeFilter = reactive<Record<GraphNodeType, boolean>>({
+  documentation: false,
+  technique: false,
+  implementation: false,
+})
+// 間接關聯（推算出來的虛線）預設不顯示，免得畫面太雜（2026-09-30 使用者決定）
+const showIndirect = ref(false)
+const indirectCount = ref(0)
+const settingsOpen = ref(false)
+const helpOpen = ref(false)
+const isMac = isMacLike()
+const stage = ref<HTMLDivElement>()
+const descId = useId()
 
 const container = ref<HTMLDivElement>()
 // settling 蓋「畫布已經掛上去、力導向模擬還在跑」這段——力學收斂到位（onEngineStop 第一次
@@ -91,10 +127,10 @@ const OVERLAY_WINDOW_END = Date.now()
 // 判斷，不重跑力學模擬，跟 hover highlight 共用同一套「dim 到 0.22」的視覺
 // 語言，讓使用者不用學兩套淡化邏輯。
 function isAnyTypeFilterActive(): boolean {
-  return props.typeFilter.documentation || props.typeFilter.technique || props.typeFilter.implementation
+  return typeFilter.documentation || typeFilter.technique || typeFilter.implementation
 }
 function isTypeFilterDimmed(type: GraphNodeType): boolean {
-  return isAnyTypeFilterActive() && !props.typeFilter[type]
+  return isAnyTypeFilterActive() && !typeFilter[type]
 }
 // 邊的兩端都要在被選的層裡才不淡化——只要有一端連到沒被選的層，就算另一端
 // 是被選的層，這條邊也要跟著淡化（使用者明確要求：選了某層之後，連到其他
@@ -103,8 +139,8 @@ function isLinkFilterDimmed(l: SimLink): boolean {
   if (!isAnyTypeFilterActive()) return false
   const sType = typeof l.source === 'object' ? l.source.domainType : undefined
   const tType = typeof l.target === 'object' ? l.target.domainType : undefined
-  const sOk = sType != null && props.typeFilter[sType]
-  const tOk = tType != null && props.typeFilter[tType]
+  const sOk = sType != null && typeFilter[sType]
+  const tOk = tType != null && typeFilter[tType]
   return !(sOk && tOk)
 }
 
@@ -113,7 +149,7 @@ function isLinkFilterDimmed(l: SimLink): boolean {
 // Documentation/Technique 完全沒有這個欄位，誠實顯示成灰色「無資料」，不是編一個
 // 假的時間。注意這是「repo 建立時間」不是「最近活動時間」，不誇大成「熱度」。
 function nodeColorFor(n: SimNode): string {
-  if (props.colorMode === 'type') return typeColor(n.domainType)
+  if (colorMode.value === 'type') return typeColor(n.domainType)
   if (!n.createdAt) return css('--overlay-nodata') || '#9a9186'
   return viridis(recencyScore(n.createdAt, OVERLAY_WINDOW_END))
 }
@@ -142,7 +178,7 @@ let directNeighborIds = new Map<string, Set<string>>()
 // （2026-09-30 使用者決定）。只影響畫不畫、hover 亮誰，不影響力模擬，所以切換時
 // 節點位置不會跳動。autoPauseRedraw(false) 讓畫面每幀重畫，改這個值下一幀就生效
 function currentNeighbors(): Map<string, Set<string>> {
-  return props.showIndirect ? neighborIds : directNeighborIds
+  return showIndirect.value ? neighborIds : directNeighborIds
 }
 
 // 雷達跳動：只在滑鼠真的 hover 到節點時，從節點邊緣往外擴散一圈淡出的圓環，像雷達／
@@ -163,7 +199,10 @@ function isDimmedNode(id: string): boolean {
   return !currentNeighbors().get(focus)?.has(id)
 }
 function derivedStrength(l: SimLink): number {
-  return derivedStrengthOf(l.via?.length, typeof l.source === 'object' ? l.source.domainType : undefined)
+  return derivedStrengthOf(
+    l.via?.length,
+    typeof l.source === 'object' ? l.source.domainType : undefined,
+  )
 }
 // hover 或固定選取中：跟該節點有直接關聯的邊提亮成 accent 色，其餘淡化。「顯示層」篩選
 // 同時開著時取聯集：連到被篩掉那層的邊，就算碰到選取節點也一樣淡化。
@@ -172,7 +211,9 @@ function derivedStrength(l: SimLink): number {
 function linkDisplayColor(l: SimLink): string {
   const filterDimmed = isLinkFilterDimmed(l)
   if (focusId()) {
-    return linkTouchesFocus(l) && !filterDimmed ? css('--text-accent') : withAlpha(css('--edge-real'), 0.18)
+    return linkTouchesFocus(l) && !filterDimmed
+      ? css('--text-accent')
+      : withAlpha(css('--edge-real'), 0.18)
   }
   if (l.derived) {
     const base = 0.6 + 0.4 * derivedStrength(l)
@@ -206,14 +247,24 @@ function drawLabels(ctx: CanvasRenderingContext2D, globalScale: number) {
   const gap = LABEL_GAP_PX / globalScale
   const rank = (n: SimNode) => (isForcedLabel(n) ? 2 : shouldLabelNode(n) ? 1 : 0)
   const ordered = simNodes
-    .filter((n) => n.x != null && n.y != null && (isForcedLabel(n) || (!isDimmedNode(n.id) && !isTypeFilterDimmed(n.domainType))))
+    .filter(
+      (n) =>
+        n.x != null &&
+        n.y != null &&
+        (isForcedLabel(n) || (!isDimmedNode(n.id) && !isTypeFilterDimmed(n.domainType))),
+    )
     .sort((a, b) => rank(b) - rank(a) || b.degree - a.degree)
   const candidates: LabelCandidate[] = ordered.map((n) => {
     const w = labelWidth(n) / globalScale
     const top = n.y! + radiusFor(n) + gap
     return {
       id: n.id,
-      box: { x0: n.x! - w / 2 - gap, y0: top - gap, x1: n.x! + w / 2 + gap, y1: top + fontPx + gap },
+      box: {
+        x0: n.x! - w / 2 - gap,
+        y0: top - gap,
+        x1: n.x! + w / 2 + gap,
+        y1: top + fontPx + gap,
+      },
       forced: isForcedLabel(n),
     }
   })
@@ -287,7 +338,8 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
     }))
   // 三層疊圖的虛線圓框也要框進來，不然圓框被畫布邊緣切掉一截（框整張圖時才算）
   if (!filter && props.layout === 'layered' && layerTargetsCache) {
-    for (const t of Object.values(layerTargetsCache)) items.push({ x: t.cx, y: t.cy, r: t.r, labelW: 0, labelH: 0 })
+    for (const t of Object.values(layerTargetsCache))
+      items.push({ x: t.cx, y: t.cy, r: t.r, labelW: 0, labelH: 0 })
   }
   const fit = fitTransform(items, viewW, viewH, FIT_PADDING_PX)
   if (!fit) return
@@ -304,7 +356,16 @@ interface PopoverState {
   left: number
   top: number
 }
-const popover = reactive<PopoverState>({ open: false, kind: '', title: '', rows: [], link: null, left: 0, top: 0 })
+const popoverEl = ref<HTMLElement>()
+const popover = reactive<PopoverState>({
+  open: false,
+  kind: '',
+  title: '',
+  rows: [],
+  link: null,
+  left: 0,
+  top: 0,
+})
 
 function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEvent) {
   if (kind === 'node') {
@@ -320,7 +381,9 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
     const s = typeof l.source === 'object' ? l.source.label : l.source
     const t = typeof l.target === 'object' ? l.target.label : l.target
     if (l.derived) {
-      const viaLabels = (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id).join('、')
+      const viaLabels = (l.via ?? [])
+        .map((id) => simNodes.find((n) => n.id === id)?.label ?? id)
+        .join('、')
       popover.kind = '間接關聯'
       popover.title = `${String(s)} ↔ ${String(t)}`
       popover.rows = [`兩邊都連到「${viaLabels}」`, '這是推算出來的，不是直接關係']
@@ -338,9 +401,25 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
   const stageEl = container.value?.closest('.kg-stage')
   if (!stageEl) return
   const stageRect = stageEl.getBoundingClientRect()
-  popover.left = Math.min(Math.max(10, ev.clientX - stageRect.left + 14), stageRect.width - 290)
-  popover.top = Math.max(10, ev.clientY - stageRect.top - 10)
+  // 擺放：預設在點的右邊；右邊放不下就放左邊；兩邊都放不下（手機）就放在點的上方或下方，
+  // 看哪邊空間多。原本只往右放、再夾回畫布內，手機上卡片會剛好蓋在剛點的節點上，
+  // 再點一次同一個節點（取消固定選取）其實點到的是卡片（D-87 觸控測試發現）。
+  const x = ev.clientX - stageRect.left
+  const y = ev.clientY - stageRect.top
+  const W = 280
+  const GAP = 14
   popover.open = true
+  if (x + GAP + W <= stageRect.width - 10) {
+    popover.left = x + GAP
+    popover.top = Math.max(10, y - 10)
+  } else if (x - GAP - W >= 10) {
+    popover.left = x - GAP - W
+    popover.top = Math.max(10, y - 10)
+  } else {
+    popover.left = Math.max(10, Math.min(x - W / 2, stageRect.width - W - 10))
+    const h = popoverEl.value?.offsetHeight ?? 140
+    popover.top = y > stageRect.height / 2 ? Math.max(10, y - GAP - h) : y + GAP
+  }
 }
 
 function forceRedraw() {
@@ -350,8 +429,12 @@ function forceRedraw() {
 }
 
 watch(theme, () => forceRedraw())
-watch(() => props.colorMode, () => forceRedraw())
-watch(() => ({ ...props.typeFilter }), () => forceRedraw())
+watch(colorMode, () => forceRedraw())
+watch(showIndirect, () => forceRedraw())
+watch(
+  () => ({ ...typeFilter }),
+  () => forceRedraw(),
+)
 
 async function boot() {
   await nextTick()
@@ -368,14 +451,21 @@ async function boot() {
   viewH = container.value.clientHeight || viewH
 
   const layered = props.layout === 'layered'
-  const targets0 = layerTargets(viewW, viewH, countByType(dto.nodes.map((n) => ({ domainType: n.type }))))
+  const targets0 = layerTargets(
+    viewW,
+    viewH,
+    countByType(dto.nodes.map((n) => ({ domainType: n.type }))),
+  )
   simNodes = dto.nodes.map((n) => {
     // 三層疊圖：從各自那層的中心附近出發；自由排版：打散在畫布範圍內，避免 charge 力在
     // 完全重疊的起點上互相推擠出不自然的爆開效果（沿用 /graph 頁原本的做法）。
     const target = targets0[n.type]
     const start = layered
       ? { x: target.cx + (Math.random() - 0.5) * 24, y: target.cy + (Math.random() - 0.5) * 24 }
-      : { x: viewW / 2 + (Math.random() - 0.5) * viewW * 0.6, y: viewH / 2 + (Math.random() - 0.5) * viewH * 0.6 }
+      : {
+          x: viewW / 2 + (Math.random() - 0.5) * viewW * 0.6,
+          y: viewH / 2 + (Math.random() - 0.5) * viewH * 0.6,
+        }
     return {
       id: n.id,
       domainType: n.type,
@@ -395,7 +485,7 @@ async function boot() {
   })) as SimLink[]
   // 同類別節點透過共同鄰居推導出來的關聯（見 derivedEdges.ts 檔頭註解）
   const derivedLinks: SimLink[] = computeDerivedEdges(simNodes, simLinks)
-  emit('indirectCount', derivedLinks.length)
+  indirectCount.value = derivedLinks.length
   const allLinks: SimLink[] = [...simLinks, ...derivedLinks]
 
   // 三層各自的目標中心點/範圍半徑要先算好，clampAllNodes()／layerBoundaryForce
@@ -471,7 +561,11 @@ async function boot() {
       ctx.arc(x, y, r, 0, 2 * Math.PI)
       const focused = n.id === focusId()
       ctx.lineWidth = focused ? 2 : 1
-      ctx.strokeStyle = focused ? css('--text-accent') : isDark() ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.38)'
+      ctx.strokeStyle = focused
+        ? css('--text-accent')
+        : isDark()
+          ? 'rgba(255,255,255,0.16)'
+          : 'rgba(255,255,255,0.38)'
       ctx.stroke()
       // 雷達跳動：只有目前真的被 hover 的節點才畫，兩圈相位錯開半個週期。
       if (n.id === hoveredNodeId && hoverPingStartTime != null) {
@@ -497,17 +591,23 @@ async function boot() {
     .linkColor((l) => linkDisplayColor(l))
     // 真實邊寬度 1.5：三層疊圖之後線條密度變高，太細會糊成一片。
     .linkWidth((l) =>
-      linkTouchesFocus(l) && !isLinkFilterDimmed(l) ? 2.2 : l.derived ? 1.2 + 0.8 * derivedStrength(l) : 1.5,
+      linkTouchesFocus(l) && !isLinkFilterDimmed(l)
+        ? 2.2
+        : l.derived
+          ? 1.2 + 0.8 * derivedStrength(l)
+          : 1.5,
     )
     // 推導邊用虛線跟真實邊區分開來——這是唯一負責「這條線是不是資料庫真實關聯」
     // 這件事的視覺線索，顏色/寬度只負責亮不亮。
     .linkLineDash((l) => (l.derived ? [5, 4] : null))
-    .linkVisibility((l) => !l.derived || props.showIndirect)
+    .linkVisibility((l) => !l.derived || showIndirect.value)
     .linkLabel((l) => {
       const s = typeof l.source === 'object' ? l.source.label : l.source
       const t = typeof l.target === 'object' ? l.target.label : l.target
       if (l.derived) {
-        const viaLabels = (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id).join('、')
+        const viaLabels = (l.via ?? [])
+          .map((id) => simNodes.find((n) => n.id === id)?.label ?? id)
+          .join('、')
         return `${s} ↔ ${t}：間接關聯，兩邊都連到「${viaLabels}」（推算出來的，不是直接關係）`
       }
       if (typeof l.source !== 'object' || typeof l.target !== 'object') return ''
@@ -515,12 +615,23 @@ async function boot() {
       return phrase.note ? `${phrase.sentence}：${phrase.note}` : phrase.sentence
     })
     // 箭頭只在 hover／固定選取到端點節點時才畫；推導邊沒有方向性，不畫箭頭。
-    .linkDirectionalArrowLength((l) => (!l.derived && linkTouchesFocus(l) && !isLinkFilterDimmed(l) ? 5 : 0))
+    .linkDirectionalArrowLength((l) =>
+      !l.derived && linkTouchesFocus(l) && !isLinkFilterDimmed(l) ? 5 : 0,
+    )
     .linkDirectionalArrowRelPos(0.96)
     .linkDirectionalArrowColor((l) => linkDisplayColor(l))
-    .enableNodeDrag(false)
+    // 拖曳節點：放開後回到力模擬裡自由移動（清掉 fx/fy），沿用 /graph 原本的行為，而不是
+    // force-graph 預設「拖完就固定住」。觸控不拖節點（一指要留給捲頁面），見 onPointerDownCapture。
+    .enableNodeDrag(true)
+    .onNodeDragEnd((n) => {
+      n.fx = undefined
+      n.fy = undefined
+    })
+    // 合作式手勢：內建 d3-zoom 只處理滑鼠拖曳平移；滾輪、觸控都由 onWheel／onTouch* 處理。
     .enableZoomInteraction(false)
-    .enablePanInteraction(false)
+    .enablePanInteraction((ev) => ev.type === 'mousedown')
+    .minZoom(MIN_ZOOM)
+    .maxZoom(MAX_ZOOM)
     // 點節點：固定選取並打開內容卡；再點同一個節點取消固定選取並收起卡片。
     // 點空白處：取消固定選取、收起卡片。觸控裝置的點一下也走這裡，手機才看得到高亮。
     .onNodeClick((n, ev) => {
@@ -547,7 +658,7 @@ async function boot() {
       forceRedraw()
     })
     .onNodeHover((n) => {
-      const nextId = n?.id ?? null
+      const nextId = lastPointerType === 'touch' && !touchPointerDown ? null : (n?.id ?? null)
       if (nextId === hoveredNodeId) return
       hoveredNodeId = nextId
       hoverPingStartTime = nextId != null ? Date.now() : null
@@ -555,8 +666,14 @@ async function boot() {
       forceRedraw()
     })
     // 同類弱聚集（見 clusterForce.ts）：兩種排版都有。
-    .d3Force('typeCluster', typeClusterForce<SimNode>(() => props.clusterStrength))
-    .d3Force('collide', forceCollide<SimNode>((n) => radiusFor(n) + (shouldLabelNode(n) ? 26 : 3)).iterations(2))
+    .d3Force(
+      'typeCluster',
+      typeClusterForce<SimNode>(() => props.clusterStrength),
+    )
+    .d3Force(
+      'collide',
+      forceCollide<SimNode>((n) => radiusFor(n) + (shouldLabelNode(n) ? 26 : 3)).iterations(2),
+    )
     .cooldownTicks(300)
     // hover 雷達跳動要每一幀重繪。
     .autoPauseRedraw(false)
@@ -580,7 +697,10 @@ async function boot() {
     return st && tt && st === tt ? 1 : 0.4
   })
   // 內建 center force 預設拉向 (0,0)，明確覆寫成畫布中心。
-  graph.d3Force('center')?.x(viewW / 2).y(viewH / 2)
+  graph
+    .d3Force('center')
+    ?.x(viewW / 2)
+    .y(viewH / 2)
   // 三層疊圖（layout='layered'）專屬的力：layerGravity 把每一層的節點溫和拉向自己那層的
   // 目標中心點；layerBoundary 是超出圓框時的軟修正。'free' 不加，整套排版就拿掉了。
   // 自由排版的向中心引力：真實資料有完全沒有關係的節點（例如還沒連到任何技術的文章），
@@ -595,8 +715,14 @@ async function boot() {
   }
   if (layered) {
     graph
-      .d3Force('layerGravity', layerGravityForce<SimNode>(() => layerTargetsCache, 0.06))
-      .d3Force('layerBoundary', layerBoundaryForce<SimNode>(() => layerTargetsCache, radiusFor))
+      .d3Force(
+        'layerGravity',
+        layerGravityForce<SimNode>(() => layerTargetsCache, 0.06),
+      )
+      .d3Force(
+        'layerBoundary',
+        layerBoundaryForce<SimNode>(() => layerTargetsCache, radiusFor),
+      )
   }
 
   resizeObserver = new ResizeObserver((entries) => {
@@ -612,72 +738,321 @@ async function boot() {
     }
   })
   resizeObserver.observe(container.value)
+
+  // d3-drag 把畫布設成 touch-action: none（整塊畫布吃掉所有觸控，手機上一指滑過圖就捲不動
+  // 頁面）。改成只讓瀏覽器處理單指捲動，兩指由 onTouch* 自己處理。
+  const canvas = container.value.querySelector('canvas')
+  if (canvas) canvas.style.touchAction = 'pan-x pan-y'
+}
+
+// ---------- 鏡頭操作 ----------
+
+function zoomBy(factor: number, ms = 250) {
+  if (!graph) return
+  graph.zoom(clampZoom(graph.zoom() * factor), ms)
+}
+function panBy(dxPx: number, dyPx: number, ms = 150) {
+  if (!graph) return
+  const k = graph.zoom()
+  const c = graph.centerAt()
+  graph.centerAt(c.x + dxPx / k, c.y + dyPx / k, ms)
+}
+function localPoint(clientX: number, clientY: number) {
+  const rect = container.value!.getBoundingClientRect()
+  return { x: clientX - rect.left, y: clientY - rect.top }
+}
+/** 縮放到 k，螢幕上 screen 那一點底下的東西不動 */
+function zoomAt(k: number, screen: { x: number; y: number }) {
+  if (!graph) return
+  const nextK = clampZoom(k)
+  const world = graph.screen2GraphCoords(screen.x, screen.y)
+  const c = centerForAnchor(world, screen, nextK, viewW, viewH)
+  graph.centerAt(c.x, c.y)
+  graph.zoom(nextK)
+}
+
+// 提示（滾輪沒按 Ctrl、一指拖動）：不擋操作，1.6 秒後自己消失，連續觸發就延長
+const hint = ref<string | null>(null)
+let hintTimer: ReturnType<typeof setTimeout> | undefined
+const WHEEL_HINT = isMac ? '按住 ⌘ 再滾動可縮放' : '按住 Ctrl 再滾動可縮放'
+const TOUCH_HINT = '用兩指移動或縮放'
+function showHint(text: string) {
+  hint.value = text
+  clearTimeout(hintTimer)
+  hintTimer = setTimeout(() => (hint.value = null), 1600)
+}
+
+function onWheel(e: WheelEvent) {
+  if (!graph || settling.value) return
+  if (!(e.ctrlKey || e.metaKey)) {
+    // 不攔：讓頁面照常捲動，只浮提示
+    showHint(WHEEL_HINT)
+    return
+  }
+  e.preventDefault()
+  zoomAt(graph.zoom() * wheelZoomFactor(e.deltaY, e.deltaMode), localPoint(e.clientX, e.clientY))
+}
+
+// 觸控：兩指才動鏡頭。一指的 touchmove 不攔（瀏覽器照常捲頁面），只在移動超過門檻時浮提示。
+let pinch: PinchStart | null = null
+let oneFingerStart: { x: number; y: number } | null = null
+function twoFingerState(e: TouchEvent) {
+  const a = e.touches[0]!
+  const b = e.touches[1]!
+  return {
+    mid: localPoint((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2),
+    dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+  }
+}
+function onTouchStart(e: TouchEvent) {
+  if (!graph || settling.value) return
+  if (e.touches.length >= 2) {
+    e.preventDefault()
+    oneFingerStart = null
+    const { mid, dist } = twoFingerState(e)
+    pinch = { world: graph.screen2GraphCoords(mid.x, mid.y), dist, k: graph.zoom() }
+  } else if (e.touches.length === 1) {
+    oneFingerStart = { x: e.touches[0]!.clientX, y: e.touches[0]!.clientY }
+  }
+}
+function onTouchMove(e: TouchEvent) {
+  if (!graph) return
+  if (pinch && e.touches.length >= 2) {
+    if (e.cancelable) e.preventDefault()
+    const { mid, dist } = twoFingerState(e)
+    const v = pinchView(pinch, mid, dist, viewW, viewH)
+    graph.zoom(v.k)
+    graph.centerAt(v.center.x, v.center.y)
+  } else if (oneFingerStart && e.touches.length === 1) {
+    const t = e.touches[0]!
+    if (Math.hypot(t.clientX - oneFingerStart.x, t.clientY - oneFingerStart.y) > 12) {
+      showHint(TOUCH_HINT)
+      oneFingerStart = null
+    }
+  }
+}
+function onTouchEnd(e: TouchEvent) {
+  if (e.touches.length < 2) pinch = null
+  if (e.touches.length === 0) oneFingerStart = null
+}
+// 觸控不拖節點：d3-drag 在 pointerdown／touchstart 當下才問要不要拖，這裡搶在它之前依輸入
+// 裝置切換（捕獲階段，比畫布上的監聽器先跑）。
+function onPointerDownCapture(e: PointerEvent) {
+  graph?.enableNodeDrag(e.pointerType !== 'touch')
+  touchPointerDown = e.pointerType === 'touch'
+  lastPointerType = e.pointerType
+}
+// 觸控沒有「移開」：手指離開後 force-graph 還是把最後的位置當成游標，捲動頁面之後那個點底下
+// 剛好是哪個節點，它就一直被當成 hover 中而亮著。觸控的 hover 預覽只在手指按著時算數。
+let touchPointerDown = false
+let lastPointerType = 'mouse'
+function onPointerUpCapture(e: PointerEvent) {
+  if (e.pointerType !== 'touch') return
+  touchPointerDown = false
+  if (hoveredNodeId != null) {
+    hoveredNodeId = null
+    hoverPingStartTime = null
+    forceRedraw()
+  }
+}
+
+// ---------- 鍵盤（只在畫布區塊有焦點時有效，WCAG 2.1.4） ----------
+
+const PAN_STEP = 60
+function onKeydown(e: KeyboardEvent) {
+  if (e.altKey || e.ctrlKey || e.metaKey) return
+  // 顯示設定面板裡的按鈕自己處理按鍵（方向鍵、空白鍵），不搶
+  if ((e.target as HTMLElement | null)?.closest('[data-kg-settings]')) return
+  const step = e.shiftKey ? PAN_STEP * 3 : PAN_STEP
+  switch (e.key) {
+    case '+':
+    case '=':
+      zoomBy(1.4)
+      break
+    case '-':
+    case '_':
+      zoomBy(1 / 1.4)
+      break
+    case '0':
+      fitView(400)
+      break
+    case 'ArrowLeft':
+      panBy(-step, 0)
+      break
+    case 'ArrowRight':
+      panBy(step, 0)
+      break
+    case 'ArrowUp':
+      panBy(0, -step)
+      break
+    case 'ArrowDown':
+      panBy(0, step)
+      break
+    case '?':
+      toggleHelp()
+      break
+    case 'Escape':
+      if (helpOpen.value) closeHelp()
+      else clearSelection()
+      break
+    default:
+      return
+  }
+  e.preventDefault()
+}
+
+function toggleHelp() {
+  if (helpOpen.value) closeHelp()
+  else {
+    settingsOpen.value = false
+    helpOpen.value = true
+  }
+}
+function closeHelp() {
+  helpOpen.value = false
+  stage.value?.focus()
+}
+function clearSelection() {
+  pinnedNodeId = null
+  popover.open = false
+  forceRedraw()
 }
 
 onMounted(() => {
   boot()
 })
 onUnmounted(() => {
+  clearTimeout(hintTimer)
   resizeObserver?.disconnect()
   graph?._destructor?.()
 })
 </script>
 
 <template>
-  <div
-    class="kg-stage relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden"
-    :style="{
-      // 窄螢幕（手機）高度跟寬度差不多：整張圖的外形接近圓形，直立的高畫布框景後
-      // 上下會空一大段
-      height: `min(${props.height}px, max(320px, 100vw - 32px))`,
-      background: 'var(--canvas-bg)',
-      backgroundImage: 'radial-gradient(var(--canvas-dot) 1.3px, transparent 1.3px)',
-      backgroundSize: '22px 22px',
-    }"
-  >
-    <div ref="container" class="w-full h-full" />
+  <div class="flex flex-col gap-2.5">
+    <GraphLegend :color-mode="colorMode" :show-indirect="showIndirect" />
 
+    <!-- 畫布區塊：可以用 Tab 移到這裡（tabindex=0），有焦點時鍵盤快捷鍵才有效（WCAG 2.1.4）。
+         滑鼠點圖也會把焦點移過來，但 :focus-visible 只在鍵盤操作時畫外框。 -->
     <div
-      class="kg-settling absolute inset-0 z-[5] flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
-      :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+      ref="stage"
+      class="kg-stage relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+      :style="{
+        // 窄螢幕（手機）高度跟寬度差不多：整張圖的外形接近圓形，直立的高畫布框景後
+        // 上下會空一大段
+        height: `min(${props.height}px, max(320px, 100vw - 32px))`,
+        background: 'var(--canvas-bg)',
+        backgroundImage: 'radial-gradient(var(--canvas-dot) 1.3px, transparent 1.3px)',
+        backgroundSize: '22px 22px',
+      }"
+      tabindex="0"
+      role="region"
+      :aria-label="props.label"
+      :aria-describedby="descId"
+      @keydown="onKeydown"
+      @wheel="onWheel"
+      @touchstart="onTouchStart"
+      @touchmove="onTouchMove"
+      @touchend="onTouchEnd"
+      @touchcancel="onTouchEnd"
+      @pointerdown.capture="onPointerDownCapture"
+      @pointerup.capture="onPointerUpCapture"
+      @pointercancel.capture="onPointerUpCapture"
     >
-      <span class="text-[13px] text-(--text-ink-body)/70"> 節點排列中… </span>
-    </div>
+      <span :id="descId" class="sr-only"
+        >按問號鍵看操作說明。加號、減號縮放，方向鍵移動，0 全部置中。</span
+      >
+      <div ref="container" class="w-full h-full" />
 
-    <div
-      class="popover absolute min-w-[220px] max-w-[280px] rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] transition-[opacity,transform] duration-150 z-10"
-      :class="popover.open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-1.5 pointer-events-none'"
-      :style="{ left: popover.left + 'px', top: popover.top + 'px' }"
-    >
-      <button
-        type="button"
-        class="absolute top-0.5 right-0.5 w-9 h-9 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) text-base leading-none cursor-pointer"
-        aria-label="關閉"
-        @click="popover.open = false"
+      <div
+        class="kg-settling absolute inset-0 z-[5] flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
+        :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       >
-        ×
-      </button>
-      <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-1">
-        {{ popover.kind }}
+        <span class="text-[13px] text-(--text-ink-body)/70"> 節點排列中… </span>
       </div>
-      <h3 class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">{{ popover.title }}</h3>
-      <div v-for="(row, i) in popover.rows" :key="i" class="text-[12.5px] text-(--text-ink-body) mb-0.5">
-        {{ row }}
+
+      <div
+        ref="popoverEl"
+        class="popover absolute min-w-[220px] max-w-[280px] rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] transition-[opacity,transform] duration-150 z-10"
+        :class="
+          popover.open
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-1.5 pointer-events-none'
+        "
+        :style="{ left: popover.left + 'px', top: popover.top + 'px' }"
+      >
+        <button
+          type="button"
+          class="absolute top-0.5 right-0.5 w-9 h-9 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) text-base leading-none cursor-pointer"
+          aria-label="關閉"
+          @click="popover.open = false"
+        >
+          ×
+        </button>
+        <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-1">
+          {{ popover.kind }}
+        </div>
+        <h3 class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">
+          {{ popover.title }}
+        </h3>
+        <div
+          v-for="(row, i) in popover.rows"
+          :key="i"
+          class="text-[12.5px] text-(--text-ink-body) mb-0.5"
+        >
+          {{ row }}
+        </div>
+        <RouterLink
+          v-if="popover.link?.kind === 'internal'"
+          :to="popover.link.to"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
+          >{{ popover.link.text }}</RouterLink
+        >
+        <a
+          v-else-if="popover.link?.kind === 'external'"
+          :href="popover.link.href"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
+          >{{ popover.link.text }}</a
+        >
       </div>
-      <RouterLink
-        v-if="popover.link?.kind === 'internal'"
-        :to="popover.link.to"
-        class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
-        >{{ popover.link.text }}</RouterLink
+
+      <!-- 合作式手勢的提示：不擋操作（pointer-events-none），幾秒後自己消失 -->
+      <div
+        class="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 z-[15] flex justify-center transition-opacity duration-200"
+        :class="hint ? 'opacity-100' : 'opacity-0'"
+        aria-live="polite"
       >
-      <a
-        v-else-if="popover.link?.kind === 'external'"
-        :href="popover.link.href"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
-        >{{ popover.link.text }}</a
-      >
+        <span
+          v-if="hint"
+          class="rounded-lg bg-(--bg-band-strong)/90 px-4 py-2 text-[14px] text-(--text-on-band)"
+          >{{ hint }}</span
+        >
+      </div>
+
+      <GraphDisplaySettings
+        v-model:open="settingsOpen"
+        v-model:color-mode="colorMode"
+        v-model:show-indirect="showIndirect"
+        data-kg-settings
+        :type-filter="typeFilter"
+        :indirect-count="indirectCount"
+        @toggle-type="typeFilter[$event] = !typeFilter[$event]"
+        @update:open="$event && (helpOpen = false)"
+      />
+
+      <GraphZoomControls
+        class="absolute z-20 right-3 bottom-3"
+        :disabled="settling"
+        :help-open="helpOpen"
+        @zoom-in="zoomBy(1.4)"
+        @zoom-out="zoomBy(1 / 1.4)"
+        @fit="fitView(400)"
+        @help="toggleHelp"
+      />
+
+      <GraphShortcutsHelp :open="helpOpen" :is-mac="isMac" @close="closeHelp" />
     </div>
   </div>
 </template>

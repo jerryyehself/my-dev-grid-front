@@ -43,7 +43,10 @@ export interface DerivedEdge {
   via: string[]
 }
 
-export function computeDerivedEdges(nodes: DerivedNodeInput[], realLinks: DerivedLinkInput[]): DerivedEdge[] {
+export function computeDerivedEdges(
+  nodes: DerivedNodeInput[],
+  realLinks: DerivedLinkInput[],
+): DerivedEdge[] {
   const nodeById = new Map(nodes.map((n) => [n.id, n]))
   const neighbors = new Map<string, Set<string>>()
   // 已經有真實同類別關聯的配對記下來，等一下推導的時候跳過——真的知道的事實
@@ -98,7 +101,10 @@ export function computeDerivedEdges(nodes: DerivedNodeInput[], realLinks: Derive
 // 0 對應該類別自己的門檻值(剛好壓線，最淡)，1 對應門檻值+3(明顯更強，封頂)——
 // 各類別門檻不同(Documentation 1 / Implementation 3)，起點要跟著各自門檻走，
 // 不能全部套用同一個絕對數字。
-export function derivedStrength(viaCount: number | undefined, type: GraphNodeType | undefined): number {
+export function derivedStrength(
+  viaCount: number | undefined,
+  type: GraphNodeType | undefined,
+): number {
   const shared = viaCount ?? 1
   const minShared = (type && DERIVED_EDGE_MIN_SHARED[type]) || 1
   return Math.min(1, Math.max(0, (shared - minShared) / 3))
