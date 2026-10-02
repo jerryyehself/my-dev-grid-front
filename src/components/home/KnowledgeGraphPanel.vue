@@ -196,6 +196,13 @@ const radiusFor = (n: SimNode) => 4.5 + Math.min(n.degree, 8) * 1.1
 // 節點 id：這個值只有 canvas 畫圖迴圈跟滑鼠事件會讀寫，不需要 Vue 響應式，
 // 用 forceRedraw() 手動觸發重畫就夠。
 let hoveredNodeId: string | null = null
+// 固定選取（front#110，2026-10-02 使用者選 A）：hover 一移開就恢復，手機又沒有 hover，
+// 所以點一下節點就把高亮固定住，點空白處或再點同一個節點才取消。固定選取時 hover
+// 別的節點是暫時預覽，移開回到固定選取的狀態——實際拿來判斷亮誰的是 focusId()。
+let pinnedNodeId: string | null = null
+function focusId(): string | null {
+  return hoveredNodeId ?? pinnedNodeId
+}
 let neighborIds = new Map<string, Set<string>>()
 // 只算直接關係的鄰居。間接關聯的虛線關掉時（預設），hover 只亮直接相連的節點——
 // 不然會亮起一堆畫面上看不到連線的節點
@@ -223,26 +230,31 @@ function endpointId(x: string | number | SimNode | undefined): string {
   if (x == null) return ''
   return typeof x === 'object' ? x.id : String(x)
 }
-function linkTouchesHovered(l: SimLink): boolean {
-  return hoveredNodeId != null && (endpointId(l.source) === hoveredNodeId || endpointId(l.target) === hoveredNodeId)
+function linkTouchesFocus(l: SimLink): boolean {
+  const id = focusId()
+  return id != null && (endpointId(l.source) === id || endpointId(l.target) === id)
 }
 function isDimmedNode(id: string): boolean {
-  if (!hoveredNodeId) return false
-  if (id === hoveredNodeId) return false
-  return !currentNeighbors().get(hoveredNodeId)?.has(id)
+  const focus = focusId()
+  if (!focus) return false
+  if (id === focus) return false
+  return !currentNeighbors().get(focus)?.has(id)
 }
 function withAlpha(hex: string, alpha: number): string {
   const [r, g, b] = hexToRgb(hex)
   return `rgba(${r},${g},${b},${alpha})`
 }
-// hover 中：跟被 hover 節點有直接關聯的邊提亮成 accent 色，其餘淡化。
-// 沒有 hover 時：推導邊（見 computeDerivedEdges）用 --accent-secondary（淺色黃銅、深色玫瑰）
+// hover 或固定選取中：跟該節點有直接關聯的邊提亮成 accent 色，其餘淡化。「顯示層」篩選
+// 同時開著時取聯集：連到被篩掉那層的邊，就算碰到選取節點也一樣淡化。
+// 沒有 hover／固定選取時：推導邊（見 computeDerivedEdges）用 --accent-secondary（淺色黃銅、深色玫瑰）
 // 加虛線，跟灰色實線的直接關係分開；透明度再依 derivedStrength() 分級，共用鄰居越多越明顯。
 // 2026-09-30 以前推導邊是更淡的灰虛線，模擬讀者審查實測打開「間接關聯」開關後畫面幾乎
 // 沒變（新增的線不到畫面 0.2% 的像素），開了等於沒開，所以改成有顏色、跟 hover 的 accent 也不撞色。
 function linkDisplayColor(l: SimLink): string {
-  if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.18)
   const filterDimmed = isLinkFilterDimmed(l)
+  if (focusId()) {
+    return linkTouchesFocus(l) && !filterDimmed ? css('--text-accent') : withAlpha(css('--edge-real'), 0.18)
+  }
   if (l.derived) {
     const base = 0.6 + 0.4 * derivedStrength(l)
     return withAlpha(css('--accent-secondary'), filterDimmed ? base * 0.3 : base)
@@ -268,8 +280,9 @@ function shouldLabelNode(n: SimNode): boolean {
 // label 留 collide 空間，只是短暫互動時的臨時文字，容許偶爾跟旁邊節點疊到。
 function shouldRenderLabel(n: SimNode): boolean {
   if (shouldLabelNode(n)) return true
-  if (n.id === hoveredNodeId) return true
-  return hoveredNodeId != null && (currentNeighbors().get(hoveredNodeId)?.has(n.id) ?? false)
+  const focus = focusId()
+  if (n.id === focus) return true
+  return focus != null && (currentNeighbors().get(focus)?.has(n.id) ?? false)
 }
 
 const measureCtx = document.createElement('canvas').getContext('2d')!
@@ -712,9 +725,10 @@ async function boot() {
       ctx.restore()
       ctx.beginPath()
       ctx.arc(x, y, r, 0, 2 * Math.PI)
-      ctx.lineWidth = n.id === hoveredNodeId ? 2 : 1
+      const focused = n.id === focusId()
+      ctx.lineWidth = focused ? 2 : 1
       ctx.strokeStyle =
-        n.id === hoveredNodeId
+        focused
           ? css('--text-accent')
           : isDark()
             ? 'rgba(255,255,255,0.16)'
@@ -754,7 +768,7 @@ async function boot() {
     // 真實邊寬度從 1.1 拉到 1.5：三層疊圖之後線條密度變高，太細會糊成一片，
     // 跟 --edge-real 顏色對比度修正（見 variables.css 註解）一起處理「edge
     // 辨識度太低」的問題——顏色負責跟背景的對比，寬度負責跟其他線條的區分。
-    .linkWidth((l) => (linkTouchesHovered(l) ? 2.2 : l.derived ? 1.2 + 0.8 * derivedStrength(l) : 1.5))
+    .linkWidth((l) => (linkTouchesFocus(l) && !isLinkFilterDimmed(l) ? 2.2 : l.derived ? 1.2 + 0.8 * derivedStrength(l) : 1.5))
     // 推導邊(bipartite projection)用虛線跟真實邊區分開來——這是唯一負責
     // 「這條線是不是資料庫真實關聯」這件事的視覺線索，顏色/寬度只負責亮不亮。
     .linkLineDash((l) => (l.derived ? [5, 4] : null))
@@ -772,10 +786,10 @@ async function boot() {
     })
     // 箭頭只在 hover 到端點節點時才畫：平常畫面線本來就密，箭頭常駐反而是
     // 雜訊；「這條線有沒有方向」是 hover 想細看某個節點關聯時才需要的資訊，
-    // 跟 linkTouchesHovered() 判斷用同一套 hover 邏輯，不是另外的互動規則。
+    // 跟 linkTouchesFocus() 判斷用同一套 hover／固定選取邏輯，不是另外的互動規則。
     // 推導邊沒有方向性(誰用了同一項技術不分先後)，就算 hover 也不畫箭頭，
     // 跟真實邊的「A → B」語意分開。
-    .linkDirectionalArrowLength((l) => (!l.derived && linkTouchesHovered(l) ? 5 : 0))
+    .linkDirectionalArrowLength((l) => (!l.derived && linkTouchesFocus(l) && !isLinkFilterDimmed(l) ? 5 : 0))
     .linkDirectionalArrowRelPos(0.96)
     .linkDirectionalArrowColor((l) => linkDisplayColor(l))
     .enableNodeDrag(false)
@@ -784,8 +798,31 @@ async function boot() {
     // 沒鎖住的話滑鼠滾輪、拖曳背景都還是能動鏡頭,跟文案講的不一致。
     .enableZoomInteraction(false)
     .enablePanInteraction(false)
-    .onNodeClick((n, ev) => openPopover('node', n, ev))
+    // 點節點：固定選取並打開內容卡；再點同一個節點取消固定選取並收起卡片。
+    // 點空白處：取消固定選取、收起卡片。觸控裝置的點一下也走這裡，手機才看得到高亮。
+    .onNodeClick((n, ev) => {
+      if (pinnedNodeId === n.id) {
+        pinnedNodeId = null
+        popover.open = false
+        // 觸控點一下之後，force-graph 會把手指最後的位置一直當成 hover 中（沒有「移開」
+        // 這回事），不清掉的話取消固定選取後畫面還是亮著。滑鼠不用清：游標還停在節點上，
+        // 顯示 hover 預覽是對的。
+        if ((ev as PointerEvent).pointerType !== 'mouse') {
+          hoveredNodeId = null
+          hoverPingStartTime = null
+        }
+      } else {
+        pinnedNodeId = n.id
+        openPopover('node', n, ev)
+      }
+      forceRedraw()
+    })
     .onLinkClick((l, ev) => openPopover('link', l, ev))
+    .onBackgroundClick(() => {
+      pinnedNodeId = null
+      popover.open = false
+      forceRedraw()
+    })
     // hover 提亮直接鄰居：靜態圖跟 /graph 頁完整拖曳探索之間的中間地帶，
     // 不用進到 /graph 頁也能看出「這個節點連到哪裡」。
     .onNodeHover((n) => {
