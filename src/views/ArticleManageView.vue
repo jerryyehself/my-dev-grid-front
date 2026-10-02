@@ -12,6 +12,7 @@ import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import BaseHint from '@/components/BaseHint.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import BaseSegmented from '@/components/BaseSegmented.vue'
 
 const auth = useAuthStore()
 const canWrite = computed(() => auth.isAuthenticated)
@@ -53,6 +54,9 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'published', label: '已發布' },
   { key: 'draft', label: '草稿' },
 ]
+const filterOptions = computed(() =>
+  FILTERS.map((f) => ({ value: f.key, label: `${f.label} ${counts.value[f.key]}` })),
+)
 
 const visible = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -115,16 +119,6 @@ async function handleDelete(a: ArticleDto) {
       </router-link>
     </div>
 
-    <!-- 未登入才需要說明,登入後按鈕本身就會動,不用額外文字解釋 -->
-    <p
-      v-if="!canWrite"
-      class="border border-dashed border-(--border-shelf) rounded-[6px] bg-(--bg-folder) px-4 py-3 text-[12.5px] leading-6 text-(--text-ink-body)"
-    >
-      <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-(--text-accent) font-bold">
-        尚未登入
-      </span>
-      ——新增與刪除文章需要先登入。
-    </p>
 
     <BaseLoadingBlock v-if="!ready && !loadError" height="240px">載入中…</BaseLoadingBlock>
     <BaseLoadingBlock v-else-if="loadError" height="240px" tone="error">
@@ -134,22 +128,8 @@ async function handleDelete(a: ArticleDto) {
     <template v-else>
       <!-- 篩選與搜尋 -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div class="flex gap-1 self-start border border-(--border-shelf) rounded-full p-[3px]">
-          <button
-            v-for="f in FILTERS"
-            :key="f.key"
-            type="button"
-            class="rounded-full px-4 py-1.5 font-mono text-[10px] tracking-[0.14em] transition-colors duration-100 ease-out"
-            :class="
-              filter === f.key
-                ? 'bg-(--bg-folder) text-(--text-accent) font-bold'
-                : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
-            "
-            @click="filter = f.key"
-          >
-            {{ f.label }} {{ counts[f.key] }}
-          </button>
-        </div>
+        <!-- 全站統一的「幾選一」切換（D-66） -->
+        <BaseSegmented v-model="filter" :options="filterOptions" label="文章篩選" class="self-start" />
 
         <div class="relative sm:min-w-[220px]">
           <svg

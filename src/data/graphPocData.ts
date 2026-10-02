@@ -42,6 +42,8 @@ export interface GraphPocNode {
   tags: string[]
   domainType: GraphNodeType // documentation/technique/implementation，配色跟 3D Z 軸分層都靠這個
   daysSinceAccessed: number // 越大代表越久沒被打開，用於「退到背景」的判斷
+  subtype: string | null // 文章子類與網址：詳情卡的連結用（components/graphNodeLink.ts）
+  url: string | null
 }
 
 export interface GraphPocLink {
@@ -64,6 +66,8 @@ export interface GraphPocNodeSelection {
   domainType: GraphNodeType
   weight: number
   degree: number
+  subtype: string | null
+  url: string | null
 }
 export interface GraphPocLinkSelection {
   kind: 'link'
@@ -92,6 +96,8 @@ function toGraphPocNodes(nodes: GraphNodeDto[], edges: GraphEdgeDto[]): GraphPoc
     tags: [n.type],
     domainType: n.type,
     daysSinceAccessed: 0,
+    subtype: n.subtype ?? null,
+    url: n.url ?? null,
   }))
 }
 
@@ -109,12 +115,12 @@ function toGraphPocLinks(edges: GraphEdgeDto[]): GraphPocLink[] {
 // catch 都只顯示錯誤訊息），跟 Home 頁「知識網路」小工具（KnowledgeGraphPanel.vue）
 // 同樣呼叫 /api/graph、卻已經有 demo fallback 的情況不一致——單純是這頁在
 // fetchGraphOrDemo() 出現前就存在，後來沒有回頭補上，不是刻意要求這頁一定要接後端。
-export async function fetchGraphPocData(): Promise<{ nodes: GraphPocNode[]; links: GraphPocLink[]; isDemo: boolean }> {
-  const { dto, isDemo } = await fetchGraphOrDemo()
+export async function fetchGraphPocData(): Promise<{ nodes: GraphPocNode[]; links: GraphPocLink[]; loadError: string | null }> {
+  const { dto, loadError } = await fetchGraphOrDemo()
 
   return {
     nodes: toGraphPocNodes(dto.nodes, dto.edges),
     links: toGraphPocLinks(dto.edges),
-    isDemo,
+    loadError,
   }
 }

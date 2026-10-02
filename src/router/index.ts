@@ -31,8 +31,8 @@ const router = createRouter({
       component: () => import('@/views/HomeView.vue'),
       meta: {
         tag: 'Home',
-        title: 'IN ARCHIVE',
-        subtitle: '正在孵化的想法，以及最近的輸入與輸出動態。',
+        title: 'IN / ARCHIVE',
+        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結',
       },
     },
     {
@@ -42,7 +42,7 @@ const router = createRouter({
       meta: {
         tag: 'About',
         title: '私人藏書，公開目錄',
-        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結。',
+        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結',
         // About 頁自己畫了一個滿版橫幅當作大標題，跟 MainLayout 的通用表頭是同一件事，
         // 兩個都顯示會重複兩次，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
         hideHeader: true,
@@ -58,7 +58,6 @@ const router = createRouter({
       meta: {
         tag: 'Dashboard & Tools',
         title: 'Production Artifacts',
-        subtitle: '工程履約管理、ISBN 掃描器與 GAS 自動化工作流整合紀錄',
         // mockup 設計是 1120px，比全站預設的 1024px 寬，主從式版面才有足夠的呼吸空間
         contentWidth: '1120px',
       },
@@ -70,7 +69,6 @@ const router = createRouter({
       meta: {
         tag: 'Articles',
         title: 'My Articles',
-        subtitle: '自己記錄',
       },
     },
     {
@@ -112,10 +110,11 @@ const router = createRouter({
       name: 'article-detail',
       component: () => import('@/views/ArticleDetailView.vue'),
       meta: {
-        // tag/title 只是導航到頁面前的預設佔位，掛載後由 ArticleDetailView 覆寫成真正的文章標題，
-        // 不然通用表頭跟捲動追蹤列會一直顯示這行字面上的「Article Detail」，跟下面真正的文章標題重複又對不上
-        tag: 'Article Detail',
-        title: 'Article Detail',
+        // title 留空：載入後 ArticleDetailView 用 siteMeta.ts 的 pageTitleOverride 換成真正的文章標題
+        // （不直接改這裡的 meta，原因見 siteMeta.ts）。以前寫「Article Detail」當佔位，載入前會在分頁
+        // 標題跟捲動追蹤列閃一下；留空時分頁標題退回站名。tag 是固定值，直接寫在這
+        tag: 'ARTICLES',
+        title: '',
         subtitle: '深入閱讀',
         hideHeader: true,
       },
@@ -246,7 +245,7 @@ const router = createRouter({
       meta: {
         tag: 'Knowledge Graph',
         title: '知識圖譜',
-        subtitle: '文件、技巧與實作之間的連結,2D 與 3D 兩種檢視',
+        subtitle: '文件、技術與實作之間的連結，2D 與 3D 兩種檢視',
       },
     },
   ],

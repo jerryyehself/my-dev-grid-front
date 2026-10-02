@@ -67,6 +67,12 @@
     --cat-fill-tech: #007d7d;
     --cat-fill-impl: #7264b3;
 
+    /* 🔘 「幾選一」切換的選中狀態（D-66，2026-09-30），只給 BaseSegmented 用。淺色主題是藏青實心，
+       深色主題改黃銅：深色主題的頁面底色本身就是藏青，藏青實心會融進背景。
+       選中文字對比：淺色 12:1、深色 8.6:1 */
+    --bg-selected: #162541;
+    --text-on-selected: #e8e3dd;
+
     /* ⚠️ 錯誤訊息（2026-09-29 追加）：表單欄位錯誤、載入失敗、登入錯誤。
        跟 --text-accent 刻意分開——欄位標籤是強調色，錯誤就在它正下方，顏色太近就不顯眼
        （腳本要求兩者 OKLab ΔE ≥ 0.1）。對卡紙底、淡藏青底、卡片底都 ≥ 5:1 */
@@ -111,6 +117,9 @@
     --cat-fill-doc: #b34f57;
     --cat-fill-tech: #007d7d;
     --cat-fill-impl: #7264b3;
+
+    --bg-selected: #d7ac66;
+    --text-on-selected: #0d1529;
 
     --text-error: #e57d71;
 }

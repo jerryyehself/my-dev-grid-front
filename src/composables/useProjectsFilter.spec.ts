@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ref } from 'vue'
-import { useProjectsFilter } from './useProjectsFilter'
+import { orderedTechniques, useProjectsFilter } from './useProjectsFilter'
 import type { Project } from '@/api/projects'
 
 function fakeProject(overrides: Partial<Project> = {}): Project {
@@ -73,17 +73,43 @@ describe('useProjectsFilter', () => {
     expect(filteredProjects.value).toEqual(projects)
   })
 
-  it('已知分類的 tag 會被分進對應的 filterGroups', () => {
-    const projects = [fakeProject({ tags: ['Vue', 'laravel', 'appscript'] })]
+  it('依後端的技術子類分組（language→語言、framework→框架…），不再用手寫的對照表', () => {
+    const projects = [
+      fakeProject({
+        tags: ['Vue 3', 'laravel', 'appscript', 'PHP'],
+        techniques: [
+          { name: 'Vue', version: '3', category: 'framework' },
+          { name: 'laravel', version: null, category: 'framework' },
+          { name: 'appscript', version: null, category: 'packagetool' },
+          { name: 'PHP', version: null, category: 'language' },
+        ],
+      }),
+    ]
     const { filterGroups } = useProjectsFilter(ref(projects))
 
-    const byLabel = Object.fromEntries(filterGroups.value.map((g) => [g.label, g.tags.map((t) => t.label)]))
-    expect(byLabel['語言']).toEqual(['Vue'])
-    expect(byLabel['套件']).toEqual(['laravel'])
-    expect(byLabel['環境']).toEqual(['appscript'])
+    expect(filterGroups.value.map((g) => [g.label, g.tags.map((t) => t.label)])).toEqual([
+      ['框架', ['laravel', 'Vue']],
+      ['語言', ['PHP']],
+      ['套件工具', ['appscript']],
+    ])
   })
 
-  it('沒有出現在對照表裡的 tag 落到「其他」分類', () => {
+  it('同一個技術的不同版本合成一個篩選項，選了會找出用任何一個版本的專案', () => {
+    const projects = [
+      fakeProject({ id: 'a', tags: ['Vue 2'], techniques: [{ name: 'Vue', version: '2', category: 'framework' }] }),
+      fakeProject({ id: 'b', tags: ['Vue 3'], techniques: [{ name: 'Vue', version: '3', category: 'framework' }] }),
+      fakeProject({ id: 'c', tags: ['PHP'], techniques: [{ name: 'PHP', version: null, category: 'language' }] }),
+    ]
+    const { filterGroups, toggleTag, filteredProjects } = useProjectsFilter(ref(projects))
+
+    const vue = filterGroups.value.flatMap((g) => g.tags).filter((t) => t.label.startsWith('Vue'))
+    expect(vue).toEqual([{ label: 'Vue', count: 2, selected: false }])
+
+    toggleTag('Vue')
+    expect(filteredProjects.value.map((p) => p.id)).toEqual(['a', 'b'])
+  })
+
+  it('沒有 techniques 的專案（示範資料快照）照 tags 篩選，分類落到「其他」', () => {
     const projects = [fakeProject({ tags: ['some-unmapped-tag'] })]
     const { filterGroups } = useProjectsFilter(ref(projects))
 
@@ -92,18 +118,17 @@ describe('useProjectsFilter', () => {
   })
 
   it('filterGroups 裡每個 tag 帶正確的出現次數', () => {
+    const lang = (name: string) => ({ name, version: null, category: 'language' })
     const projects = [
-      fakeProject({ id: 'a', tags: ['Vue'] }),
-      fakeProject({ id: 'b', tags: ['Vue'] }),
-      fakeProject({ id: 'c', tags: ['python'] }),
+      fakeProject({ id: 'a', tags: ['Vue'], techniques: [lang('Vue')] }),
+      fakeProject({ id: 'b', tags: ['Vue'], techniques: [lang('Vue')] }),
+      fakeProject({ id: 'c', tags: ['Python'], techniques: [lang('Python')] }),
     ]
     const { filterGroups } = useProjectsFilter(ref(projects))
 
-    const lang = filterGroups.value.find((g) => g.label === '語言')
-    const vueTag = lang?.tags.find((t) => t.label === 'Vue')
-    const pyTag = lang?.tags.find((t) => t.label === 'python')
-    expect(vueTag?.count).toBe(2)
-    expect(pyTag?.count).toBe(1)
+    const group = filterGroups.value.find((g) => g.label === '語言')
+    expect(group?.tags.find((t) => t.label === 'Vue')?.count).toBe(2)
+    expect(group?.tags.find((t) => t.label === 'Python')?.count).toBe(1)
   })
 
   it('toggleTag 之後，filterGroups 裡對應 tag 的 selected 會變成 true', () => {
@@ -112,8 +137,7 @@ describe('useProjectsFilter', () => {
 
     toggleTag('Vue')
 
-    const lang = filterGroups.value.find((g) => g.label === '語言')
-    const vueTag = lang?.tags.find((t) => t.label === 'Vue')
+    const vueTag = filterGroups.value.flatMap((g) => g.tags).find((t) => t.label === 'Vue')
     expect(vueTag?.selected).toBe(true)
   })
 
@@ -121,6 +145,29 @@ describe('useProjectsFilter', () => {
     const projects = [fakeProject({ tags: ['Vue'] })]
     const { filterGroups } = useProjectsFilter(ref(projects))
 
-    expect(filterGroups.value.map((g) => g.label)).toEqual(['語言'])
+    expect(filterGroups.value.map((g) => g.label)).toEqual(['其他'])
+  })
+
+  it('同一類裡用得多的排前面，同樣多的照名稱', () => {
+    const lang = (name: string) => ({ name, version: null, category: 'language' })
+    const projects = [
+      fakeProject({ id: 'a', techniques: [lang('Shell'), lang('PHP')] }),
+      fakeProject({ id: 'b', techniques: [lang('PHP'), lang('CSS')] }),
+    ]
+    const { filterGroups } = useProjectsFilter(ref(projects))
+
+    expect(filterGroups.value[0]!.tags.map((t) => t.label)).toEqual(['PHP', 'CSS', 'Shell'])
+  })
+
+  it('orderedTechniques 照篩選器的分類順序排，框架在前', () => {
+    const p = fakeProject({
+      techniques: [
+        { name: 'json', version: null, category: 'packagetool' },
+        { name: 'PHP', version: null, category: 'language' },
+        { name: 'Vue', version: '3', category: 'framework' },
+        { name: 'Blade', version: null, category: 'language' },
+      ],
+    })
+    expect(orderedTechniques(p).map((t) => t.name)).toEqual(['Vue', 'Blade', 'PHP', 'json'])
   })
 })

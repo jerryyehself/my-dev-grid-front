@@ -22,7 +22,7 @@
           <span class="w-[3px] h-4 rounded-[2px] bg-(--text-accent) shrink-0"></span>
           <span
             v-if="$slots.tag"
-            class="shrink-0 text-[10px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
+            class="shrink-0 text-[11px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
           >
             <slot name="tag"></slot>
           </span>
@@ -86,7 +86,7 @@
       class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
       :style="widthStyle"
     >
-      © 2026 IN. All Rights Reserved.
+      © 2026 Jerry Yeh
     </footer>
   </div>
 </template>

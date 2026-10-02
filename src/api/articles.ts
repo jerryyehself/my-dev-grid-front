@@ -7,7 +7,7 @@
 // 後端 documentations 資料表完全沒有對應欄位（entity_relations 表雖然存在，
 // 但 DocumentationController 沒有 sync 邏輯，文章對文章連結目前寫不進去），
 // 這裡刻意不假裝能存——只回傳／只接受後端真的有的欄位。
-import { apiDelete, apiGet, apiPost, apiPut } from './client'
+import { ApiHttpError, apiDelete, apiGet, apiPost, apiPut, describeLoadError } from './client'
 import { fetchScopes } from './ontology'
 
 interface ListEnvelope<T> {
@@ -96,7 +96,8 @@ export function deleteArticle(id: number): Promise<{ message: string }> {
 
 // 2026-09-24：跟 api/projects.ts 的 fetchProjectsOrDemo()、api/graph.ts 的
 // fetchGraphOrDemo() 同一套作法——正常打真的 API，連不上（單機展示沒開後端）才退回
-// 保底填充內容，並誠實回報 isDemo 讓畫面標示「這不是即時資料」。
+// 保底填充內容，並回報 loadError（錯誤訊息字串，成功時是 null）讓畫面顯示出錯了（2026-10-02 站主決定：
+// 出錯導致沒資料時照樣用示範資料頂替，但一定要顯示錯誤，不能悄悄蓋過去）。
 //
 // 2026-09-25 改版：body 內容從「自己編的示範散文」換成 `daily-claude-summary` 專案
 // `reports/` 資料夾裡三篇真的寫過的技術文件（逐字引用，只去掉重複的 H1）——使用者
@@ -104,26 +105,29 @@ export function deleteArticle(id: number): Promise<{ message: string }> {
 // 前端建置工具問答、首頁視覺化設計決策），不是 `summaries/` 那種逐日對話流水帳；
 // 後者內容偏內部協作/交接細節（session id、hook 腳本內部機制等），不適合當公開文章
 // 的填充內容。body 沒有另外加揭露句——D-57 的摘要就是抓 body 第一段，加一句每篇
-// 都一樣的揭露文字只會蓋掉這三篇本來就有意義的摘要；`isDemo` 已經讓畫面在頁面層級
-// 顯示 DEMO_DATA 橫幅，不需要每篇內文再重複講一次。
+// 都一樣的揭露文字只會蓋掉這三篇本來就有意義的摘要；`loadError` 已經讓畫面在頁面層級
+// 顯示錯誤訊息，不需要每篇內文再重複講一次。
 import articlesDemoFixture from '@/data/articlesDemoFixture.json'
 
-export async function fetchArticlesOrDemo(): Promise<{ articles: ArticleDto[]; isDemo: boolean }> {
+export async function fetchArticlesOrDemo(): Promise<{ articles: ArticleDto[]; loadError: string | null }> {
   try {
-    return { articles: await fetchArticles(), isDemo: false }
+    return { articles: await fetchArticles(), loadError: null }
   } catch (e) {
-    console.warn('[articles] 連不上後端，改用填充內容（僅供單機展示）', e)
-    return { articles: articlesDemoFixture as ArticleDto[], isDemo: true }
+    console.warn('[articles] 載入失敗，改用填充內容', e)
+    return { articles: articlesDemoFixture as ArticleDto[], loadError: describeLoadError(e) }
   }
 }
 
-export async function fetchArticleOrDemo(id: number): Promise<{ article: ArticleDto; isDemo: boolean }> {
+export async function fetchArticleOrDemo(id: number): Promise<{ article: ArticleDto; loadError: string | null }> {
   try {
-    return { article: await fetchArticle(id), isDemo: false }
+    return { article: await fetchArticle(id), loadError: null }
   } catch (e) {
+    // 404 是「這篇文章真的不存在」，不是載入失敗：不拿填充文章頂替（即使 demo 清單剛好有同一個
+    // id），丟回去讓頁面顯示一般的找不到狀態。
+    if (e instanceof ApiHttpError && e.status === 404) throw e
     const demo = (articlesDemoFixture as ArticleDto[]).find((a) => a.id === id)
     if (!demo) throw e // demo 清單裡也沒有這個 id，誠實回報「找不到」，不要生一篇假的出來
-    console.warn('[articles] 連不上後端，改用填充內容（僅供單機展示）', e)
-    return { article: demo, isDemo: true }
+    console.warn('[articles] 載入失敗，改用填充內容', e)
+    return { article: demo, loadError: describeLoadError(e) }
   }
 }

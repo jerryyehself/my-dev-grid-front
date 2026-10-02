@@ -28,7 +28,7 @@ type SimNode = GraphPocNode & NodeObject
 // 收斂成只剩 string，typeof l.source === 'object' 分支會被 TS 判成 never。
 type SimLink = Omit<GraphPocLink, 'source' | 'target'> & LinkObject<SimNode>
 
-const emit = defineEmits<{ select: [selection: GraphPocSelection]; demo: [isDemo: boolean] }>()
+const emit = defineEmits<{ select: [selection: GraphPocSelection]; loadError: [loadError: string | null] }>()
 
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
@@ -93,6 +93,45 @@ function isDimmedNode(id: string): boolean {
   if (id === hoveredNodeId) return false
   return !neighborIds.get(hoveredNodeId)?.has(id)
 }
+// 節點名稱。原本只畫 weight > 0.6（連線數超過全圖最多那個的 60%），整張圖只剩
+// my-dev-grid 一個有字（2026-10-01 使用者問「為何只有 my dev grid 有文字標籤」）。
+// 改成地圖慣用的做法：每個節點都試著畫名稱，依優先序擺放，會跟已經擺好的名稱
+// 重疊的就這一幀先不畫。放大後名稱之間的螢幕距離變大，被略過的自然會出現。
+// 優先序：路徑查詢上的節點、hover 的節點與鄰居一定畫（不受重疊限制），其餘依
+// 連線數由多到少。被淡化的節點不畫。
+// 字級 13px：D-68 的中文標籤下限（節點名稱常帶中文，例如「PHP 官方文件」）；
+// 除以 globalScale 讓字在縮放時維持同樣的螢幕大小。
+const LABEL_FONT_PX = 13
+const LABEL_GAP_PX = 3
+function isForcedLabel(id: string): boolean {
+  if (pathNodeIds) return pathNodeIds.has(id)
+  return hoveredNodeId != null && (id === hoveredNodeId || (neighborIds.get(hoveredNodeId)?.has(id) ?? false))
+}
+function drawLabels(ctx: CanvasRenderingContext2D, globalScale: number, nodes: SimNode[]) {
+  const fontPx = LABEL_FONT_PX / globalScale
+  const gap = LABEL_GAP_PX / globalScale
+  ctx.save()
+  ctx.font = `500 ${fontPx}px system-ui, sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = css('--text-ink-body')
+  const degreeOf = (n: SimNode) => neighborIds.get(n.id)?.size ?? 0
+  const ordered = nodes
+    .filter((n) => !isDimmedNode(n.id) && n.x != null && n.y != null)
+    .sort((a, b) => Number(isForcedLabel(b.id)) - Number(isForcedLabel(a.id)) || degreeOf(b) - degreeOf(a))
+  const placed: { x0: number; y0: number; x1: number; y1: number }[] = []
+  for (const n of ordered) {
+    const w = ctx.measureText(n.label).width
+    const top = n.y! + radiusFor(n) + gap
+    const box = { x0: n.x! - w / 2 - gap, y0: top - gap, x1: n.x! + w / 2 + gap, y1: top + fontPx + gap }
+    const overlaps = placed.some((p) => box.x0 < p.x1 && box.x1 > p.x0 && box.y0 < p.y1 && box.y1 > p.y0)
+    if (overlaps && !isForcedLabel(n.id)) continue
+    placed.push(box)
+    ctx.fillText(n.label, n.x!, top)
+  }
+  ctx.restore()
+}
+
 function hexToRgb(hex: string): [number, number, number] {
   const v = parseInt(hex.replace('#', ''), 16)
   return [(v >> 16) & 255, (v >> 8) & 255, v & 255]
@@ -114,10 +153,10 @@ onMounted(async () => {
   let graphPocNodes: GraphPocNode[]
   let graphPocLinks: GraphPocLink[]
   try {
-    const { nodes, links, isDemo } = await fetchGraphPocData()
+    const { nodes, links, loadError } = await fetchGraphPocData()
     graphPocNodes = nodes
     graphPocLinks = links
-    emit('demo', isDemo)
+    emit('loadError', loadError)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '載入知識圖譜資料失敗'
     loading.value = false
@@ -167,7 +206,6 @@ onMounted(async () => {
       const r = radiusFor(n)
       const x = n.x ?? 0
       const y = n.y ?? 0
-      const isCore = n.weight > 0.6
       const dimmed = isDimmedNode(n.id)
       ctx.save()
       ctx.globalAlpha = dimmed ? 0.25 : 1
@@ -196,20 +234,17 @@ onMounted(async () => {
           ctx.stroke()
         }
       }
-      if ((isCore || pathNodeIds?.has(n.id)) && !dimmed) {
-        ctx.font = '11px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.fillStyle = css('--text-ink-body')
-        ctx.fillText(n.label, x, y - r - 6)
-      }
       ctx.restore()
     })
+    // 名稱在所有節點畫完之後統一擺放，才能依優先序判斷重疊（見 drawLabels）
+    .onRenderFramePost((ctx, globalScale) => drawLabels(ctx, globalScale, nodes))
     .linkColor((l) => {
       if (pathNodeIds) return isPathEdge(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.12)
       if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : withAlpha(css('--edge-real'), 0.12)
-      return l.kind === 'inspiration' ? css('--text-accent') : css('--edge-real')
+      // 同類別、跨類別都是直接關係，畫成同一種實線。虛線全站只留給首頁的「間接關聯」
+      // （推算出來、資料庫裡沒有的），同一種線不能在兩頁代表兩件事（2026-09-30 使用者同意）
+      return css('--edge-real')
     })
-    .linkLineDash((l) => (l.kind === 'inspiration' ? [4, 3] : null))
     .linkWidth((l) => ((pathNodeIds ? isPathEdge(l) : hoveredNodeId && linkTouchesHovered(l)) ? 2.4 : 1.2))
     .enableNodeDrag(true)
     .onNodeDragEnd((n) => {
@@ -237,6 +272,8 @@ onMounted(async () => {
         domainType: n.domainType,
         weight: n.weight,
         degree: neighborIds.get(n.id)?.size ?? 0,
+        subtype: n.subtype,
+        url: n.url,
       }),
     )
     .onLinkClick((l) =>
@@ -328,7 +365,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <BaseLoadingBlock v-if="loading" height="520px">// LOADING_GRAPH...</BaseLoadingBlock>
+  <BaseLoadingBlock v-if="loading" height="520px">圖譜載入中…</BaseLoadingBlock>
   <BaseLoadingBlock v-else-if="error" height="520px" tone="error">{{ error }}</BaseLoadingBlock>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->
@@ -339,7 +376,7 @@ onUnmounted(() => {
       class="absolute inset-0 flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
       :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
     >
-      <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">// 節點排列中...</span>
+      <span class="text-[13px] text-(--text-ink-body)/70">節點排列中…</span>
     </div>
   </div>
 </template>

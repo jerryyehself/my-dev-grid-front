@@ -128,6 +128,27 @@ real new semantic color (success/warning/error) only if a genuine tri-state or
 alert-level distinction shows up — two states that are really just
 "current" vs "past" don't need one.
 
+**Concrete example — `BaseSegmented.vue` (D-66, 2026-09-30)**: every
+one-of-N toggle on the site uses it — Articles 時間軸/分類夾, the home graph's
+節點顏色, `/graph` 2D/3D, About 從兩頭看, the article editor's 編輯/預覽 and
+草稿/已發布 (`stretch`), and the manage page's filter. Before it there were four
+looks for the same control (pill with a pale fill and wine text, pill with a
+solid wine fill, navy solid, square navy solid). Selected = `--bg-selected` /
+`--text-on-selected`: navy in the light theme, **brass in the dark theme**,
+because the dark theme's page ground *is* navy and a navy fill disappears into
+it. Unselected = transparent with a 35% ink border. Sizes: `sm` (toolbars) and
+`md` (44px, primary in-content toggle). Deliberately *not* using it: the
+navbar's active link (brass text + underline on the navy bar — a different
+context) and multi-select filter chips like the graph's 顯示層 (category
+colours carry meaning). A new one-of-N toggle reaches for `BaseSegmented`, not
+a fresh set of ternary classes. Comparison: canvas `8nZmo6sneYNdSEgfGHXst8`.
+
+`BaseSwitch` (added 2026-09-30) is the on/off counterpart: a single thing
+shown or hidden, `role="switch"`. Its "on" track uses the same
+`--bg-selected`/`--text-on-selected` pair, so the site has only one look for
+"this is on/selected". First use: the home graph's 間接關聯 switch. It is off
+by default because the user wanted a less cluttered first view.
+
 **Where a shared component's values come from** (added 2026-09-16, after getting
 this wrong): when the role already exists in a design canvas's `<style>` block
 (`.lbl`, `.hint`, `.fld`, `.chip` in the article-editor canvas), that block is
@@ -242,6 +263,63 @@ typography (Fraunces) and eyebrow/mono labels were evaluated in the same
 research pass and confirmed already correct — no change. (Superseded
 2026-09-29 by D-60: Fraunces has no CJK glyphs, so Chinese headings were in
 fact rendering in each device's fallback serif; headings moved to Noto Serif TC.)
+
+## Typography — small-text floors (visitor-facing pages)
+
+Set 2026-09-30 after the user found the home page text too small. Before,
+full explanatory sentences sat at 12px and some labels at 9–10px.
+
+| Role | Floor | Examples |
+|---|---|---|
+| Running prose | 16px (see above) | article body, About paragraphs |
+| Full sentences a visitor reads | 14px (`text-sm`/`text-[14px]`) | page explanations, empty/error/demo-data notices, list-item titles |
+| Secondary sans text | 12px | tech-stack lines, legends, popover rows |
+| Mono uppercase labels (Latin/digits only) | 11px | dates, `PROJ-` ids, status badges, `STARTED`/`ROLE` |
+| Chinese labels | 13px, tracking ≤ 0.05em | 節點顏色, 語言／套件, 起點／終點, 所有文章 →, nav 淺色／登入 |
+| Chinese section headings | 15px bold | 近期知識網路, 近況板, 路徑查詢 |
+
+The 11px floor was first applied to Chinese labels too. The user caught it
+the same day: 近期知識網路 at 11px was too small. The 11px/wide-tracking
+style is designed for uppercase Latin. Chinese has no uppercase, and wide
+tracking only pulls the characters apart. The mono font has no CJK glyphs
+either, so those labels were falling back to the system sans anyway.
+
+Copy rules checked in the same pass:
+- Page subtitles take no trailing 。. Explanatory sentences under a
+  section do.
+- Visitor-facing text avoids developer vocabulary: hover, 邊, 型別,
+  已實現, library names like `force-graph`, identifiers like `All_Essays`.
+  Relations in the catalogue are 直接關係 and computed ones are 間接關聯.
+  The earlier 登記的關係 was dropped: the user asked what it meant.
+  The categories are 類別/三大類, never 型別.
+- Graph line style follows the same split. 直接關係 is a solid `--edge-real`
+  line on every graph. 間接關聯 is a dashed `--accent-secondary` line, home
+  graph only. It was a paler gray dash first, but a reader review measured
+  almost no visible change when the switch was turned on, so it now has its
+  own color. Hover stays `--text-accent`, so the two never collide.
+- Don't tell touch users to hover. Hover-only hints ("滑到節點上…") sit in a
+  `[@media(hover:hover)]` span.
+- Relation arrows are one-way. One arrow per direction, pointing from subject
+  to object, labelled with that direction's predicate. Never draw a
+  double-headed arrow labelled "specs / specifiedBy": nobody can tell which
+  name goes with which direction. The backend's `uses` was defined backwards
+  for months and got misread exactly this way (2026-09-30, user decision; the
+  ER model diagram and the About class diagram were both changed).
+
+Sources, and which parts are judgment:
+- **11px label floor**: sourced. Apple HIG sets 11pt as the minimum text
+  size, and Material 3's smallest role (Label Small) is also 11px.
+- **14px sentence floor**: a design judgment, not a standard. Material 3's
+  Body Small is 12px, so 12px is not wrong per se. The call is that CJK
+  sentences at 12px are tiring to read. W3C clreq notes that small sizes
+  are hard to read because of the complex structure of Chinese characters,
+  but its numbers are for print.
+
+Scope: this covers the pages a visitor reaches (home, articles, article
+detail, projects, graph, layout and navbar). Admin forms keep the 10px
+values that `BaseHint`, `BaseEyebrow size="field"` and `BaseTextarea` took
+from the 文章編輯頁 mockup. That is a deliberate exception. It is not an
+oversight.
 
 ## Extending the token set
 

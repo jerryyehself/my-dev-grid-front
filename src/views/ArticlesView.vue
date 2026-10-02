@@ -8,27 +8,28 @@
 // summary：D-57，不是獨立欄位，取 body 第一段（見 excerptOf）。
 // 只列 status===1（已發布）——草稿不該出現在訪客看得到的清單。
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import { fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
+import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
-
-const router = useRouter()
+import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 
 const ready = ref(false)
 const loadError = ref(false)
-const isDemoData = ref(false)
+const fallbackError = ref<string | null>(null)
 const articles = ref<ArticleDto[]>([])
 
 async function load() {
   ready.value = false
   loadError.value = false
   try {
-    // fetchArticlesOrDemo()：正常打真的 API，連不上（本機沒開後端）才退回填充內容，
+    // fetchArticlesOrDemo()：正常打真的 API，載入失敗才退回填充內容，
     // 見 api/articles.ts 的說明——跟 Home 頁專案/知識網路小工具同一套 fallback 慣例。
-    const { articles: all, isDemo } = await fetchArticlesOrDemo()
-    isDemoData.value = isDemo
+    const { articles: all, loadError: error } = await fetchArticlesOrDemo()
+    fallbackError.value = error
     // 後端 index() 依 title 排序（DocumentationController），不是日期——
     // 時間軸要照日期分組，這裡一定要自己重排，不能假設 API 順序就是時間序。
     articles.value = all
@@ -55,6 +56,10 @@ function displayDate(a: ArticleDto): string {
 }
 
 const viewMode = ref<'timeline' | 'folder'>('timeline')
+const VIEW_MODES = [
+  { value: 'timeline', label: '時間軸' },
+  { value: 'folder', label: '分類夾' },
+] as const
 const currentTag = ref('')
 
 const allTags = computed(() => {
@@ -90,54 +95,28 @@ const folderArticles = computed(() => {
   if (!currentTag.value) return articles.value
   return articles.value.filter((article) => tagsOf(article).includes(currentTag.value))
 })
-
-const goToArticle = (id: number) => {
-  router.push({ name: 'article-detail', params: { id } })
-}
 </script>
 
 <template>
   <div class="w-full">
     <div class="flex items-center justify-between gap-4 mb-6">
-      <!-- 管理頁入口。D-56 落地後 /articles/manage 本身已經是 requiresAuth 路由，
-           未登入點進去會被導去登入頁——這裡刻意不因為登入狀態隱藏連結本身,
-           見到「管理」但點進去先被要求登入,是常見且合理的模式,不是假訊號。 -->
-      <router-link
-        :to="{ name: 'article-manage' }"
-        class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-        管理
-      </router-link>
-      <div class="inline-flex rounded-full border border-(--border-shelf) p-0.5 gap-0.5">
-        <button
-          type="button"
-          class="px-4 py-1.5 rounded-full font-mono text-[11px] tracking-wider font-bold transition-colors cursor-pointer"
-          :class="
-            viewMode === 'timeline'
-              ? 'bg-(--bg-folder) text-(--text-accent)'
-              : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
-          "
-          @click="viewMode = 'timeline'"
+      <!-- 管理頁入口，只有登入後才顯示（AuthOnly.vue 說明為什麼）。 -->
+      <AuthOnly>
+        <router-link
+          :to="{ name: 'article-manage' }"
+          class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
         >
-          時間軸
-        </button>
-        <button
-          type="button"
-          class="px-4 py-1.5 rounded-full font-mono text-[11px] tracking-wider font-bold transition-colors cursor-pointer"
-          :class="
-            viewMode === 'folder'
-              ? 'bg-(--bg-folder) text-(--text-accent)'
-              : 'text-(--text-ink-muted) hover:text-(--text-ink-main)'
-          "
-          @click="viewMode = 'folder'"
-        >
-          分類夾
-        </button>
-      </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+          管理
+        </router-link>
+      </AuthOnly>
+      <!-- ml-auto：沒登入時左邊的「管理」不存在，justify-between 只剩一個子元素會把切換鈕擠到左邊。
+           全站統一的「幾選一」切換（D-66） -->
+      <!-- 沒有文章時不顯示排列切換：空頁面上兩顆沒有東西可排的按鈕只會讓人困惑（模擬讀者審查，D-83） -->
+      <BaseSegmented v-if="articles.length > 0" v-model="viewMode" :options="VIEW_MODES" label="文章排列方式" class="ml-auto" />
     </div>
 
     <BaseLoadingBlock v-if="!ready && !loadError" height="240px">載入中…</BaseLoadingBlock>
@@ -146,11 +125,14 @@ const goToArticle = (id: number) => {
     </BaseLoadingBlock>
 
     <template v-else>
-    <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
-      // DEMO_DATA（連不上後端，顯示的是填充內容，不是真的文章）
+    <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
+    <!-- 一篇已發布的文章都沒有時，兩種排列都只剩空白；頁面拿掉副標後連一句中文都沒有（D-83），
+         補一句空狀態 -->
+    <p v-if="timelineGroups.length === 0" class="py-12 text-center text-[15px] text-(--text-ink-body)">
+      還沒有發布的文章，寫好的文章會依日期排在這裡。
     </p>
     <!-- 時間軸：依日期線性掃視 -->
-    <div v-if="viewMode === 'timeline'" class="relative pl-7">
+    <div v-else-if="viewMode === 'timeline'" class="relative pl-7">
       <div class="absolute left-[5px] top-1.5 bottom-1.5 w-0.5 bg-(--border-shelf)"></div>
 
       <template v-for="group in timelineGroups" :key="group.month">
@@ -158,7 +140,7 @@ const goToArticle = (id: number) => {
           <div
             class="absolute -left-7 top-0.5 w-3 h-3 rounded-full bg-(--text-accent) ring-[3px] ring-(--bg-paper-light)"
           ></div>
-          <div class="font-mono text-xs tracking-wider font-bold text-(--text-accent)">
+          <div class="text-[13px] tracking-[0.05em] font-bold text-(--text-accent)">
             {{ group.month }}
           </div>
         </div>
@@ -166,20 +148,26 @@ const goToArticle = (id: number) => {
         <article
           v-for="article in group.articles"
           :key="article.id"
-          class="relative pb-6 cursor-pointer group"
-          @click="goToArticle(article.id)"
+          class="relative pb-6 group"
         >
           <div
             class="absolute -left-[24.5px] top-[7px] w-[7px] h-[7px] rounded-full bg-(--text-ink-muted)"
           ></div>
-          <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
+          <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article)[0] }}</span>
           </div>
+          <!-- 標題是真的連結，::after 撐滿整列，整列都點得到：鍵盤能 Tab 到、能開新分頁、能複製網址。
+               以前是 <article @click>，只有滑鼠點得到 -->
           <h3
             class="text-base font-bold text-(--text-ink-main) mb-1.5 group-hover:text-(--text-accent) transition-colors"
           >
-            {{ article.title }}
+            <RouterLink
+              :to="{ name: 'article-detail', params: { id: article.id } }"
+              class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+            >
+              {{ article.title }}
+            </RouterLink>
           </h3>
           <p class="text-(--text-ink-body) text-sm leading-relaxed text-left sm:text-justify max-w-[620px]">
             {{ summaryOf(article) }}
@@ -197,7 +185,7 @@ const goToArticle = (id: number) => {
       >
         <div class="flex flex-nowrap gap-x-1 items-end">
           <BaseButton variant="tab" class="shrink-0" :active="!currentTag" @click="currentTag = ''">
-            All_Essays
+            全部
           </BaseButton>
 
           <BaseButton
@@ -223,14 +211,20 @@ const goToArticle = (id: number) => {
         <article
           v-for="article in folderArticles"
           :key="article.id"
-          class="p-5 sm:p-6 cursor-pointer hover:bg-(--bg-folder) transition-colors"
-          @click="goToArticle(article.id)"
+          class="relative p-5 sm:p-6 hover:bg-(--bg-folder) transition-colors"
         >
-          <div class="flex items-center gap-3 mb-2 font-mono text-[10px] uppercase tracking-wider">
+          <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article).join(' / ') }}</span>
           </div>
-          <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">{{ article.title }}</h3>
+          <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">
+            <RouterLink
+              :to="{ name: 'article-detail', params: { id: article.id } }"
+              class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+            >
+              {{ article.title }}
+            </RouterLink>
+          </h3>
           <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-left sm:text-justify max-w-[700px]">
             {{ summaryOf(article) }}
           </p>
@@ -238,9 +232,9 @@ const goToArticle = (id: number) => {
 
         <div
           v-if="folderArticles.length === 0"
-          class="py-16 text-center text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest"
+          class="py-16 text-center text-sm text-(--text-ink-muted)"
         >
-          // NO_DOCUMENTS_FOUND
+          這個分類還沒有文章。
         </div>
       </div>
     </div>

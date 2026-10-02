@@ -9,6 +9,7 @@
  */
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseCard from '@/components/BaseCard.vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
@@ -145,12 +146,14 @@ const lockReason = computed(() => {
         {{ relation.name }}
       </h1>
       <BaseTag v-if="relation.is_referenced" tone="accent">已被引用 · 欄位鎖定</BaseTag>
-      <router-link
-        :to="{ name: 'ontology-relation-edit', params: { id: relation.id } }"
-        class="ml-auto self-center"
-      >
-        <BaseButton variant="primary">{{ relation.is_referenced ? '編輯註釋' : '編輯' }}</BaseButton>
-      </router-link>
+      <AuthOnly>
+        <router-link
+          :to="{ name: 'ontology-relation-edit', params: { id: relation.id } }"
+          class="ml-auto self-center"
+        >
+          <BaseButton variant="primary">{{ relation.is_referenced ? '編輯註釋' : '編輯' }}</BaseButton>
+        </router-link>
+      </AuthOnly>
     </div>
 
     <!-- 三元組那一行。族別色直接用 --node-doc / tech / impl，跟首頁圖譜同一組

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchProjects } from './projects'
+import { fetchProjects, fetchProjectsOrDemo, toProjectTechniques } from './projects'
+import projectsDemoFixture from '@/data/projectsDemoFixture.json'
 
 const mockFetch = vi.fn()
 
@@ -60,8 +61,13 @@ describe('fetchProjects', () => {
         statusType: 'active',
         desc: '學習檔案前端',
         tags: ['Vue3', 'TypeScript'],
+        techniques: [
+          { name: 'Vue3', version: null, category: '' },
+          { name: 'TypeScript', version: null, category: '' },
+        ],
         started: '2026.06',
         repo: 'my-dev-grid-front',
+        implementationId: 1,
       },
     ])
   })
@@ -108,5 +114,67 @@ describe('fetchProjects', () => {
       ['PROJ-2025-02', 'older-2025'],
       ['PROJ-2024-01', 'only-2024'],
     ])
+  })
+})
+
+describe('toProjectTechniques', () => {
+  const scopes = new Map([
+    [5, 'language'],
+    [9, 'framework'],
+  ])
+
+  it('標籤帶版本、分類換成後端的 scope 名稱', () => {
+    expect(
+      toProjectTechniques(
+        [
+          { title: 'Vue', version: '3', type: 9 },
+          { title: 'PHP', version: null, type: 5 },
+        ],
+        scopes,
+      ),
+    ).toEqual([
+      { name: 'Vue', version: '3', category: 'framework' },
+      { name: 'PHP', version: null, category: 'language' },
+    ])
+  })
+
+  it('同時有「Vue」和「Vue 3」時只留 Vue 3（升級前的邊還留著，但版本已經知道了）', () => {
+    const out = toProjectTechniques(
+      [
+        { title: 'Vue', version: null, type: 9 },
+        { title: 'Vue', version: '3', type: 9 },
+        { title: 'Vue', version: '2', type: 9 },
+      ],
+      scopes,
+    )
+    expect(out.map((t) => `${t.name} ${t.version}`)).toEqual(['Vue 3', 'Vue 2'])
+  })
+
+  it('查不到分類時留空字串，不猜', () => {
+    expect(toProjectTechniques([{ title: 'x', type: 999 }], scopes)).toEqual([{ name: 'x', version: null, category: '' }])
+  })
+})
+
+describe('fetchProjectsOrDemo', () => {
+  it('成功時回真實資料，loadError 為 null', async () => {
+    mockScopesAndImplementations([])
+    expect(await fetchProjectsOrDemo()).toEqual({ projects: [], loadError: null })
+  })
+
+  it('網路錯誤時退回快照並回報 loadError', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
+    expect(await fetchProjectsOrDemo()).toEqual({
+      projects: projectsDemoFixture,
+      loadError: '資料載入失敗：連不上後端 API（Failed to fetch），下面先放示範資料。',
+    })
+  })
+
+  it('HTTP 500 時退回快照並回報 loadError', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mockFetch.mockResolvedValue({ ok: false, status: 500, json: async () => ({}) })
+    const result = await fetchProjectsOrDemo()
+    expect(result.projects).toEqual(projectsDemoFixture)
+    expect(result.loadError).toMatch(/^資料載入失敗：GET \/\S+ 回傳 HTTP 500，下面先放示範資料。$/)
   })
 })

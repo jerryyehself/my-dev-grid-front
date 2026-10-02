@@ -5,25 +5,23 @@
   </BaseLoadingBlock>
 
   <div v-else class="w-full">
-    <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
-      // DEMO_DATA（連不上後端，顯示的是填充內容，不是真的文章）
-    </p>
+    <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
 
     <div class="flex items-center justify-between gap-4 mb-7">
       <BackToArticlesLink class="inline-flex" />
-      <!-- 編輯頁的入口。D-56 落地後 /articles/:id/edit 是 requiresAuth 路由，
-           未登入點進去會被導去登入頁——連結本身不因登入狀態隱藏，見 ArticlesView.vue
-           同一類連結的說明。 -->
-      <router-link
-        :to="{ name: 'article-editor', params: { id: article.id } }"
-        class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-        </svg>
-        編輯
-      </router-link>
+      <!-- 編輯頁的入口，只有登入後才顯示（AuthOnly.vue 說明為什麼）。 -->
+      <AuthOnly>
+        <router-link
+          :to="{ name: 'article-editor', params: { id: article.id } }"
+          class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+          編輯
+        </router-link>
+      </AuthOnly>
     </div>
 
     <div class="border-b border-(--border-shelf) pb-6 mb-8">
@@ -54,7 +52,7 @@
             :to="{ name: 'article-detail', params: { id: previousArticle.id } }"
             class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors hover:border-(--text-accent)/40"
           >
-            <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+            <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               &lt;&lt; PREV
             </div>
             <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
@@ -67,7 +65,7 @@
             :to="{ name: 'article-detail', params: { id: nextArticle.id } }"
             class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors hover:border-(--text-accent)/40"
           >
-            <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+            <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               NEXT &gt;&gt;
             </div>
             <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
@@ -80,7 +78,7 @@
       <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
       <div class="lg:sticky lg:top-24 flex flex-col gap-8">
         <div v-if="headings.length">
-          <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+          <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
             本文結構
           </div>
           <!-- slug 從 extractHeadings 來，跟 MarkdownBody 渲染標題時用的是同一份，
@@ -100,7 +98,7 @@
         </div>
 
         <div v-if="article.implementations.length">
-          <div class="text-[10px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+          <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
             Related Projects
           </div>
           <div class="flex flex-col gap-2">
@@ -133,10 +131,13 @@ import { computed, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { fetchArticleOrDemo, fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
+import AuthOnly from '@/components/AuthOnly.vue'
 import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { extractHeadings } from '@/components/markdown/headings'
+import { pageTitleOverride } from '@/siteMeta'
 
 const route = useRoute()
 const articleId = computed(() => Number(route.params.id))
@@ -145,23 +146,23 @@ const article = ref<ArticleDto | null>(null)
 const publishedList = ref<ArticleDto[]>([])
 const ready = ref(false)
 const loadError = ref(false)
-const isDemoData = ref(false)
+const fallbackError = ref<string | null>(null)
 
 async function load() {
   ready.value = false
   loadError.value = false
   article.value = null
   try {
-    // fetchArticleOrDemo()/fetchArticlesOrDemo()：正常打真的 API，連不上才退回填充
-    // 內容——見 api/articles.ts 的說明。填充內容裡不存在的 id（不是從 demo 清單點進來
-    // 的）會照樣被 fetchArticleOrDemo 丟出「找不到」，走進下面的 catch，不會生一篇假的。
-    const [{ article: a, isDemo: articleDemo }, { articles: all, isDemo: listDemo }] = await Promise.all([
+    // fetchArticleOrDemo()/fetchArticlesOrDemo()：正常打真的 API，載入失敗才退回填充
+    // 內容——見 api/articles.ts 的說明。404（文章真的不存在）跟填充內容裡不存在的 id 一樣
+    // 會被 fetchArticleOrDemo 丟出來，走進下面的 catch 顯示找不到，不會生一篇假的。
+    const [{ article: a, loadError: articleError }, { articles: all, loadError: listError }] = await Promise.all([
       fetchArticleOrDemo(articleId.value),
       fetchArticlesOrDemo(),
     ])
     article.value = a
     publishedList.value = all.filter((item) => item.status === 1)
-    isDemoData.value = articleDemo || listDemo
+    fallbackError.value = articleError ?? listError
     ready.value = true
   } catch {
     loadError.value = true
@@ -184,13 +185,10 @@ const intro = computed(() => (article.value ? excerptOf(article.value.body ?? ''
 /** 本文結構側欄。跟 MarkdownBody 內部用的是同一個 extractHeadings，slug 不會分岔。 */
 const headings = computed(() => (article.value ? extractHeadings(article.value.body ?? '') : []))
 
-// route.meta 的 tag/title 只是掛載前的靜態佔位，這裡掛載後改寫成真正的文章標題，
-// 讓捲動追蹤列（MainLayout）顯示的內容跟頁面上真正的文章標題一致，不是寫死的「Article Detail」
+// 載入後把捲動追蹤列（MainLayout）跟瀏覽器分頁的標題換成真正的文章標題，不是路由設定裡的
+// 佔位「Article Detail」。以前是直接改 route.meta，畫面不會跟著更新，原因見 siteMeta.ts
 watchEffect(() => {
-  if (article.value) {
-    route.meta.tag = 'ARTICLES'
-    route.meta.title = article.value.title
-  }
+  if (article.value) pageTitleOverride.value = article.value.title
 })
 
 const currentIndex = computed(() => {

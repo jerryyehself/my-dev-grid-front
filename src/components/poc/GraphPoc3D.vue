@@ -15,7 +15,7 @@ type SimNode = GraphPocNode & NodeObject
 // source/target 收斂成只剩字串，typeof l.source === 'object' 分支會被 TS 判成 never。
 type SimLink = Omit<GraphPocLink, 'source' | 'target'> & LinkObject<SimNode>
 
-const emit = defineEmits<{ select: [selection: GraphPocSelection]; demo: [isDemo: boolean] }>()
+const emit = defineEmits<{ select: [selection: GraphPocSelection]; loadError: [loadError: string | null] }>()
 
 const container = ref<HTMLDivElement>()
 const loading = ref(true)
@@ -90,9 +90,9 @@ function zForType(domainType: GraphPocNode['domainType']): number {
 const LAYER_PLANE_SIZE = 900
 const LAYER_ORDER: GraphPocNode['domainType'][] = ['documentation', 'technique', 'implementation']
 const LAYER_LABEL: Record<GraphPocNode['domainType'], string> = {
-  documentation: 'Documentation',
-  technique: 'Technique',
-  implementation: 'Implementation',
+  documentation: '文件',
+  technique: '技術',
+  implementation: '實作',
 }
 let layerVisuals: { plane: THREE.Mesh; sprite: THREE.Sprite; domainType: GraphPocNode['domainType'] }[] = []
 
@@ -151,10 +151,10 @@ onMounted(async () => {
   let graphPocNodes: GraphPocNode[]
   let graphPocLinks: GraphPocLink[]
   try {
-    const { nodes, links, isDemo } = await fetchGraphPocData()
+    const { nodes, links, loadError } = await fetchGraphPocData()
     graphPocNodes = nodes
     graphPocLinks = links
-    emit('demo', isDemo)
+    emit('loadError', loadError)
   } catch (e) {
     error.value = e instanceof Error ? e.message : '載入知識圖譜資料失敗'
     loading.value = false
@@ -193,6 +193,8 @@ onMounted(async () => {
     .width(width)
     .height(FALLBACK_HEIGHT)
     .backgroundColor(css('--canvas-bg'))
+    // 函式庫預設會在畫布角落放一行英文操作說明（Left-click: rotate…），關掉，改用 GraphPocView 圖例列的中文提示
+    .showNavInfo(false)
     .graphData({ nodes, links })
     .nodeId('id')
     .nodeLabel('label')
@@ -203,20 +205,21 @@ onMounted(async () => {
       return blendTowardBg(base, 0.15)
     })
     .linkColor((l) => {
-      const base = l.kind === 'inspiration' ? css('--text-accent') : css('--edge-real')
+      // 同類別、跨類別都是直接關係，一種顏色、一種粗細（見 GraphPoc2D 的同一段說明）
+      const base = css('--edge-real')
       if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : blendTowardBg(base, 0.12)
       return base
     })
     .linkWidth((l) => {
       if (hoveredNodeId && linkTouchesHovered(l)) return 2.2
-      return l.kind === 'inspiration' ? 1.5 : 0.6
+      return 1
     })
-    // 3d-force-graph 沒有原生「虛線」材質,用沿線飄動的粒子近似「靈感對撞機」的動態感，
-    // hover 到的鄰居邊額外加密粒子當提示。
-    .linkDirectionalParticles((l) => {
-      if (hoveredNodeId && linkTouchesHovered(l)) return 5
-      return l.kind === 'inspiration' ? 3 : 0
-    })
+    // 套件預設的線條不透明度是 0.2，疊在深淺兩種背景上幾乎看不到線（2026-09-30 模擬讀者審查）。
+    // 淡化靠上面 linkColor 的 blendTowardBg 處理，這裡整體拉高
+    .linkOpacity(0.85)
+    // hover 到的鄰居邊加上沿線飄動的粒子當提示。以前同類別的邊平常也有粒子（模擬 2D 的虛線），
+    // 2026-09-30 同類別跟跨類別統一成同一種直接關係之後拿掉
+    .linkDirectionalParticles((l) => (hoveredNodeId && linkTouchesHovered(l) ? 5 : 0))
     .linkDirectionalParticleSpeed(0.004)
     .onNodeHover((n) => {
       const nextId = n?.id ?? null
@@ -232,6 +235,8 @@ onMounted(async () => {
         domainType: n.domainType,
         weight: n.weight,
         degree: neighborIds.get(n.id)?.size ?? 0,
+        subtype: n.subtype,
+        url: n.url,
       }),
     )
     .onLinkClick((l) =>
@@ -287,7 +292,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <BaseLoadingBlock v-if="loading" height="520px">// LOADING_GRAPH...</BaseLoadingBlock>
+  <BaseLoadingBlock v-if="loading" height="520px">圖譜載入中…</BaseLoadingBlock>
   <BaseLoadingBlock v-else-if="error" height="520px" tone="error">{{ error }}</BaseLoadingBlock>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->
@@ -298,7 +303,7 @@ onUnmounted(() => {
       class="absolute inset-0 flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
       :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
     >
-      <span class="font-mono text-[11px] tracking-widest text-(--text-ink-body)/70">// 節點排列中...</span>
+      <span class="text-[13px] text-(--text-ink-body)/70">節點排列中…</span>
     </div>
   </div>
 </template>

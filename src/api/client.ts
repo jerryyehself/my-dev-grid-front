@@ -34,11 +34,40 @@ function handleUnauthorized(): never {
   throw new Error('Unauthorized')
 }
 
+/**
+ * GET 收到非 2xx 時丟的錯誤，帶著 HTTP 狀態碼。呼叫端要分「查無此資料（404）」跟
+ * 「伺服器壞了（5xx）」時看 `status`，不要去猜 `message` 字串。
+ * 網路層失敗（fetch 本身丟 TypeError）不會是這個類別，沒有 `status`。
+ */
+export class ApiHttpError extends Error {
+  constructor(
+    readonly status: number,
+    readonly path: string,
+    readonly method = 'GET',
+  ) {
+    super(`API 請求失敗（${status}）：${path}`)
+    this.name = 'ApiHttpError'
+  }
+}
+
+/**
+ * 「載入失敗、改用示範資料」那一行錯誤訊息的內容。這行是給站主看的，所以直接講實際出了什麼事
+ * （2026-10-02 站主指定，copy-language 的訪客用語規則不適用）：HTTP 錯誤寫出請求方法、路徑跟狀態碼，
+ * 其他（網路層 fetch 失敗等）寫出錯誤本身的 message。
+ */
+export function describeLoadError(e: unknown): string {
+  if (e instanceof ApiHttpError) {
+    return `資料載入失敗：${e.method} ${e.path} 回傳 HTTP ${e.status}，下面先放示範資料。`
+  }
+  const message = e instanceof Error ? e.message : String(e)
+  return `資料載入失敗：連不上後端 API（${message}），下面先放示範資料。`
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, { headers: authHeaders() })
   if (res.status === 401) handleUnauthorized()
   if (!res.ok) {
-    throw new Error(`API 請求失敗（${res.status}）：${path}`)
+    throw new ApiHttpError(res.status, path)
   }
   return res.json() as Promise<T>
 }
