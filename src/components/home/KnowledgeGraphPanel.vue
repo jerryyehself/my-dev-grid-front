@@ -18,6 +18,10 @@ const sectionRef = ref<HTMLElement>()
 const entered = ref(false)
 let entranceObserver: IntersectionObserver | undefined
 
+// 首頁維持三層疊圖（D-87）。下面「怎麼看這張圖」裡的圓框說明跟著這個值：哪天改成 'free'，
+// 那句說明也會一起消失。
+const GRAPH_LAYOUT: 'layered' | 'free' = 'layered'
+
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const dto = shallowRef<GraphDto | null>(null)
@@ -81,7 +85,12 @@ onUnmounted(() => {
     <BaseLoadingBlock v-if="loading" height="460px">圖譜載入中…</BaseLoadingBlock>
 
     <!-- 節點顏色、顯示層、間接關聯原本在這裡疊了三列，D-87 收進畫布左上角的「顯示設定」 -->
-    <KnowledgeGraphCanvas v-if="!loading && dto" :data="dto" label="近期知識網路圖" />
+    <KnowledgeGraphCanvas
+      v-if="!loading && dto"
+      :data="dto"
+      :layout="GRAPH_LAYOUT"
+      label="近期知識網路圖"
+    />
 
     <!-- 給訪客的讀法說明。原本這裡是開發筆記（色階出處、欄位缺口、佈局演算法），2026-09-30 使用者
          決定改成對應的說明。D-87：拿掉「圓框：……重疊的地方就是彼此相關的節點」——節點落在重疊區
@@ -113,6 +122,14 @@ onUnmounted(() => {
           class="text-(--text-accent) hover:underline"
           >圖譜頁</RouterLink
         >。
+      </p>
+      <!-- 只有三層疊圖才有圓框（2026-10-02 使用者核可的候選 C）。節點落在圓框重疊處是因為三個圓
+           錯開疊放，不是因為彼此相關，所以要明講 -->
+      <p
+        v-if="GRAPH_LAYOUT === 'layered'"
+        class="pb-1 text-[14px] leading-relaxed text-(--text-ink-muted)"
+      >
+        圓框：三大類各自的範圍，錯開疊放；落在重疊處不代表彼此有關。
       </p>
     </details>
   </section>

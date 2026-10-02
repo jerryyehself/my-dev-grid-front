@@ -19,7 +19,7 @@ const props = defineProps<{
 const emit = defineEmits<{ toggleType: [type: GraphNodeType] }>()
 
 const COLOR_MODES = [
-  { value: 'type', label: '依類型' },
+  { value: 'type', label: '依類別' },
   { value: 'overlay', label: '依建立時間' },
 ] as const
 const TYPES = ['documentation', 'technique', 'implementation'] as const
@@ -27,6 +27,13 @@ const NODE_VAR: Record<GraphNodeType, string> = {
   documentation: '--node-doc',
   technique: '--node-tech',
   implementation: '--node-impl',
+}
+// 選中時的實心底：--cat-fill-* 是專門給白字用的分類色（兩個主題同值、白字 ≥ 4.5:1，見
+// variables.css）。原本用 --node-* 底配 --bg-paper-light 字，深色主題變成深字配青綠底，對比不足。
+const FILL_VAR: Record<GraphNodeType, string> = {
+  documentation: '--cat-fill-doc',
+  technique: '--cat-fill-tech',
+  implementation: '--cat-fill-impl',
 }
 
 const panelId = useId()
@@ -88,27 +95,36 @@ function onKeydown(e: KeyboardEvent) {
     >
       <div class="flex flex-col gap-1.5">
         <span class="text-[13px] tracking-[0.05em] text-(--text-ink-muted)">節點顏色</span>
-        <!-- 全站統一的「幾選一」切換（D-66）。下面的「顯示層」不換：它可以多選，顏色是分類色，有語意 -->
+        <!-- 全站統一的「幾選一」切換（D-66）。下面的「突顯類別」不換：它可以多選，顏色是分類色，有語意 -->
         <BaseSegmented v-model="colorMode" :options="COLOR_MODES" label="節點顏色" />
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <span class="text-[13px] tracking-[0.05em] text-(--text-ink-muted)">顯示層</span>
-        <div class="flex flex-wrap gap-1.5" role="group" aria-label="顯示層">
+        <!-- 突顯類別（原「顯示層」，2026-10-02 使用者改名）：選了的類別維持清楚、其他變淡，可多選。
+             沒選任何一個＝全部一樣清楚，所以沒選的鈕用一般樣式（透明底、正文字色、類別色點），
+             不是原本那種淡色底淡字——看起來像「全部關掉」，深色主題對比也不夠（讀者審查）。
+             選中＝該類別的實心色底白字。 -->
+        <span class="text-[13px] tracking-[0.05em] text-(--text-ink-muted)">突顯類別</span>
+        <div class="flex flex-wrap gap-1.5" role="group" aria-label="突顯類別">
           <button
             v-for="type in TYPES"
             :key="type"
             type="button"
-            class="rounded-full border px-3 min-h-8 text-[13px] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+            class="inline-flex items-center gap-1.5 rounded-full border px-3 min-h-8 text-[13px] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
             :class="
               props.typeFilter[type]
-                ? 'text-(--bg-paper-light) border-transparent'
-                : 'bg-(--bg-folder) text-(--text-ink-muted) border-(--border-shelf)'
+                ? 'text-white border-transparent'
+                : 'bg-transparent text-(--text-ink-main) border-[color-mix(in_srgb,var(--text-ink-main)_35%,transparent)] hover:border-[color-mix(in_srgb,var(--text-ink-main)_65%,transparent)]'
             "
-            :style="props.typeFilter[type] ? { background: `var(${NODE_VAR[type]})` } : {}"
+            :style="props.typeFilter[type] ? { background: `var(${FILL_VAR[type]})` } : {}"
             :aria-pressed="props.typeFilter[type]"
             @click="emit('toggleType', type)"
           >
+            <span
+              aria-hidden="true"
+              class="w-2 h-2 rounded-full"
+              :style="{ background: props.typeFilter[type] ? '#fff' : `var(${NODE_VAR[type]})` }"
+            ></span>
             {{ TYPE_LABEL[type] }}
           </button>
         </div>
