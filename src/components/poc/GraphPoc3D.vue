@@ -6,6 +6,10 @@ import * as THREE from 'three'
 import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from '@/data/graphPocData'
 import { useTheme } from '@/composables/useTheme'
 
+// 註（D-87，2026-10-02）：下面多處寫「見 GraphPoc2D.vue 同樣的說明」——2D 版已經併進
+// components/graph/KnowledgeGraphCanvas.vue（跟首頁共用），GraphPoc2D.vue 已刪除，原本的說明
+// 可以在 git 歷史裡查到。3D 不在這次範圍內，沒有跟著改寫。
+
 // 800×520 只是行動裝置量不到容器寬度前的保底值，見 GraphPoc2D.vue 同樣的說明。
 const FALLBACK_WIDTH = 800
 const FALLBACK_HEIGHT = 520

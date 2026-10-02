@@ -5,7 +5,8 @@ import ForceGraph from 'force-graph'
 import { forceCollide, forceX, forceY } from 'd3-force'
 import { graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
 import { relationPhrase } from '@/components/graphRelationPhrase'
-import type { GraphDto, GraphNodeType } from '@/api/graph'
+import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
+import type { GraphPocSelection } from '@/data/graphPocData'
 import { useTheme } from '@/composables/useTheme'
 import { TYPE_LABEL, endpointId, type SimLink, type SimNode } from './graphTypes'
 import { recencyScore, viridis, withAlpha } from './colorScale'
@@ -66,6 +67,13 @@ const props = withDefaults(
     height?: number
     /** 畫布的無障礙名稱（螢幕報讀器唸） */
     label?: string
+    /**
+     * 點節點／連線之後怎麼顯示內容：'popover' 在畫布上浮一張卡（首頁）；'emit' 只發 select
+     * 事件，由頁面自己顯示（/graph 的詳情卡在圖下面）。兩種都會發 select。
+     */
+    details?: 'popover' | 'emit'
+    /** 路徑查詢結果（/graph 專用）：路徑上的節點與關係提亮，其餘淡化，鏡頭帶過去 */
+    highlightPath?: GraphPathDto | null
   }>(),
   // 同類聚集 0.08 的由來（2026-10-02 拿真實 60 節點資料、4 個亂數種子平均調過）：指標是
   // 「各類別節點到自己類別重心的平均距離 ÷ 全部節點到整體重心的平均距離」（越小越成團）跟
@@ -77,8 +85,19 @@ const props = withDefaults(
   //   0.12   0.91   0.92   0.86   0.68
   // 技術、實作被關係線綁著，幾乎不受影響；有感的是關係少的文件。0.04→0.08 文件明顯靠攏、
   // 連線只多拉長一點，0.12 起連線長度的代價變大、開始像 2026-09-14 拿掉的強力分區，所以取 0.08。
-  { layout: 'layered', clusterStrength: 0.08, height: 460, label: '知識圖譜' },
+  {
+    layout: 'layered',
+    clusterStrength: 0.08,
+    height: 460,
+    label: '知識圖譜',
+    details: 'popover',
+    highlightPath: null,
+  },
 )
+
+// select：點節點／連線時發出（GraphPocSelection 是 /graph 詳情卡原本就在用的共同格式，
+// 3D 版也是發這個）；取消固定選取時發 null。
+const emit = defineEmits<{ select: [selection: GraphPocSelection | null] }>()
 
 // 顯示設定（畫布自己管，兩頁一樣）：節點顏色模式、顯示層篩選、間接關聯開關。
 const colorMode = ref<'type' | 'overlay'>('type')
@@ -188,11 +207,28 @@ const RADAR_PING_PERIOD_MS = 1400
 const RADAR_PING_MAX_EXPAND = 16
 let hoverPingStartTime: number | null = null
 
+// 路徑查詢高亮（從 GraphPoc2D.vue 搬來）：跟 hover／固定選取是兩套獨立機制，但視覺上互斥——
+// 有路徑結果時優先，整張圖只淡化「不在路徑上」的東西，不理會滑鼠停在哪個節點。
+let pathNodeIds: Set<string> | null = null
+let pathEdgeKeys: Set<string> | null = null
+function linkKey(a: string, b: string): string {
+  return a < b ? `${a}|${b}` : `${b}|${a}`
+}
+function isPathEdge(l: SimLink): boolean {
+  return (
+    !l.derived &&
+    pathEdgeKeys != null &&
+    pathEdgeKeys.has(linkKey(endpointId(l.source), endpointId(l.target)))
+  )
+}
+
 function linkTouchesFocus(l: SimLink): boolean {
+  if (pathNodeIds) return isPathEdge(l)
   const id = focusId()
   return id != null && (endpointId(l.source) === id || endpointId(l.target) === id)
 }
 function isDimmedNode(id: string): boolean {
+  if (pathNodeIds) return !pathNodeIds.has(id)
   const focus = focusId()
   if (!focus) return false
   if (id === focus) return false
@@ -210,7 +246,7 @@ function derivedStrength(l: SimLink): number {
 // 實線的直接關係分開；透明度再依 derivedStrength() 分級，共用鄰居越多越明顯。
 function linkDisplayColor(l: SimLink): string {
   const filterDimmed = isLinkFilterDimmed(l)
-  if (focusId()) {
+  if (pathNodeIds || focusId()) {
     return linkTouchesFocus(l) && !filterDimmed
       ? css('--text-accent')
       : withAlpha(css('--edge-real'), 0.18)
@@ -234,6 +270,7 @@ function shouldLabelNode(n: SimNode): boolean {
 
 // 選取中（hover／固定選取）的節點本身跟它的鄰居一定畫名稱，不受重疊避讓限制。
 function isForcedLabel(n: SimNode): boolean {
+  if (pathNodeIds) return pathNodeIds.has(n.id)
   const focus = focusId()
   if (n.id === focus) return true
   return focus != null && (currentNeighbors().get(focus)?.has(n.id) ?? false)
@@ -325,6 +362,7 @@ function clampAllNodes() {
 // 鏡頭框住整張圖（含標籤，見 fitView.ts）。標籤以「常駐清單」為準：hover 臨時冒出來的名稱
 // 不算進框景，免得滑過節點時鏡頭跟著跳。
 const FIT_PADDING_PX = 16
+// 只框部分節點（路徑查詢）時最多放大 2 倍：路徑常常只有三四個節點，放到最大會看不到周圍
 function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
   if (!graph) return
   const items: FitItem[] = simNodes
@@ -341,7 +379,7 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
     for (const t of Object.values(layerTargetsCache))
       items.push({ x: t.cx, y: t.cy, r: t.r, labelW: 0, labelH: 0 })
   }
-  const fit = fitTransform(items, viewW, viewH, FIT_PADDING_PX)
+  const fit = fitTransform(items, viewW, viewH, filter ? 48 : FIT_PADDING_PX, filter ? 2 : 3)
   if (!fit) return
   graph.centerAt(fit.cx, fit.cy, durationMs)
   graph.zoom(fit.k, durationMs)
@@ -478,10 +516,12 @@ async function boot() {
     }
   })
   measureLabels()
+  maxDegree = Math.max(1, ...degree.values())
   const simLinks: SimLink[] = dto.edges.map((e) => ({
     source: e.source,
     target: e.target,
     predicate: e.predicate,
+    label: e.label,
   })) as SimLink[]
   // 同類別節點透過共同鄰居推導出來的關聯（見 derivedEdges.ts 檔頭註解）
   const derivedLinks: SimLink[] = computeDerivedEdges(simNodes, simLinks)
@@ -559,8 +599,8 @@ async function boot() {
       ctx.restore()
       ctx.beginPath()
       ctx.arc(x, y, r, 0, 2 * Math.PI)
-      const focused = n.id === focusId()
-      ctx.lineWidth = focused ? 2 : 1
+      const focused = pathNodeIds ? pathNodeIds.has(n.id) : n.id === focusId()
+      ctx.lineWidth = focused ? (pathNodeIds ? 2.5 : 2) : 1
       ctx.strokeStyle = focused
         ? css('--text-accent')
         : isDark()
@@ -638,6 +678,7 @@ async function boot() {
       if (pinnedNodeId === n.id) {
         pinnedNodeId = null
         popover.open = false
+        emit('select', null)
         // 觸控點一下之後，force-graph 會把手指最後的位置一直當成 hover 中（沒有「移開」
         // 這回事），不清掉的話取消固定選取後畫面還是亮著。滑鼠不用清：游標還停在節點上，
         // 顯示 hover 預覽是對的。
@@ -647,16 +688,16 @@ async function boot() {
         }
       } else {
         pinnedNodeId = n.id
-        openPopover('node', n, ev)
+        if (props.details === 'popover') openPopover('node', n, ev)
+        emit('select', nodeSelection(n))
       }
       forceRedraw()
     })
-    .onLinkClick((l, ev) => openPopover('link', l, ev))
-    .onBackgroundClick(() => {
-      pinnedNodeId = null
-      popover.open = false
-      forceRedraw()
+    .onLinkClick((l, ev) => {
+      if (props.details === 'popover') openPopover('link', l, ev)
+      emit('select', linkSelection(l))
     })
+    .onBackgroundClick(() => clearSelection())
     .onNodeHover((n) => {
       const nextId = lastPointerType === 'touch' && !touchPointerDown ? null : (n?.id ?? null)
       if (nextId === hoveredNodeId) return
@@ -682,7 +723,8 @@ async function boot() {
     .onEngineStop(() => {
       if (!settling.value) return
       clampAllNodes()
-      fitView()
+      if (pathNodeIds) fitView(0, (n) => pathNodeIds?.has(n.id) ?? false)
+      else fitView()
       settling.value = false
     })
   graph.d3Force('charge')?.strength(-130)
@@ -913,10 +955,59 @@ function closeHelp() {
   stage.value?.focus()
 }
 function clearSelection() {
+  const had = pinnedNodeId != null || popover.open
   pinnedNodeId = null
   popover.open = false
+  if (had) emit('select', null)
   forceRedraw()
 }
+
+// 轉成 /graph 詳情卡認得的共同格式（data/graphPocData.ts）
+let maxDegree = 1
+function nodeSelection(n: SimNode): GraphPocSelection {
+  return {
+    kind: 'node',
+    id: n.id,
+    label: n.label,
+    domainType: n.domainType,
+    weight: n.degree / maxDegree,
+    degree: n.degree,
+    subtype: n.subtype,
+    url: n.url,
+  }
+}
+function linkSelection(l: SimLink): GraphPocSelection {
+  const s = typeof l.source === 'object' ? l.source : undefined
+  const t = typeof l.target === 'object' ? l.target : undefined
+  return {
+    kind: 'link',
+    sourceLabel: s?.label ?? endpointId(l.source),
+    targetLabel: t?.label ?? endpointId(l.target),
+    linkKind: s && t && s.domainType === t.domainType ? 'inspiration' : 'related',
+    predicate: l.predicate,
+    label: l.label ?? null,
+    indirectVia: l.derived
+      ? (l.via ?? []).map((id) => simNodes.find((n) => n.id === id)?.label ?? id)
+      : undefined,
+  }
+}
+
+watch(
+  () => props.highlightPath,
+  (path) => {
+    if (!path?.found || path.nodes.length === 0) {
+      pathNodeIds = null
+      pathEdgeKeys = null
+    } else {
+      pathNodeIds = new Set(path.nodes.map((n) => n.id))
+      pathEdgeKeys = new Set(path.edges.map((e) => linkKey(e.source, e.target)))
+      // 找到路徑就把鏡頭帶過去，只框路徑上的節點。還沒收斂前交給第一次框景處理。
+      if (!settling.value) fitView(400, (n) => pathNodeIds?.has(n.id) ?? false)
+    }
+    forceRedraw()
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   boot()
