@@ -1046,7 +1046,7 @@ onUnmounted(() => {
          滑鼠點圖也會把焦點移過來，但 :focus-visible 只在鍵盤操作時畫外框。 -->
     <div
       ref="stage"
-      class="kg-stage relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+      class="kg-stage @container relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
       :style="{
         // 窄螢幕（手機）高度跟寬度差不多：整張圖的外形接近圓形，直立的高畫布框景後
         // 上下會空一大段

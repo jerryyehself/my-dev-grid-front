@@ -27,21 +27,23 @@ const KEYS: { keys: string[]; text: string }[] = [
 </script>
 
 <template>
+  <!-- 版面（D-87 第二輪：桌機深色截圖裡最後一行被切掉）：
+       - 窄畫布（< 640px）：上下左右貼齊畫布，只留底邊給橫排的控制按鈕，內容區自己捲動。
+       - 寬畫布：放在控制按鈕左邊，鍵盤一欄、滑鼠＋觸控一欄，460px 高的畫布裡不用捲就看得完；
+         高度上限是畫布高度扣掉上下邊距，真的放不下時內容區捲動。 -->
   <div
     v-if="open"
     role="dialog"
     aria-modal="false"
     aria-labelledby="kg-help-title"
-    class="absolute z-20 right-16 bottom-3 left-3 sm:left-auto sm:w-[360px] max-h-[calc(100%-1.5rem)] overflow-y-auto rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
+    class="absolute z-30 inset-x-3 top-3 bottom-[4.25rem] @min-[640px]:inset-x-auto @min-[640px]:top-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
   >
-    <div class="flex items-start justify-between gap-2 mb-2">
-      <h3 id="kg-help-title" class="text-[15px] font-bold text-(--text-ink-main) pt-1.5">
-        操作說明
-      </h3>
+    <div class="shrink-0 flex items-center justify-between gap-2 pl-4 pr-1.5 pt-1.5">
+      <h3 id="kg-help-title" class="text-[15px] font-bold text-(--text-ink-main)">操作說明</h3>
       <button
         ref="closeBtn"
         type="button"
-        class="-mr-2 -mt-1 w-11 h-11 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) text-lg leading-none cursor-pointer focus-visible:outline-2 focus-visible:outline-(--text-accent)"
+        class="w-11 h-11 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) text-lg leading-none cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent)"
         aria-label="關閉操作說明"
         @click="$emit('close')"
       >
@@ -49,9 +51,13 @@ const KEYS: { keys: string[]; text: string }[] = [
       </button>
     </div>
 
-    <!-- 三段的順序：觸控裝置（pointer: coarse）把「觸控」排到最前面，其他裝置照鍵盤、滑鼠、觸控 -->
-    <div class="flex flex-col gap-3">
-      <section>
+    <!-- 內容區：放不下時自己捲動（tabindex 讓鍵盤使用者也捲得到）。觸控裝置（pointer: coarse）
+         把「觸控」排到最前面 -->
+    <div
+      tabindex="0"
+      class="min-h-0 overflow-y-auto px-4 pb-3.5 pt-1 grid gap-3 @min-[640px]:grid-cols-2 @min-[640px]:gap-x-6 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent) rounded-b-xl"
+    >
+      <section class="@min-[640px]:row-span-2">
         <h4 class="text-[13px] text-(--text-ink-muted) mb-1">
           鍵盤（先點一下圖，或用 Tab 移到圖上）
         </h4>
@@ -74,7 +80,8 @@ const KEYS: { keys: string[]; text: string }[] = [
         <h4 class="text-[13px] text-(--text-ink-muted) mb-1">滑鼠</h4>
         <ul class="text-[14px] flex flex-col gap-0.5">
           <li>按住 {{ isMac ? '⌘' : 'Ctrl' }} 再滾動滾輪：縮放</li>
-          <li>拖曳空白處：移動畫面；拖曳節點：調整位置</li>
+          <li>拖曳空白處：移動畫面</li>
+          <li>拖曳節點：調整位置</li>
           <li>點節點：固定亮起它的關係；點空白處或再點一次：取消</li>
         </ul>
       </section>
