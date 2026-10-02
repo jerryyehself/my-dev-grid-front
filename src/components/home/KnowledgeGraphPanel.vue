@@ -116,21 +116,21 @@ onUnmounted(() => {
         </svg>
         怎麼看這張圖
       </summary>
-      <p class="pb-1 text-[14px] leading-relaxed text-(--text-ink-muted)">
-        節點越大，關係越多。點一個節點，它和相連的節點會一直亮著；想查兩個節點之間怎麼連起來，到<RouterLink
-          to="/graph"
-          class="text-(--text-accent) hover:underline"
-          >圖譜頁</RouterLink
-        >。
-      </p>
-      <!-- 只有三層疊圖才有圓框（2026-10-02 使用者核可的候選 C）。節點落在圓框重疊處是因為三個圓
-           錯開疊放，不是因為彼此相關，所以要明講 -->
-      <p
-        v-if="GRAPH_LAYOUT === 'layered'"
-        class="pb-1 text-[14px] leading-relaxed text-(--text-ink-muted)"
-      >
-        圓框：三大類各自的範圍，錯開疊放；落在重疊處不代表彼此有關。
-      </p>
+      <!-- 用 div 不用 p：全站 .global-page-wrapper p 有 1.25rem 下邊距（書本段落樣式），兩句之間會空一大段 -->
+      <div class="flex flex-col gap-1 pb-1 text-[14px] leading-relaxed text-(--text-ink-muted)">
+        <div>
+          節點越大，關係越多。點一個節點，它和相連的節點會一直亮著；想查兩個節點之間怎麼連起來，到<RouterLink
+            to="/graph"
+            class="text-(--text-accent) hover:underline"
+            >圖譜頁</RouterLink
+          >。
+        </div>
+        <!-- 只有三層疊圖才有圓框（2026-10-02 使用者核可的候選 C）。節點落在圓框重疊處是因為三個圓
+             錯開疊放，不是因為彼此相關，所以要明講 -->
+        <div v-if="GRAPH_LAYOUT === 'layered'">
+          圓框：三大類各自的範圍，錯開疊放；落在重疊處不代表彼此有關。
+        </div>
+      </div>
     </details>
   </section>
 </template>
