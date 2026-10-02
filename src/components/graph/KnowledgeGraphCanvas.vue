@@ -12,7 +12,7 @@ import { TYPE_LABEL, endpointId, type SimLink, type SimNode } from './graphTypes
 import { recencyScore, viridis, withAlpha } from './colorScale'
 import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './derivedEdges'
 import { typeClusterForce } from './clusterForce'
-import { fitTransform, type FitItem } from './fitView'
+import { controlsBottomInset, fitTransformWithInset, type FitItem } from './fitView'
 import { LABEL_MAX_WIDTH_PX, placeLabels, truncateLabel, type LabelCandidate } from './labels'
 import GraphDisplaySettings from './GraphDisplaySettings.vue'
 import GraphLegend from './GraphLegend.vue'
@@ -384,7 +384,16 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
     for (const t of Object.values(layerTargetsCache))
       items.push({ x: t.cx, y: t.cy, r: t.r, labelW: 0, labelH: 0 })
   }
-  const fit = fitTransform(items, viewW, viewH, filter ? 48 : FIT_PADDING_PX, filter ? 2 : 3)
+  // 窄畫布的控制按鈕橫排在右下角，底邊讓出按鈕列的高度，框景後最下面的節點不會被蓋住
+  const pad = filter ? 48 : FIT_PADDING_PX
+  const fit = fitTransformWithInset(
+    items,
+    viewW,
+    viewH,
+    pad,
+    controlsBottomInset(viewW, pad),
+    filter ? 2 : 3,
+  )
   if (!fit) return
   graph.centerAt(fit.cx, fit.cy, durationMs)
   graph.zoom(fit.k, durationMs)
@@ -828,7 +837,30 @@ const hint = ref<string | null>(null)
 let hintTimer: ReturnType<typeof setTimeout> | undefined
 const WHEEL_HINT = isMac ? '按住 ⌘ 再滾動可縮放' : '按住 Ctrl 再滾動可縮放'
 const TOUCH_HINT = '用兩指移動或縮放'
+// 提示的垂直位置：預設在畫布正中；內容卡開著時，改放到不會跟卡片重疊的位置（上方、中間、
+// 底部按鈕列上方三選一，D-87 第三輪：一指拖動的提示蓋在內容卡上）。卡片最高約 150px，
+// 三個位置至少有一個空著。
+const hintTop = ref<number | null>(null)
+const HINT_H = 40
+function placeHint() {
+  const cardOpen = popover.open && props.details === 'popover'
+  const center = viewH / 2 - HINT_H / 2
+  if (!cardOpen) return center
+  const cardTop = popover.top
+  const cardBottom = popover.top + (popoverEl.value?.offsetHeight ?? 150)
+  const candidates = [center, 60, viewH - controlsBottomInset(viewW, 0) - HINT_H - 12]
+  return (
+    candidates.find((y) => y + HINT_H + 6 <= cardTop || y - 6 >= cardBottom) ??
+    candidates.reduce((best, y) =>
+      Math.abs(y + HINT_H / 2 - (cardTop + cardBottom) / 2) >
+      Math.abs(best + HINT_H / 2 - (cardTop + cardBottom) / 2)
+        ? y
+        : best,
+    )
+  )
+}
 function showHint(text: string) {
+  hintTop.value = placeHint()
   hint.value = text
   clearTimeout(hintTimer)
   hintTimer = setTimeout(() => (hint.value = null), 1600)
@@ -1131,8 +1163,9 @@ onUnmounted(() => {
 
       <!-- 合作式手勢的提示：不擋操作（pointer-events-none），幾秒後自己消失 -->
       <div
-        class="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 z-[15] flex justify-center transition-opacity duration-200"
+        class="pointer-events-none absolute inset-x-0 z-[15] flex justify-center transition-opacity duration-200"
         :class="hint ? 'opacity-100' : 'opacity-0'"
+        :style="{ top: `${hintTop ?? 0}px` }"
         aria-live="polite"
       >
         <span

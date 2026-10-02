@@ -78,3 +78,26 @@ export function fitTransform(
   const e = screenExtent(items, k)
   return { k, cx: (e.minX + e.maxX) / 2 / k, cy: (e.minY + e.maxY) / 2 / k }
 }
+
+/**
+ * 跟 fitTransform 一樣，但畫布底邊有一段被蓋住（例如窄畫布上橫排的控制按鈕，D-87 第三輪）：
+ * 只在剩下的區域裡框景，畫面中心往上移半個遮蓋高度。
+ */
+export function fitTransformWithInset(
+  items: FitItem[],
+  viewW: number,
+  viewH: number,
+  pad: number,
+  bottomInset: number,
+  maxK = 3,
+): FitResult | null {
+  const fit = fitTransform(items, viewW, viewH - bottomInset, pad, maxK)
+  if (!fit) return null
+  return { ...fit, cy: fit.cy + bottomInset / 2 / fit.k }
+}
+
+/** 窄畫布（< 640px）控制按鈕橫排在底邊：按鈕列 46px ＋ 離邊 12px，扣掉原本就有的框景留白 */
+export const NARROW_CANVAS_PX = 640
+export function controlsBottomInset(viewW: number, pad: number): number {
+  return viewW < NARROW_CANVAS_PX ? Math.max(0, 46 + 12 + 4 - pad) : 0
+}

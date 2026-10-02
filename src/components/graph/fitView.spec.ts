@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { fitTransform, screenExtent, type FitItem } from './fitView'
+import {
+  controlsBottomInset,
+  fitTransform,
+  fitTransformWithInset,
+  screenExtent,
+  type FitItem,
+} from './fitView'
 
 const node = (x: number, y: number, labelW = 0): FitItem => ({ x, y, r: 5, labelW, labelH: 18 })
 
@@ -35,5 +41,27 @@ describe('fitTransform', () => {
 
   it('沒有節點回傳 null', () => {
     expect(fitTransform([], 800, 600, 10)).toBeNull()
+  })
+})
+
+describe('fitTransformWithInset', () => {
+  it('底邊被蓋住時，整張圖（含標籤）落在上方剩下的區域裡', () => {
+    const items = [node(0, 0), node(100, 0), node(0, 300), node(100, 300, 80)]
+    const W = 358
+    const H = 358
+    const pad = 16
+    const inset = controlsBottomInset(W, pad)
+    expect(inset).toBe(46)
+    const fit = fitTransformWithInset(items, W, H, pad, inset)!
+    const e = screenExtent(items, fit.k)
+    // 世界 → 螢幕：(p - c) × k + H / 2；最下緣不能進入底邊被蓋住的區域
+    const bottom = e.maxY - fit.cy * fit.k + H / 2
+    const top = e.minY - fit.cy * fit.k + H / 2
+    expect(bottom).toBeLessThanOrEqual(H - inset - pad + 1e-6)
+    expect(top).toBeGreaterThanOrEqual(pad - 1e-6)
+  })
+
+  it('寬畫布不留底邊', () => {
+    expect(controlsBottomInset(976, 16)).toBe(0)
   })
 })
