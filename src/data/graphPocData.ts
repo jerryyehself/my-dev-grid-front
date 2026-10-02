@@ -115,12 +115,12 @@ function toGraphPocLinks(edges: GraphEdgeDto[]): GraphPocLink[] {
 // catch 都只顯示錯誤訊息），跟 Home 頁「知識網路」小工具（KnowledgeGraphPanel.vue）
 // 同樣呼叫 /api/graph、卻已經有 demo fallback 的情況不一致——單純是這頁在
 // fetchGraphOrDemo() 出現前就存在，後來沒有回頭補上，不是刻意要求這頁一定要接後端。
-export async function fetchGraphPocData(): Promise<{ nodes: GraphPocNode[]; links: GraphPocLink[]; isDemo: boolean }> {
-  const { dto, isDemo } = await fetchGraphOrDemo()
+export async function fetchGraphPocData(): Promise<{ nodes: GraphPocNode[]; links: GraphPocLink[]; loadError: string | null }> {
+  const { dto, loadError } = await fetchGraphOrDemo()
 
   return {
     nodes: toGraphPocNodes(dto.nodes, dto.edges),
     links: toGraphPocLinks(dto.edges),
-    isDemo,
+    loadError,
   }
 }

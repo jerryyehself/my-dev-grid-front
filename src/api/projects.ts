@@ -1,4 +1,4 @@
-import { apiGet } from './client'
+import { apiGet, describeLoadError } from './client'
 
 /** 專案用到的一個技術。版本是後端獨立的一筆技術（title 相同、version 填主版號，2026-09-30） */
 export interface ProjectTechnique {
@@ -145,11 +145,11 @@ export async function fetchProjects(): Promise<Project[]> {
 // 時當保底填充用——跟 graph.ts 的 graphDemoFixture.json 同一套作法，不是常態資料來源。
 import projectsDemoFixture from '@/data/projectsDemoFixture.json'
 
-export async function fetchProjectsOrDemo(): Promise<{ projects: Project[]; isDemo: boolean }> {
+export async function fetchProjectsOrDemo(): Promise<{ projects: Project[]; loadError: string | null }> {
   try {
-    return { projects: await fetchProjects(), isDemo: false }
+    return { projects: await fetchProjects(), loadError: null }
   } catch (e) {
-    console.warn('[projects] 連不上後端，改用示範資料快照（僅供單機展示）', e)
-    return { projects: projectsDemoFixture as Project[], isDemo: true }
+    console.warn('[projects] 載入失敗，改用示範資料快照', e)
+    return { projects: projectsDemoFixture as Project[], loadError: describeLoadError(e) }
   }
 }

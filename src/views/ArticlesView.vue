@@ -15,20 +15,21 @@ import AuthOnly from '@/components/AuthOnly.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 
 const ready = ref(false)
 const loadError = ref(false)
-const isDemoData = ref(false)
+const fallbackError = ref<string | null>(null)
 const articles = ref<ArticleDto[]>([])
 
 async function load() {
   ready.value = false
   loadError.value = false
   try {
-    // fetchArticlesOrDemo()：正常打真的 API，連不上（本機沒開後端）才退回填充內容，
+    // fetchArticlesOrDemo()：正常打真的 API，載入失敗才退回填充內容，
     // 見 api/articles.ts 的說明——跟 Home 頁專案/知識網路小工具同一套 fallback 慣例。
-    const { articles: all, isDemo } = await fetchArticlesOrDemo()
-    isDemoData.value = isDemo
+    const { articles: all, loadError: error } = await fetchArticlesOrDemo()
+    fallbackError.value = error
     // 後端 index() 依 title 排序（DocumentationController），不是日期——
     // 時間軸要照日期分組，這裡一定要自己重排，不能假設 API 順序就是時間序。
     articles.value = all
@@ -124,9 +125,7 @@ const folderArticles = computed(() => {
     </BaseLoadingBlock>
 
     <template v-else>
-    <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
-      示範資料（連不上後端，顯示的是填充內容，不是真的文章）
-    </p>
+    <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
     <!-- 一篇已發布的文章都沒有時，兩種排列都只剩空白；頁面拿掉副標後連一句中文都沒有（D-83），
          補一句空狀態 -->
     <p v-if="timelineGroups.length === 0" class="py-12 text-center text-[15px] text-(--text-ink-body)">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
+import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import GraphLegendDots from '@/components/GraphLegendDots.vue'
 import { useRoute, RouterLink } from 'vue-router'
 import GraphPoc2D from '@/components/poc/GraphPoc2D.vue'
@@ -19,10 +20,10 @@ const MODES = [
 ] as const
 
 // 2026-09-24：跟 Home 頁「知識網路」小工具（KnowledgeGraphPanel.vue）用同一套
-// 「示範資料」標示慣例——這頁原本連不上後端就直接顯示錯誤，沒有跟著補上 demo
+// 「載入失敗」訊息慣例——這頁原本連不上後端就直接顯示錯誤，沒有跟著補上 demo
 // fallback，見 graphPocData.ts 的說明。2D/3D 只會掛一個（依 mode），各自回報
 // 自己那次 fetch 的結果即可，不用互相同步。
-const isDemoData = ref(false)
+const loadError = ref<string | null>(null)
 
 // 點節點/點連線的詳情——2D/3D 各自把力模擬內部物件解析成同一種形狀再往上 emit
 // （見 graphPocData.ts 的 GraphPocSelection 說明），這裡只管顯示，不用管是哪個
@@ -60,12 +61,10 @@ const pathResult = ref<GraphPathDto | null>(null)
 
     <GraphPathSearch @result="pathResult = $event" />
 
-    <GraphPoc2D v-if="mode === '2d'" :highlight-path="pathResult" @select="selected = $event" @demo="isDemoData = $event" />
-    <GraphPoc3D v-else @select="selected = $event" @demo="isDemoData = $event" />
+    <GraphPoc2D v-if="mode === '2d'" :highlight-path="pathResult" @select="selected = $event" @load-error="loadError = $event" />
+    <GraphPoc3D v-else @select="selected = $event" @load-error="loadError = $event" />
 
-    <p v-if="isDemoData" class="text-[14px] text-(--text-accent)">
-      示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
-    </p>
+    <LoadFailedNotice v-if="loadError" :message="loadError" />
 
     <!-- 捷運路線圖式的路徑清單／找不到路徑的誠實空狀態——GraphPathSearch 起訖點都選
          好才會真的查詢，pathResult 是 null 代表還沒查，這裡不用顯示任何東西。 -->
