@@ -2,7 +2,7 @@
 import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import ForceGraph from 'force-graph'
-import { forceCollide } from 'd3-force'
+import { forceCollide, forceX, forceY } from 'd3-force'
 import { graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
 import { relationPhrase } from '@/components/graphRelationPhrase'
 import type { GraphDto, GraphNodeType } from '@/api/graph'
@@ -10,9 +10,11 @@ import { useTheme } from '@/composables/useTheme'
 import { TYPE_LABEL, endpointId, type SimLink, type SimNode } from './graphTypes'
 import { recencyScore, viridis, withAlpha } from './colorScale'
 import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './derivedEdges'
+import { typeClusterForce } from './clusterForce'
+import { fitTransform, type FitItem } from './fitView'
+import { LABEL_MAX_WIDTH_PX, placeLabels, truncateLabel, type LabelCandidate } from './labels'
 import {
   DEPTH_ORDER,
-  boundaryForce,
   clampToLayer,
   countByType,
   layerBoundaryForce,
@@ -26,12 +28,35 @@ import {
 // 行為完全不變），排版選項、互動控制在後續步驟加上。
 // 純邏輯（推導邊、顏色、三層排版的力）放在同目錄的 .ts 模組，附 vitest 單元測試。
 
-const props = defineProps<{
-  data: GraphDto
-  colorMode: 'type' | 'overlay'
-  typeFilter: Record<GraphNodeType, boolean>
-  showIndirect: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    data: GraphDto
+    colorMode: 'type' | 'overlay'
+    typeFilter: Record<GraphNodeType, boolean>
+    showIndirect: boolean
+    /**
+     * 'layered'：首頁原本的三層疊圖（三個類別各一個圓框、沿對角線錯開）；'free'：拿掉整套
+     * 三層排版（向心力、圓框邊界力、夾回圓框、虛線圓框），只留一般力導向＋同類弱聚集。
+     * 只在掛載時讀一次，切換要重新掛載元件。
+     */
+    layout?: 'layered' | 'free'
+    /** 同類弱聚集力的強度（見 clusterForce.ts），0 表示關掉 */
+    clusterStrength?: number
+    /** 畫布高度（CSS px） */
+    height?: number
+  }>(),
+  // 同類聚集 0.08 的由來（2026-10-02 拿真實 60 節點資料、4 個亂數種子平均調過）：指標是
+  // 「各類別節點到自己類別重心的平均距離 ÷ 全部節點到整體重心的平均距離」（越小越成團）跟
+  // 「平均連線長度 ÷ 同一個分母」（越大代表關係線被拉長、越亂）。
+  //   強度   文件   技術   實作   連線長
+  //   0      1.38   0.95   0.82   0.51
+  //   0.04   1.27   0.93   0.85   0.59
+  //   0.08   1.05   0.92   0.84   0.62
+  //   0.12   0.91   0.92   0.86   0.68
+  // 技術、實作被關係線綁著，幾乎不受影響；有感的是關係少的文件。0.04→0.08 文件明顯靠攏、
+  // 連線只多拉長一點，0.12 起連線長度的代價變大、開始像 2026-09-14 拿掉的強力分區，所以取 0.08。
+  { layout: 'layered', clusterStrength: 0.08, height: 460 },
+)
 
 const emit = defineEmits<{ indirectCount: [count: number] }>()
 
@@ -46,8 +71,8 @@ const { theme } = useTheme()
 
 let graph: ForceGraph<SimNode, SimLink> | undefined
 let resizeObserver: ResizeObserver | undefined
-let width = 900
-let height = 460
+let viewW = 900
+let viewH = 460
 
 function css(varName: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
@@ -92,6 +117,9 @@ function nodeColorFor(n: SimNode): string {
   if (!n.createdAt) return css('--overlay-nodata') || '#9a9186'
   return viridis(recencyScore(n.createdAt, OVERLAY_WINDOW_END))
 }
+
+// 自由排版的向中心引力強度（見 boot() 裡的說明）
+const FREE_GRAVITY = 0.05
 
 const radiusFor = (n: SimNode) => 4.5 + Math.min(n.degree, 8) * 1.1
 
@@ -156,58 +184,115 @@ function linkDisplayColor(l: SimLink): string {
 // 節點是否要「常駐」烤字在圖上：文件／實作筆數少，每個標題都有意義，全部
 // 烤字；技術筆數比較多、又跟其他兩層疊在同一區，全部烤字會擠成一片，改成只烤
 // degree>=5 的樞紐節點（比如 PHP、Laravel、Vue），其餘留白圈，靠圖例色＋
-// shouldRenderLabel() 的 hover 動態顯示辨識（selective labeling）。
+// 選取時的強制顯示辨識（selective labeling）。D-87 起這份清單改成擺放名稱的優先序，
+// 不再是「只有這些才畫」：放大後空間夠，其他技術的名稱也會出現（見 drawLabels）。
 function shouldLabelNode(n: SimNode): boolean {
   if (n.domainType !== 'technique') return true
   return n.degree >= 5
 }
 
-// 實際畫字時用的判斷：在 shouldLabelNode() 的常駐清單之外，hover 到的節點
-// 本身跟它的直接鄰居也臨時秀出 label。
-function shouldRenderLabel(n: SimNode): boolean {
-  if (shouldLabelNode(n)) return true
+// 選取中（hover／固定選取）的節點本身跟它的鄰居一定畫名稱，不受重疊避讓限制。
+function isForcedLabel(n: SimNode): boolean {
   const focus = focusId()
   if (n.id === focus) return true
   return focus != null && (currentNeighbors().get(focus)?.has(n.id) ?? false)
 }
 
+// 名稱在所有節點畫完之後統一擺放（onRenderFramePost），才能依優先序判斷重疊。
+// 優先序：強制顯示的 → 首頁原本的常駐清單（文件、實作、樞紐技術）→ 關係數多的。
+// 被淡化的節點不畫名稱（強制顯示的除外）。
+function drawLabels(ctx: CanvasRenderingContext2D, globalScale: number) {
+  const fontPx = LABEL_FONT_PX / globalScale
+  const gap = LABEL_GAP_PX / globalScale
+  const rank = (n: SimNode) => (isForcedLabel(n) ? 2 : shouldLabelNode(n) ? 1 : 0)
+  const ordered = simNodes
+    .filter((n) => n.x != null && n.y != null && (isForcedLabel(n) || (!isDimmedNode(n.id) && !isTypeFilterDimmed(n.domainType))))
+    .sort((a, b) => rank(b) - rank(a) || b.degree - a.degree)
+  const candidates: LabelCandidate[] = ordered.map((n) => {
+    const w = labelWidth(n) / globalScale
+    const top = n.y! + radiusFor(n) + gap
+    return {
+      id: n.id,
+      box: { x0: n.x! - w / 2 - gap, y0: top - gap, x1: n.x! + w / 2 + gap, y1: top + fontPx + gap },
+      forced: isForcedLabel(n),
+    }
+  })
+  const shown = placeLabels(candidates)
+  ctx.save()
+  ctx.font = `500 ${fontPx}px system-ui, sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = css('--text-ink-body')
+  for (const n of ordered) {
+    if (!shown.has(n.id)) continue
+    ctx.fillText(shortLabel.get(n.id)?.text ?? n.label, n.x!, n.y! + radiusFor(n) + gap)
+  }
+  ctx.restore()
+}
+
+// 字級 13px：D-68 的中文標籤下限（首頁原本 10.5px，/graph 已經是 13px）；畫的時候除以
+// globalScale，縮放時維持同樣的螢幕大小。
+const LABEL_FONT_PX = 13
+const LABEL_GAP_PX = 3
+const LABEL_FONT = `500 ${LABEL_FONT_PX}px system-ui, sans-serif`
 const measureCtx = document.createElement('canvas').getContext('2d')!
-const LABEL_FONT = '500 10.5px system-ui, sans-serif'
-function labelWidth(n: SimNode): number {
-  if (!shouldLabelNode(n)) return 0
+// 畫布上顯示的（截斷過的）名稱與寬度，掛載時算一次
+const shortLabel = new Map<string, { text: string; width: number }>()
+function measureLabels() {
   measureCtx.font = LABEL_FONT
-  return measureCtx.measureText(n.label).width
+  const measure = (s: string) => measureCtx.measureText(s).width
+  shortLabel.clear()
+  // 手機寬度的畫布再截短一點：框景要把標籤框進來，標籤越寬整張圖就得縮越小
+  const maxW = Math.max(80, Math.min(LABEL_MAX_WIDTH_PX, viewW * 0.25))
+  for (const n of simNodes) {
+    const text = truncateLabel(n.label, maxW, measure)
+    shortLabel.set(n.id, { text, width: measure(text) })
+  }
+}
+function labelWidth(n: SimNode): number {
+  return shortLabel.get(n.id)?.width ?? 0
 }
 
 let layerTargetsCache: LayerTargets | undefined
 function recomputeLayerTargets() {
-  layerTargetsCache = layerTargets(width, height, countByType(simNodes))
+  layerTargetsCache = layerTargets(viewW, viewH, countByType(simNodes))
 }
 
 let simNodes: SimNode[] = []
 
-// 最終安全網：不管前面的力有沒有把節點(含標籤)收在畫布內，這裡直接把座標夾回
-// 邊界，保證畫面上不會有節點或字被裁到畫布外。標籤畫在節點下方，下邊界要多
-// 留文字高度的空間，左右邊界用量出來的實際字寬（不是猜一個固定緩衝值）。
+// 三層疊圖的收尾：不管 layerBoundaryForce 有沒有把力道打平衡，結算時每個節點都夾回自己
+// 類別的圓框內。原本這裡還會把節點夾回畫布邊界（那時不能縮放、鏡頭固定），現在鏡頭由
+// fitView() 框景，夾回畫布邊界只會把圖壓扁，拿掉（D-87）。
 function clampAllNodes() {
+  if (props.layout !== 'layered' || !layerTargetsCache) return
   for (const n of simNodes) {
-    if (n.x == null || n.y == null) continue
-    const r = radiusFor(n)
-    const target = layerTargetsCache?.[n.domainType]
-    if (target) clampToLayer(n, target, r)
-    const padX = Math.max(r + 4, labelWidth(n) / 2 + 4)
-    const padBottom = shouldLabelNode(n) ? r + 20 : r + 4
-    n.x = Math.max(padX, Math.min(width - padX, n.x!))
-    n.y = Math.max(r + 4, Math.min(height - padBottom, n.y!))
+    const target = layerTargetsCache[n.domainType]
+    if (target) clampToLayer(n, target, radiusFor(n))
   }
 }
 
-// zoomToFit() 只框節點半徑（force-graph 內建算法看不到畫在節點外面的文字），
-// 所以框景要留的邊界得用量出來的最長標籤寬度算，不是猜一個數字。
-function framePadding(): number {
-  let maxHalfLabel = 0
-  for (const n of simNodes) maxHalfLabel = Math.max(maxHalfLabel, labelWidth(n) / 2)
-  return Math.ceil(Math.max(maxHalfLabel + 10, 30))
+// 鏡頭框住整張圖（含標籤，見 fitView.ts）。標籤以「常駐清單」為準：hover 臨時冒出來的名稱
+// 不算進框景，免得滑過節點時鏡頭跟著跳。
+const FIT_PADDING_PX = 16
+function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
+  if (!graph) return
+  const items: FitItem[] = simNodes
+    .filter((n) => n.x != null && n.y != null && (!filter || filter(n)))
+    .map((n) => ({
+      x: n.x!,
+      y: n.y!,
+      r: radiusFor(n),
+      labelW: shouldLabelNode(n) ? labelWidth(n) : 0,
+      labelH: LABEL_GAP_PX + LABEL_FONT_PX + 2,
+    }))
+  // 三層疊圖的虛線圓框也要框進來，不然圓框被畫布邊緣切掉一截（框整張圖時才算）
+  if (!filter && props.layout === 'layered' && layerTargetsCache) {
+    for (const t of Object.values(layerTargetsCache)) items.push({ x: t.cx, y: t.cy, r: t.r, labelW: 0, labelH: 0 })
+  }
+  const fit = fitTransform(items, viewW, viewH, FIT_PADDING_PX)
+  if (!fit) return
+  graph.centerAt(fit.cx, fit.cy, durationMs)
+  graph.zoom(fit.k, durationMs)
 }
 
 interface PopoverState {
@@ -279,12 +364,18 @@ async function boot() {
     degree.set(e.target, (degree.get(e.target) ?? 0) + 1)
   }
 
-  width = container.value.clientWidth || width
-  height = container.value.clientHeight || height
+  viewW = container.value.clientWidth || viewW
+  viewH = container.value.clientHeight || viewH
 
-  const targets0 = layerTargets(width, height, countByType(dto.nodes.map((n) => ({ domainType: n.type }))))
+  const layered = props.layout === 'layered'
+  const targets0 = layerTargets(viewW, viewH, countByType(dto.nodes.map((n) => ({ domainType: n.type }))))
   simNodes = dto.nodes.map((n) => {
+    // 三層疊圖：從各自那層的中心附近出發；自由排版：打散在畫布範圍內，避免 charge 力在
+    // 完全重疊的起點上互相推擠出不自然的爆開效果（沿用 /graph 頁原本的做法）。
     const target = targets0[n.type]
+    const start = layered
+      ? { x: target.cx + (Math.random() - 0.5) * 24, y: target.cy + (Math.random() - 0.5) * 24 }
+      : { x: viewW / 2 + (Math.random() - 0.5) * viewW * 0.6, y: viewH / 2 + (Math.random() - 0.5) * viewH * 0.6 }
     return {
       id: n.id,
       domainType: n.type,
@@ -293,10 +384,10 @@ async function boot() {
       createdAt: n.created_at,
       subtype: n.subtype ?? null,
       url: n.url ?? null,
-      x: target.cx + (Math.random() - 0.5) * 24,
-      y: target.cy + (Math.random() - 0.5) * 24,
+      ...start,
     }
   })
+  measureLabels()
   const simLinks: SimLink[] = dto.edges.map((e) => ({
     source: e.source,
     target: e.target,
@@ -308,8 +399,8 @@ async function boot() {
   const allLinks: SimLink[] = [...simLinks, ...derivedLinks]
 
   // 三層各自的目標中心點/範圍半徑要先算好，clampAllNodes()／layerBoundaryForce
-  // 才有東西可以夾——依賴 simNodes 已經建立（拿得到各類別實際筆數）。
-  recomputeLayerTargets()
+  // 才有東西可以夾——依賴 simNodes 已經建立（拿得到各類別實際筆數）。自由排版不需要。
+  if (layered) recomputeLayerTargets()
 
   // hover highlight 的鄰居關係涵蓋真實邊＋推導邊：推導邊本來就是想讓「同類別
   // 但透過中介間接相關」這件事被看見，hover 時理當也要能問到這層關係。
@@ -333,8 +424,8 @@ async function boot() {
   }
 
   graph = new ForceGraph<SimNode, SimLink>(container.value)
-    .width(width)
-    .height(height)
+    .width(viewW)
+    .height(viewH)
     .backgroundColor('rgba(0,0,0,0)')
     .graphData({ nodes: simNodes, links: allLinks })
     .nodeId('id')
@@ -343,7 +434,7 @@ async function boot() {
     // 自己顏色的虛線圓框。原本還有一條貫穿三層中心的黃銅色虛線（「Z 軸」），2026-10-01
     // 使用者決定拿掉：訪客看不懂、跟 hover 的 accent 撞色。
     .onRenderFramePre((ctx) => {
-      if (!layerTargetsCache) return
+      if (props.layout !== 'layered' || !layerTargetsCache) return
       for (const type of DEPTH_ORDER) {
         const target = layerTargetsCache[type]
         ctx.save()
@@ -358,7 +449,7 @@ async function boot() {
       }
     })
     .nodeCanvasObjectMode(() => 'replace')
-    .nodeCanvasObject((n, ctx, globalScale) => {
+    .nodeCanvasObject((n, ctx) => {
       const x = n.x ?? 0
       const y = n.y ?? 0
       const r = radiusFor(n)
@@ -394,16 +485,9 @@ async function boot() {
           ctx.stroke()
         }
       }
-      if (shouldRenderLabel(n)) {
-        const fontPx = 10.5
-        ctx.font = `500 ${fontPx / globalScale}px system-ui, sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'top'
-        ctx.fillStyle = css('--text-ink-body')
-        ctx.fillText(n.label, x, y + r + 3.5 / globalScale)
-      }
       ctx.restore()
     })
+    .onRenderFramePost((ctx, globalScale) => drawLabels(ctx, globalScale))
     .nodePointerAreaPaint((n, color, ctx) => {
       ctx.fillStyle = color
       ctx.beginPath()
@@ -470,18 +554,18 @@ async function boot() {
       if (container.value) container.value.style.cursor = n ? 'pointer' : 'default'
       forceRedraw()
     })
-    // layerGravity 把每一層的節點溫和拉向自己那層的目標中心點；layerBoundary 是超出範圍時的
-    // 軟修正。charge/collide 在範圍內還是能自然撐開、均勻分佈。
-    .d3Force('boundary', boundaryForce<SimNode>(() => width, () => height, 30))
-    .d3Force('layerGravity', layerGravityForce<SimNode>(() => layerTargetsCache, 0.06))
-    .d3Force('layerBoundary', layerBoundaryForce<SimNode>(() => layerTargetsCache, radiusFor))
+    // 同類弱聚集（見 clusterForce.ts）：兩種排版都有。
+    .d3Force('typeCluster', typeClusterForce<SimNode>(() => props.clusterStrength))
     .d3Force('collide', forceCollide<SimNode>((n) => radiusFor(n) + (shouldLabelNode(n) ? 26 : 3)).iterations(2))
     .cooldownTicks(300)
     // hover 雷達跳動要每一幀重繪。
     .autoPauseRedraw(false)
+    // onEngineStop 不只在初始收斂時觸發（之後拖曳節點放開也會），只有第一次收斂時框景、
+    // 收起遮罩，拖完節點不會被強制拉回置中。
     .onEngineStop(() => {
+      if (!settling.value) return
       clampAllNodes()
-      graph?.zoomToFit(0, framePadding())
+      fitView()
       settling.value = false
     })
   graph.d3Force('charge')?.strength(-130)
@@ -496,20 +580,35 @@ async function boot() {
     return st && tt && st === tt ? 1 : 0.4
   })
   // 內建 center force 預設拉向 (0,0)，明確覆寫成畫布中心。
-  graph.d3Force('center')?.x(width / 2).y(height / 2)
+  graph.d3Force('center')?.x(viewW / 2).y(viewH / 2)
+  // 三層疊圖（layout='layered'）專屬的力：layerGravity 把每一層的節點溫和拉向自己那層的
+  // 目標中心點；layerBoundary 是超出圓框時的軟修正。'free' 不加，整套排版就拿掉了。
+  // 自由排版的向中心引力：真實資料有完全沒有關係的節點（例如還沒連到任何技術的文章），
+  // 只有 charge 斥力的話它們會一路飄到很遠，框景時整張圖被迫縮小（/graph 頁原本就有這個
+  // 問題）。依畫布長寬比分配 x/y 兩個方向的力道：寬畫布 y 方向拉得緊一點、x 方向鬆一點，
+  // 整張圖的外形比較接近畫布，框景後留白少。三層疊圖有自己的向心力，不用這個。
+  if (!layered) {
+    const aspect = Math.sqrt(viewW / viewH)
+    graph
+      .d3Force('gravityX', forceX<SimNode>(viewW / 2).strength(FREE_GRAVITY / aspect))
+      .d3Force('gravityY', forceY<SimNode>(viewH / 2).strength(FREE_GRAVITY * aspect))
+  }
+  if (layered) {
+    graph
+      .d3Force('layerGravity', layerGravityForce<SimNode>(() => layerTargetsCache, 0.06))
+      .d3Force('layerBoundary', layerBoundaryForce<SimNode>(() => layerTargetsCache, radiusFor))
+  }
 
   resizeObserver = new ResizeObserver((entries) => {
     const w = entries[0]?.contentRect.width
     const h = entries[0]?.contentRect.height
     if (w && h && graph) {
-      width = w
-      height = h
+      viewW = w
+      viewH = h
       graph.width(w).height(h)
-      // 寬高變了，center force 與三層的目標中心點/範圍半徑都要跟著更新。
-      graph.d3Force('center')?.x(width / 2).y(height / 2)
-      recomputeLayerTargets()
-      clampAllNodes()
-      graph.zoomToFit(0, framePadding())
+      // 世界座標（節點位置、三層圓框）不跟著畫布尺寸改，只重新框景就好——以前會重算
+      // 圓框並把節點夾回去，是因為那時鏡頭不能動。
+      if (!settling.value) fitView()
     }
   })
   resizeObserver.observe(container.value)
@@ -526,8 +625,11 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="kg-stage relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden h-[460px]"
+    class="kg-stage relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden"
     :style="{
+      // 窄螢幕（手機）高度跟寬度差不多：整張圖的外形接近圓形，直立的高畫布框景後
+      // 上下會空一大段
+      height: `min(${props.height}px, max(320px, 100vw - 32px))`,
       background: 'var(--canvas-bg)',
       backgroundImage: 'radial-gradient(var(--canvas-dot) 1.3px, transparent 1.3px)',
       backgroundSize: '22px 22px',
