@@ -85,14 +85,35 @@ onUnmounted(() => {
 
     <!-- 給訪客的讀法說明。原本這裡是開發筆記（色階出處、欄位缺口、佈局演算法），2026-09-30 使用者
          決定改成對應的說明。D-87：拿掉「圓框：……重疊的地方就是彼此相關的節點」——節點落在重疊區
-         是因為三個圓框錯開疊放，不是因為彼此相關，這句是錯的；顏色、線條已經有上方圖例，顯示設定
-         面板自己有說明，這裡只留圖例沒講的（大小）和下一步去哪。候選文案見 D-87 報告。 -->
-    <p class="mt-3 text-[14px] leading-relaxed text-(--text-ink-muted)">
-      節點越大，關係越多。點一個節點，它和相連的節點會一直亮著；想查兩個節點之間怎麼連起來，到<RouterLink
-        to="/graph"
-        class="text-(--text-accent) hover:underline"
-        >圖譜頁</RouterLink
-      >。
-    </p>
+         是因為三個圓框錯開疊放，不是因為彼此相關，這句是錯的。2026-10-02 使用者選了候選 A，並要求
+         預設收合：用原生 <details>，鍵盤（Enter／空白鍵）與螢幕報讀器都不用另外寫程式。 -->
+    <details class="group mt-2">
+      <summary
+        class="inline-flex items-center gap-1.5 min-h-11 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-[14px] text-(--text-ink-muted) hover:text-(--text-ink-body) rounded-[6px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          class="w-3.5 h-3.5 transition-transform group-open:rotate-90"
+          fill="none"
+        >
+          <path
+            d="M7 4l6 6-6 6"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        怎麼看這張圖
+      </summary>
+      <p class="pb-1 text-[14px] leading-relaxed text-(--text-ink-muted)">
+        節點越大，關係越多。點一個節點，它和相連的節點會一直亮著；想查兩個節點之間怎麼連起來，到<RouterLink
+          to="/graph"
+          class="text-(--text-accent) hover:underline"
+          >圖譜頁</RouterLink
+        >。
+      </p>
+    </details>
   </section>
 </template>
