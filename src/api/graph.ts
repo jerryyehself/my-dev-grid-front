@@ -1,4 +1,4 @@
-import { apiGet } from './client'
+import { apiGet, describeLoadError } from './client'
 
 // 對應後端 GraphController@index（my-dev-grid GET /api/graph）的回傳形狀：
 // nodes 來自 Documentation/Technique/Implementation 三張表，id 是 "<type>-<id>"；
@@ -77,14 +77,13 @@ export function fetchGraphPath(start: string, end: string): Promise<GraphPathDto
 // 之後資料庫內容變了，這份快照不會跟著變，僅供展示用途，不代表目前的真實狀態。
 import graphDemoFixture from '@/data/graphDemoFixture.json'
 
-// 正常打 API；連不上（單機展示沒開後端等情境）才退回上面那份快照，並且明確回報
-// 用的是示範資料，讓畫面上可以誠實標示「這是示範資料、不是即時資料」，不能悄悄
-// 拿假資料冒充真資料。
-export async function fetchGraphOrDemo(): Promise<{ dto: GraphDto; isDemo: boolean }> {
+// 正常打 API；載入失敗（沒開後端、伺服器錯誤等）才退回上面那份快照，並且回報
+// loadError（錯誤訊息，成功時 null），讓畫面顯示錯誤訊息，不能悄悄拿舊資料冒充真資料。
+export async function fetchGraphOrDemo(): Promise<{ dto: GraphDto; loadError: string | null }> {
   try {
-    return { dto: await fetchGraph(), isDemo: false }
+    return { dto: await fetchGraph(), loadError: null }
   } catch (e) {
-    console.warn('[graph] 連不上後端，改用示範資料快照（僅供單機展示）', e)
-    return { dto: graphDemoFixture as GraphDto, isDemo: true }
+    console.warn('[graph] 載入失敗，改用示範資料快照', e)
+    return { dto: graphDemoFixture as GraphDto, loadError: describeLoadError(e) }
   }
 }

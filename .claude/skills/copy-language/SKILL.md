@@ -81,6 +81,7 @@ When a new term is settled with the user, add a row here **and** a decision-regi
 
 **Interactive microcopy on visitor pages** (patterns from `design:ux-copy`)
 - Errors: what happened + why + what to do (「文章清單載入失敗，重新整理再試一次。」 already follows it).
+  - **Exception: load-failure notices (`LoadFailedNotice`) are for the site owner, not visitors** (2026-10-02, user: 「開發用語不需要吧 這我自己看的錯誤訊息而已」). They name the failing request and status in developer terms, e.g. 「資料載入失敗：GET /graph 回傳 HTTP 500，下面先放示範資料。」 Don't rewrite them into visitor wording, and don't send them through ux-review.
 - Empty states: what this is + why it's empty + how to start, when there is a way to start.
 
 ## Claims must match the data

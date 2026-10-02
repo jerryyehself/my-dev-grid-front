@@ -5,9 +5,7 @@
   </BaseLoadingBlock>
 
   <div v-else class="w-full">
-    <p v-if="isDemoData" class="text-[11px] font-mono text-(--text-accent) tracking-widest mb-4">
-      示範資料（連不上後端，顯示的是填充內容，不是真的文章）
-    </p>
+    <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
 
     <div class="flex items-center justify-between gap-4 mb-7">
       <BackToArticlesLink class="inline-flex" />
@@ -136,6 +134,7 @@ import { excerptOf } from '@/components/markdown/excerpt'
 import AuthOnly from '@/components/AuthOnly.vue'
 import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { extractHeadings } from '@/components/markdown/headings'
 import { pageTitleOverride } from '@/siteMeta'
@@ -147,23 +146,23 @@ const article = ref<ArticleDto | null>(null)
 const publishedList = ref<ArticleDto[]>([])
 const ready = ref(false)
 const loadError = ref(false)
-const isDemoData = ref(false)
+const fallbackError = ref<string | null>(null)
 
 async function load() {
   ready.value = false
   loadError.value = false
   article.value = null
   try {
-    // fetchArticleOrDemo()/fetchArticlesOrDemo()：正常打真的 API，連不上才退回填充
-    // 內容——見 api/articles.ts 的說明。填充內容裡不存在的 id（不是從 demo 清單點進來
-    // 的）會照樣被 fetchArticleOrDemo 丟出「找不到」，走進下面的 catch，不會生一篇假的。
-    const [{ article: a, isDemo: articleDemo }, { articles: all, isDemo: listDemo }] = await Promise.all([
+    // fetchArticleOrDemo()/fetchArticlesOrDemo()：正常打真的 API，載入失敗才退回填充
+    // 內容——見 api/articles.ts 的說明。404（文章真的不存在）跟填充內容裡不存在的 id 一樣
+    // 會被 fetchArticleOrDemo 丟出來，走進下面的 catch 顯示找不到，不會生一篇假的。
+    const [{ article: a, loadError: articleError }, { articles: all, loadError: listError }] = await Promise.all([
       fetchArticleOrDemo(articleId.value),
       fetchArticlesOrDemo(),
     ])
     article.value = a
     publishedList.value = all.filter((item) => item.status === 1)
-    isDemoData.value = articleDemo || listDemo
+    fallbackError.value = articleError ?? listError
     ready.value = true
   } catch {
     loadError.value = true

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseSwitch from '@/components/BaseSwitch.vue'
 import { graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
@@ -81,7 +82,7 @@ const loading = ref(true)
 // 16+35+5 個節點時要跑約 10 幾秒才收斂），直接曝露會被誤認成排版壞了。用霧面
 // 遮罩蓋住這段而不是整個藏起來，讓使用者看得出「畫面正在動、還沒定」而不是空白。
 const settling = ref(true)
-const isDemoData = ref(false)
+const loadError = ref<string | null>(null)
 const stats = reactive({ doc: 0, tech: 0, impl: 0, edges: 0, indirect: 0 })
 
 const { theme } = useTheme()
@@ -585,10 +586,10 @@ watch(theme, () => forceRedraw())
 watch(colorMode, () => forceRedraw())
 
 async function boot() {
-  // fetchGraphOrDemo() 正常打真的 API；連不上時（單機展示沒開後端）才退回存好的
-  // 資料快照，並且誠實回報 isDemo，畫面上要清楚標示這不是即時資料。
-  const { dto, isDemo } = await fetchGraphOrDemo()
-  isDemoData.value = isDemo
+  // fetchGraphOrDemo() 正常打真的 API；載入失敗時才退回存好的資料快照，
+  // 並且回報 loadError，畫面上要顯示錯誤訊息。
+  const { dto, loadError: error } = await fetchGraphOrDemo()
+  loadError.value = error
   loading.value = false
   await nextTick()
   if (!container.value) return
@@ -901,9 +902,7 @@ onUnmounted(() => {
       <b class="text-(--text-ink-main) tabular-nums">{{ stats.edges }}</b> 條直接關係串成的知識網路。
     </p>
 
-    <p v-if="!loading && isDemoData" class="text-[14px] text-(--text-accent) mb-2">
-      示範資料（連不上後端，顯示的是存好的資料快照，不是即時資料）
-    </p>
+    <LoadFailedNotice v-if="!loading && loadError" :message="loadError" class="mb-2" />
 
     <div v-if="!loading" class="flex items-center gap-2 mb-2.5">
       <span class="text-[13px] tracking-[0.05em] text-(--text-ink-muted)">節點顏色</span>

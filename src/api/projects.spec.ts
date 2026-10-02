@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchProjects, toProjectTechniques } from './projects'
+import { fetchProjects, fetchProjectsOrDemo, toProjectTechniques } from './projects'
+import projectsDemoFixture from '@/data/projectsDemoFixture.json'
 
 const mockFetch = vi.fn()
 
@@ -151,5 +152,29 @@ describe('toProjectTechniques', () => {
 
   it('查不到分類時留空字串，不猜', () => {
     expect(toProjectTechniques([{ title: 'x', type: 999 }], scopes)).toEqual([{ name: 'x', version: null, category: '' }])
+  })
+})
+
+describe('fetchProjectsOrDemo', () => {
+  it('成功時回真實資料，loadError 為 null', async () => {
+    mockScopesAndImplementations([])
+    expect(await fetchProjectsOrDemo()).toEqual({ projects: [], loadError: null })
+  })
+
+  it('網路錯誤時退回快照並回報 loadError', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
+    expect(await fetchProjectsOrDemo()).toEqual({
+      projects: projectsDemoFixture,
+      loadError: '資料載入失敗：連不上後端 API（Failed to fetch），下面先放示範資料。',
+    })
+  })
+
+  it('HTTP 500 時退回快照並回報 loadError', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    mockFetch.mockResolvedValue({ ok: false, status: 500, json: async () => ({}) })
+    const result = await fetchProjectsOrDemo()
+    expect(result.projects).toEqual(projectsDemoFixture)
+    expect(result.loadError).toMatch(/^資料載入失敗：GET \/\S+ 回傳 HTTP 500，下面先放示範資料。$/)
   })
 })
