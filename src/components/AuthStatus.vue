@@ -57,6 +57,10 @@ async function handleLogout() {
     <button v-if="auth.isAuthenticated" type="button" :class="pillClass" @click="handleLogout">
       登出
     </button>
-    <router-link v-else-if="showLoginEntry" to="/login" :class="pillClass"> 登入 </router-link>
+    <!-- 開機時正在用 refresh cookie 換回登入狀態（auth.restoring）就先什麼都不顯示，
+         不要先閃一下「登入」再變成「使用者＋登出」 -->
+    <router-link v-else-if="showLoginEntry && !auth.restoring" to="/login" :class="pillClass">
+      登入
+    </router-link>
   </div>
 </template>

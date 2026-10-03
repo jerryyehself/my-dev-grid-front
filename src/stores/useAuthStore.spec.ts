@@ -3,32 +3,53 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from './useAuthStore'
 
 // 登入／登出結果的提示（AuthNotice 顯示的 notice）。2026-10-03 使用者：「登入成功與否要有提示」
+// 以及「重新整理後維持登入」：restore()／refresh() 用 httpOnly refresh cookie 換回登入狀態。
 
-function mockFetch(handler: (url: string) => Response) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (url: string) => handler(url)),
-  )
+const SESSION_HINT_KEY = 'mdg_auth_session'
+const USER = { id: 1, name: 'Jerry', email: 'j@example.com' }
+
+type Handler = (url: string, init: RequestInit) => Response | Promise<Response>
+
+function mockFetch(handler: Handler) {
+  // store 的每個 fetch 都有帶 init，這裡宣告成必填，測試讀 mock.calls 時型別才不會是 undefined
+  const fn = vi.fn(async (url: string, init: RequestInit) => handler(url, init ?? {}))
+  vi.stubGlobal('fetch', fn)
+  return fn
 }
 
+function pathOf(url: string) {
+  return url.replace(/^.*\/api/, '')
+}
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+  window.localStorage.clear()
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
 describe('useAuthStore：登入結果提示', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
-
-  it('OAuth 回呼成功：回傳 true，提示「已登入：名字」', async () => {
-    mockFetch(() => Response.json({ id: 1, name: 'Jerry', email: 'j@example.com' }))
+  it('OAuth 回呼成功：打 /auth/session 換正式 token，回傳 true，提示「已登入：名字」', async () => {
+    const fetchMock = mockFetch(() =>
+      Response.json({ token: 'access', expires_in: 900, data: USER }),
+    )
     const auth = useAuthStore()
-    expect(await auth.setTokenFromOAuthCallback('t')).toBe(true)
+    expect(await auth.setTokenFromOAuthCallback('callback-token')).toBe(true)
     expect(auth.isAuthenticated).toBe(true)
+    // 存的是換發後的 token，不是回呼帶來的那支
+    expect(auth.token).toBe('access')
     expect(auth.notice).toEqual({ tone: 'success', text: '已登入：Jerry' })
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(pathOf(url)).toBe('/auth/session')
+    expect(init.method).toBe('POST')
+    expect(init.credentials).toBe('include')
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer callback-token')
   })
 
-  it('OAuth 回呼拿到 token 但 GET /user 失敗：回傳 false、不算登入、不提示成功', async () => {
+  it('OAuth 回呼拿到 token 但換發失敗：回傳 false、不算登入、不提示成功', async () => {
     mockFetch(() => new Response(null, { status: 401 }))
     const auth = useAuthStore()
     expect(await auth.setTokenFromOAuthCallback('bad')).toBe(false)
@@ -48,21 +69,164 @@ describe('useAuthStore：登入結果提示', () => {
     expect(auth.token).toBeNull()
   })
 
-  it('帳密登入成功：提示「已登入：名字」', async () => {
-    mockFetch(() =>
-      Response.json({ token: 't', data: { id: 1, name: 'Jerry', email: 'j@example.com' } }),
-    )
+  it('帳密登入成功：帶 credentials 讓瀏覽器存下 refresh cookie，提示「已登入：名字」', async () => {
+    const fetchMock = mockFetch(() => Response.json({ token: 't', expires_in: 900, data: USER }))
     const auth = useAuthStore()
     expect(await auth.login('j@example.com', 'pw')).toEqual({ ok: true })
     expect(auth.notice).toEqual({ tone: 'success', text: '已登入：Jerry' })
+    expect(fetchMock.mock.calls[0]![1].credentials).toBe('include')
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
   })
 
-  it('登出：提示「已登出」', async () => {
-    mockFetch(() => new Response(null, { status: 204 }))
+  it('登出：帶 Bearer 跟 credentials，清掉登入狀態，提示「已登出」', async () => {
+    const fetchMock = mockFetch(() => Response.json({ message: '已登出。' }))
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const auth = useAuthStore()
     auth.token = 't'
     await auth.logout()
     expect(auth.isAuthenticated).toBe(false)
     expect(auth.notice).toEqual({ tone: 'success', text: '已登出' })
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
+
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(pathOf(url)).toBe('/auth/logout')
+    expect(init.credentials).toBe('include')
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer t')
+  })
+
+  it('登出時 access token 已過期：先換發再登出，伺服器端的 refresh token 才會被撤銷', async () => {
+    const calls: string[] = []
+    mockFetch((url, init) => {
+      const path = pathOf(url)
+      const bearer = (init.headers as Record<string, string>).Authorization
+      calls.push(`${path} ${bearer ?? '-'}`)
+      if (path === '/auth/refresh') return Response.json({ token: 'fresh', data: USER })
+      if (bearer === 'Bearer expired') return new Response(null, { status: 401 })
+      return Response.json({ message: '已登出。' })
+    })
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    await auth.logout()
+    expect(calls).toEqual([
+      '/auth/logout Bearer expired',
+      '/auth/refresh -',
+      '/auth/logout Bearer fresh',
+    ])
+    expect(auth.isAuthenticated).toBe(false)
+  })
+
+  it('登出時後端連不上：前端照樣登出', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('Failed to fetch')
+      }),
+    )
+    const auth = useAuthStore()
+    auth.token = 't'
+    await auth.logout()
+    expect(auth.isAuthenticated).toBe(false)
+  })
+})
+
+describe('useAuthStore：restore()（重新整理後換回登入狀態）', () => {
+  it('上次是登入狀態、refresh cookie 有效：安靜地換回 token 跟使用者，不顯示提示', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    const fetchMock = mockFetch(() =>
+      Response.json({ token: 'restored', expires_in: 900, data: USER }),
+    )
+    const auth = useAuthStore()
+
+    await auth.restore()
+
+    expect(auth.token).toBe('restored')
+    expect(auth.user).toEqual(USER)
+    expect(auth.notice).toBeNull()
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(pathOf(url)).toBe('/auth/refresh')
+    expect(init.method).toBe('POST')
+    expect(init.credentials).toBe('include')
+    // refresh 只靠 cookie，不帶 Authorization
+    expect((init.headers as Record<string, string>).Authorization).toBeUndefined()
+  })
+
+  it('refresh cookie 無效（401）：維持未登入、清掉旗標，不顯示提示', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    mockFetch(() => Response.json({ message: '登入已過期' }, { status: 401 }))
+    const auth = useAuthStore()
+
+    await auth.restore()
+
+    expect(auth.isAuthenticated).toBe(false)
+    expect(auth.notice).toBeNull()
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
+  })
+
+  it('後端連不上：維持未登入，但保留旗標，下次開站再試', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('Failed to fetch')
+      }),
+    )
+    const auth = useAuthStore()
+
+    await auth.restore()
+
+    expect(auth.isAuthenticated).toBe(false)
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
+  })
+
+  it('沒有「上次是登入狀態」的旗標（一般訪客）：完全不打 API', async () => {
+    const fetchMock = mockFetch(() => Response.json({}))
+    const auth = useAuthStore()
+
+    await auth.restore()
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(auth.isAuthenticated).toBe(false)
+  })
+
+  it('只跑一次：重複呼叫拿到同一個結果，不會重打', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    const fetchMock = mockFetch(() => Response.json({ token: 'restored', data: USER }))
+    const auth = useAuthStore()
+
+    await Promise.all([auth.restore(), auth.restore()])
+    await auth.restore()
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('換發進行中 restoring 是 true，做完變回 false', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    let resolve!: (r: Response) => void
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise<Response>((r) => (resolve = r))),
+    )
+    const auth = useAuthStore()
+
+    const pending = auth.restore()
+    expect(auth.restoring).toBe(true)
+    resolve(Response.json({ token: 'restored', data: USER }))
+    await pending
+
+    expect(auth.restoring).toBe(false)
+    expect(auth.isAuthenticated).toBe(true)
+  })
+})
+
+describe('useAuthStore：refresh()', () => {
+  it('同時好幾個呼叫共用同一次換發（refresh token 單次使用，各換各的會互相作廢）', async () => {
+    const fetchMock = mockFetch(() => Response.json({ token: 'fresh', data: USER }))
+    const auth = useAuthStore()
+
+    const results = await Promise.all([auth.refresh(), auth.refresh(), auth.refresh()])
+
+    expect(results).toEqual([true, true, true])
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(auth.token).toBe('fresh')
   })
 })

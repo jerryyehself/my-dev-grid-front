@@ -78,6 +78,14 @@ describe('AuthStatus', () => {
     expect(wrapper.find('a[href="/admin"]').text()).toBe('管理')
   })
 
+  it('開機換回登入狀態中（restoring）：本機開發也先不顯示「登入」，不閃一下未登入的樣子', async () => {
+    vi.stubEnv('DEV', true)
+    useAuthStore().restoring = true
+    const wrapper = await mountStatus()
+    expect(wrapper.find('a[href="/login"]').exists()).toBe(false)
+    expect(wrapper.text()).toBe('')
+  })
+
   it('沒登入：不管哪個環境都沒有「管理」（訪客看到的導覽列不變）', async () => {
     for (const dev of [false, true]) {
       vi.stubEnv('DEV', dev)
