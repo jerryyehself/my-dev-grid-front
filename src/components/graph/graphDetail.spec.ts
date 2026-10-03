@@ -63,29 +63,55 @@ const index = buildGraphDetailIndex(dto)
 const labels = (ns: { label: string }[]) => ns.map((n) => n.label)
 
 describe('relationGroupsOf', () => {
-  it('技術：依關係分組，跨類別照文件→實作排，同類的放最後，組內依名稱排序', () => {
+  it('技術：依對方類別分組（技術→實作→文件），組內依名稱排序', () => {
     const groups = relationGroupsOf(index, 'technique-29')
-    expect(groups.map((g) => [g.label, g.otherType, labels(g.nodes)])).toEqual([
-      ['說明它的文件', 'documentation', ['vue 官方文件']],
-      ['用到它的實作', 'implementation', ['isbn-scanner', 'my-dev-grid-front']],
-      ['相關的技術', 'technique', ['JavaScript']],
+    expect(groups.map((g) => [g.label, labels(g.nodes)])).toEqual([
+      ['技術', ['JavaScript']],
+      ['實作', ['isbn-scanner', 'my-dev-grid-front']],
+      ['文件', ['vue 官方文件']],
     ])
   })
 
-  it('實作：用到的技術一組，不管邊存的方向', () => {
+  it('實作：技術一組，不管邊存的方向', () => {
     expect(
       relationGroupsOf(index, 'implementation-2').map((g) => [g.label, labels(g.nodes)]),
-    ).toEqual([['用到的技術', ['JavaScript', 'TypeScript', 'vue']]])
+    ).toEqual([['技術', ['JavaScript', 'TypeScript', 'vue']]])
   })
 
-  it('文件：說明的技術', () => {
+  it('文件：技術', () => {
     expect(
       relationGroupsOf(index, 'documentation-5').map((g) => [g.label, labels(g.nodes)]),
-    ).toEqual([['說明的技術', ['vue']]])
+    ).toEqual([['技術', ['vue']]])
   })
 
   it('沒有關係或查不到的節點回空陣列', () => {
     expect(relationGroupsOf(index, 'nope')).toEqual([])
+  })
+
+  it('版本：主技術那端把版本另成一組排最前；版本那端看主技術就是「技術」', () => {
+    const v = buildGraphDetailIndex({
+      nodes: [
+        node('technique-1', 'technique', 'Vue'),
+        node('technique-2', 'technique', 'Vue 3'),
+        node('technique-3', 'technique', 'JavaScript'),
+        node('technique-4', 'technique', 'Nuxt'),
+        node('technique-5', 'technique', 'Nuxt 3'),
+      ],
+      edges: [
+        edge('technique-2', 'technique-1', 'isVersionOf'),
+        edge('technique-1', 'technique-3', 'requires'),
+        // 反向述詞也認得
+        edge('technique-4', 'technique-5', 'hasVersion'),
+      ],
+    })
+    const brief = (id: string) => relationGroupsOf(v, id).map((g) => [g.label, labels(g.nodes)])
+    expect(brief('technique-1')).toEqual([
+      ['版本', ['Vue 3']],
+      ['技術', ['JavaScript']],
+    ])
+    expect(brief('technique-2')).toEqual([['技術', ['Vue']]])
+    expect(brief('technique-4')).toEqual([['版本', ['Nuxt 3']]])
+    expect(brief('technique-5')).toEqual([['技術', ['Nuxt']]])
   })
 })
 

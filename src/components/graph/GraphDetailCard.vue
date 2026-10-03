@@ -3,7 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import ArticleEditLink from '@/components/ArticleEditLink.vue'
 import { articleIdOfGraphNode, graphNodeLink } from '@/components/graphNodeLink'
-import { relationPhrase } from '@/components/graphRelationPhrase'
+import { edgeRelation } from '@/components/graphRelationPhrase'
 import type { GraphPocSelection } from '@/data/graphPocData'
 import {
   detailNodeOf,
@@ -58,11 +58,13 @@ const ends = computed(() => {
     targetLabel: target?.label ?? l.targetLabel,
   }
 })
-const phrase = computed(() =>
-  ends.value?.source && ends.value.target
-    ? relationPhrase(ends.value.source, ends.value.target)
-    : null,
-)
+// 直接關係的起點／關係／終點：起點是主詞那一端（不一定是邊原本的 source），見 edgeRelation
+const direct = computed(() => {
+  const e = ends.value
+  if (!e?.source || !e.target) return null
+  const r = edgeRelation(e.source, e.target, linkSel.value?.predicate ?? null)
+  return { subject: r.subject as DetailNode, object: r.object as DetailNode, verb: r.verb }
+})
 // 間接關聯的共同鄰居：從索引查 id（才能點）；查不到就退回畫布給的名稱，只顯示不能點
 const via = computed<DetailNode[] | null>(() => {
   const l = linkSel.value
@@ -173,7 +175,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
           </thead>
           <tbody
             v-for="g in groups"
-            :key="g.otherType"
+            :key="g.label"
             class="border-b border-(--border-shelf) last:border-b-0"
           >
             <tr v-for="(n, i) in g.nodes" :key="n.id">
@@ -294,42 +296,35 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
           <col />
         </colgroup>
         <tbody>
-          <tr class="border-b border-(--border-shelf)">
-            <th scope="row" :class="[TH, 'py-1.5 pr-3 text-(--text-ink-muted)']">起點</th>
+          <tr
+            v-for="row in direct
+              ? [
+                  { head: '起點', node: direct.subject },
+                  { head: '關係', node: null },
+                  { head: '終點', node: direct.object },
+                ]
+              : [
+                  { head: '起點', node: null, text: ends.sourceLabel },
+                  { head: '終點', node: null, text: ends.targetLabel },
+                ]"
+            :key="row.head"
+            class="border-b border-(--border-shelf) last:border-b-0"
+          >
+            <th scope="row" :class="[TH, 'py-1.5 pr-3 text-(--text-ink-muted)']">
+              {{ row.head }}
+            </th>
             <td class="align-top py-0.5">
-              <template v-if="ends.source"
-                ><button type="button" :class="NODE_BTN" @click="pick(ends.source.id)">
-                  {{ ends.source.label }}</button
+              <template v-if="row.node"
+                ><button type="button" :class="NODE_BTN" @click="pick(row.node.id)">
+                  {{ row.node.label }}</button
                 ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-                  TYPE_LABEL[ends.source.domainType]
+                  TYPE_LABEL[row.node.domainType]
                 }}</span></template
               >
-              <span v-else class="inline-block py-1">{{ ends.sourceLabel }}</span>
-            </td>
-          </tr>
-          <tr class="border-b border-(--border-shelf)">
-            <th scope="row" :class="[TH, 'py-1.5 pr-3 text-(--text-ink-muted)']">關係</th>
-            <td class="align-top py-1 [overflow-wrap:anywhere]">
-              <template v-if="phrase">
-                <p class="text-(--text-ink-body)">{{ phrase.sentence }}</p>
-                <p v-if="phrase.note" class="text-(--text-ink-muted)">{{ phrase.note }}</p>
-              </template>
-              <p v-else class="text-(--text-ink-body)">
-                「{{ ends.sourceLabel }}」與「{{ ends.targetLabel }}」
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <th scope="row" :class="[TH, 'py-1.5 pr-3 text-(--text-ink-muted)']">終點</th>
-            <td class="align-top py-0.5">
-              <template v-if="ends.target"
-                ><button type="button" :class="NODE_BTN" @click="pick(ends.target.id)">
-                  {{ ends.target.label }}</button
-                ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-                  TYPE_LABEL[ends.target.domainType]
-                }}</span></template
-              >
-              <span v-else class="inline-block py-1">{{ ends.targetLabel }}</span>
+              <span v-else-if="direct" class="inline-block py-1 text-(--text-ink-body)">{{
+                direct.verb
+              }}</span>
+              <span v-else class="inline-block py-1">{{ 'text' in row ? row.text : '' }}</span>
             </td>
           </tr>
         </tbody>

@@ -1,6 +1,6 @@
 import type { GraphDto, GraphNodeType } from '@/api/graph'
 import type { GraphPocNodeSelection } from '@/data/graphPocData'
-import { relationFromNode } from '@/components/graphRelationPhrase'
+import { HAS_VERSION, VERSION_OF, relationFromNode } from '@/components/graphRelationPhrase'
 import { computeDerivedEdges } from './derivedEdges'
 
 // /graph 詳情卡的表格資料（點節點／連線之後「連到誰、什麼關係」）。純邏輯，不碰畫布，
@@ -14,10 +14,8 @@ export interface DetailNode {
 }
 
 export interface RelationGroup {
-  /** 從選中節點看出去的關係名稱（見 graphRelationPhrase.ts 的 relationFromNode） */
+  /** 「關係」欄的簡短標示：對方的類別，或「版本」（見 graphRelationPhrase.ts 的 relationFromNode） */
   label: string
-  /** 這一組連到的節點類別；關係由兩端類別決定，同一組一定同類 */
-  otherType: GraphNodeType
   nodes: DetailNode[]
 }
 
@@ -31,12 +29,12 @@ export interface GraphDetailIndex {
   nodes: Map<string, DetailNode & { subtype: string | null; url: string | null }>
   /** 直接關係的鄰居（無向；同一對節點有好幾條邊也只算一次） */
   neighbors: Map<string, Set<string>>
+  /** 主技術 id → 它的版本 id（isVersionOf／hasVersion 邊） */
+  versions: Map<string, Set<string>>
   /** 間接關聯（跟畫布同一套推算，見 derivedEdges.ts），key 是節點 id */
   indirect: Map<string, { other: string; via: string[] }[]>
   maxDegree: number
 }
-
-const DEPTH_ORDER: GraphNodeType[] = ['documentation', 'technique', 'implementation']
 
 const byLabel = (a: DetailNode, b: DetailNode) => a.label.localeCompare(b.label, 'zh-Hant')
 
@@ -58,11 +56,22 @@ export function buildGraphDetailIndex(dto: GraphDto): GraphDetailIndex {
     if (!neighbors.has(a)) neighbors.set(a, new Set())
     neighbors.get(a)!.add(b)
   }
+  const versions = new Map<string, Set<string>>()
   for (const e of dto.edges) {
     // 指到不存在節點的邊（資料不一致）略過，不在表格裡顯示一個查不到名稱的 id
     if (!nodes.has(e.source) || !nodes.has(e.target) || e.source === e.target) continue
     add(e.source, e.target)
     add(e.target, e.source)
+    const pair =
+      e.predicate === VERSION_OF
+        ? [e.target, e.source]
+        : e.predicate === HAS_VERSION
+          ? [e.source, e.target]
+          : null
+    if (pair) {
+      if (!versions.has(pair[0]!)) versions.set(pair[0]!, new Set())
+      versions.get(pair[0]!)!.add(pair[1]!)
+    }
   }
 
   const indirect = new Map<string, { other: string; via: string[] }[]>()
@@ -81,30 +90,28 @@ export function buildGraphDetailIndex(dto: GraphDto): GraphDetailIndex {
   }
 
   const maxDegree = Math.max(1, ...[...neighbors.values()].map((s) => s.size))
-  return { nodes, neighbors, indirect, maxDegree }
+  return { nodes, neighbors, versions, indirect, maxDegree }
 }
 
 /**
- * 選中節點的直接關係，依「關係名稱」分組。跨類別的組照文件→技術→實作排，同類的組放最後
- * （同類之間沒有動詞，只是「相關」，資訊量最少）；組內依名稱排序。
+ * 選中節點的直接關係，依「關係」欄的標示分組：版本、技術、實作、文件；組內依名稱排序。
  */
+const GROUP_ORDER = ['版本', '技術', '實作', '文件']
+
 export function relationGroupsOf(index: GraphDetailIndex, id: string): RelationGroup[] {
-  const self = index.nodes.get(id)
-  if (!self) return []
-  const byType = new Map<GraphNodeType, DetailNode[]>()
+  if (!index.nodes.has(id)) return []
+  const myVersions = index.versions.get(id)
+  const byLabel_ = new Map<string, DetailNode[]>()
   for (const otherId of index.neighbors.get(id) ?? []) {
     const other = index.nodes.get(otherId)!
-    if (!byType.has(other.domainType)) byType.set(other.domainType, [])
-    byType.get(other.domainType)!.push(toDetail(other))
+    const label = relationFromNode(other.domainType, myVersions?.has(otherId) ?? false)
+    if (!byLabel_.has(label)) byLabel_.set(label, [])
+    byLabel_.get(label)!.push(toDetail(other))
   }
-  const order = [...DEPTH_ORDER.filter((t) => t !== self.domainType), self.domainType]
-  return order
-    .filter((t) => byType.has(t))
-    .map((t) => ({
-      label: relationFromNode(self.domainType, t),
-      otherType: t,
-      nodes: byType.get(t)!.sort(byLabel),
-    }))
+  return GROUP_ORDER.filter((l) => byLabel_.has(l)).map((label) => ({
+    label,
+    nodes: byLabel_.get(label)!.sort(byLabel),
+  }))
 }
 
 /** 選中節點的間接關聯（推算出來的），共同連到的節點越多排越前面 */
