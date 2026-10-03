@@ -160,7 +160,9 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
         <!-- 直接關係：上下堆疊（D-88，畫稿 C）。每組一個 dt（類別或「版本」）＋一個 dd（名稱用頓號接），
              手機上不用兩欄；名稱是 inline-block，只在名稱之間折行，不會從連字號中間斷開 -->
         <template v-if="directCount > 0">
-          <p class="mt-2 text-(--text-ink-muted)">共 {{ directCount }} 條直接關係</p>
+          <p class="mt-2 text-[14px] leading-relaxed text-(--text-ink-muted)">
+            共 {{ directCount }} 條直接關係
+          </p>
           <dl class="mt-2 grid gap-2.5 m-0">
             <div
               v-for="g in groups"
@@ -274,7 +276,10 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
     <!-- ───── 選了直接關係的實線：一行「主詞 類別　動詞 →　受詞 類別」（D-88，畫稿 E2′）───── -->
     <template v-else-if="ends">
       <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">直接關係</p>
-      <p v-if="direct" class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <p
+        v-if="direct"
+        class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[14px] leading-relaxed"
+      >
         <span
           ><button type="button" :class="NODE_BTN" @click="pick(direct.subject.id)">
             {{ direct.subject.label }}</button
@@ -292,7 +297,9 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
         >
       </p>
       <!-- 索引還沒載入：查不到類別，也就不知道誰是主詞，只照邊的方向列兩端名稱 -->
-      <p v-else class="mt-2">{{ ends.sourceLabel }} → {{ ends.targetLabel }}</p>
+      <p v-else class="mt-2 text-[14px] leading-relaxed">
+        {{ ends.sourceLabel }} → {{ ends.targetLabel }}
+      </p>
     </template>
   </div>
 </template>
