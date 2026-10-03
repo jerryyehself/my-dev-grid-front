@@ -1075,10 +1075,13 @@ onUnmounted(() => {
     <GraphLegend :color-mode="colorMode" :show-indirect="showIndirect" />
 
     <!-- 畫布區塊：可以用 Tab 移到這裡（tabindex=0），有焦點時鍵盤快捷鍵才有效（WCAG 2.1.4）。
-         滑鼠點圖也會把焦點移過來，但 :focus-visible 只在鍵盤操作時畫外框。 -->
+         滑鼠點圖也會把焦點移過來，但 :focus-visible 只在鍵盤操作時畫外框。
+         isolate：畫布自成一個層級範圍。裡面的顯示設定、操作說明是 z-30，沒有這個的話會跟畫布
+         外面的元素比高低——/graph 的路徑查詢下拉選單（z-10）往下展開時被「顯示設定」蓋住
+         （2026-10-03 使用者回報）。畫布本身 overflow-hidden，裡面的東西本來就不會超出框外 -->
     <div
       ref="stage"
-      class="kg-stage @container relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+      class="kg-stage @container relative isolate rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
       :style="{
         // 窄螢幕（手機）高度跟寬度差不多：整張圖的外形接近圓形，直立的高畫布框景後
         // 上下會空一大段
