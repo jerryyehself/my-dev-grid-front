@@ -55,7 +55,7 @@ Grounded in what the site already says (About, home), not invented:
 | Page titles as they are, English included (`My Articles`, `Production Artifacts`) | translating titles to Chinese | D-76 |
 | 收在目錄裡, 一筆一筆記下來 (for "recorded in the catalogue") | 登記 on visitor pages | the user, 2026-10-01 (D-82) |
 | 關聯對象 (the column of things a relation points to, in `/graph` detail-card tables); 這兩個 (the pair at either end of an indirect link) | 節點, 連到的節點 (graph-theory jargon); 兩端 (read as a near-duplicate of 兩邊都連到) | the user, 2026-10-03 (D-88) |
-| `/graph` detail cards use short labels, not sentences: node card groups by 版本／技術／實作／文件; edge card 關係 row is one verb — 使用 (實作→技術), 說明, 記錄, 需要, 版本, else 相關 — with 起點 as the subject | 用到它的實作, 說明它的文件, 相關的技術, 「Vue」用在「…」 in the detail cards (the user: 「經過圖形化的東西不該這麼口語」). Home popups/hover keep `relationPhrase` sentences for now | the user, 2026-10-03 (D-88) |
+| `/graph` detail cards use short labels, not sentences: node card stacks groups (label above, names joined with 、) labelled 版本／技術／實作／文件; edge card is one line「a 類別　動詞 →　b 類別」with one verb — 使用 (實作→技術), 說明, 記錄, 需要, 版本, else 相關 — subject first | 用到它的實作, 說明它的文件, 相關的技術, 「Vue」用在「…」 in the detail cards (the user: 「經過圖形化的東西不該這麼口語」); 起點／終點 rows (graph-theory words, like 節點). Picked from mockup variants C + E2′ after ux-review. Home popups/hover keep `relationPhrase` sentences for now | the user, 2026-10-03 (D-88) |
 
 When a new term is settled with the user, add a row here **and** a decision-register row.
 

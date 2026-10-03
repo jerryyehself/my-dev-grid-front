@@ -97,6 +97,9 @@ watch(
 // 表格裡的節點名稱按鈕。跟連結同色（accent）表示「可以點」；上下留一點高度，手指好點
 const NODE_BTN =
   'inline text-left text-(--text-accent) hover:underline underline-offset-2 rounded-sm py-1 cursor-pointer break-words [overflow-wrap:anywhere] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--text-accent)'
+// 堆疊清單裡的名稱：inline-block，一行放不下時在名稱之間折行，不會把 my-dev-grid-front 從連字號斷開；
+// 名稱本身比整行還長時才在名稱裡折（overflow-wrap:anywhere 仍在）
+const NODE_BTN_STACKED = NODE_BTN.replace(/^inline /, 'inline-block max-w-full align-baseline ')
 // 表格的欄名、列名：中文標籤 13px（D-68 字級下限）
 const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
 </script>
@@ -154,48 +157,29 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
       </div>
 
       <template v-if="index">
-        <!-- 直接關係：一組一個 tbody，關係名稱是那組的列標題（rowgroup），跨好幾列 -->
-        <table v-if="directCount > 0" class="mt-2 w-full border-collapse table-fixed">
-          <caption class="text-left text-(--text-ink-muted) pb-1">
-            共
-            {{
-              directCount
-            }}
-            條直接關係
-          </caption>
-          <colgroup>
-            <col class="w-[7.5em]" />
-            <col />
-          </colgroup>
-          <thead>
-            <tr class="border-b border-(--border-shelf)">
-              <th scope="col" :class="[TH, 'py-1 pr-3 text-(--text-ink-muted)']">關係</th>
-              <th scope="col" :class="[TH, 'py-1 text-(--text-ink-muted)']">關聯對象</th>
-            </tr>
-          </thead>
-          <tbody
-            v-for="g in groups"
-            :key="g.label"
-            class="border-b border-(--border-shelf) last:border-b-0"
-          >
-            <tr v-for="(n, i) in g.nodes" :key="n.id">
-              <th
-                v-if="i === 0"
-                scope="rowgroup"
-                :rowspan="g.nodes.length"
-                :class="[TH, 'pt-2 pb-1.5 pr-3 text-(--text-ink-body)']"
-              >
-                {{ g.label }}
-              </th>
-              <td
-                class="align-top"
-                :class="[i === 0 ? 'pt-1' : '', i === g.nodes.length - 1 ? 'pb-1' : '']"
-              >
-                <button type="button" :class="NODE_BTN" @click="pick(n.id)">{{ n.label }}</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- 直接關係：上下堆疊（D-88，畫稿 C）。每組一個 dt（類別或「版本」）＋一個 dd（名稱用頓號接），
+             手機上不用兩欄；名稱是 inline-block，只在名稱之間折行，不會從連字號中間斷開 -->
+        <template v-if="directCount > 0">
+          <p class="mt-2 text-(--text-ink-muted)">共 {{ directCount }} 條直接關係</p>
+          <dl class="mt-2 grid gap-2.5 m-0">
+            <div
+              v-for="g in groups"
+              :key="g.label"
+              class="grid gap-0.5 border-t border-(--border-shelf) pt-2"
+            >
+              <dt :class="[TH, 'text-(--text-ink-body)']">{{ g.label }}</dt>
+              <dd class="m-0">
+                <template v-for="(n, i) in g.nodes" :key="n.id"
+                  ><button type="button" :class="NODE_BTN_STACKED" @click="pick(n.id)">
+                    {{ n.label }}</button
+                  ><span v-if="i < g.nodes.length - 1" class="text-(--text-ink-body)"
+                    >、</span
+                  ></template
+                >
+              </dd>
+            </div>
+          </dl>
+        </template>
         <p v-else class="mt-1 text-(--text-ink-muted)">還沒有直接關係。</p>
 
         <!-- 間接關聯：只在顯示設定打開「間接關聯」時列出，跟直接關係分開一張表 -->
@@ -287,48 +271,28 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
       <p class="mt-2 text-(--text-ink-muted)">這是推算出來的，不是直接關係。</p>
     </template>
 
-    <!-- ───── 選了直接關係的實線：起點／關係／終點 ───── -->
+    <!-- ───── 選了直接關係的實線：一行「主詞 類別　動詞 →　受詞 類別」（D-88，畫稿 E2′）───── -->
     <template v-else-if="ends">
       <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">直接關係</p>
-      <table class="mt-1 w-full border-collapse table-fixed">
-        <colgroup>
-          <col class="w-[4.5em]" />
-          <col />
-        </colgroup>
-        <tbody>
-          <tr
-            v-for="row in direct
-              ? [
-                  { head: '起點', node: direct.subject },
-                  { head: '關係', node: null },
-                  { head: '終點', node: direct.object },
-                ]
-              : [
-                  { head: '起點', node: null, text: ends.sourceLabel },
-                  { head: '終點', node: null, text: ends.targetLabel },
-                ]"
-            :key="row.head"
-            class="border-b border-(--border-shelf) last:border-b-0"
-          >
-            <th scope="row" :class="[TH, 'py-1.5 pr-3 text-(--text-ink-muted)']">
-              {{ row.head }}
-            </th>
-            <td class="align-top py-0.5">
-              <template v-if="row.node"
-                ><button type="button" :class="NODE_BTN" @click="pick(row.node.id)">
-                  {{ row.node.label }}</button
-                ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-                  TYPE_LABEL[row.node.domainType]
-                }}</span></template
-              >
-              <span v-else-if="direct" class="inline-block py-1 text-(--text-ink-body)">{{
-                direct.verb
-              }}</span>
-              <span v-else class="inline-block py-1">{{ 'text' in row ? row.text : '' }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <p v-if="direct" class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span
+          ><button type="button" :class="NODE_BTN" @click="pick(direct.subject.id)">
+            {{ direct.subject.label }}</button
+          ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
+            TYPE_LABEL[direct.subject.domainType]
+          }}</span></span
+        >
+        <span class="font-bold text-(--text-ink-main)">{{ direct.verb }} →</span>
+        <span
+          ><button type="button" :class="NODE_BTN" @click="pick(direct.object.id)">
+            {{ direct.object.label }}</button
+          ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
+            TYPE_LABEL[direct.object.domainType]
+          }}</span></span
+        >
+      </p>
+      <!-- 索引還沒載入：查不到類別，也就不知道誰是主詞，只照邊的方向列兩端名稱 -->
+      <p v-else class="mt-2">{{ ends.sourceLabel }} → {{ ends.targetLabel }}</p>
     </template>
   </div>
 </template>
