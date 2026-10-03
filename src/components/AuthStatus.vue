@@ -22,9 +22,9 @@ const showLoginEntry = import.meta.env.DEV
 const pillClass =
   'inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all'
 
+// 登出失敗（後端沒確認）時留在原頁，錯誤提示由 AuthNotice 顯示，使用者可以再按一次
 async function handleLogout() {
-  await auth.logout()
-  router.push('/')
+  if (await auth.logout()) router.push('/')
 }
 </script>
 

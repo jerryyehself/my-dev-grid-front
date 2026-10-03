@@ -48,15 +48,24 @@ function writeSessionHint(on: boolean) {
 
 /**
  * 同一個瀏覽器的多個分頁共用同一顆 refresh cookie，而 refresh token 是單次使用：
- * 兩個分頁同時拿同一支去換，後到的那個會 401，後端回應還會順手清掉 cookie，
- * 把先到的那個剛拿到的新 cookie 也刪了。用 Web Locks 讓同一個 origin 的換發排隊，
- * 後到的分頁等前一個做完才送，送出時帶的已經是新的 cookie。
- * 不支援 Web Locks 的環境（舊瀏覽器、jsdom）就直接送。
+ * 用 Web Locks 讓同一個 origin 的換發排隊，後到的分頁等前一個做完才送，
+ * 送出時帶的已經是新的 cookie。
+ * 不支援 Web Locks 的環境（舊瀏覽器、jsdom）就直接送：兩個分頁撞在一起時，後到的
+ * 那個會拿到 409（後端在寬限秒數內認得出是同一支剛被用掉，不當成被偷、不清 cookie），
+ * refresh() 稍等用新 cookie 重試一次（REFRESH_CONFLICT_RETRY_MS）。
  */
 function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
   return locks ? locks.request('mdg-auth-refresh', task) : task()
 }
+
+/**
+ * 換發收到 409 之後等多久再重試一次（毫秒）。409 是後端說「這支 refresh token 幾秒前
+ * 剛被另一個請求用掉」——沒有 Web Locks 的瀏覽器兩個分頁同時換發時，後到的那個會拿到它。
+ * 這時瀏覽器的 cookie 多半已經（或馬上就會）被先到那個的回應換成新值，稍等再用新 cookie
+ * 換一次就好。後端刻意不在 409 清 cookie，也不撤銷整個登入（見後端 RefreshTokenFamilies）。
+ */
+export const REFRESH_CONFLICT_RETRY_MS = 300
 
 /**
  * Access token 只存在記憶體裡（一個 ref），不落 localStorage/sessionStorage——
@@ -117,13 +126,21 @@ export const useAuthStore = defineStore('auth', () => {
   function refresh(): Promise<boolean> {
     refreshInFlight ??= (async () => {
       try {
-        const res = await withRefreshLock(() =>
-          fetch(`${BASE_URL}/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { Accept: 'application/json' },
-          }),
-        )
+        const send = () =>
+          withRefreshLock(() =>
+            fetch(`${BASE_URL}/auth/refresh`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { Accept: 'application/json' },
+            }),
+          )
+        let res = await send()
+        // 409：同一支 refresh token 剛被另一個分頁用掉，稍等用新 cookie 重試一次。
+        // 重試還是 409 就當成暫時失敗（下面的非 401 分支：保留旗標、下次再試）
+        if (res.status === 409) {
+          await new Promise((resolve) => setTimeout(resolve, REFRESH_CONFLICT_RETRY_MS))
+          res = await send()
+        }
         if (!res.ok) {
           if (res.status === 401) clearSession()
           else {
@@ -222,25 +239,35 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * 後端會撤銷目前的 access token 跟 cookie 裡的 refresh token，並清掉 cookie。
-   * access token 可能已經過期（閒置超過 15 分鐘）：這時先換一次再登出，不然
-   * 登出請求被 401 擋掉、refresh cookie 還留著，重新整理又會自動登入回來。
+   * 登出：帶 Bearer（如果還有）跟 refresh cookie（credentials: 'include'）。後端兩個任一個
+   * 有效就撤銷這次登入的所有 token、清 cookie——access token 閒置過期了也不用先換發。
+   *
+   * 只有後端確認（2xx）才清掉前端的登入狀態。連不上、5xx、429 時伺服器上的 refresh
+   * token 還活著：這時把畫面改成「已登出」是騙人的——重新整理會自動登入回來，在共用電腦上
+   * 下一個人也能這樣進來。所以保留登入狀態，顯示錯誤，讓使用者再按一次登出。
+   * 回傳是否真的登出了。
    */
-  async function logout() {
-    const send = () =>
-      fetch(`${BASE_URL}/auth/logout`, {
+  async function logout(): Promise<boolean> {
+    let ok = false
+    try {
+      const res = await fetch(`${BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         headers: { Accept: 'application/json', ...authHeaders() },
       })
-    try {
-      const res = await send()
-      if (res.status === 401 && (await refresh())) await send()
+      ok = res.ok
     } catch {
-      // 連不上後端也照樣清掉前端的登入狀態
+      // 連不上後端：當成登出失敗
     }
+
+    if (!ok) {
+      notice.value = { tone: 'error', text: '登出失敗，目前仍是登入狀態，請再按一次登出' }
+      return false
+    }
+
     clearSession()
     notice.value = { tone: 'success', text: '已登出' }
+    return true
   }
 
   return {

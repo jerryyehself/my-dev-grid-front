@@ -94,38 +94,73 @@ describe('useAuthStore：登入結果提示', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer t')
   })
 
-  it('登出時 access token 已過期：先換發再登出，伺服器端的 refresh token 才會被撤銷', async () => {
-    const calls: string[] = []
-    mockFetch((url, init) => {
-      const path = pathOf(url)
-      const bearer = (init.headers as Record<string, string>).Authorization
-      calls.push(`${path} ${bearer ?? '-'}`)
-      if (path === '/auth/refresh') return Response.json({ token: 'fresh', data: USER })
-      if (bearer === 'Bearer expired') return new Response(null, { status: 401 })
-      return Response.json({ message: '已登出。' })
-    })
+  it('登出只打一次 /auth/logout：access token 過期也不先換發（後端靠 refresh cookie 就能撤銷）', async () => {
+    const fetchMock = mockFetch(() => Response.json({ message: '已登出。' }))
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const auth = useAuthStore()
     auth.token = 'expired'
-    await auth.logout()
-    expect(calls).toEqual([
-      '/auth/logout Bearer expired',
-      '/auth/refresh -',
-      '/auth/logout Bearer fresh',
-    ])
+    expect(await auth.logout()).toBe(true)
+    expect(fetchMock.mock.calls.map(([url]) => pathOf(url))).toEqual(['/auth/logout'])
     expect(auth.isAuthenticated).toBe(false)
   })
 
-  it('登出時後端連不上：前端照樣登出', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => {
-        throw new TypeError('Failed to fetch')
-      }),
-    )
+  it.each([
+    ['後端連不上', () => {
+      throw new TypeError('Failed to fetch')
+    }],
+    ['後端 500', () => new Response(null, { status: 500 })],
+    ['被限流 429', () => new Response(null, { status: 429 })],
+  ])('登出失敗（%s）：保留登入狀態跟旗標、顯示錯誤，不假裝已登出', async (_label, handler) => {
+    mockFetch(handler)
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const auth = useAuthStore()
     auth.token = 't'
-    await auth.logout()
+    auth.user = USER
+    expect(await auth.logout()).toBe(false)
+    expect(auth.isAuthenticated).toBe(true)
+    expect(auth.token).toBe('t')
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
+    expect(auth.notice?.tone).toBe('error')
+  })
+
+  it('登出失敗後再按一次、這次成功：才清掉登入狀態', async () => {
+    let attempt = 0
+    mockFetch(() =>
+      ++attempt === 1 ? new Response(null, { status: 503 }) : Response.json({ message: '已登出。' }),
+    )
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    const auth = useAuthStore()
+    auth.token = 't'
+    expect(await auth.logout()).toBe(false)
+    expect(await auth.logout()).toBe(true)
     expect(auth.isAuthenticated).toBe(false)
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
+    expect(auth.notice).toEqual({ tone: 'success', text: '已登出' })
+  })
+})
+
+describe('useAuthStore：refresh() 收到 409（另一個分頁剛用掉同一支 refresh token）', () => {
+  it('稍等再重試一次，成功就算換發成功', async () => {
+    let attempt = 0
+    const fetchMock = mockFetch(() =>
+      ++attempt === 1
+        ? Response.json({ message: '登入狀態剛更新過，請重試。' }, { status: 409 })
+        : Response.json({ token: 'after-retry', expires_in: 900, data: USER }),
+    )
+    const auth = useAuthStore()
+    expect(await auth.refresh()).toBe(true)
+    expect(auth.token).toBe('after-retry')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('只重試一次；重試還是 409 就當暫時失敗：不算登入，但保留旗標下次再試', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    const fetchMock = mockFetch(() => new Response(null, { status: 409 }))
+    const auth = useAuthStore()
+    expect(await auth.refresh()).toBe(false)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(auth.isAuthenticated).toBe(false)
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
   })
 })
 
