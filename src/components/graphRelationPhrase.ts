@@ -78,14 +78,3 @@ const FROM_NODE: Record<GraphNodeType, Record<GraphNodeType, string>> = {
 export function relationFromNode(self: GraphNodeType, other: GraphNodeType): string {
   return FROM_NODE[self][other]
 }
-
-/**
- * 換個方向讀同一條關係。只有「技術用在實作」反過來是自然的中文（「實作用到技術」）；
- * 「說明」「記錄」反過來要用「被」字句，讀起來比原句更拗口，就不給，回 null。
- */
-export function reverseRelationSentence(a: PhraseNode, b: PhraseNode): string | null {
-  const tech = a.domainType === 'technique' ? a : b.domainType === 'technique' ? b : null
-  const impl = a.domainType === 'implementation' ? a : b.domainType === 'implementation' ? b : null
-  if (!tech || !impl) return null
-  return `「${impl.label}」用到「${tech.label}」`
-}

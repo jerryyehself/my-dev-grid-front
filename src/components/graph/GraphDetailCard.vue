@@ -3,7 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import ArticleEditLink from '@/components/ArticleEditLink.vue'
 import { articleIdOfGraphNode, graphNodeLink } from '@/components/graphNodeLink'
-import { relationPhrase, reverseRelationSentence } from '@/components/graphRelationPhrase'
+import { relationPhrase } from '@/components/graphRelationPhrase'
 import type { GraphPocSelection } from '@/data/graphPocData'
 import {
   detailNodeOf,
@@ -61,11 +61,6 @@ const ends = computed(() => {
 const phrase = computed(() =>
   ends.value?.source && ends.value.target
     ? relationPhrase(ends.value.source, ends.value.target)
-    : null,
-)
-const reverse = computed(() =>
-  ends.value?.source && ends.value.target
-    ? reverseRelationSentence(ends.value.source, ends.value.target)
     : null,
 )
 // 間接關聯的共同鄰居：從索引查 id（才能點）；查不到就退回畫布給的名稱，只顯示不能點
@@ -173,7 +168,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
           <thead>
             <tr class="border-b border-(--border-shelf)">
               <th scope="col" :class="[TH, 'py-1 pr-3 text-(--text-ink-muted)']">關係</th>
-              <th scope="col" :class="[TH, 'py-1 text-(--text-ink-muted)']">連到的節點</th>
+              <th scope="col" :class="[TH, 'py-1 text-(--text-ink-muted)']">關聯對象</th>
             </tr>
           </thead>
           <tbody
@@ -207,7 +202,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
             <caption class="text-left pb-1">
               <span class="block text-[13px] tracking-[0.05em] text-(--text-accent)">間接關聯</span>
               <span class="block text-(--text-ink-muted)"
-                >兩邊都連到相同的節點，這是推算出來的，不是直接關係。</span
+                >兩邊都連到相同的對象，這是推算出來的，不是直接關係。</span
               >
             </caption>
             <colgroup>
@@ -216,7 +211,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
             </colgroup>
             <thead>
               <tr class="border-b border-(--border-shelf)">
-                <th scope="col" :class="[TH, 'py-1 pr-3 text-(--text-ink-muted)']">節點</th>
+                <th scope="col" :class="[TH, 'py-1 pr-3 text-(--text-ink-muted)']">關聯對象</th>
                 <th scope="col" :class="[TH, 'py-1 text-(--text-ink-muted)']">兩邊都連到</th>
               </tr>
             </thead>
@@ -258,13 +253,13 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
         </colgroup>
         <tbody>
           <tr class="border-b border-(--border-shelf)">
-            <th scope="row" :class="[TH, 'py-1.5 pr-3 text-(--text-ink-muted)']">兩端</th>
+            <th scope="row" :class="[TH, 'py-1.5 pr-3 text-(--text-ink-muted)']">這兩個</th>
             <td class="align-top py-0.5">
               <span v-for="end in [ends.source, ends.target]" :key="end?.id" class="block">
                 <template v-if="end">
                   <button type="button" :class="NODE_BTN" @click="pick(end.id)">
                     {{ end.label }}</button
-                  ><span class="ml-2 text-[13px] text-(--text-ink-muted)">{{
+                  ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
                     TYPE_LABEL[end.domainType]
                   }}</span>
                 </template>
@@ -305,7 +300,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
               <template v-if="ends.source"
                 ><button type="button" :class="NODE_BTN" @click="pick(ends.source.id)">
                   {{ ends.source.label }}</button
-                ><span class="ml-2 text-[13px] text-(--text-ink-muted)">{{
+                ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
                   TYPE_LABEL[ends.source.domainType]
                 }}</span></template
               >
@@ -318,7 +313,6 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
               <template v-if="phrase">
                 <p class="text-(--text-ink-body)">{{ phrase.sentence }}</p>
                 <p v-if="phrase.note" class="text-(--text-ink-muted)">{{ phrase.note }}</p>
-                <p v-if="reverse" class="text-(--text-ink-muted)">也就是{{ reverse }}</p>
               </template>
               <p v-else class="text-(--text-ink-body)">
                 「{{ ends.sourceLabel }}」與「{{ ends.targetLabel }}」
@@ -331,7 +325,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
               <template v-if="ends.target"
                 ><button type="button" :class="NODE_BTN" @click="pick(ends.target.id)">
                   {{ ends.target.label }}</button
-                ><span class="ml-2 text-[13px] text-(--text-ink-muted)">{{
+                ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
                   TYPE_LABEL[ends.target.domainType]
                 }}</span></template
               >

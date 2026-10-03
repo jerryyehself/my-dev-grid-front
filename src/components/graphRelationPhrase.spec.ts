@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { relationFromNode, relationPhrase, reverseRelationSentence } from './graphRelationPhrase'
+import { relationFromNode, relationPhrase } from './graphRelationPhrase'
 
 const doc = { domainType: 'documentation' as const, label: 'Vue 官方文件' }
 const tech = { domainType: 'technique' as const, label: 'Vue' }
@@ -46,20 +46,5 @@ describe('relationFromNode', () => {
     expect(relationFromNode('documentation', 'implementation')).toBe('記錄的實作')
     expect(relationFromNode('implementation', 'documentation')).toBe('記錄它的文件')
     expect(relationFromNode('implementation', 'technique')).toBe('用到的技術')
-  })
-})
-
-describe('reverseRelationSentence', () => {
-  it('技術用在實作，反過來是實作用到技術；兩端順序不影響', () => {
-    expect(reverseRelationSentence(tech, impl)).toBe('「my-dev-grid」用到「Vue」')
-    expect(reverseRelationSentence(impl, tech)).toBe('「my-dev-grid」用到「Vue」')
-  })
-
-  it('說明、記錄、同類之間反過來不自然，不給', () => {
-    expect(reverseRelationSentence(doc, tech)).toBeNull()
-    expect(reverseRelationSentence(doc, impl)).toBeNull()
-    expect(
-      reverseRelationSentence(tech, { domainType: 'technique', label: 'JavaScript' }),
-    ).toBeNull()
   })
 })

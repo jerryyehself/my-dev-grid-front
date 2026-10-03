@@ -54,6 +54,7 @@ Grounded in what the site already says (About, home), not invented:
 | Relation verbs from the two endpoint classes: 文件**說明**技術, 文件**記錄**實作, 技術**用在**實作 | per-predicate glosses; 「寫到」 for `specs` | D-73 (full table still open) |
 | Page titles as they are, English included (`My Articles`, `Production Artifacts`) | translating titles to Chinese | D-76 |
 | 收在目錄裡, 一筆一筆記下來 (for "recorded in the catalogue") | 登記 on visitor pages | the user, 2026-10-01 (D-82) |
+| 關聯對象 (the column of things a relation points to, in `/graph` detail-card tables); 這兩個 (the pair at either end of an indirect link) | 節點, 連到的節點 (graph-theory jargon); 兩端 (read as a near-duplicate of 兩邊都連到) | the user, 2026-10-03 (D-88) |
 
 When a new term is settled with the user, add a row here **and** a decision-register row.
 
