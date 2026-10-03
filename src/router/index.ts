@@ -63,6 +63,21 @@ const router = createRouter({
       },
     },
     {
+      // 後台入口：寫入相關的頁面（文章管理、本體論編輯）原本散在各頁的 AuthOnly 按鈕後面，
+      // 沒有一個地方能一次看到全部。這頁只放連結與計數，不自己做任何寫入。
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/AdminView.vue'),
+      meta: {
+        tag: 'Admin',
+        title: '管理',
+        subtitle: '文章、分類與述詞的編輯入口',
+        // 這頁自己畫表頭，跟文章管理頁同一個理由
+        hideHeader: true,
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/articles',
       name: 'articles',
       component: () => import('@/views/ArticlesView.vue'),

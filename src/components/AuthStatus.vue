@@ -18,6 +18,10 @@ const auth = useAuthStore()
 const router = useRouter()
 const showLoginEntry = import.meta.env.DEV
 
+// 三顆都是同一種膠囊，樣式集中在這裡，不要各寫一份再慢慢漂移
+const pillClass =
+  'inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all'
+
 async function handleLogout() {
   await auth.logout()
   router.push('/')
@@ -32,19 +36,21 @@ async function handleLogout() {
     >
       {{ auth.user?.name ?? auth.user?.email }}
     </span>
-    <button
+    <!-- 後台入口（/admin）。跟登出一樣只在登入後出現，訪客看到的導覽列完全不變——
+         理由同 AuthOnly.vue：訪客登入不了，看得到進不去的入口只會像網站沒做完。
+         在 /admin 上時用導覽列 active 連結同一個顏色，表示「你在這裡」 -->
+    <router-link
       v-if="auth.isAuthenticated"
-      type="button"
-      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
-      @click="handleLogout"
+      :to="{ name: 'admin' }"
+      :class="pillClass"
+      active-class="!text-(--text-nav-hover) !opacity-100"
     >
+      管理
+    </router-link>
+    <button v-if="auth.isAuthenticated" type="button" :class="pillClass" @click="handleLogout">
       登出
     </button>
-    <router-link
-      v-else-if="showLoginEntry"
-      to="/login"
-      class="inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all"
-    >
+    <router-link v-else-if="showLoginEntry" to="/login" :class="pillClass">
       登入
     </router-link>
   </div>

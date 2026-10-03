@@ -13,6 +13,7 @@ async function mountStatus() {
     routes: [
       { path: '/', component: Stub },
       { path: '/login', component: Stub },
+      { path: '/admin', name: 'admin', component: Stub },
     ],
   })
   router.push('/')
@@ -50,5 +51,21 @@ describe('AuthStatus', () => {
     const wrapper = await mountStatus()
     expect(wrapper.text()).toContain('Jerry')
     expect(wrapper.find('button').text()).toBe('登出')
+  })
+
+  it('已登入：顯示連到 /admin 的「管理」', async () => {
+    vi.stubEnv('DEV', false)
+    useAuthStore().token = 'test-token'
+    const wrapper = await mountStatus()
+    expect(wrapper.find('a[href="/admin"]').text()).toBe('管理')
+  })
+
+  it('沒登入：不管哪個環境都沒有「管理」（訪客看到的導覽列不變）', async () => {
+    for (const dev of [false, true]) {
+      vi.stubEnv('DEV', dev)
+      const wrapper = await mountStatus()
+      expect(wrapper.find('a[href="/admin"]').exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('管理')
+    }
   })
 })
