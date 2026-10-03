@@ -47,3 +47,9 @@
   改動即使只是修一個部署錯誤、驗證條件也全過，一樣要先問，不能因為是
   「修 bug」就自動歸類成可以直接合併（2026-09-25 的教訓：PR #81/#82 誤判
   成一般前端實作細節，直接合併了）。
+- **`develop` → `main` 的上線 PR 用 squash 合併**（repo 設定不允許 merge commit，
+  2026-10-02 第一次上線 #90 時確認）。合併完一定要把 `main` 合併回 `develop`
+  （`git merge --no-ff origin/main`，一般推送），不然下次上線的 PR 歷史會對不上。
+  回滾用 `git revert <squash commit>`。
+- `develop` 有 ruleset 擋刪除與 force push（2026-10-02 使用者設定）：repo 開了
+  「合併後自動刪除分支」，#90 合併後 `develop` 曾被自動刪掉、事後還原。

@@ -1,5 +1,7 @@
 // 知識圖譜技術驗證（POC）的資料層：實際打 GET /api/graph，把後端資料轉成
-// GraphPoc2D/GraphPoc3D 兩個元件原本預期的形狀。
+// GraphPoc2D/GraphPoc3D 兩個元件原本預期的形狀。D-87 起 2D 改用共用畫布
+// components/graph/KnowledgeGraphCanvas.vue（直接吃 GraphDto），這裡只剩 3D 跟路徑查詢在用；
+// GraphPocSelection 仍是 /graph 詳情卡的共同格式，共用畫布也發這個。
 //
 // 後端 nodes 只有 {id, type, label}，edges 只有 {source, target, predicate, label,
 // relation_id}——沒有 weight/tags/daysSinceAccessed，也沒有 kind: 'related' | 'inspiration'
@@ -76,6 +78,8 @@ export interface GraphPocLinkSelection {
   linkKind: 'related' | 'inspiration'
   predicate: string | null
   label: string | null
+  /** 間接關聯（推算出來的虛線）才有：兩端共同連到的節點名稱（D-87，/graph 也能打開間接關聯） */
+  indirectVia?: string[]
 }
 export type GraphPocSelection = GraphPocNodeSelection | GraphPocLinkSelection
 
