@@ -246,6 +246,8 @@ onMounted(async () => {
     .onLinkClick((l) =>
       emit('select', {
         kind: 'link',
+        sourceId: typeof l.source === 'object' ? l.source.id : String(l.source),
+        targetId: typeof l.target === 'object' ? l.target.id : String(l.target),
         sourceLabel: (typeof l.source === 'object' ? l.source.label : nodes.find((n) => n.id === l.source)?.label) ?? String(l.source),
         targetLabel: (typeof l.target === 'object' ? l.target.label : nodes.find((n) => n.id === l.target)?.label) ?? String(l.target),
         linkKind: l.kind,
