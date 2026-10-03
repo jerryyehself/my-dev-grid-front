@@ -50,9 +50,10 @@ function writeSessionHint(on: boolean) {
  * 同一個瀏覽器的多個分頁共用同一顆 refresh cookie，而 refresh token 是單次使用：
  * 用 Web Locks 讓同一個 origin 的換發排隊，後到的分頁等前一個做完才送，
  * 送出時帶的已經是新的 cookie。
- * 不支援 Web Locks 的環境（舊瀏覽器、jsdom）就直接送：兩個分頁撞在一起時，後到的
- * 那個會拿到 409（後端在寬限秒數內認得出是同一支剛被用掉，不當成被偷、不清 cookie），
- * refresh() 稍等用新 cookie 重試一次（REFRESH_CONFLICT_RETRY_MS）。
+ * 不支援 Web Locks 的環境（舊瀏覽器、jsdom）就直接送：兩個分頁撞在一起時，後端在
+ * 寬限秒數內認得出是同一支剛被用掉，不當成被偷——通常直接從剛換出來的那支接著換發給
+ * 後到的請求；三個以上撞在一起才會有人拿到 409（不清 cookie），refresh() 稍等用新
+ * cookie 重試一次（REFRESH_CONFLICT_RETRY_MS）。
  */
 function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
@@ -61,7 +62,7 @@ function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
 
 /**
  * 換發收到 409 之後等多久再重試一次（毫秒）。409 是後端說「這支 refresh token 幾秒前
- * 剛被另一個請求用掉」——沒有 Web Locks 的瀏覽器兩個分頁同時換發時，後到的那個會拿到它。
+ * 剛被別的請求用掉，從它換出來的那支也已經用掉了」——沒有 Web Locks 時好幾個請求同時換發才會發生。
  * 這時瀏覽器的 cookie 多半已經（或馬上就會）被先到那個的回應換成新值，稍等再用新 cookie
  * 換一次就好。後端刻意不在 409 清 cookie，也不撤銷整個登入（見後端 RefreshTokenFamilies）。
  */
