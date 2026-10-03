@@ -34,7 +34,12 @@ export interface RelationPhrase {
 
 export function relationPhrase(a: PhraseNode, b: PhraseNode): RelationPhrase {
   for (const { from, to, verb } of CROSS_CLASS) {
-    const subject = a.domainType === from && b.domainType === to ? a : b.domainType === from && a.domainType === to ? b : null
+    const subject =
+      a.domainType === from && b.domainType === to
+        ? a
+        : b.domainType === from && a.domainType === to
+          ? b
+          : null
     if (subject) {
       const object = subject === a ? b : a
       return { sentence: `「${subject.label}」${verb}「${object.label}」`, note: null }
@@ -44,4 +49,43 @@ export function relationPhrase(a: PhraseNode, b: PhraseNode): RelationPhrase {
     sentence: `「${a.label}」與「${b.label}」`,
     note: a.domainType === b.domainType ? `兩個${TYPE_LABEL[a.domainType]}之間的關係` : null,
   }
+}
+
+// /graph 詳情卡「從一個節點看出去」的關係名稱（表格的「關係」欄）。
+// 一樣只看兩端的類別、不看述詞：關係由兩端類別決定，所以同一組裡連到的節點一定是同一類，
+// 名稱裡直接帶出類別（「用到它的實作」），表格就不用再多一欄每列都一樣的「類別」。
+// 動詞沿用上面三個：文件說明技術、文件記錄實作、技術用在實作；從被說明／被用到的那一端看，
+// 改成「說明它的文件」「用到的技術」這種不用「被」字的說法。
+// 同類之間沒有動詞（完整述詞對照表還沒做，D-73），只說「相關的技術」。
+const FROM_NODE: Record<GraphNodeType, Record<GraphNodeType, string>> = {
+  documentation: {
+    documentation: '相關的文件',
+    technique: '說明的技術',
+    implementation: '記錄的實作',
+  },
+  technique: {
+    documentation: '說明它的文件',
+    technique: '相關的技術',
+    implementation: '用到它的實作',
+  },
+  implementation: {
+    documentation: '記錄它的文件',
+    technique: '用到的技術',
+    implementation: '相關的實作',
+  },
+}
+
+export function relationFromNode(self: GraphNodeType, other: GraphNodeType): string {
+  return FROM_NODE[self][other]
+}
+
+/**
+ * 換個方向讀同一條關係。只有「技術用在實作」反過來是自然的中文（「實作用到技術」）；
+ * 「說明」「記錄」反過來要用「被」字句，讀起來比原句更拗口，就不給，回 null。
+ */
+export function reverseRelationSentence(a: PhraseNode, b: PhraseNode): string | null {
+  const tech = a.domainType === 'technique' ? a : b.domainType === 'technique' ? b : null
+  const impl = a.domainType === 'implementation' ? a : b.domainType === 'implementation' ? b : null
+  if (!tech || !impl) return null
+  return `「${impl.label}」用到「${tech.label}」`
 }
