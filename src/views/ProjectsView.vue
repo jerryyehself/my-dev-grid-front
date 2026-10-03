@@ -3,7 +3,8 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseTag from '@/components/BaseTag.vue'
 import BaseButton from '@/components/BaseButton.vue'
-import { fetchProjects, techniqueLabel, type Project } from '@/api/projects'
+import { fetchProjects, type Project } from '@/api/projects'
+import { techniqueLabel } from '@/api/techniqueLabel'
 import { orderedTechniques, useProjectsFilter } from '@/composables/useProjectsFilter'
 
 const projects = ref<Project[]>([])
@@ -58,7 +59,7 @@ const pick = async (id: string) => {
 // 詳情裡的技術標籤：照篩選器的分類順序排；目前篩選中的技術加框，選了「Vue」就看得出這個專案用的是 Vue 3
 const selectedTechniqueTags = computed(() =>
   selected.value
-    ? orderedTechniques(selected.value).map((t) => ({ label: techniqueLabel(t), matched: selectedTags.value.has(t.name) }))
+    ? orderedTechniques(selected.value).map((t) => ({ label: techniqueLabel(t.name, t.version), matched: selectedTags.value.has(t.name) }))
     : [],
 )
 

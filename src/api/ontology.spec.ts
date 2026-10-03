@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createScope, previewFullCallNumber, updateScope } from './ontology'
+import {
+  createScope,
+  fetchDocumentationOptions,
+  fetchTechniqueOptions,
+  previewFullCallNumber,
+  updateScope,
+} from './ontology'
 import { ApiValidationError } from './client'
 
 const mockFetch = vi.fn()
@@ -104,5 +110,29 @@ describe('createScope / updateScope', () => {
     })
     await expect(promise).rejects.toThrow('500')
     await expect(promise).rejects.not.toBeInstanceOf(ApiValidationError)
+  })
+})
+
+describe('fetchTechniqueOptions', () => {
+  // 版本是獨立的一筆、title 相同（後端 2026-09-30）：挑選器上只顯示 title 的話 Vue 和 Vue 3 分不出來
+  it('技術的名稱帶版本，版本留空就只有 title', async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({
+        type: 'techniques',
+        data: [
+          { id: 1, title: 'Vue', version: null, scope: { full_call_number: '1040', name: 'framework' } },
+          { id: 2, title: 'Vue', version: '3', scope: { full_call_number: '1040', name: 'framework' } },
+        ],
+      }),
+    )
+    expect(await fetchTechniqueOptions()).toEqual([
+      { id: 1, title: 'Vue', scope: '1040 framework' },
+      { id: 2, title: 'Vue 3', scope: '1040 framework' },
+    ])
+  })
+
+  it('沒有 version 欄位的族（文件）名稱不變', async () => {
+    mockFetch.mockResolvedValue(jsonResponse({ type: 'documentations', data: [{ id: 5, title: 'Vue 官方文件', scope: null }] }))
+    expect(await fetchDocumentationOptions()).toEqual([{ id: 5, title: 'Vue 官方文件', scope: null }])
   })
 })

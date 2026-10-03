@@ -107,8 +107,10 @@ const typeFilter = reactive<Record<GraphNodeType, boolean>>({
   technique: false,
   implementation: false,
 })
-// 間接關聯（推算出來的虛線）預設不顯示，免得畫面太雜（2026-09-30 使用者決定）
-const showIndirect = ref(false)
+// 間接關聯（推算出來的虛線）預設不顯示，免得畫面太雜（2026-09-30 使用者決定）。
+// 開成 v-model:show-indirect：/graph 的詳情卡要跟著開關決定列不列間接關聯；首頁沒綁，
+// defineModel 沒綁時就是元件自己的狀態，行為跟原本的 ref 一樣。
+const showIndirect = defineModel<boolean>('showIndirect', { default: false })
 const indirectCount = ref(0)
 const settingsOpen = ref(false)
 const helpOpen = ref(false)
@@ -1038,6 +1040,8 @@ function linkSelection(l: SimLink): GraphPocSelection {
   const t = typeof l.target === 'object' ? l.target : undefined
   return {
     kind: 'link',
+    sourceId: endpointId(l.source),
+    targetId: endpointId(l.target),
     sourceLabel: s?.label ?? endpointId(l.source),
     targetLabel: t?.label ?? endpointId(l.target),
     linkKind: s && t && s.domainType === t.domainType ? 'inspiration' : 'related',
@@ -1048,6 +1052,21 @@ function linkSelection(l: SimLink): GraphPocSelection {
       : undefined,
   }
 }
+
+// /graph 詳情卡裡點了別的節點名稱：畫布跟著固定選取那個節點，鏡頭平移過去（不改縮放）。
+// 不發 select——頁面已經自己換了詳情卡的內容，再發一次會繞回去。null＝取消固定選取
+// （詳情卡按了關閉）。首頁不會呼叫，行為不變。
+function pinNode(id: string | null) {
+  pinnedNodeId = id
+  popover.open = false
+  const n = id ? simNodes.find((x) => x.id === id) : undefined
+  if (graph && n?.x != null && n.y != null && !settling.value) {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    graph.centerAt(n.x, n.y, reduceMotion ? 0 : 400)
+  }
+  forceRedraw()
+}
+defineExpose({ pinNode })
 
 watch(
   () => props.highlightPath,
