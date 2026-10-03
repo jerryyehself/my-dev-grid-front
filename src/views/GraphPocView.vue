@@ -11,7 +11,8 @@ import GraphPathSearch from '@/components/poc/GraphPathSearch.vue'
 import GraphPathDiagram from '@/components/poc/GraphPathDiagram.vue'
 import type { GraphPocSelection } from '@/data/graphPocData'
 import { fetchGraphOrDemo, type GraphDto, type GraphNodeType, type GraphPathDto } from '@/api/graph'
-import { graphNodeLink } from '@/components/graphNodeLink'
+import { articleIdOfGraphNode, graphNodeLink } from '@/components/graphNodeLink'
+import ArticleEditLink from '@/components/ArticleEditLink.vue'
 
 const route = useRoute()
 const mode = ref<'2d' | '3d'>(route.query.mode === '3d' ? '3d' : '2d')
@@ -51,6 +52,10 @@ const selected = ref<GraphPocSelection | null>(null)
 // 點到的節點連去哪（文章頁、外部網址、專案頁；技術沒有頁面）。規則跟首頁知識網路的彈窗共用
 const selectedLink = computed(() =>
   selected.value?.kind === 'node' ? graphNodeLink(selected.value) : null,
+)
+// 站上自己的文章才有，給登入後的「編輯這篇」用（同一條規則，見 graphNodeLink.ts）
+const selectedArticleId = computed(() =>
+  selected.value?.kind === 'node' ? articleIdOfGraphNode(selected.value) : null,
 )
 
 // 詳情卡在圖譜跟圖例下面，畫布一個螢幕高，點下去之後卡片常常在畫面外，讀者以為點了沒反應
@@ -154,6 +159,14 @@ const pathResult = ref<GraphPathDto | null>(null)
           class="inline-flex items-center min-h-11 -mb-2 pr-3 text-(--text-accent) hover:underline"
           >{{ selectedLink.text }}</a
         >
+        <!-- 跟首頁知識網路彈窗同一顆，只給登入的人看 -->
+        <ArticleEditLink
+          v-if="selectedArticleId != null"
+          :article-id="selectedArticleId"
+          :title="selected.label"
+          label="編輯這篇"
+          class="inline-flex items-center min-h-11 -mb-2 pl-1 text-(--text-ink-muted) hover:text-(--text-accent) hover:underline"
+        />
       </template>
       <template v-else-if="selected.indirectVia">
         <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">間接關聯</p>

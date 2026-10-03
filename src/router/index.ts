@@ -63,6 +63,21 @@ const router = createRouter({
       },
     },
     {
+      // 後台入口：寫入相關的頁面（文章管理、本體論編輯）原本散在各頁的 AuthOnly 按鈕後面，
+      // 沒有一個地方能一次看到全部。這頁只放連結與計數，不自己做任何寫入。
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/AdminView.vue'),
+      meta: {
+        tag: 'Admin',
+        title: '管理',
+        subtitle: '文章、分類與述詞的編輯入口',
+        // 這頁自己畫表頭，跟文章管理頁同一個理由
+        hideHeader: true,
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/articles',
       name: 'articles',
       component: () => import('@/views/ArticlesView.vue'),
@@ -255,6 +270,12 @@ const router = createRouter({
 // token」的前端層級檢查——真正的權限判斷永遠在後端 Policy（見
 // app/Policies），這道 guard 只是不讓使用者先看到一個註定會 401 的頁面。
 router.beforeEach((to) => {
+  // OAuth 登入失敗時，後端（TokenSocialAuthController）導回 `/?auth_error=not_authorized`。
+  // 以前前端沒接，畫面什麼都沒變，只有網址多一串（2026-10-03 使用者回報）。統一轉去登入頁，
+  // 由登入頁說明原因
+  if (typeof to.query.auth_error === 'string' && to.name !== 'login') {
+    return { name: 'login', query: { auth_error: to.query.auth_error } }
+  }
   if (to.meta.requiresAuth && !useAuthStore().isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }

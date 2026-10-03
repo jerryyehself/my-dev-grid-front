@@ -3,7 +3,8 @@ import { nextTick, onMounted, onUnmounted, reactive, ref, useId, watch } from 'v
 import { RouterLink } from 'vue-router'
 import ForceGraph from 'force-graph'
 import { forceCollide, forceX, forceY } from 'd3-force'
-import { graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
+import { articleIdOfGraphNode, graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
+import ArticleEditLink from '@/components/ArticleEditLink.vue'
 import { relationPhrase } from '@/components/graphRelationPhrase'
 import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
 import type { GraphPocSelection } from '@/data/graphPocData'
@@ -405,6 +406,8 @@ interface PopoverState {
   title: string
   rows: string[]
   link: GraphNodeLink | null
+  /** 站上自己的文章才有，給登入後的「編輯這篇」用 */
+  articleId: number | null
   left: number
   top: number
 }
@@ -415,6 +418,7 @@ const popover = reactive<PopoverState>({
   title: '',
   rows: [],
   link: null,
+  articleId: null,
   left: 0,
   top: 0,
 })
@@ -427,9 +431,11 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
     popover.rows = [`共 ${n.degree} 條直接關係`]
     if (n.createdAt) popover.rows.push(`GitHub 上建立於 ${n.createdAt}`)
     popover.link = graphNodeLink(n)
+    popover.articleId = articleIdOfGraphNode(n)
   } else {
     const l = obj as SimLink
     popover.link = null
+    popover.articleId = null
     const s = typeof l.source === 'object' ? l.source.label : l.source
     const t = typeof l.target === 'object' ? l.target.label : l.target
     if (l.derived) {
@@ -1162,6 +1168,15 @@ onUnmounted(() => {
           class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
           >{{ popover.link.text }}</a
         >
+        <!-- 文章節點才有，而且只給登入的人看（ArticleEditLink 內建 AuthOnly）。跟上面的「閱讀」
+             同一行、同樣 44px 高，但用次要的墨色，主要動作仍是閱讀 -->
+        <ArticleEditLink
+          v-if="popover.articleId != null"
+          :article-id="popover.articleId"
+          :title="popover.title"
+          label="編輯這篇"
+          class="inline-flex items-center min-h-11 -mb-2 pl-1 text-[14px] text-(--text-ink-muted) hover:text-(--text-accent) hover:underline"
+        />
       </div>
 
       <!-- 合作式手勢的提示：不擋操作（pointer-events-none），幾秒後自己消失 -->

@@ -24,16 +24,20 @@ onMounted(async () => {
     return
   }
 
-  await auth.setTokenFromOAuthCallback(token)
-  router.replace('/')
+  if (!(await auth.setTokenFromOAuthCallback(token))) {
+    failed.value = true
+    return
+  }
+  // 登入就是為了管理，直接去後台入口；成功提示由 AuthNotice 顯示
+  router.replace('/admin')
 })
 </script>
 
 <template>
   <div class="flex justify-center py-16">
     <BaseLoadingBlock v-if="!failed" height="120px">登入中…</BaseLoadingBlock>
-    <p v-else class="text-sm text-(--text-ink-muted)">
-      登入回呼缺少必要資訊，請
+    <p v-else role="alert" class="text-[14px] text-(--text-error)">
+      登入失敗：沒有拿到有效的登入憑證，請
       <RouterLink to="/login" class="text-(--text-accent) underline">重新登入</RouterLink>。
     </p>
   </div>

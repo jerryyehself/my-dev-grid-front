@@ -28,14 +28,26 @@ function rawIdOf(nodeId: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null
 }
 
+/**
+ * 這個節點是不是站上自己的文章，是的話回文章 id（給登入後的「編輯這篇」用）。
+ * 跟 graphNodeLink 的「連到站內文章頁」是同一條判斷，抽出來共用，兩邊不會各自漂移——
+ * 參考資料（外部官方文件）、技術、專案都不是站上能編的文章，一律回 null。
+ */
+export function articleIdOfGraphNode(node: LinkableGraphNode): number | null {
+  if (node.domainType !== 'documentation' || node.subtype !== 'post') return null
+  return rawIdOf(node.id)
+}
+
 export function graphNodeLink(node: LinkableGraphNode): GraphNodeLink | null {
+  const articleId = articleIdOfGraphNode(node)
+  if (articleId != null) {
+    return { kind: 'internal', to: { name: 'article-detail', params: { id: articleId } }, text: '閱讀這篇文章 →' }
+  }
+
   const id = rawIdOf(node.id)
   if (id == null) return null
 
   if (node.domainType === 'documentation') {
-    if (node.subtype === 'post') {
-      return { kind: 'internal', to: { name: 'article-detail', params: { id } }, text: '閱讀這篇文章 →' }
-    }
     if (node.url) return { kind: 'external', href: node.url, text: '前往原始網站 ↗' }
     return null
   }
