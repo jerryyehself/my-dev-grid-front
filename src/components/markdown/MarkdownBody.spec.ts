@@ -93,4 +93,32 @@ describe('MarkdownBody', () => {
     expect(w.text()).toContain('段落一')
     expect(w.text()).toContain('段落二')
   })
+
+  describe('連結網址白名單（safeLink）', () => {
+    it.each([
+      '[點我](javascript:alert(1))',
+      '[點我](JaVaScRiPt:alert(1))',
+      '[點我](&#106;avascript:alert(1))',
+      '[點我](javascript&#58;alert(1))',
+      '[點我](&#x6A;&#x61;vascript:alert(1))',
+      '[點我](data:text/html,<b>x</b>)',
+      '[點我](vbscript:msgbox(1))',
+      '<javascript:alert(1)>',
+      '[點我][ref]\n\n[ref]: javascript:alert(1)',
+    ])('危險協定只留文字、不產生任何 <a>：%s', async (source) => {
+      const w = await mountMd(source)
+      expect(w.find('a').exists()).toBe(false)
+      // 文字本身可以出現（`<javascript:…>` 的連結文字就是網址），但不能有任何 href
+      expect(w.html()).not.toMatch(/href/i)
+      expect(w.text()).toContain(source.startsWith('<') ? 'javascript:alert(1)' : '點我')
+    })
+
+    it('https、mailto 照常是站外連結', async () => {
+      const w = await mountMd('[站外](https://example.com) 與 [信](mailto:a@example.com)')
+      const links = w.findAll('a')
+      expect(links.map((a) => a.attributes('href'))).toEqual(['https://example.com/', 'mailto:a@example.com'])
+      expect(links[0]!.attributes('target')).toBe('_blank')
+      expect(links[0]!.attributes('rel')).toBe('noopener noreferrer')
+    })
+  })
 })

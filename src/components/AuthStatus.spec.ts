@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import AuthStatus from './AuthStatus.vue'
@@ -7,18 +7,20 @@ import { useAuthStore } from '@/stores/useAuthStore'
 
 const Stub = { template: '<div />' }
 
-async function mountStatus() {
+async function mountStatus(start = '/') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/', component: Stub },
       { path: '/login', component: Stub },
       { path: '/admin', name: 'admin', component: Stub },
+      { path: '/articles/manage', component: Stub },
     ],
   })
-  router.push('/')
+  router.push(start)
   await router.isReady()
-  return mount(AuthStatus, { global: { plugins: [router] } })
+  const wrapper = mount(AuthStatus, { global: { plugins: [router] } })
+  return Object.assign(wrapper, { router })
 }
 
 describe('AuthStatus', () => {
@@ -78,6 +80,14 @@ describe('AuthStatus', () => {
     expect(wrapper.find('a[href="/admin"]').text()).toBe('管理')
   })
 
+  it('開機換回登入狀態中（restoring）：本機開發也先不顯示「登入」，不閃一下未登入的樣子', async () => {
+    vi.stubEnv('DEV', true)
+    useAuthStore().restoring = true
+    const wrapper = await mountStatus()
+    expect(wrapper.find('a[href="/login"]').exists()).toBe(false)
+    expect(wrapper.text()).toBe('')
+  })
+
   it('沒登入：不管哪個環境都沒有「管理」（訪客看到的導覽列不變）', async () => {
     for (const dev of [false, true]) {
       vi.stubEnv('DEV', dev)
@@ -85,5 +95,31 @@ describe('AuthStatus', () => {
       expect(wrapper.find('a[href="/admin"]').exists()).toBe(false)
       expect(wrapper.text()).not.toContain('管理')
     }
+  })
+
+  it('登出失敗（後端沒確認）：留在原頁、仍顯示登入狀態；成功才回首頁', async () => {
+    const auth = useAuthStore()
+    auth.token = 'test-token'
+    auth.user = { id: 1, name: 'Jerry', email: 'j@example.com' }
+    let attempt = 0
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        ++attempt === 1 ? new Response(null, { status: 500 }) : Response.json({ message: '已登出。' }),
+      ),
+    )
+    const wrapper = await mountStatus('/articles/manage')
+
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+    expect(wrapper.router.currentRoute.value.path).toBe('/articles/manage')
+    expect(auth.isAuthenticated).toBe(true)
+    expect(auth.notice?.tone).toBe('error')
+
+    await wrapper.find('button').trigger('click')
+    await flushPromises()
+    expect(wrapper.router.currentRoute.value.path).toBe('/')
+    expect(auth.isAuthenticated).toBe(false)
+    vi.unstubAllGlobals()
   })
 })

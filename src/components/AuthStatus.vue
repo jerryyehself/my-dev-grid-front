@@ -22,9 +22,9 @@ const showLoginEntry = import.meta.env.DEV
 const pillClass =
   'inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all'
 
+// 登出失敗（後端沒確認）時留在原頁，錯誤提示由 AuthNotice 顯示，使用者可以再按一次
 async function handleLogout() {
-  await auth.logout()
-  router.push('/')
+  if (await auth.logout()) router.push('/')
 }
 </script>
 
@@ -57,6 +57,10 @@ async function handleLogout() {
     <button v-if="auth.isAuthenticated" type="button" :class="pillClass" @click="handleLogout">
       登出
     </button>
-    <router-link v-else-if="showLoginEntry" to="/login" :class="pillClass"> 登入 </router-link>
+    <!-- 開機時正在用 refresh cookie 換回登入狀態（auth.restoring）就先什麼都不顯示，
+         不要先閃一下「登入」再變成「使用者＋登出」 -->
+    <router-link v-else-if="showLoginEntry && !auth.restoring" to="/login" :class="pillClass">
+      登入
+    </router-link>
   </div>
 </template>
