@@ -270,6 +270,12 @@ const router = createRouter({
 // token」的前端層級檢查——真正的權限判斷永遠在後端 Policy（見
 // app/Policies），這道 guard 只是不讓使用者先看到一個註定會 401 的頁面。
 router.beforeEach((to) => {
+  // OAuth 登入失敗時，後端（TokenSocialAuthController）導回 `/?auth_error=not_authorized`。
+  // 以前前端沒接，畫面什麼都沒變，只有網址多一串（2026-10-03 使用者回報）。統一轉去登入頁，
+  // 由登入頁說明原因
+  if (typeof to.query.auth_error === 'string' && to.name !== 'login') {
+    return { name: 'login', query: { auth_error: to.query.auth_error } }
+  }
   if (to.meta.requiresAuth && !useAuthStore().isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }

@@ -36,8 +36,13 @@ function oauthRedirectUrl(provider: 'google' | 'line'): string {
   return `${API_ORIGIN}/auth/token/${provider}/redirect`
 }
 
-const authError = route.query.auth_error
-  ? '登入未通過授權，請確認使用的是已綁定的帳號。'
+// 後端 OAuth 失敗時帶回來的錯誤代碼（router 守衛把 `/?auth_error=…` 轉來這裡）
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  not_authorized: '登入失敗：這個 Google／LINE 帳號還沒綁定管理員帳號。',
+}
+const authErrorCode = typeof route.query.auth_error === 'string' ? route.query.auth_error : ''
+const authError = authErrorCode
+  ? (AUTH_ERROR_MESSAGES[authErrorCode] ?? `登入失敗（錯誤代碼：${authErrorCode}），請再試一次。`)
   : ''
 
 async function handleSubmit() {
@@ -49,7 +54,8 @@ async function handleSubmit() {
       errorMessage.value = result.message
       return
     }
-    const redirect = (route.query.redirect as string) || '/'
+    // 沒有指定要回哪一頁（不是被路由守衛擋下來才來登入）就去後台入口，登入就是為了管理
+    const redirect = (route.query.redirect as string) || '/admin'
     router.push(redirect)
   } finally {
     submitting.value = false
@@ -65,7 +71,14 @@ async function handleSubmit() {
         <p class="text-sm text-(--text-ink-muted)">用 Google／LINE 帳號，或 email 備援表單。</p>
       </div>
 
-      <BaseHint v-if="authError" tone="error">{{ authError }}</BaseHint>
+      <!-- 不用 BaseHint：那是 10px 的欄位提示，整頁唯一的登入結果放那麼小會看不到 -->
+      <p
+        v-if="authError"
+        role="alert"
+        class="rounded-[6px] border border-(--text-error) px-3 py-2 text-[14px] text-(--text-error)"
+      >
+        {{ authError }}
+      </p>
 
       <div class="flex flex-col gap-2">
         <a

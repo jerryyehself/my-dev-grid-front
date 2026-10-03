@@ -2,6 +2,7 @@
 import { computed, watch, watchEffect } from 'vue'
 import { useRoute, RouterView } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
+import AuthNotice from '@/components/AuthNotice.vue'
 import { SITE_NAME, documentTitle, pageTitleOverride } from '@/siteMeta'
 
 const route = useRoute()
@@ -56,6 +57,9 @@ watchEffect(() => {
       <RouterView />
     </template>
   </MainLayout>
+
+  <!-- 登入／登出結果的提示，見 AuthNotice.vue -->
+  <AuthNotice />
 </template>
 
 <style>

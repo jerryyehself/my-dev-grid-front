@@ -7,6 +7,12 @@ interface AuthUser {
   email: string
 }
 
+/** 登入／登出結果的提示（AuthNotice.vue 顯示）。2026-10-03 使用者：「登入成功與否要有提示」 */
+export interface AuthNotice {
+  tone: 'success' | 'error'
+  text: string
+}
+
 /**
  * Token 故意只存在記憶體裡（一個 ref），不落 localStorage/sessionStorage——
  * 這個專案是跨 origin 的 Sanctum API token 模式（decision-register.md D-56），
@@ -20,7 +26,16 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   const user = ref<AuthUser | null>(null)
 
+  const notice = ref<AuthNotice | null>(null)
+
   const isAuthenticated = computed(() => token.value !== null)
+
+  /** 導覽列、提示用的顯示名稱：有名字用名字，沒有退回 email */
+  const displayName = computed(() => user.value?.name || user.value?.email || '')
+
+  function setNotice(next: AuthNotice | null) {
+    notice.value = next
+  }
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
 
@@ -60,13 +75,24 @@ export const useAuthStore = defineStore('auth', () => {
     const body = await res.json()
     token.value = body.token
     user.value = body.data
+    notice.value = { tone: 'success', text: `已登入：${displayName.value}` }
     return { ok: true }
   }
 
-  /** OAuth 回呼把 token 放在 URL fragment（AuthCallbackView 呼叫這支）。 */
-  async function setTokenFromOAuthCallback(newToken: string) {
+  /**
+   * OAuth 回呼把 token 放在 URL fragment（AuthCallbackView 呼叫這支）。
+   * 回傳是否真的登入成功：token 拿到了，但 GET /user 失敗（token 無效、後端掛了）
+   * 也算失敗——以前這種情況會安靜地導回首頁，看起來像什麼都沒發生。
+   */
+  async function setTokenFromOAuthCallback(newToken: string): Promise<boolean> {
     token.value = newToken
     await fetchCurrentUser()
+    if (!user.value) {
+      token.value = null
+      return false
+    }
+    notice.value = { tone: 'success', text: `已登入：${displayName.value}` }
+    return true
   }
 
   async function logout() {
@@ -75,12 +101,16 @@ export const useAuthStore = defineStore('auth', () => {
     )
     token.value = null
     user.value = null
+    notice.value = { tone: 'success', text: '已登出' }
   }
 
   return {
     token,
     user,
     isAuthenticated,
+    displayName,
+    notice,
+    setNotice,
     login,
     logout,
     setTokenFromOAuthCallback,

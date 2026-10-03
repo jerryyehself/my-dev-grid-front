@@ -53,6 +53,24 @@ describe('AuthStatus', () => {
     expect(wrapper.find('button').text()).toBe('登出')
   })
 
+  it('已登入：名字旁標明是登入狀態（報讀器唸「已登入：」，滑過看得到完整名字）', async () => {
+    const auth = useAuthStore()
+    auth.token = 'test-token'
+    auth.user = { id: 1, name: 'Jerry', email: 'j@example.com' }
+    const wrapper = await mountStatus()
+    const user = wrapper.find('[data-test="auth-user"]')
+    expect(user.text()).toBe('已登入：Jerry')
+    expect(user.attributes('title')).toBe('已登入：Jerry')
+  })
+
+  it('已登入但沒有名字：退回顯示 email', async () => {
+    const auth = useAuthStore()
+    auth.token = 'test-token'
+    auth.user = { id: 1, name: '', email: 'j@example.com' }
+    const wrapper = await mountStatus()
+    expect(wrapper.find('[data-test="auth-user"]').text()).toBe('已登入：j@example.com')
+  })
+
   it('已登入：顯示連到 /admin 的「管理」', async () => {
     vi.stubEnv('DEV', false)
     useAuthStore().token = 'test-token'
