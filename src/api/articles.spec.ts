@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchArticleOrDemo, fetchArticlesOrDemo } from './articles'
+import { fetchArticleOrDemo, fetchArticlesOrDemo, withTechniqueLabels } from './articles'
 import articlesDemoFixture from '@/data/articlesDemoFixture.json'
 
 const mockFetch = vi.fn()
@@ -53,7 +53,7 @@ describe('fetchArticlesOrDemo', () => {
 
 describe('fetchArticleOrDemo', () => {
   it('成功時回真實文章，loadError 為 null', async () => {
-    const real = { id: demoId, title: 'real' }
+    const real = { id: demoId, title: 'real', techniques: [], implementations: [] }
     mockFetch.mockResolvedValue(jsonResponse(real))
     const result = await fetchArticleOrDemo(demoId)
     expect(result.loadError).toBeNull()
@@ -82,5 +82,46 @@ describe('fetchArticleOrDemo', () => {
   it('錯誤且 demo 清單沒有這個 id 時照樣丟錯', async () => {
     mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
     await expect(fetchArticleOrDemo(999999)).rejects.toThrow()
+  })
+})
+
+describe('技術名稱帶版本', () => {
+  const raw = {
+    id: 1,
+    type: 3,
+    title: 'Vue 3 升級筆記',
+    body: '',
+    status: 1,
+    creation_date: null,
+    created_at: null,
+    updated_at: null,
+    scope: null,
+    techniques: [
+      { id: 10, title: 'Vue', version: '3', relation_id: 7 },
+      { id: 11, title: 'Vue', version: null, relation_id: 7 },
+    ],
+    implementations: [{ id: 20, title: 'my-dev-grid-front', relation_id: 8 }],
+  }
+
+  it('技術的 title 換成帶版本的顯示名稱，實作不動', () => {
+    const a = withTechniqueLabels(raw)
+    expect(a.techniques.map((t) => t.title)).toEqual(['Vue 3', 'Vue'])
+    expect(a.implementations).toEqual(raw.implementations)
+  })
+
+  it('version 轉完就丟掉，套第二次不會變成「Vue 3 3」', () => {
+    const once = withTechniqueLabels(raw)
+    expect(once.techniques[0]).not.toHaveProperty('version')
+    expect(withTechniqueLabels(once)).toEqual(once)
+  })
+
+  it('fetchArticle／fetchArticles 回來的就已經帶版本，畫面不用自己拼', async () => {
+    mockDocumentations(async () => jsonResponse({ data: [raw] }))
+    const { articles } = await fetchArticlesOrDemo()
+    expect(articles[0]!.techniques.map((t) => t.title)).toEqual(['Vue 3', 'Vue'])
+
+    mockFetch.mockResolvedValue(jsonResponse(raw))
+    const { article } = await fetchArticleOrDemo(1)
+    expect(article.techniques.map((t) => t.title)).toEqual(['Vue 3', 'Vue'])
   })
 })

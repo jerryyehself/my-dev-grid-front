@@ -1,4 +1,5 @@
 import { apiGet, describeLoadError } from './client'
+import { techniqueLabel } from './techniqueLabel'
 
 /** 專案用到的一個技術。版本是後端獨立的一筆技術（title 相同、version 填主版號，2026-09-30） */
 export interface ProjectTechnique {
@@ -87,8 +88,6 @@ export function toProjectTechniques(raw: TechniqueDto[], scopeNames: Map<number,
   return out
 }
 
-export const techniqueLabel = (t: ProjectTechnique): string => (t.version ? `${t.name} ${t.version}` : t.name)
-
 const toStartedYm = (dateStr: string | null): string => (dateStr ? dateStr.slice(0, 7).replace('-', '.') : '')
 
 // desc/status 目前有已知的後端資料缺口（description、maintain_status 的 GitHub
@@ -110,7 +109,7 @@ const toProject = (raw: ImplementationDto, id: string, scopeNames: Map<number, s
     status: statusType === 'archived' ? 'Archived' : statusType === 'active' ? 'Active' : undefined,
     statusType,
     desc: raw.description ?? '',
-    tags: techniques.map(techniqueLabel),
+    tags: techniques.map((t) => techniqueLabel(t.name, t.version)),
     techniques,
     started: toStartedYm(raw.git_repo_created_at),
     repo: raw.title,

@@ -9,6 +9,7 @@
 // 這裡刻意不假裝能存——只回傳／只接受後端真的有的欄位。
 import { ApiHttpError, apiDelete, apiGet, apiPost, apiPut, describeLoadError } from './client'
 import { fetchScopes } from './ontology'
+import { techniqueLabel } from './techniqueLabel'
 
 interface ListEnvelope<T> {
   type: string
@@ -18,8 +19,27 @@ interface ListEnvelope<T> {
 /** 三張 pivot 表都帶 relation_id，述詞不是附加資訊，是這條邊本身。 */
 export interface ArticleRelationDto {
   id: number
+  /** 顯示用的名稱。技術已經帶上版本（「Vue 3」），見 withTechniqueLabels() */
   title: string
   relation_id: number
+}
+
+/** 後端原樣回傳的文章：技術多一個 version 欄位，title 還沒帶版本。 */
+type RawArticleDto = Omit<ArticleDto, 'techniques'> & {
+  techniques: (ArticleRelationDto & { version?: string | null })[]
+}
+
+/**
+ * 把文章關聯到的技術名稱換成顯示用的（「Vue 3」）。在 API 層做一次，文章清單、詳情、
+ * 編輯頁讀 `title` 就是帶版本的名稱，不用每個畫面各自拼。
+ *
+ * version 轉完就丟掉、不留在回傳值裡：留著的話這個函式被套第二次就會變成「Vue 3 3」。
+ */
+export function withTechniqueLabels(raw: RawArticleDto): ArticleDto {
+  return {
+    ...raw,
+    techniques: raw.techniques.map(({ version, ...t }) => ({ ...t, title: techniqueLabel(t.title, version) })),
+  }
 }
 
 export interface ArticleDto {
@@ -70,13 +90,13 @@ async function postScopeIdOnce(): Promise<number> {
 export async function fetchArticles(): Promise<ArticleDto[]> {
   const [scopeId, res] = await Promise.all([
     postScopeIdOnce(),
-    apiGet<ListEnvelope<ArticleDto>>('/documentations'),
+    apiGet<ListEnvelope<RawArticleDto>>('/documentations'),
   ])
-  return res.data.filter((d) => d.type === scopeId)
+  return res.data.filter((d) => d.type === scopeId).map(withTechniqueLabels)
 }
 
-export function fetchArticle(id: number): Promise<ArticleDto> {
-  return apiGet<ArticleDto>(`/documentations/${id}`)
+export async function fetchArticle(id: number): Promise<ArticleDto> {
+  return withTechniqueLabels(await apiGet<RawArticleDto>(`/documentations/${id}`))
 }
 
 export function createArticle(payload: ArticleWritePayload): Promise<ArticleWriteResponse> {
@@ -114,7 +134,7 @@ export async function fetchArticlesOrDemo(): Promise<{ articles: ArticleDto[]; l
     return { articles: await fetchArticles(), loadError: null }
   } catch (e) {
     console.warn('[articles] 載入失敗，改用填充內容', e)
-    return { articles: articlesDemoFixture as ArticleDto[], loadError: describeLoadError(e) }
+    return { articles: (articlesDemoFixture as RawArticleDto[]).map(withTechniqueLabels), loadError: describeLoadError(e) }
   }
 }
 
@@ -125,9 +145,9 @@ export async function fetchArticleOrDemo(id: number): Promise<{ article: Article
     // 404 是「這篇文章真的不存在」，不是載入失敗：不拿填充文章頂替（即使 demo 清單剛好有同一個
     // id），丟回去讓頁面顯示一般的找不到狀態。
     if (e instanceof ApiHttpError && e.status === 404) throw e
-    const demo = (articlesDemoFixture as ArticleDto[]).find((a) => a.id === id)
+    const demo = (articlesDemoFixture as RawArticleDto[]).find((a) => a.id === id)
     if (!demo) throw e // demo 清單裡也沒有這個 id，誠實回報「找不到」，不要生一篇假的出來
     console.warn('[articles] 載入失敗，改用填充內容', e)
-    return { article: demo, loadError: describeLoadError(e) }
+    return { article: withTechniqueLabels(demo), loadError: describeLoadError(e) }
   }
 }
