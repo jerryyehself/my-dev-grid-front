@@ -5,6 +5,7 @@
 // 完全公開不需要登入；寫入（store/update/destroy）才在 auth:sanctum 後面。
 import { apiGet, apiPost, apiPut } from './client'
 import type { GraphNodeType } from './graph'
+import { techniqueLabel } from './techniqueLabel'
 
 /** 後端所有 index 端點的共同外層：{ type, data }。 */
 interface ListEnvelope<T> {
@@ -34,6 +35,7 @@ export interface RelationDto {
 /** 挑選器上一列實體所需要的最小資訊，三個族共用同一個形狀。 */
 export interface EntityOption {
   id: number
+  /** 顯示用的名稱。技術帶版本（「Vue 3」），不然 Vue 和 Vue 3 在挑選器上分不出來 */
   title: string
   /** 例如 '1040 framework'；後端查不到 scope 時為 null，不自己編一個。 */
   scope: string | null
@@ -42,13 +44,15 @@ export interface EntityOption {
 interface RawEntity {
   id: number
   title: string
+  /** 只有技術有這個欄位；文件、實作沒有，視同留空 */
+  version?: string | null
   scope?: { full_call_number?: string | null; name?: string | null } | null
 }
 
 function toOption(r: RawEntity): EntityOption {
   const n = r.scope?.full_call_number
   const name = r.scope?.name
-  return { id: r.id, title: r.title, scope: n && name ? `${n} ${name}` : null }
+  return { id: r.id, title: techniqueLabel(r.title, r.version), scope: n && name ? `${n} ${name}` : null }
 }
 
 export function fetchScopes(): Promise<ScopeDto[]> {
