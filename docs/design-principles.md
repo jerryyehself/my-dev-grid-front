@@ -32,34 +32,34 @@
 
 ## 四、核心原則
 
-| # | 原則 | 依據 |
-|---|---|---|
-| 1 | **每個元素都要表達真實的東西**。看起來有意義、其實沒有意義的元素（假訊號）算 bug，不是風格問題 | `visual-design-language`（導覽列脈衝圓點的例子） |
-| 2 | **文字要跟資料一致**：寫出來的說法，資料要撐得住 | `copy-language`「Claims must match the data」 |
-| 3 | **數值要有來源**：配色由工具產生並驗證對比度；設計值走 token → 元件規則 → 全站架構 | `visual-design-language`、D-59 |
-| 4 | **先畫圖、讓讀者審，再實作**：新頁面或版面改動先做 mockup，跑 ux-review，站主選定後才寫程式，寫完做 fidelity-check | `mockup-fidelity`、D-67、D-69 |
-| 5 | **探索型頁面可以有表現力，操作型頁面要安靜**：About、首頁可以有敘事；文章閱讀、後台、編輯頁、圖譜畫布不加裝飾 | D-93 |
-| 6 | **無障礙是底線**：字級下限、對比度 AA、尊重「減少動態」 | D-68、`base.css` |
-| 7 | **不為裝飾犧牲速度**：動畫只動 transform 與 opacity，LCP、INP 不能退步 | D-93 |
-| 8 | **避開 AI 設計的常見套路** | `visual-design-language` |
-| 9 | ⚠ **把隱性的結構變成明確、可用的東西**：這是站主碩論、側專案、現職工作的共同主線，可以當成網站想傳達的核心價值 | `daily-claude-summary/reports/job-search-positioning.md`（推論，站主未確認是否要放進網站設計） |
+| #   | 原則                                                                                                               | 依據                                                                                           |
+| --- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| 1   | **每個元素都要表達真實的東西**。看起來有意義、其實沒有意義的元素（假訊號）算 bug，不是風格問題                     | `visual-design-language`（導覽列脈衝圓點的例子）                                               |
+| 2   | **文字要跟資料一致**：寫出來的說法，資料要撐得住                                                                   | `copy-language`「Claims must match the data」                                                  |
+| 3   | **數值要有來源**：配色由工具產生並驗證對比度；設計值走 token → 元件規則 → 全站架構                                 | `visual-design-language`、D-59                                                                 |
+| 4   | **先畫圖、讓讀者審，再實作**：新頁面或版面改動先做 mockup，跑 ux-review，站主選定後才寫程式，寫完做 fidelity-check | `mockup-fidelity`、D-67、D-69                                                                  |
+| 5   | **探索型頁面可以有表現力，操作型頁面要安靜**：About、首頁可以有敘事；文章閱讀、後台、編輯頁、圖譜畫布不加裝飾      | D-93                                                                                           |
+| 6   | **無障礙是底線**：字級下限、對比度 AA、尊重「減少動態」                                                            | D-68、`base.css`                                                                               |
+| 7   | **不為裝飾犧牲速度**：動畫只動 transform 與 opacity，LCP、INP 不能退步                                             | D-93                                                                                           |
+| 8   | **避開 AI 設計的常見套路**                                                                                         | `visual-design-language`                                                                       |
+| 9   | ⚠ **把隱性的結構變成明確、可用的東西**：這是站主碩論、側專案、現職工作的共同主線，可以當成網站想傳達的核心價值     | `daily-claude-summary/reports/job-search-positioning.md`（推論，站主未確認是否要放進網站設計） |
 
 ## 五、各面向的規則在哪裡
 
-| 面向 | 負責的文件 | 狀態 |
-|---|---|---|
-| 視覺（配色、字型、字級、元件命名） | `.claude/skills/visual-design-language/` | 已有 |
-| 設計 token、配色產生、網站 icon | `design/tokens/`、`design/palettes/`、`design/icon/` | 已有 |
-| 文案（語氣、定案用詞、格式） | `.claude/skills/copy-language/` | 已有（標示為草稿） |
-| 動態 | D-93；規則待寫進 `visual-design-language`（front #129） | 政策已定，規則待寫 |
-| 視覺敘事、插圖、技術 icon | front milestone 2（#136、#137）；`daily-claude-summary/reports/developer-site-visual-style-and-tech-logos.md` | 研究中 |
-| 知識圖譜的呈現 | D-70、D-71、D-87、D-88、D-90 | 已有，分散在決策紀錄 |
-| 資訊架構（導覽、頁面分工） | 沒有專門文件；`README.md` 的管理頁面表 | ⚠ 缺 |
-| 互動與元件行為 | `README.md`「共用元件」一節 | 部分 |
-| 無障礙 | D-68、`base.css` 的減少動態處理 | 部分，沒有總整理 |
-| 效能 | D-93 的驗收條件 | 部分 |
-| 設計稿清單 | `my-dev-grid-skills/docs/design-artifacts.md` | 已有 |
-| 設計流程（mockup → 審查 → 實作 → 對稿） | `my-dev-grid-skills` 的 `mockup-fidelity`、`design-canvas-workflow` | 已有 |
+| 面向                                    | 負責的文件                                                                                                    | 狀態                 |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------- |
+| 視覺（配色、字型、字級、元件命名）      | `.claude/skills/visual-design-language/`                                                                      | 已有                 |
+| 設計 token、配色產生、網站 icon         | `design/tokens/`、`design/palettes/`、`design/icon/`                                                          | 已有                 |
+| 文案（語氣、定案用詞、格式）            | `.claude/skills/copy-language/`                                                                               | 已有（標示為草稿）   |
+| 動態                                    | D-93；規則待寫進 `visual-design-language`（front #129）                                                       | 政策已定，規則待寫   |
+| 視覺敘事、插圖、技術 icon               | front milestone 2（#136、#137）；`daily-claude-summary/reports/developer-site-visual-style-and-tech-logos.md` | 研究中               |
+| 知識圖譜的呈現                          | D-70、D-71、D-87、D-88、D-90                                                                                  | 已有，分散在決策紀錄 |
+| 資訊架構（導覽、頁面分工）              | 沒有專門文件；`README.md` 的管理頁面表                                                                        | ⚠ 缺                 |
+| 互動與元件行為                          | `README.md`「共用元件」一節                                                                                   | 部分                 |
+| 無障礙                                  | D-68、`base.css` 的減少動態處理                                                                               | 部分，沒有總整理     |
+| 效能                                    | D-93 的驗收條件                                                                                               | 部分                 |
+| 設計稿清單                              | `my-dev-grid-skills/docs/design-artifacts.md`                                                                 | 已有                 |
+| 設計流程（mockup → 審查 → 實作 → 對稿） | `my-dev-grid-skills` 的 `mockup-fidelity`、`design-canvas-workflow`                                           | 已有                 |
 
 ## 六、待決
 
