@@ -263,6 +263,17 @@ const router = createRouter({
         subtitle: '文件、技術與實作之間的連結，2D 與 3D 兩種檢視',
       },
     },
+    // 兜底：上面都對不到的網址。一定要放最後（vue-router 依排序權重比對，這條權重最低）
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/NotFoundView.vue'),
+      meta: {
+        // title 給瀏覽器分頁標題；頁面自己畫置中的大標題，通用表頭關掉免得重複
+        title: '找不到這個頁面',
+        hideHeader: true,
+      },
+    },
   ],
 })
 
