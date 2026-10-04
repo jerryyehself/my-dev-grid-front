@@ -87,12 +87,41 @@ async function authorizedFetch(
   return res
 }
 
+/**
+ * GET 失敗時重試的等待時間（毫秒），陣列長度就是重試次數。
+ *
+ * 後端 Cloud Run 閒置會縮到 0 台，下一個請求要等容器冷啟動；啟動那一下 nginx 比 php-fpm 先
+ * 就緒，前一兩個請求會拿到 502（2026-10-04 部署切換時實測到）。站主回報「文章常常打不到
+ * 資料庫就顯示示範資料」——文章頁一次打兩支 API，只要其中一支碰到就整頁退回示範資料。
+ * 後端的根治（啟動檢查改打 /up）先不動，前端對「重試一下多半就好」的失敗自己再試：
+ * 只重試 GET（冪等），只重試 502／503／504 跟網路層失敗（fetch 丟 TypeError），
+ * 404、500、401 這些重試也不會變的照舊直接丟。測試環境不等，免得拖慢測試。
+ */
+const RETRY_DELAYS_MS = import.meta.env.MODE === 'test' ? [0, 0] : [800, 2000]
+const RETRYABLE_STATUS = new Set([502, 503, 504])
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await authorizedFetch(path)
-  if (!res.ok) {
-    throw new ApiHttpError(res.status, path)
+  for (let attempt = 0; ; attempt++) {
+    const canRetry = attempt < RETRY_DELAYS_MS.length
+    let res: Response
+    try {
+      res = await authorizedFetch(path)
+    } catch (e) {
+      if (!(e instanceof TypeError) || !canRetry) throw e
+      await sleep(RETRY_DELAYS_MS[attempt]!)
+      continue
+    }
+    if (RETRYABLE_STATUS.has(res.status) && canRetry) {
+      await sleep(RETRY_DELAYS_MS[attempt]!)
+      continue
+    }
+    if (!res.ok) {
+      throw new ApiHttpError(res.status, path)
+    }
+    return res.json() as Promise<T>
   }
-  return res.json() as Promise<T>
 }
 
 /**
