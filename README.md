@@ -40,7 +40,9 @@
 
 ## 後端串接與登入
 
-打 [`my-dev-grid`](https://github.com/jerryyehself/my-dev-grid)（Laravel）的公開 API（`VITE_API_BASE_URL`，預設 `http://localhost:8000/api`）。讀（`index`／`show`）不用登入。寫入用 Sanctum **API token**：帳號密碼走 `POST /auth/login`；Google／LINE 走後端的 `/auth/token/{provider}/redirect`，登入後帶著 token 導回 `/auth/callback`。token 由 `useAuthStore` 存在記憶體，不落 `localStorage`，整頁重新整理就會登出。這是刻意的取捨，理由見 `useAuthStore.ts` 的註解。
+打 [`my-dev-grid`](https://github.com/jerryyehself/my-dev-grid)（Laravel）的公開 API（`VITE_API_BASE_URL`，預設 `http://localhost:8000/api`）。讀（`index`／`show`）不用登入。寫入用 Sanctum **API token**：帳號密碼走 `POST /auth/login`；Google／LINE 走後端的 `/auth/token/{provider}/redirect`，登入後帶著 token 導回 `/auth/callback`。access token 由 `useAuthStore` 存在記憶體，不落 `localStorage`。重新整理後，開機時打後端 `POST /auth/refresh`，用後端設在 API 網域的 httpOnly refresh cookie 換回登入狀態（需要後端 `my-dev-grid` 的 refresh token 支援）；細節見 `useAuthStore.ts` 的註解。
+
+讀取（GET）碰到 502／503／504 或連不上時，`src/api/client.ts` 會自動重試兩次，仍失敗才讓各頁改用示範資料。
 
 用 token 模式、不用 SPA session cookie，是因為前後端跨 origin（D-56，`my-dev-grid-skills/docs/decision-register.md`）。前端已經在 `jerrylib.com`；等後端也掛上同網域的子網域，才重新評估 cookie 模式。
 
@@ -52,6 +54,7 @@
 
 | 路徑 | 說明 |
 | --- | --- |
+| `/admin` | 後台入口：文章、分類、述詞的計數與各自的管理連結。登入後導覽列會多一個「管理」 |
 | `/articles/manage`、`/articles/new`、`/articles/:id/edit` | 文章 CRUD，內文是 Markdown（`ArticleEditorView.vue`） |
 | `/ontology/scopes`、`/ontology/scopes/new`、`/ontology/scopes/:id`、`/ontology/scopes/:id/edit` | 階層分類號一覽/詳情/新增/編輯 |
 | `/ontology/relations`、`/ontology/relations/new`、`/ontology/relations/:id`、`/ontology/relations/:id/edit` | 述詞一覽/詳情/新增/編輯。被任何邊引用的述詞，編輯頁裡主詞/受詞/名稱/子類號會鎖成唯讀（只剩備註能改） |
@@ -73,11 +76,15 @@
 ## 分支與部署
 
 - `main` 接 Cloudflare 的正式部署，push 到 `main` 就會更新正式站。
-- `develop` 是整合分支。feature 分支從 `develop` 分出、PR 對 `develop`。要上線時才由 `develop` 開 PR 進 `main`，用 merge commit 合併（D-62）。
+- `develop` 是整合分支。feature 分支從 `develop` 分出、PR 對 `develop`。要上線時才由 `develop` 開 PR 進 `main`，用 squash 合併（repo 不允許 merge commit），合併後要把 `main` 合併回 `develop`（`git merge --no-ff origin/main`），細節見 `CLAUDE.md`。
 - CI（`.github/workflows/ci.yml`）在兩個分支的 PR 都會跑 lint／type-check／test／build。
 - Cloudflare 也會替每個分支建一份預覽部署。SPA 的路由 fallback 設在 `wrangler.jsonc` 的 `assets.not_found_handling`，不要用 `public/_redirects`（會觸發無限迴圈，原因見檔案裡的註解）。
 
 Cloudflare 這邊的完整設定（網域、Access 鎖定、預覽部署）見 `daily-claude-summary` 的 `reports/cloudflare-workers-spa-deployment-guide.md`。
+
+## 更新紀錄
+
+見 [`CHANGELOG.md`](CHANGELOG.md)。
 
 ## 建議的 IDE 設定
 
