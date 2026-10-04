@@ -17,13 +17,13 @@ export interface Project {
   desc: string
   /** 顯示用的標籤，帶版本（例如「Vue 3」） */
   tags: string[]
-  /** 篩選用。示範資料快照沒有這個欄位，篩選時退回用 tags */
+  /** 篩選用。2026-10-04 以前的示範資料快照沒有這個欄位，篩選時退回用 tags */
   techniques?: ProjectTechnique[]
   started: string
   repo: string
   role?: string
   /** 後端 Implementation 的 id。圖譜節點連到專案頁時用它選中那一筆（?implementation=<id>）；
-   *  示範資料快照沒有這個欄位 */
+   *  2026-10-04 以前的示範資料快照沒有這個欄位 */
   implementationId?: number
 }
 
@@ -139,8 +139,9 @@ export async function fetchProjects(): Promise<Project[]> {
   })
 }
 
-// 2026-09-04 從真實資料庫的 fetchProjects() 存下來的快照（2 個真實專案，透過本檔案同一套
-// 轉換邏輯手動跑出來的結果，不是編的），只給 StatusBoardPanel 在「單機展示、後端沒起來」
+// 2026-10-04 從正式環境的 /scopes、/implementations 經 fetchProjects() 存下來的快照（16 個專案，
+// 透過本檔案同一套轉換邏輯跑出來的結果，不是編的；原本是 2026-09-04 的 2 個專案版），
+// 只給 StatusBoardPanel 在「單機展示、後端沒起來」
 // 時當保底填充用——跟 graph.ts 的 graphDemoFixture.json 同一套作法，不是常態資料來源。
 import projectsDemoFixture from '@/data/projectsDemoFixture.json'
 

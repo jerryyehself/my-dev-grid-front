@@ -4,115 +4,487 @@
       "id": "documentation-1",
       "type": "documentation",
       "label": "PHP 官方文件",
-      "created_at": null
+      "created_at": null,
+      "subtype": "sourcesite",
+      "url": "https://www.php.net/docs.php"
     },
     {
       "id": "documentation-2",
       "type": "documentation",
       "label": "JavaScript 官方文件",
-      "created_at": null
+      "created_at": null,
+      "subtype": "sourcesite",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
     },
     {
       "id": "documentation-3",
       "type": "documentation",
       "label": "laravel 官方文件",
-      "created_at": null
+      "created_at": null,
+      "subtype": "sourcesite",
+      "url": "https://laravel.com/docs"
     },
     {
       "id": "documentation-4",
       "type": "documentation",
       "label": "TypeScript 官方文件",
-      "created_at": null
+      "created_at": null,
+      "subtype": "sourcesite",
+      "url": "https://www.typescriptlang.org/docs/"
+    },
+    {
+      "id": "documentation-5",
+      "type": "documentation",
+      "label": "vue 官方文件",
+      "created_at": null,
+      "subtype": "sourcesite",
+      "url": "https://vuejs.org/"
+    },
+    {
+      "id": "documentation-6",
+      "type": "documentation",
+      "label": "前端建置工具與部署概念問答整理",
+      "created_at": null,
+      "subtype": "post",
+      "url": null
+    },
+    {
+      "id": "documentation-7",
+      "type": "documentation",
+      "label": "首頁知識視覺化設計決策記錄",
+      "created_at": null,
+      "subtype": "post",
+      "url": null
+    },
+    {
+      "id": "documentation-8",
+      "type": "documentation",
+      "label": "節省 Token／降變異度機制盤點",
+      "created_at": null,
+      "subtype": "post",
+      "url": null
+    },
+    {
+      "id": "documentation-9",
+      "type": "documentation",
+      "label": "my-dev-grid-front 部署到 Cloudflare 的完整流程",
+      "created_at": null,
+      "subtype": "post",
+      "url": null
     },
     {
       "id": "technique-1",
       "type": "technique",
       "label": "PHP",
-      "created_at": null
-    },
-    {
-      "id": "technique-2",
-      "type": "technique",
-      "label": "Vue",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-3",
       "type": "technique",
       "label": "JavaScript",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-4",
       "type": "technique",
       "label": "Dockerfile",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-5",
       "type": "technique",
       "label": "Blade",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-6",
       "type": "technique",
       "label": "Shell",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-7",
       "type": "technique",
       "label": "CSS",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-8",
       "type": "technique",
       "label": "laravel",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-9",
       "type": "technique",
       "label": "tailwind",
-      "created_at": null
-    },
-    {
-      "id": "technique-10",
-      "type": "technique",
-      "label": "vue3",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-11",
       "type": "technique",
       "label": "TypeScript",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "technique-12",
       "type": "technique",
       "label": "HTML",
-      "created_at": null
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-13",
+      "type": "technique",
+      "label": "exceljs",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-14",
+      "type": "technique",
+      "label": "html5-qrcode",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-15",
+      "type": "technique",
+      "label": "i18n",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-16",
+      "type": "technique",
+      "label": "isbn3",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-18",
+      "type": "technique",
+      "label": "pinia",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-19",
+      "type": "technique",
+      "label": "vuetify",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-20",
+      "type": "technique",
+      "label": "vueuse-core",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-21",
+      "type": "technique",
+      "label": "Hack",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-22",
+      "type": "technique",
+      "label": "Procfile",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-24",
+      "type": "technique",
+      "label": "chartjs",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-26",
+      "type": "technique",
+      "label": "appscript",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-27",
+      "type": "technique",
+      "label": "cheerio",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-28",
+      "type": "technique",
+      "label": "linebot",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-30",
+      "type": "technique",
+      "label": "leetcode",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-31",
+      "type": "technique",
+      "label": "Jupyter Notebook",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-32",
+      "type": "technique",
+      "label": "graphviz",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-33",
+      "type": "technique",
+      "label": "json",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-35",
+      "type": "technique",
+      "label": "rdflib",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-29",
+      "type": "technique",
+      "label": "Vue",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-10",
+      "type": "technique",
+      "label": "Vue 3",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-17",
+      "type": "technique",
+      "label": "Nuxt 3",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-23",
+      "type": "technique",
+      "label": "Bootstrap 5",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-34",
+      "type": "technique",
+      "label": "Python",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-36",
+      "type": "technique",
+      "label": "Nuxt",
+      "created_at": null,
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "technique-37",
+      "type": "technique",
+      "label": "Bootstrap",
+      "created_at": null,
+      "subtype": null,
+      "url": null
     },
     {
       "id": "implementation-1",
       "type": "implementation",
       "label": "my-dev-grid",
-      "created_at": "2025-06-11"
+      "created_at": "2025-06-11",
+      "subtype": null,
+      "url": null
     },
     {
       "id": "implementation-2",
       "type": "implementation",
       "label": "my-dev-grid-front",
-      "created_at": "2026-06-09"
+      "created_at": "2026-06-09",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-3",
+      "type": "implementation",
+      "label": "idea-trigger",
+      "created_at": "2026-08-27",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-4",
+      "type": "implementation",
+      "label": "isbn-scanner",
+      "created_at": "2025-12-26",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-5",
+      "type": "implementation",
+      "label": "Laravel-LearningLibrary",
+      "created_at": "2022-04-18",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-6",
+      "type": "implementation",
+      "label": "bulletin-api",
+      "created_at": "2024-06-15",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-7",
+      "type": "implementation",
+      "label": "business-card-generator",
+      "created_at": "2025-02-27",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-8",
+      "type": "implementation",
+      "label": "gym-people-count-parser",
+      "created_at": "2024-11-11",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-9",
+      "type": "implementation",
+      "label": "vue-exercise",
+      "created_at": "2022-01-03",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-10",
+      "type": "implementation",
+      "label": "my-profile",
+      "created_at": "2025-02-09",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-11",
+      "type": "implementation",
+      "label": "api-demo",
+      "created_at": "2022-05-24",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-12",
+      "type": "implementation",
+      "label": "laravel-demo",
+      "created_at": "2022-05-06",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-13",
+      "type": "implementation",
+      "label": "marqee-maker",
+      "created_at": "2022-01-18",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-14",
+      "type": "implementation",
+      "label": "shorturl",
+      "created_at": "2021-12-06",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-15",
+      "type": "implementation",
+      "label": "leetcode-practice",
+      "created_at": "2024-07-23",
+      "subtype": null,
+      "url": null
+    },
+    {
+      "id": "implementation-16",
+      "type": "implementation",
+      "label": "thesis",
+      "created_at": "2021-12-06",
+      "subtype": null,
+      "url": null
     }
   ],
   "edges": [
     {
-      "source": "documentation-1",
-      "target": "technique-1",
+      "source": "documentation-4",
+      "target": "technique-11",
       "predicate": "specs",
       "label": "specs",
       "relation_id": 1
@@ -125,6 +497,13 @@
       "relation_id": 1
     },
     {
+      "source": "documentation-5",
+      "target": "technique-29",
+      "predicate": "specs",
+      "label": "specs",
+      "relation_id": 1
+    },
+    {
       "source": "documentation-3",
       "target": "technique-8",
       "predicate": "specs",
@@ -132,8 +511,8 @@
       "relation_id": 1
     },
     {
-      "source": "documentation-4",
-      "target": "technique-11",
+      "source": "documentation-1",
+      "target": "technique-1",
       "predicate": "specs",
       "label": "specs",
       "relation_id": 1
@@ -142,105 +521,546 @@
       "source": "technique-1",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
-      "relation_id": 4
-    },
-    {
-      "source": "technique-2",
-      "target": "implementation-1",
-      "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-3",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-4",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-5",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-6",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-7",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-8",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-9",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-10",
       "target": "implementation-1",
       "predicate": "usedBy",
-      "label": "uses",
-      "relation_id": 4
-    },
-    {
-      "source": "technique-2",
-      "target": "implementation-2",
-      "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-11",
       "target": "implementation-2",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-7",
       "target": "implementation-2",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-12",
       "target": "implementation-2",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
       "source": "technique-6",
       "target": "implementation-2",
       "predicate": "usedBy",
-      "label": "uses",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-3",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-11",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-7",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-13",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-14",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-15",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-16",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-17",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-18",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-10",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-19",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-20",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-1",
+      "target": "implementation-5",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-5",
+      "target": "implementation-5",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-21",
+      "target": "implementation-5",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-22",
+      "target": "implementation-5",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-23",
+      "target": "implementation-5",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-24",
+      "target": "implementation-5",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-8",
+      "target": "implementation-5",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-3",
+      "target": "implementation-6",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-1",
+      "target": "implementation-6",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-5",
+      "target": "implementation-6",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-7",
+      "target": "implementation-6",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-8",
+      "target": "implementation-6",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-3",
+      "target": "implementation-7",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-11",
+      "target": "implementation-7",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-7",
+      "target": "implementation-7",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-9",
+      "target": "implementation-7",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-10",
+      "target": "implementation-7",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-3",
+      "target": "implementation-8",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-26",
+      "target": "implementation-8",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-27",
+      "target": "implementation-8",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-28",
+      "target": "implementation-8",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-12",
+      "target": "implementation-9",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-29",
+      "target": "implementation-9",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-11",
+      "target": "implementation-10",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-3",
+      "target": "implementation-10",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-4",
+      "target": "implementation-10",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-7",
+      "target": "implementation-10",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-8",
+      "target": "implementation-11",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-8",
+      "target": "implementation-12",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-1",
+      "target": "implementation-13",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-5",
+      "target": "implementation-13",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-6",
+      "target": "implementation-13",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-8",
+      "target": "implementation-13",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-29",
+      "target": "implementation-13",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-1",
+      "target": "implementation-14",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-5",
+      "target": "implementation-14",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-6",
+      "target": "implementation-14",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-12",
+      "target": "implementation-14",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-8",
+      "target": "implementation-14",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-1",
+      "target": "implementation-15",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-30",
+      "target": "implementation-15",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-31",
+      "target": "implementation-16",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-32",
+      "target": "implementation-16",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-33",
+      "target": "implementation-16",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-34",
+      "target": "implementation-16",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-35",
+      "target": "implementation-16",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-1",
+      "target": "implementation-11",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-1",
+      "target": "implementation-12",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-29",
+      "target": "implementation-1",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-29",
+      "target": "implementation-2",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-29",
+      "target": "implementation-4",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-29",
+      "target": "implementation-7",
+      "predicate": "usedBy",
+      "label": "usedBy",
+      "relation_id": 4
+    },
+    {
+      "source": "technique-29",
+      "target": "implementation-14",
+      "predicate": "usedBy",
+      "label": "usedBy",
       "relation_id": 4
     },
     {
@@ -249,6 +1069,34 @@
       "predicate": "requires",
       "label": "requires",
       "relation_id": 9
+    },
+    {
+      "source": "technique-29",
+      "target": "technique-3",
+      "predicate": "requires",
+      "label": "requires",
+      "relation_id": 9
+    },
+    {
+      "source": "technique-10",
+      "target": "technique-29",
+      "predicate": "isVersionOf",
+      "label": "isVersionOf",
+      "relation_id": 16
+    },
+    {
+      "source": "technique-17",
+      "target": "technique-36",
+      "predicate": "isVersionOf",
+      "label": "isVersionOf",
+      "relation_id": 16
+    },
+    {
+      "source": "technique-23",
+      "target": "technique-37",
+      "predicate": "isVersionOf",
+      "label": "isVersionOf",
+      "relation_id": 16
     }
   ]
 }
