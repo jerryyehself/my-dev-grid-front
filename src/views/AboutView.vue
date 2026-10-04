@@ -505,7 +505,8 @@ const CLASS_LIST = [CLASSES.doc, CLASSES.tech, CLASSES.impl]
 type ClassDef = (typeof CLASS_LIST)[number]
 
 // 標籤座標同樣是設計稿 1088×470 畫框裡的中心點換算成百分比
-// 動詞跟首頁知識網路連線的說明是同一套（graphRelationPhrase.ts）。specs 原本照設計稿譯「寫到」，
+// 動詞原本跟首頁知識網路連線的說明是同一套（graphRelationPhrase.ts）；2026-10-04 首頁、/graph 改用
+// 簡短標示「實作 使用 → 技術」（D-88），這張圖還是「技術 用在 實作」，要不要統一待定。specs 原本照設計稿譯「寫到」，
 // 2026-10-01 改成「說明」：資料裡 specs 的主詞是官方文件網站，意思是「這份文件是這個技術的說明」，
 // 「寫到」是文章提到某技術，是另一種關係。完整的述詞對照表要先查來源詞彙，還沒做（D-73）
 const CLASS_RELATIONS = [
