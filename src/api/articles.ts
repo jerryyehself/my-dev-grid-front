@@ -127,6 +127,9 @@ export function deleteArticle(id: number): Promise<{ message: string }> {
 // 的填充內容。body 沒有另外加揭露句——D-57 的摘要就是抓 body 第一段，加一句每篇
 // 都一樣的揭露文字只會蓋掉這三篇本來就有意義的摘要；`loadError` 已經讓畫面在頁面層級
 // 顯示錯誤訊息，不需要每篇內文再重複講一次。
+//
+// 2026-10-04：整份換成正式環境 GET /api/documentations 裡 post 類的 4 篇（原始 DTO，
+// 跟 API 回的一樣，技術顯示名稱照樣在讀取時套 withTechniqueLabels），文章 id 跟正式站一致。
 import articlesDemoFixture from '@/data/articlesDemoFixture.json'
 
 export async function fetchArticlesOrDemo(): Promise<{ articles: ArticleDto[]; loadError: string | null }> {
