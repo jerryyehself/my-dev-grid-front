@@ -5,7 +5,7 @@ import ForceGraph from 'force-graph'
 import { forceCollide, forceX, forceY } from 'd3-force'
 import { articleIdOfGraphNode, graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
 import ArticleEditLink from '@/components/ArticleEditLink.vue'
-import { relationPhrase } from '@/components/graphRelationPhrase'
+import { edgeRelation, edgeRelationText, type EdgeRelation } from '@/components/graphRelationPhrase'
 import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
 import type { GraphPocSelection } from '@/data/graphPocData'
 import { useTheme } from '@/composables/useTheme'
@@ -407,6 +407,8 @@ interface PopoverState {
   kind: string
   title: string
   rows: string[]
+  /** 直接關係的連線才有：標題改畫成「名稱 類別 動詞 → 名稱 類別」一行（D-88 延伸到首頁） */
+  edge: EdgeRelation | null
   link: GraphNodeLink | null
   /** 站上自己的文章才有，給登入後的「編輯這篇」用 */
   articleId: number | null
@@ -419,6 +421,7 @@ const popover = reactive<PopoverState>({
   kind: '',
   title: '',
   rows: [],
+  edge: null,
   link: null,
   articleId: null,
   left: 0,
@@ -426,6 +429,7 @@ const popover = reactive<PopoverState>({
 })
 
 function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEvent) {
+  popover.edge = null
   if (kind === 'node') {
     const n = obj as SimNode
     popover.kind = TYPE_LABEL[n.domainType]
@@ -448,11 +452,13 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
       popover.title = `${String(s)} ↔ ${String(t)}`
       popover.rows = [`兩邊都連到「${viaLabels}」`, '這是推算出來的，不是直接關係']
     } else if (typeof l.source === 'object' && typeof l.target === 'object') {
-      // 不顯示英文述詞：用兩端的類別講成一句話（見 graphRelationPhrase.ts）
-      const phrase = relationPhrase(l.source, l.target)
+      // 不顯示英文述詞，也不講成口語句子：跟 /graph 詳情卡同一套簡短標示（D-88，
+      // 2026-10-04 使用者選 H 版延伸到首頁），見 graphRelationPhrase.ts 的 edgeRelation
+      const edge = edgeRelation(l.source, l.target, l.predicate)
       popover.kind = '直接關係'
-      popover.title = phrase.sentence
-      popover.rows = phrase.note ? [phrase.note] : []
+      popover.edge = edge
+      popover.title = edgeRelationText(edge)
+      popover.rows = []
     }
   }
   // force-graph 的 onNodeClick/onLinkClick 回呼給的 MouseEvent 是套件內部處理過的，
@@ -678,8 +684,7 @@ async function boot() {
         return `${s} ↔ ${t}：間接關聯，兩邊都連到「${viaLabels}」（推算出來的，不是直接關係）`
       }
       if (typeof l.source !== 'object' || typeof l.target !== 'object') return ''
-      const phrase = relationPhrase(l.source, l.target)
-      return phrase.note ? `${phrase.sentence}：${phrase.note}` : phrase.sentence
+      return edgeRelationText(edgeRelation(l.source, l.target, l.predicate))
     })
     // 箭頭只在 hover／固定選取到端點節點時才畫；推導邊沒有方向性，不畫箭頭。
     .linkDirectionalArrowLength((l) =>
@@ -1163,7 +1168,28 @@ onUnmounted(() => {
         <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-1">
           {{ popover.kind }}
         </div>
-        <h3 class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">
+        <!-- 連線：一行「名稱 類別 動詞 → 名稱 類別」，放不下就在動詞前換行，「動詞 → 名稱」
+             不拆開（模擬讀者審查：動詞停在行尾像句子被截斷）。名稱不能點，用墨色粗體 -->
+        <h3
+          v-if="popover.edge"
+          class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1 text-[15.5px] leading-[1.35] font-bold text-(--text-ink-main) [overflow-wrap:anywhere]"
+        >
+          <span class="min-w-0"
+            >{{ popover.edge.subject.label
+            }}<span class="ml-1.5 text-[13px] font-normal text-(--text-ink-body)">{{
+              TYPE_LABEL[popover.edge.subject.domainType]
+            }}</span></span
+          >
+          <span class="min-w-0"
+            ><span class="whitespace-nowrap text-[14px] font-normal"
+              >{{ popover.edge.verb }} →&nbsp;</span
+            >{{ popover.edge.object.label
+            }}<span class="ml-1.5 text-[13px] font-normal text-(--text-ink-body)">{{
+              TYPE_LABEL[popover.edge.object.domainType]
+            }}</span></span
+          >
+        </h3>
+        <h3 v-else class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">
           {{ popover.title }}
         </h3>
         <div
