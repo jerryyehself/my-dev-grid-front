@@ -162,3 +162,48 @@ describe('401 → refresh → retry', () => {
     expect(mockPush).toHaveBeenCalled()
   })
 })
+
+// 後端冷啟動時前一兩個請求會 502：GET 自己重試，不要一碰到就退回示範資料（2026-10-04 站主回報）
+describe('GET 重試', () => {
+  it('502 之後重試，第二次成功就回正常結果', async () => {
+    mockFetch
+      .mockResolvedValueOnce(jsonResponse({}, 502))
+      .mockResolvedValueOnce(jsonResponse({ data: [1] }))
+
+    await expect(apiGet('/documentations')).resolves.toEqual({ data: [1] })
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('網路層失敗（TypeError）也重試', async () => {
+    mockFetch
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(jsonResponse({ data: [] }))
+
+    await expect(apiGet('/scopes')).resolves.toEqual({ data: [] })
+  })
+
+  it('最多重試兩次，三次都 503 就丟出 ApiHttpError', async () => {
+    mockFetch.mockResolvedValue(jsonResponse({}, 503))
+
+    await expect(apiGet('/scopes')).rejects.toMatchObject({ name: 'ApiHttpError', status: 503 })
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+  })
+
+  it('404、500 重試也不會變：不重試，直接丟', async () => {
+    mockFetch.mockResolvedValue(jsonResponse({}, 404))
+    await expect(apiGet('/documentations/9')).rejects.toMatchObject({ status: 404 })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+
+    mockFetch.mockReset()
+    mockFetch.mockResolvedValue(jsonResponse({}, 500))
+    await expect(apiGet('/scopes')).rejects.toMatchObject({ status: 500 })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('POST 不重試（不是冪等的）', async () => {
+    mockFetch.mockResolvedValue(jsonResponse({}, 502))
+
+    await expect(apiPost('/documentations', {})).rejects.toBeTruthy()
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+})

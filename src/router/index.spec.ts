@@ -111,3 +111,17 @@ describe('router：等 restore() 做完再判斷', () => {
     expect(router.currentRoute.value.name).toBe('home')
   })
 })
+
+// 對不到任何路由的網址：兜底到 404 頁（以前只剩空白頁）
+describe('router：not-found', () => {
+  it('不存在的網址解析到 not-found，原路徑保留在網址上', () => {
+    const resolved = router.resolve('/no/such/page?x=1')
+    expect(resolved.name).toBe('not-found')
+    expect(resolved.fullPath).toBe('/no/such/page?x=1')
+  })
+
+  it('既有的頁面不會被兜底路由搶走', () => {
+    expect(router.resolve('/articles/12').name).toBe('article-detail')
+    expect(router.resolve('/graph').name).toBe('graph')
+  })
+})
