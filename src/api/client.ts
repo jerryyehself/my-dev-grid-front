@@ -8,7 +8,8 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api
 
 /**
  * Sanctum API token 模式（decision-register.md D-56）：帶
- * `Authorization: Bearer`，不是 cookie，所以不用 `credentials: 'include'`。
+ * `Authorization: Bearer`，不是 cookie，所以一般請求不用 `credentials: 'include'`
+ * （只有登入／換發／登出那幾支會碰 refresh cookie，在 useAuthStore 裡另外處理）。
  * `useAuthStore()` 在一般 component 外的模組層級呼叫也能用——Pinia 在
  * `app.use(createPinia())` 之後會設一個全域 active instance，這個專案
  * 只有一個 Pinia instance，不會有拿錯 instance 的問題。
@@ -25,8 +26,8 @@ function authHeaders(): Record<string, string> {
 }
 
 /**
- * token 過期/被撤銷時後端回 401，統一導去登入頁並帶上原本要去的路徑——
- * 跟 Triple 後台 `useFetchAPI.js` 既有的 401 處理邏輯是同一個模式。
+ * 換發也救不回來的 401（refresh cookie 無效／過期），統一導去登入頁並帶上原本要去的
+ * 路徑——跟 Triple 後台 `useFetchAPI.js` 既有的 401 處理邏輯是同一個模式。
  */
 function handleUnauthorized(): never {
   if (getActivePinia()) useAuthStore().$patch({ token: null, user: null })
@@ -63,13 +64,64 @@ export function describeLoadError(e: unknown): string {
   return `資料載入失敗：連不上後端 API（${message}），下面先放示範資料。`
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, { headers: authHeaders() })
-  if (res.status === 401) handleUnauthorized()
-  if (!res.ok) {
-    throw new ApiHttpError(res.status, path)
+/**
+ * 送出請求；帶著 token 卻收到 401（access token 只活 15 分鐘，過期是常態），
+ * 先用 refresh cookie 換一支新的 token、再重送一次。只重試一次：換到新 token
+ * 重送還是 401，或根本換不到，就當成真的沒登入。沒帶 token 的請求收到 401
+ * 不換發，照舊直接導去登入頁。header 每次送出前重新組，重送時才會帶到新 token。
+ */
+async function authorizedFetch(
+  path: string,
+  init: RequestInit = {},
+  extraHeaders: Record<string, string> = {},
+): Promise<Response> {
+  const send = () =>
+    fetch(`${BASE_URL}${path}`, { ...init, headers: { ...extraHeaders, ...authHeaders() } })
+
+  const sentWithToken = 'Authorization' in authHeaders()
+  let res = await send()
+  if (res.status === 401 && sentWithToken && (await useAuthStore().refresh())) {
+    res = await send()
   }
-  return res.json() as Promise<T>
+  if (res.status === 401) handleUnauthorized()
+  return res
+}
+
+/**
+ * GET 失敗時重試的等待時間（毫秒），陣列長度就是重試次數。
+ *
+ * 後端 Cloud Run 閒置會縮到 0 台，下一個請求要等容器冷啟動；啟動那一下 nginx 比 php-fpm 先
+ * 就緒，前一兩個請求會拿到 502（2026-10-04 部署切換時實測到）。站主回報「文章常常打不到
+ * 資料庫就顯示示範資料」——文章頁一次打兩支 API，只要其中一支碰到就整頁退回示範資料。
+ * 後端的根治（啟動檢查改打 /up）先不動，前端對「重試一下多半就好」的失敗自己再試：
+ * 只重試 GET（冪等），只重試 502／503／504 跟網路層失敗（fetch 丟 TypeError），
+ * 404、500、401 這些重試也不會變的照舊直接丟。測試環境不等，免得拖慢測試。
+ */
+const RETRY_DELAYS_MS = import.meta.env.MODE === 'test' ? [0, 0] : [800, 2000]
+const RETRYABLE_STATUS = new Set([502, 503, 504])
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+export async function apiGet<T>(path: string): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    const canRetry = attempt < RETRY_DELAYS_MS.length
+    let res: Response
+    try {
+      res = await authorizedFetch(path)
+    } catch (e) {
+      if (!(e instanceof TypeError) || !canRetry) throw e
+      await sleep(RETRY_DELAYS_MS[attempt]!)
+      continue
+    }
+    if (RETRYABLE_STATUS.has(res.status) && canRetry) {
+      await sleep(RETRY_DELAYS_MS[attempt]!)
+      continue
+    }
+    if (!res.ok) {
+      throw new ApiHttpError(res.status, path)
+    }
+    return res.json() as Promise<T>
+  }
 }
 
 /**
@@ -108,17 +160,11 @@ function flattenErrors(errors: Record<string, string[] | string>): Record<string
 }
 
 async function sendJson<T>(method: 'POST' | 'PUT', path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...authHeaders(),
-    },
-    body: JSON.stringify(body),
-  })
-
-  if (res.status === 401) handleUnauthorized()
+  const res = await authorizedFetch(
+    path,
+    { method, body: JSON.stringify(body) },
+    { 'Content-Type': 'application/json', Accept: 'application/json' },
+  )
 
   if (res.status === 422) {
     // 422 的 body 一定是 JSON，但真的解析失敗時不要讓它變成看不懂的例外，
@@ -143,8 +189,7 @@ export function apiPut<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function apiDelete<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE', headers: authHeaders() })
-  if (res.status === 401) handleUnauthorized()
+  const res = await authorizedFetch(path, { method: 'DELETE' })
   if (!res.ok) {
     throw new Error(`API 請求失敗（${res.status}）：DELETE ${path}`)
   }

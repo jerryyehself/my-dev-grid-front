@@ -3,8 +3,9 @@ import { nextTick, onMounted, onUnmounted, reactive, ref, useId, watch } from 'v
 import { RouterLink } from 'vue-router'
 import ForceGraph from 'force-graph'
 import { forceCollide, forceX, forceY } from 'd3-force'
-import { graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
-import { relationPhrase } from '@/components/graphRelationPhrase'
+import { articleIdOfGraphNode, graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
+import ArticleEditLink from '@/components/ArticleEditLink.vue'
+import { edgeRelation, edgeRelationText, type EdgeRelation } from '@/components/graphRelationPhrase'
 import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
 import type { GraphPocSelection } from '@/data/graphPocData'
 import { useTheme } from '@/composables/useTheme'
@@ -106,8 +107,10 @@ const typeFilter = reactive<Record<GraphNodeType, boolean>>({
   technique: false,
   implementation: false,
 })
-// 間接關聯（推算出來的虛線）預設不顯示，免得畫面太雜（2026-09-30 使用者決定）
-const showIndirect = ref(false)
+// 間接關聯（推算出來的虛線）預設不顯示，免得畫面太雜（2026-09-30 使用者決定）。
+// 開成 v-model:show-indirect：/graph 的詳情卡要跟著開關決定列不列間接關聯；首頁沒綁，
+// defineModel 沒綁時就是元件自己的狀態，行為跟原本的 ref 一樣。
+const showIndirect = defineModel<boolean>('showIndirect', { default: false })
 const indirectCount = ref(0)
 const settingsOpen = ref(false)
 const helpOpen = ref(false)
@@ -404,7 +407,11 @@ interface PopoverState {
   kind: string
   title: string
   rows: string[]
+  /** 直接關係的連線才有：標題改畫成「名稱 類別 動詞 → 名稱 類別」一行（D-88 延伸到首頁） */
+  edge: EdgeRelation | null
   link: GraphNodeLink | null
+  /** 站上自己的文章才有，給登入後的「編輯這篇」用 */
+  articleId: number | null
   left: number
   top: number
 }
@@ -414,12 +421,15 @@ const popover = reactive<PopoverState>({
   kind: '',
   title: '',
   rows: [],
+  edge: null,
   link: null,
+  articleId: null,
   left: 0,
   top: 0,
 })
 
 function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEvent) {
+  popover.edge = null
   if (kind === 'node') {
     const n = obj as SimNode
     popover.kind = TYPE_LABEL[n.domainType]
@@ -427,9 +437,11 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
     popover.rows = [`共 ${n.degree} 條直接關係`]
     if (n.createdAt) popover.rows.push(`GitHub 上建立於 ${n.createdAt}`)
     popover.link = graphNodeLink(n)
+    popover.articleId = articleIdOfGraphNode(n)
   } else {
     const l = obj as SimLink
     popover.link = null
+    popover.articleId = null
     const s = typeof l.source === 'object' ? l.source.label : l.source
     const t = typeof l.target === 'object' ? l.target.label : l.target
     if (l.derived) {
@@ -440,11 +452,13 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
       popover.title = `${String(s)} ↔ ${String(t)}`
       popover.rows = [`兩邊都連到「${viaLabels}」`, '這是推算出來的，不是直接關係']
     } else if (typeof l.source === 'object' && typeof l.target === 'object') {
-      // 不顯示英文述詞：用兩端的類別講成一句話（見 graphRelationPhrase.ts）
-      const phrase = relationPhrase(l.source, l.target)
+      // 不顯示英文述詞，也不講成口語句子：跟 /graph 詳情卡同一套簡短標示（D-88，
+      // 2026-10-04 使用者選 H 版延伸到首頁），見 graphRelationPhrase.ts 的 edgeRelation
+      const edge = edgeRelation(l.source, l.target, l.predicate)
       popover.kind = '直接關係'
-      popover.title = phrase.sentence
-      popover.rows = phrase.note ? [phrase.note] : []
+      popover.edge = edge
+      popover.title = edgeRelationText(edge)
+      popover.rows = []
     }
   }
   // force-graph 的 onNodeClick/onLinkClick 回呼給的 MouseEvent 是套件內部處理過的，
@@ -670,8 +684,7 @@ async function boot() {
         return `${s} ↔ ${t}：間接關聯，兩邊都連到「${viaLabels}」（推算出來的，不是直接關係）`
       }
       if (typeof l.source !== 'object' || typeof l.target !== 'object') return ''
-      const phrase = relationPhrase(l.source, l.target)
-      return phrase.note ? `${phrase.sentence}：${phrase.note}` : phrase.sentence
+      return edgeRelationText(edgeRelation(l.source, l.target, l.predicate))
     })
     // 箭頭只在 hover／固定選取到端點節點時才畫；推導邊沒有方向性，不畫箭頭。
     .linkDirectionalArrowLength((l) =>
@@ -1032,6 +1045,8 @@ function linkSelection(l: SimLink): GraphPocSelection {
   const t = typeof l.target === 'object' ? l.target : undefined
   return {
     kind: 'link',
+    sourceId: endpointId(l.source),
+    targetId: endpointId(l.target),
     sourceLabel: s?.label ?? endpointId(l.source),
     targetLabel: t?.label ?? endpointId(l.target),
     linkKind: s && t && s.domainType === t.domainType ? 'inspiration' : 'related',
@@ -1042,6 +1057,21 @@ function linkSelection(l: SimLink): GraphPocSelection {
       : undefined,
   }
 }
+
+// /graph 詳情卡裡點了別的節點名稱：畫布跟著固定選取那個節點，鏡頭平移過去（不改縮放）。
+// 不發 select——頁面已經自己換了詳情卡的內容，再發一次會繞回去。null＝取消固定選取
+// （詳情卡按了關閉）。首頁不會呼叫，行為不變。
+function pinNode(id: string | null) {
+  pinnedNodeId = id
+  popover.open = false
+  const n = id ? simNodes.find((x) => x.id === id) : undefined
+  if (graph && n?.x != null && n.y != null && !settling.value) {
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    graph.centerAt(n.x, n.y, reduceMotion ? 0 : 400)
+  }
+  forceRedraw()
+}
+defineExpose({ pinNode })
 
 watch(
   () => props.highlightPath,
@@ -1075,10 +1105,13 @@ onUnmounted(() => {
     <GraphLegend :color-mode="colorMode" :show-indirect="showIndirect" />
 
     <!-- 畫布區塊：可以用 Tab 移到這裡（tabindex=0），有焦點時鍵盤快捷鍵才有效（WCAG 2.1.4）。
-         滑鼠點圖也會把焦點移過來，但 :focus-visible 只在鍵盤操作時畫外框。 -->
+         滑鼠點圖也會把焦點移過來，但 :focus-visible 只在鍵盤操作時畫外框。
+         isolate：畫布自成一個層級範圍。裡面的顯示設定、操作說明是 z-30，沒有這個的話會跟畫布
+         外面的元素比高低——/graph 的路徑查詢下拉選單（z-10）往下展開時被「顯示設定」蓋住
+         （2026-10-03 使用者回報）。畫布本身 overflow-hidden，裡面的東西本來就不會超出框外 -->
     <div
       ref="stage"
-      class="kg-stage @container relative rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+      class="kg-stage @container relative isolate rounded-xl border border-(--border-shelf) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
       :style="{
         // 窄螢幕（手機）高度跟寬度差不多：整張圖的外形接近圓形，直立的高畫布框景後
         // 上下會空一大段
@@ -1135,7 +1168,28 @@ onUnmounted(() => {
         <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-1">
           {{ popover.kind }}
         </div>
-        <h3 class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">
+        <!-- 連線：一行「名稱 類別 動詞 → 名稱 類別」，放不下就在動詞前換行，「動詞 → 名稱」
+             不拆開（模擬讀者審查：動詞停在行尾像句子被截斷）。名稱不能點，用墨色粗體 -->
+        <h3
+          v-if="popover.edge"
+          class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1 text-[15.5px] leading-[1.35] font-bold text-(--text-ink-main) [overflow-wrap:anywhere]"
+        >
+          <span class="min-w-0"
+            >{{ popover.edge.subject.label
+            }}<span class="ml-1.5 text-[13px] font-normal text-(--text-ink-body)">{{
+              TYPE_LABEL[popover.edge.subject.domainType]
+            }}</span></span
+          >
+          <span class="min-w-0"
+            ><span class="whitespace-nowrap text-[14px] font-normal"
+              >{{ popover.edge.verb }} →&nbsp;</span
+            >{{ popover.edge.object.label
+            }}<span class="ml-1.5 text-[13px] font-normal text-(--text-ink-body)">{{
+              TYPE_LABEL[popover.edge.object.domainType]
+            }}</span></span
+          >
+        </h3>
+        <h3 v-else class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">
           {{ popover.title }}
         </h3>
         <div
@@ -1159,6 +1213,15 @@ onUnmounted(() => {
           class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
           >{{ popover.link.text }}</a
         >
+        <!-- 文章節點才有，而且只給登入的人看（ArticleEditLink 內建 AuthOnly）。跟上面的「閱讀」
+             同一行、同樣 44px 高，但用次要的墨色，主要動作仍是閱讀 -->
+        <ArticleEditLink
+          v-if="popover.articleId != null"
+          :article-id="popover.articleId"
+          :title="popover.title"
+          label="編輯這篇"
+          class="inline-flex items-center min-h-11 -mb-2 pl-1 text-[14px] text-(--text-ink-muted) hover:text-(--text-accent) hover:underline"
+        />
       </div>
 
       <!-- 合作式手勢的提示：不擋操作（pointer-events-none），幾秒後自己消失 -->

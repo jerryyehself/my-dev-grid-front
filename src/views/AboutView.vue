@@ -121,7 +121,7 @@
               />
             </div>
 
-            <!-- 從技術看：技術 —被說明→ 文件、技術 —用在→ 實作。反向是兩條關係，所以是兩支箭頭 -->
+            <!-- 從技術看：技術 —被說明→ 文件、技術 —被使用→ 實作。反向是兩條關係，所以是兩支箭頭 -->
             <div
               v-else
               class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-[3fr_5fr_3fr] sm:grid-rows-[auto_auto] sm:gap-x-7 sm:gap-y-[18px] sm:items-end"
@@ -144,7 +144,7 @@
                 end
               />
               <!-- 手機直排時兩支箭頭上下疊，第二支看起來像從「這篇文章」出發（模擬讀者審查 2026-10-01），
-                   所以手機版在「用在」前面再放一次 Vue 3；桌機版 Vue 3 跨兩列，兩支箭頭共用同一個起點 -->
+                   所以手機版在「被使用」前面再放一次 Vue 3；桌機版 Vue 3 跨兩列，兩支箭頭共用同一個起點 -->
               <div class="sm:hidden mt-3">
                 <EntryChip
                   :code="CLASSES.tech.code"
@@ -154,7 +154,7 @@
                   focus
                 />
               </div>
-              <RelationArrow label="用在" predicate="usedBy" />
+              <RelationArrow label="被使用" predicate="usedBy" />
               <EntryChip
                 :code="CLASSES.impl.code"
                 :label="CLASSES.impl.name"
@@ -181,8 +181,8 @@
     </section>
 
     <!-- ④ CLASS NUMBERS：三大類與它們之間的述詞。述詞以後端 RelationSeeder 為準
-         （文件→技術 specs、文件→實作 documents、技術→實作 usedBy。usedBy 是「實作 uses 技術」的反向；
-         2026-09-30 以前後端把這一對定義反了，技術→實作叫 uses） -->
+         （文件→技術 specs、文件→實作 documents、實作→技術 uses。2026-09-30 以前後端把這一對定義反了，
+         技術→實作叫 uses，後來改名 usedBy；2026-10-04 這張圖改從實作畫向技術，跟首頁、/graph 一致，D-90） -->
     <section
       class="bg-(--bg-band-strong) pt-16 pb-16 lg:pt-24 lg:pb-[104px]"
       style="
@@ -216,7 +216,7 @@
         <!-- 桌機：三張分類卡排成三角形。座標照設計稿的 1088×470 畫框換算成百分比，
              窄一點的桌機（1024 起）等比例縮。
              連線是單向箭頭，從主詞指向受詞，標的是那個方向的述詞。設計稿畫的是雙向箭頭加「specs / specifiedBy」，
-             但「說明」「用在」只讀得通一個方向，雙向箭頭看不出哪個名字是哪個方向——後端的 uses 就是這樣
+             但「說明」「使用」只讀得通一個方向，雙向箭頭看不出哪個名字是哪個方向——後端的 uses 就是這樣
              被讀反的（2026-09-30 使用者決定拆成單向，ER model 概念圖同一天也改了）。反方向在上面「從兩頭看」 -->
         <div class="hidden lg:block relative w-full max-w-[1088px] aspect-[1088/470] self-center">
           <svg
@@ -244,7 +244,7 @@
             >
               <line x1="203" y1="346" x2="466" y2="124" />
               <line x1="260" y1="411" x2="828" y2="411" />
-              <line x1="622" y1="124" x2="885" y2="346" />
+              <line x1="885" y1="346" x2="622" y2="124" />
             </g>
           </svg>
           <ClassCard
@@ -505,7 +505,8 @@ const CLASS_LIST = [CLASSES.doc, CLASSES.tech, CLASSES.impl]
 type ClassDef = (typeof CLASS_LIST)[number]
 
 // 標籤座標同樣是設計稿 1088×470 畫框裡的中心點換算成百分比
-// 動詞跟首頁知識網路連線的說明是同一套（graphRelationPhrase.ts）。specs 原本照設計稿譯「寫到」，
+// 動詞跟首頁、/graph 連線的簡短標示是同一套（graphRelationPhrase.ts）。2026-10-04 使用者要求一致：
+// 原本畫成「技術 用在 實作」，改成「實作 使用 → 技術」（主詞在前，D-88／D-90）。specs 原本照設計稿譯「寫到」，
 // 2026-10-01 改成「說明」：資料裡 specs 的主詞是官方文件網站，意思是「這份文件是這個技術的說明」，
 // 「寫到」是文章提到某技術，是另一種關係。完整的述詞對照表要先查來源詞彙，還沒做（D-73）
 const CLASS_RELATIONS = [
@@ -524,10 +525,10 @@ const CLASS_RELATIONS = [
     pos: { left: '50%', top: '87.45%' },
   },
   {
-    from: '技術',
-    to: '實作',
-    label: '用在',
-    predicate: 'usedBy',
+    from: '實作',
+    to: '技術',
+    label: '使用',
+    predicate: 'uses',
     pos: { left: '69.30%', top: '50%' },
   },
 ]

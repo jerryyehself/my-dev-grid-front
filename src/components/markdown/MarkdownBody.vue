@@ -14,6 +14,7 @@ import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { extractHeadings } from './headings'
+import { safeLink } from './safeLink'
 
 const props = defineProps<{ source: string }>()
 
@@ -44,11 +45,6 @@ const headings = computed(() => extractHeadings(props.source))
 // render() 走到第幾個 heading。每次從頭 render 都要歸零,
 // 否則第二次渲染會從上次的位置接下去,id 全部對不上
 let headingCursor = 0
-
-/** 站內連結走 RouterLink，站外開新分頁並補 rel。判斷依據是「有沒有協定」。 */
-function isInternal(url: string): boolean {
-  return url.startsWith('/') || url.startsWith('#')
-}
 
 function kids(node: MdNode): VNode[] {
   return (node.children ?? []).flatMap(render)
@@ -129,13 +125,16 @@ function render(node: MdNode): VNode[] {
       ]
 
     case 'link': {
-      const url = node.url ?? ''
+      // 網址先過白名單（http／https／mailto、站內路徑、錨點，見 safeLink.ts）。
+      // 不在白名單裡（javascript:、data: …）就只留連結文字，不產生任何 href
+      const link = safeLink(node.url)
+      if (!link) return kids(node)
       const cls = 'text-(--text-accent) underline underline-offset-2 hover:opacity-80 transition-opacity duration-100 ease-out'
       // 站內連結用 RouterLink 而不是 <a>:這是走 AST 而不是 v-html 的主要理由之一。
       // v-html 塞出來的 <a href="/articles/x"> 會整頁重載，SPA 的狀態全部重來
-      return isInternal(url)
-        ? [h(RouterLink, { to: url, class: cls }, () => kids(node))]
-        : [h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', class: cls }, kids(node))]
+      return link.internal
+        ? [h(RouterLink, { to: link.href, class: cls }, () => kids(node))]
+        : [h('a', { href: link.href, target: '_blank', rel: 'noopener noreferrer', class: cls }, kids(node))]
     }
 
     case 'image':

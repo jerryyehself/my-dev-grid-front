@@ -12,6 +12,7 @@ import { RouterLink } from 'vue-router'
 import { fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
 import AuthOnly from '@/components/AuthOnly.vue'
+import ArticleEditLink from '@/components/ArticleEditLink.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -54,6 +55,11 @@ function displayDate(a: ArticleDto): string {
   const raw = a.creation_date ?? a.created_at
   return raw ? raw.slice(0, 10) : '—'
 }
+
+// 每篇文章右上角的「編輯」。所在那一列是 mono 大寫小字，這顆是中文，照 D-68 的中文標籤下限用 13px、
+// 不套大寫與寬字距
+const EDIT_LINK_CLASS =
+  'relative z-10 ml-auto font-sans normal-case text-[13px] tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out'
 
 const viewMode = ref<'timeline' | 'folder'>('timeline')
 const VIEW_MODES = [
@@ -156,6 +162,9 @@ const folderArticles = computed(() => {
           <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article)[0] }}</span>
+            <!-- 登入後才有（ArticleEditLink 內建 AuthOnly）。relative z-10：標題連結的 ::after 撐滿整列，
+                 不墊高的話這顆會被蓋住、點下去變成開文章 -->
+            <ArticleEditLink :article-id="article.id" :title="article.title" :class="EDIT_LINK_CLASS" />
           </div>
           <!-- 標題是真的連結，::after 撐滿整列，整列都點得到：鍵盤能 Tab 到、能開新分頁、能複製網址。
                以前是 <article @click>，只有滑鼠點得到 -->
@@ -216,6 +225,7 @@ const folderArticles = computed(() => {
           <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article).join(' / ') }}</span>
+            <ArticleEditLink :article-id="article.id" :title="article.title" :class="EDIT_LINK_CLASS" />
           </div>
           <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">
             <RouterLink

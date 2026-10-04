@@ -73,6 +73,9 @@ export interface GraphPocNodeSelection {
 }
 export interface GraphPocLinkSelection {
   kind: 'link'
+  /** 兩端的節點 id：詳情卡的表格靠它查名稱、類別，點名稱改選那個節點 */
+  sourceId: string
+  targetId: string
   sourceLabel: string
   targetLabel: string
   linkKind: 'related' | 'inspiration'

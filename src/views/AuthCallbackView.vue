@@ -1,8 +1,9 @@
 <script setup lang="ts">
-// OAuth 登入成功後，後端（TokenSocialAuthController）導回這裡，把 token
+// OAuth 登入成功後，後端（TokenSocialAuthController）導回這裡，把短效 token
 // 放在 URL fragment（`#token=...`）——fragment 不會被送到任何伺服器，
-// 這支頁面掛載時讀出來、存進 authStore（記憶體），然後立刻把它從網址上
-// 清掉（history.replaceState），不讓它留在瀏覽器歷史紀錄裡。
+// 這支頁面掛載時讀出來，立刻把它從網址上清掉（history.replaceState），不讓它
+// 留在瀏覽器歷史紀錄裡，再交給 authStore 打 POST /auth/session 換成正式的
+// access token＋refresh cookie（為什麼要多換這一次，見 setTokenFromOAuthCallback）。
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -24,16 +25,20 @@ onMounted(async () => {
     return
   }
 
-  await auth.setTokenFromOAuthCallback(token)
-  router.replace('/')
+  if (!(await auth.setTokenFromOAuthCallback(token))) {
+    failed.value = true
+    return
+  }
+  // 登入就是為了管理，直接去後台入口；成功提示由 AuthNotice 顯示
+  router.replace('/admin')
 })
 </script>
 
 <template>
   <div class="flex justify-center py-16">
     <BaseLoadingBlock v-if="!failed" height="120px">登入中…</BaseLoadingBlock>
-    <p v-else class="text-sm text-(--text-ink-muted)">
-      登入回呼缺少必要資訊，請
+    <p v-else role="alert" class="text-[14px] text-(--text-error)">
+      登入失敗：沒有拿到有效的登入憑證，請
       <RouterLink to="/login" class="text-(--text-accent) underline">重新登入</RouterLink>。
     </p>
   </div>

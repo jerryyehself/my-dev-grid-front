@@ -1,4 +1,5 @@
 import { apiGet, describeLoadError } from './client'
+import { techniqueLabel } from './techniqueLabel'
 
 /** 專案用到的一個技術。版本是後端獨立的一筆技術（title 相同、version 填主版號，2026-09-30） */
 export interface ProjectTechnique {
@@ -16,13 +17,13 @@ export interface Project {
   desc: string
   /** 顯示用的標籤，帶版本（例如「Vue 3」） */
   tags: string[]
-  /** 篩選用。示範資料快照沒有這個欄位，篩選時退回用 tags */
+  /** 篩選用。2026-10-04 以前的示範資料快照沒有這個欄位，篩選時退回用 tags */
   techniques?: ProjectTechnique[]
   started: string
   repo: string
   role?: string
   /** 後端 Implementation 的 id。圖譜節點連到專案頁時用它選中那一筆（?implementation=<id>）；
-   *  示範資料快照沒有這個欄位 */
+   *  2026-10-04 以前的示範資料快照沒有這個欄位 */
   implementationId?: number
 }
 
@@ -87,8 +88,6 @@ export function toProjectTechniques(raw: TechniqueDto[], scopeNames: Map<number,
   return out
 }
 
-export const techniqueLabel = (t: ProjectTechnique): string => (t.version ? `${t.name} ${t.version}` : t.name)
-
 const toStartedYm = (dateStr: string | null): string => (dateStr ? dateStr.slice(0, 7).replace('-', '.') : '')
 
 // desc/status 目前有已知的後端資料缺口（description、maintain_status 的 GitHub
@@ -110,7 +109,7 @@ const toProject = (raw: ImplementationDto, id: string, scopeNames: Map<number, s
     status: statusType === 'archived' ? 'Archived' : statusType === 'active' ? 'Active' : undefined,
     statusType,
     desc: raw.description ?? '',
-    tags: techniques.map(techniqueLabel),
+    tags: techniques.map((t) => techniqueLabel(t.name, t.version)),
     techniques,
     started: toStartedYm(raw.git_repo_created_at),
     repo: raw.title,
@@ -140,8 +139,9 @@ export async function fetchProjects(): Promise<Project[]> {
   })
 }
 
-// 2026-09-04 從真實資料庫的 fetchProjects() 存下來的快照（2 個真實專案，透過本檔案同一套
-// 轉換邏輯手動跑出來的結果，不是編的），只給 StatusBoardPanel 在「單機展示、後端沒起來」
+// 2026-10-04 從正式環境的 /scopes、/implementations 經 fetchProjects() 存下來的快照（16 個專案，
+// 透過本檔案同一套轉換邏輯跑出來的結果，不是編的；原本是 2026-09-04 的 2 個專案版），
+// 只給 StatusBoardPanel 在「單機展示、後端沒起來」
 // 時當保底填充用——跟 graph.ts 的 graphDemoFixture.json 同一套作法，不是常態資料來源。
 import projectsDemoFixture from '@/data/projectsDemoFixture.json'
 

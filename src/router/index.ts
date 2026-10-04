@@ -63,6 +63,21 @@ const router = createRouter({
       },
     },
     {
+      // 後台入口：寫入相關的頁面（文章管理、本體論編輯）原本散在各頁的 AuthOnly 按鈕後面，
+      // 沒有一個地方能一次看到全部。這頁只放連結與計數，不自己做任何寫入。
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/AdminView.vue'),
+      meta: {
+        tag: 'Admin',
+        title: '管理',
+        subtitle: '文章、分類與述詞的編輯入口',
+        // 這頁自己畫表頭，跟文章管理頁同一個理由
+        hideHeader: true,
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/articles',
       name: 'articles',
       component: () => import('@/views/ArticlesView.vue'),
@@ -248,15 +263,39 @@ const router = createRouter({
         subtitle: '文件、技術與實作之間的連結，2D 與 3D 兩種檢視',
       },
     },
+    // 兜底：上面都對不到的網址。一定要放最後（vue-router 依排序權重比對，這條權重最低）
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/NotFoundView.vue'),
+      meta: {
+        // title 給瀏覽器分頁標題；頁面自己畫置中的大標題，通用表頭關掉免得重複
+        title: '找不到這個頁面',
+        hideHeader: true,
+      },
+    },
   ],
 })
 
-// Token 是記憶體狀態，開機/整頁重新整理後一定是未登入，這裡只做「有沒有
-// token」的前端層級檢查——真正的權限判斷永遠在後端 Policy（見
-// app/Policies），這道 guard 只是不讓使用者先看到一個註定會 401 的頁面。
-router.beforeEach((to) => {
-  if (to.meta.requiresAuth && !useAuthStore().isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+// Token 是記憶體狀態，整頁重新整理後要等 restore()（用 refresh cookie 換回
+// 登入狀態，main.ts 開機時就開始跑）做完才知道有沒有登入——requiresAuth 的頁面
+// 先 await 它，不然重新整理 /admin 會在換回來之前就被導去 /login。不需要登入的
+// 頁面不等，照常立刻顯示。這裡只做「有沒有 token」的前端層級檢查——真正的權限
+// 判斷永遠在後端 Policy（見 app/Policies），這道 guard 只是不讓使用者先看到一個
+// 註定會 401 的頁面。
+router.beforeEach(async (to) => {
+  // OAuth 登入失敗時，後端（TokenSocialAuthController）導回 `/?auth_error=not_authorized`。
+  // 以前前端沒接，畫面什麼都沒變，只有網址多一串（2026-10-03 使用者回報）。統一轉去登入頁，
+  // 由登入頁說明原因
+  if (typeof to.query.auth_error === 'string' && to.name !== 'login') {
+    return { name: 'login', query: { auth_error: to.query.auth_error } }
+  }
+  if (to.meta.requiresAuth) {
+    const auth = useAuthStore()
+    await auth.restore()
+    if (!auth.isAuthenticated) {
+      return { name: 'login', query: { redirect: to.fullPath } }
+    }
   }
 })
 

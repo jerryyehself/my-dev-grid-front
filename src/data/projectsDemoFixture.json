@@ -1,22 +1,607 @@
 [
   {
     "id": "PROJ-2026-01",
+    "title": "idea-trigger",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "專案配對工具",
+    "tags": [],
+    "techniques": [],
+    "started": "2026.08",
+    "repo": "idea-trigger",
+    "implementationId": 3
+  },
+  {
+    "id": "PROJ-2026-02",
     "title": "my-dev-grid-front",
     "status": "Active",
     "statusType": "active",
     "desc": "學習檔案前端",
-    "tags": ["Vue", "Shell", "CSS", "TypeScript", "HTML"],
+    "tags": ["TypeScript", "CSS", "HTML", "Shell", "Vue"],
+    "techniques": [
+      {
+        "name": "TypeScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "CSS",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "HTML",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Shell",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Vue",
+        "version": null,
+        "category": "framework"
+      }
+    ],
     "started": "2026.06",
-    "repo": "my-dev-grid-front"
+    "repo": "my-dev-grid-front",
+    "implementationId": 2
   },
   {
     "id": "PROJ-2025-01",
+    "title": "isbn-scanner",
+    "status": "Archived",
+    "statusType": "archived",
+    "desc": "A vue ISBN Scanner project (for librarian).",
+    "tags": [
+      "JavaScript",
+      "TypeScript",
+      "CSS",
+      "exceljs",
+      "html5-qrcode",
+      "i18n",
+      "isbn3",
+      "Nuxt 3",
+      "pinia",
+      "Vue 3",
+      "vuetify",
+      "vueuse-core"
+    ],
+    "techniques": [
+      {
+        "name": "JavaScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "CSS",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "exceljs",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "html5-qrcode",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "i18n",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "isbn3",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "Nuxt",
+        "version": "3",
+        "category": "framework"
+      },
+      {
+        "name": "pinia",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "Vue",
+        "version": "3",
+        "category": "framework"
+      },
+      {
+        "name": "vuetify",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "vueuse-core",
+        "version": null,
+        "category": "packagetool"
+      }
+    ],
+    "started": "2025.12",
+    "repo": "isbn-scanner",
+    "implementationId": 4
+  },
+  {
+    "id": "PROJ-2025-02",
     "title": "my-dev-grid",
     "status": "Active",
     "statusType": "active",
     "desc": "",
-    "tags": ["PHP", "Vue", "JavaScript", "Dockerfile", "Blade", "Shell", "CSS", "laravel", "tailwind", "vue3"],
+    "tags": [
+      "PHP",
+      "JavaScript",
+      "Dockerfile",
+      "Blade",
+      "Shell",
+      "CSS",
+      "laravel",
+      "tailwind",
+      "Vue 3"
+    ],
+    "techniques": [
+      {
+        "name": "PHP",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "JavaScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Dockerfile",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Blade",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Shell",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "CSS",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "laravel",
+        "version": null,
+        "category": "framework"
+      },
+      {
+        "name": "tailwind",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "Vue",
+        "version": "3",
+        "category": "framework"
+      }
+    ],
     "started": "2025.06",
-    "repo": "my-dev-grid"
+    "repo": "my-dev-grid",
+    "implementationId": 1
+  },
+  {
+    "id": "PROJ-2025-03",
+    "title": "business-card-generator",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "A Vue3 Business Card generator",
+    "tags": ["JavaScript", "TypeScript", "CSS", "tailwind", "Vue 3"],
+    "techniques": [
+      {
+        "name": "JavaScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "CSS",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "tailwind",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "Vue",
+        "version": "3",
+        "category": "framework"
+      }
+    ],
+    "started": "2025.02",
+    "repo": "business-card-generator",
+    "implementationId": 7
+  },
+  {
+    "id": "PROJ-2025-04",
+    "title": "my-profile",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "",
+    "tags": ["TypeScript", "JavaScript", "Dockerfile", "CSS"],
+    "techniques": [
+      {
+        "name": "TypeScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "JavaScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Dockerfile",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "CSS",
+        "version": null,
+        "category": "language"
+      }
+    ],
+    "started": "2025.02",
+    "repo": "my-profile",
+    "implementationId": 10
+  },
+  {
+    "id": "PROJ-2024-01",
+    "title": "gym-people-count-parser",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "",
+    "tags": ["JavaScript", "appscript", "cheerio", "linebot"],
+    "techniques": [
+      {
+        "name": "JavaScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "appscript",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "cheerio",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "linebot",
+        "version": null,
+        "category": "packagetool"
+      }
+    ],
+    "started": "2024.11",
+    "repo": "gym-people-count-parser",
+    "implementationId": 8
+  },
+  {
+    "id": "PROJ-2024-02",
+    "title": "leetcode-practice",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "練習紀錄",
+    "tags": ["PHP", "leetcode"],
+    "techniques": [
+      {
+        "name": "PHP",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "leetcode",
+        "version": null,
+        "category": "packagetool"
+      }
+    ],
+    "started": "2024.07",
+    "repo": "leetcode-practice",
+    "implementationId": 15
+  },
+  {
+    "id": "PROJ-2024-03",
+    "title": "bulletin-api",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "",
+    "tags": ["JavaScript", "PHP", "Blade", "CSS", "laravel"],
+    "techniques": [
+      {
+        "name": "JavaScript",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "PHP",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Blade",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "CSS",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "laravel",
+        "version": null,
+        "category": "framework"
+      }
+    ],
+    "started": "2024.06",
+    "repo": "bulletin-api",
+    "implementationId": 6
+  },
+  {
+    "id": "PROJ-2022-01",
+    "title": "api-demo",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "first pure API demo project",
+    "tags": ["laravel", "PHP"],
+    "techniques": [
+      {
+        "name": "laravel",
+        "version": null,
+        "category": "framework"
+      },
+      {
+        "name": "PHP",
+        "version": null,
+        "category": "language"
+      }
+    ],
+    "started": "2022.05",
+    "repo": "api-demo",
+    "implementationId": 11
+  },
+  {
+    "id": "PROJ-2022-02",
+    "title": "laravel-demo",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "",
+    "tags": ["laravel", "PHP"],
+    "techniques": [
+      {
+        "name": "laravel",
+        "version": null,
+        "category": "framework"
+      },
+      {
+        "name": "PHP",
+        "version": null,
+        "category": "language"
+      }
+    ],
+    "started": "2022.05",
+    "repo": "laravel-demo",
+    "implementationId": 12
+  },
+  {
+    "id": "PROJ-2022-03",
+    "title": "Laravel-LearningLibrary",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "A Library about resource used in projects.",
+    "tags": ["PHP", "Blade", "Hack", "Procfile", "Bootstrap 5", "chartjs", "laravel"],
+    "techniques": [
+      {
+        "name": "PHP",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Blade",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Hack",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Procfile",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Bootstrap",
+        "version": "5",
+        "category": "packagetool"
+      },
+      {
+        "name": "chartjs",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "laravel",
+        "version": null,
+        "category": "framework"
+      }
+    ],
+    "started": "2022.04",
+    "repo": "Laravel-LearningLibrary",
+    "implementationId": 5
+  },
+  {
+    "id": "PROJ-2022-04",
+    "title": "marqee-maker",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "",
+    "tags": ["PHP", "Blade", "Shell", "laravel", "Vue"],
+    "techniques": [
+      {
+        "name": "PHP",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Blade",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Shell",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "laravel",
+        "version": null,
+        "category": "framework"
+      },
+      {
+        "name": "Vue",
+        "version": null,
+        "category": "framework"
+      }
+    ],
+    "started": "2022.01",
+    "repo": "marqee-maker",
+    "implementationId": 13
+  },
+  {
+    "id": "PROJ-2022-05",
+    "title": "vue-exercise",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "",
+    "tags": ["HTML", "Vue"],
+    "techniques": [
+      {
+        "name": "HTML",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Vue",
+        "version": null,
+        "category": "framework"
+      }
+    ],
+    "started": "2022.01",
+    "repo": "vue-exercise",
+    "implementationId": 9
+  },
+  {
+    "id": "PROJ-2021-01",
+    "title": "thesis",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "",
+    "tags": ["Jupyter Notebook", "graphviz", "json", "Python", "rdflib"],
+    "techniques": [
+      {
+        "name": "Jupyter Notebook",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "graphviz",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "json",
+        "version": null,
+        "category": "packagetool"
+      },
+      {
+        "name": "Python",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "rdflib",
+        "version": null,
+        "category": "packagetool"
+      }
+    ],
+    "started": "2021.12",
+    "repo": "thesis",
+    "implementationId": 16
+  },
+  {
+    "id": "PROJ-2021-02",
+    "title": "shorturl",
+    "status": "Active",
+    "statusType": "active",
+    "desc": "",
+    "tags": ["PHP", "Blade", "Shell", "HTML", "laravel", "Vue"],
+    "techniques": [
+      {
+        "name": "PHP",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Blade",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "Shell",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "HTML",
+        "version": null,
+        "category": "language"
+      },
+      {
+        "name": "laravel",
+        "version": null,
+        "category": "framework"
+      },
+      {
+        "name": "Vue",
+        "version": null,
+        "category": "framework"
+      }
+    ],
+    "started": "2021.12",
+    "repo": "shorturl",
+    "implementationId": 14
   }
 ]

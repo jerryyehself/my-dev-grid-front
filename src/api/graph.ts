@@ -16,7 +16,7 @@ export interface GraphNodeDto {
   created_at: string | null
   // 2026-09-30 後端加的：文章節點的子類（post 是自己寫的文章、sourcesite 是官方文件這類參考資料）
   // 與外部網址，節點彈窗靠它決定連去哪（見 components/graphNodeLink.ts）。其他型別一律 null；
-  // 舊的示範資料快照沒有這兩個欄位，所以是 optional
+  // 2026-10-04 以前的示範資料快照沒有這兩個欄位，所以是 optional
   subtype?: string | null
   url?: string | null
 }
@@ -71,8 +71,9 @@ export function fetchGraphPath(start: string, end: string): Promise<GraphPathDto
   return apiGet<GraphPathDto>(`/graph/path?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`)
 }
 
-// 2026-09-03 從真實資料庫的 GET /api/graph 存下來的快照（18 節點、20 邊，含
-// GraphController 補上的 created_at 欄位），只給「單機展示、後端沒起來」這種
+// 2026-10-04 從正式環境的 GET /api/graph 存下來的快照（60 節點、88 邊，含
+// GraphController 補上的 created_at、subtype、url 欄位；原本是 2026-09-03 的 18 節點版），
+// 只給「單機展示、後端沒起來」這種
 // 情境當保底填充用——不是常態資料來源。用真實查過的一份快照，不是編的示意資料。
 // 之後資料庫內容變了，這份快照不會跟著變，僅供展示用途，不代表目前的真實狀態。
 import graphDemoFixture from '@/data/graphDemoFixture.json'
