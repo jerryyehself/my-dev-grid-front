@@ -65,6 +65,20 @@ export function describeLoadError(e: unknown): string {
 }
 
 /**
+ * 4xx／5xx 回應在 console 記一行 error：方法、路徑、狀態碼跟 `X-Request-Id`，
+ * 站主回報問題時可以拿這個 id 去後端 log 對（T-26／D-128）。只寫 console，不顯示在畫面上。
+ * 後端要在 CORS `exposed_headers` 公開這個 header，前端跨來源才讀得到；還沒公開
+ * （或後端沒回）時 `get` 回 null，印 `(none)`，不影響原本的錯誤處理。
+ */
+function logErrorResponse(method: string, path: string, res: Response): void {
+  if (res.status < 400) return
+  const requestId = res.headers?.get('X-Request-Id') ?? null
+  console.error(
+    `API 請求失敗：${method} ${path} HTTP ${res.status}，request id: ${requestId ?? '(none)'}`,
+  )
+}
+
+/**
  * 送出請求；帶著 token 卻收到 401（access token 只活 15 分鐘，過期是常態），
  * 先用 refresh cookie 換一支新的 token、再重送一次。只重試一次：換到新 token
  * 重送還是 401，或根本換不到，就當成真的沒登入。沒帶 token 的請求收到 401
@@ -83,6 +97,7 @@ async function authorizedFetch(
   if (res.status === 401 && sentWithToken && (await useAuthStore().refresh())) {
     res = await send()
   }
+  logErrorResponse(init.method ?? 'GET', path, res)
   if (res.status === 401) handleUnauthorized()
   return res
 }

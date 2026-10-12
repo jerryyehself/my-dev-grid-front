@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { apiDelete, apiGet, apiPost } from './client'
 import { useAuthStore } from '@/stores/useAuthStore'
@@ -205,5 +205,80 @@ describe('GET 重試', () => {
 
     await expect(apiPost('/documentations', {})).rejects.toBeTruthy()
     expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+})
+
+// T-26／D-128：4xx／5xx 在 console 記一行 error，帶 X-Request-Id 方便對後端 log
+describe('錯誤回應的 console.error', () => {
+  const errorSpy = vi.spyOn(console, 'error')
+
+  beforeEach(() => {
+    errorSpy.mockReset()
+    errorSpy.mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    errorSpy.mockReset()
+  })
+
+  function errorResponse(status: number, requestId?: string) {
+    const headers = new Headers(requestId ? { 'X-Request-Id': requestId } : {})
+    return { ok: false, status, headers, json: async () => ({}) }
+  }
+
+  it('4xx 有 X-Request-Id：記方法、路徑、狀態碼跟 request id', async () => {
+    mockFetch.mockResolvedValue(errorResponse(404, 'req-abc-123'))
+
+    await expect(apiGet('/documentations/9')).rejects.toMatchObject({ status: 404 })
+
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+    const line = errorSpy.mock.calls[0]![0] as string
+    expect(line).toContain('GET')
+    expect(line).toContain('/documentations/9')
+    expect(line).toContain('404')
+    expect(line).toContain('request id: req-abc-123')
+  })
+
+  it('4xx 沒有 X-Request-Id：印 (none)', async () => {
+    mockFetch.mockResolvedValue(errorResponse(403))
+
+    await expect(apiDelete('/scopes/1')).rejects.toThrow()
+
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+    const line = errorSpy.mock.calls[0]![0] as string
+    expect(line).toContain('DELETE')
+    expect(line).toContain('/scopes/1')
+    expect(line).toContain('403')
+    expect(line).toContain('request id: (none)')
+  })
+
+  it('5xx 有 X-Request-Id：記下來', async () => {
+    mockFetch.mockResolvedValue(errorResponse(500, 'req-500-xyz'))
+
+    await expect(apiPost('/scopes', { name: 'x' })).rejects.toThrow()
+
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+    const line = errorSpy.mock.calls[0]![0] as string
+    expect(line).toContain('POST')
+    expect(line).toContain('/scopes')
+    expect(line).toContain('500')
+    expect(line).toContain('request id: req-500-xyz')
+  })
+
+  it('5xx 沒有 X-Request-Id：印 (none)', async () => {
+    mockFetch.mockResolvedValue(errorResponse(500))
+
+    await expect(apiGet('/scopes')).rejects.toMatchObject({ status: 500 })
+
+    expect(errorSpy).toHaveBeenCalledTimes(1)
+    expect(errorSpy.mock.calls[0]![0]).toContain('request id: (none)')
+  })
+
+  it('2xx 不記', async () => {
+    mockFetch.mockResolvedValue(jsonResponse({ data: [] }))
+
+    await apiGet('/scopes')
+
+    expect(errorSpy).not.toHaveBeenCalled()
   })
 })
