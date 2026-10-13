@@ -125,7 +125,7 @@
 // 可以直接用 id 開啟：這裡不擋草稿本身的讀取，只是不讓它出現在 prev/next。
 // tags／Related Projects：後端沒有自由標籤欄位（D-40），改用真的圖譜關聯
 // （techniques→標籤、implementations→Related Projects）。
-// margins（邊註）：後端沒有對應欄位（技術債，見 management-debt-ledger.md），
+// margins（邊註）：後端沒有對應欄位（已知的技術債），
 // 這裡直接不顯示，不假裝有資料可以讀。
 import { computed, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'

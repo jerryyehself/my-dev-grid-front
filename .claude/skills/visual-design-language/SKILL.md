@@ -10,7 +10,7 @@ management and idea incubation. That framing is why visual decisions here get
 checked against more than taste: a choice that looks fine but doesn't mean
 anything (see the nav dot example below) is a bug, not a style preference.
 
-**Current themes** (since 2026-09-29, decision-register D-59): both
+**Current themes** (since 2026-09-29, D-59): both
 `.theme-library` (light, default) and `.theme-terminal` (dark, toggled via
 `useTheme.ts` / `ThemeToggle.vue`) are filled with the **navy v2** palette —
 card-stock ground, navy (`--bg-nav-footer`/`--bg-band-strong`), wine accent in
@@ -424,12 +424,11 @@ outside it. Don't burn turns retrying them. Use this instead:
   (commit messages/comments/replies default to Traditional Chinese) —
   cross-linked here rather than duplicated.
 - Exploratory visual work (new theme candidates, unproven directions) follows
-  the general engineering principle recorded in the `my-dev-grid-skills`
-  marketplace repo (`docs/engineering-principles.md`): open a branch before
-  writing any code, not after.
+  the general engineering principle: open a branch before writing any code,
+  not after.
 - Implementing *from* a design mockup (this project's Claude Design canvas,
   or any other visual spec with concrete style values) follows the
-  `mockup-fidelity` skill in the `my-dev-grid-skills` marketplace repo:
+  `mockup-fidelity` skill (from the project's skills marketplace):
   extract exact values instead of eyeballing the nearest Tailwind default,
   and verify with `getComputedStyle` rather than a screenshot alone —
   screenshots only catch structural problems (duplication, misalignment),

@@ -208,7 +208,7 @@ describe('GET 重試', () => {
   })
 })
 
-// T-26／D-128：4xx／5xx 在 console 記一行 error，帶 X-Request-Id 方便對後端 log
+// D-128：4xx／5xx 在 console 記一行 error，帶 X-Request-Id 方便對後端 log
 describe('錯誤回應的 console.error', () => {
   const errorSpy = vi.spyOn(console, 'error')
 

@@ -7,7 +7,7 @@ interface AuthUser {
   email: string
 }
 
-/** 登入／登出結果的提示（AuthNotice.vue 顯示）。2026-10-03 使用者：「登入成功與否要有提示」 */
+/** 登入／登出結果的提示（AuthNotice.vue 顯示）。2026-10-03 起登入成功與否都要有提示 */
 export interface AuthNotice {
   tone: 'success' | 'error'
   text: string
@@ -70,7 +70,7 @@ export const REFRESH_CONFLICT_RETRY_MS = 300
 
 /**
  * Access token 只存在記憶體裡（一個 ref），不落 localStorage/sessionStorage——
- * 跨 origin 的 Sanctum API token 模式（decision-register.md D-56），token 存
+ * 跨 origin 的 Sanctum API token 模式（D-56），token 存
  * Web Storage 的話任何跑在頁面上的 script（含 XSS 注入）都能直接讀到。
  *
  * 「重新整理後維持登入」靠的是後端另外發的 refresh token：它放在 API 網域的

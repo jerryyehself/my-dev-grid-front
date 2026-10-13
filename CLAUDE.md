@@ -18,7 +18,7 @@
 
 **2026-09-14 追加（刪分支的例外）**：分支對應的 PR 已經合併的話，刪那個分支（本地端跟遠端都算）不用先問，直接刪；還沒合併、或不確定有沒有合併的分支，維持原規則、刪之前要先問。
 
-**2026-09-14 追加（PR 合併授權，套用 `my-dev-grid-skills/docs/engineering-principles.md` 的「What needs the user's input, and what doesn't — a tiering standard」）**：自己開的 PR，同時符合以下**驗證條件**跟**範圍條件**才直接合併，不用先問使用者：
+**2026-09-14 追加（PR 合併授權，依「哪些事要問使用者、哪些不用」的分級標準）**：自己開的 PR，同時符合以下**驗證條件**跟**範圍條件**才直接合併，不用先問使用者：
 
 驗證條件（缺一不可）：
 - CI 全部通過（lint/type-check/build/test 等各項 check）

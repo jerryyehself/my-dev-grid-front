@@ -6,11 +6,11 @@
 
 五個頁面的版面結構最早照 **[My Dev Grid Site Redesign](https://claude.ai/code/artifact/41b6b24a-8dbd-4f19-a366-ed14221f202b)** 這份 Claude Design 畫布做。之後有幾項全站改動已經取代它：配色換成藏青第二版（D-59），標題字型換成 Noto Serif TC、字標換成 Libre Caslon（D-60），About 頁照另一份 E 版設計稿重寫。網站 icon、選中狀態、字級這類全站比較，收在另一份 canvas。
 
-哪份設計稿現在還算數、各自管哪一塊，以 `my-dev-grid-skills` 的 [`docs/design-artifacts.md`](https://github.com/jerryyehself/my-dev-grid-skills/blob/main/docs/design-artifacts.md) 為準。改版面／字體／共用元件前先查那裡，確認是刻意偏離，還是單純沒對齊。
+改版面／字體／共用元件前，先對照現行的設計決定（配色 D-59、字型 D-60）與 `.claude/skills/visual-design-language`，確認是刻意偏離，還是單純沒對齊。
 
 網站 icon 與社群分享圖由 `design/icon/build.mjs` 產生（見 `design/icon/README.md`），輸出在 `public/`。
 
-**設計稿 `<style>` 區塊裡的 class 就是那份設計的共用元件定義**(`.lbl`、`.hint`、`.fld`、`.chip` 這類)。要為同樣的角色抽共用元件時,數值從那裡拿,不要從既有程式碼逆推——既有程式碼可能已經漂移了,逆推會把漂移一起保留下來,還給它一個具名元件的權威。實際踩過:小標元件當初讀了兩個彼此不一致的頁面,做出設計稿沒有的兩種字距,還附上一套設計稿從沒講過的理由。細節見 `my-dev-grid-skills` 的 `mockup-fidelity` skill。
+**設計稿 `<style>` 區塊裡的 class 就是那份設計的共用元件定義**(`.lbl`、`.hint`、`.fld`、`.chip` 這類)。要為同樣的角色抽共用元件時,數值從那裡拿,不要從既有程式碼逆推——既有程式碼可能已經漂移了,逆推會把漂移一起保留下來,還給它一個具名元件的權威。實際踩過:小標元件當初讀了兩個彼此不一致的頁面,做出設計稿沒有的兩種字距,還附上一套設計稿從沒講過的理由。
 
 另外,**重構會讓對稿失效**。把重複的 class 串收斂成共用元件等於重寫了當初對過的那些值,而重新裂開的落差是型別安全、lint 乾淨、build 通過的（Vue SFC 的 template 不走型別檢查,改錯的值也還是合法 CSS）。抽完元件要重新對一次數值,不能只看截圖。
 
@@ -44,7 +44,7 @@
 
 讀取（GET）碰到 502／503／504 或連不上時，`src/api/client.ts` 會自動重試兩次，仍失敗才讓各頁改用示範資料。
 
-用 token 模式、不用 SPA session cookie，是因為前後端跨 origin（D-56，`my-dev-grid-skills/docs/decision-register.md`）。前端已經在 `jerrylib.com`；等後端也掛上同網域的子網域，才重新評估 cookie 模式。
+用 token 模式、不用 SPA session cookie，是因為前後端跨 origin（D-56）。前端已經在 `jerrylib.com`；等後端也掛上同網域的子網域，才重新評估 cookie 模式。
 
 **正式站上沒有登入按鈕**（D-63）。「登入」只在本機 `npm run dev` 顯示；要登入就直接開 `/login`。管理、編輯、新增這些寫入入口包在 `AuthOnly` 元件裡，登入後才出現。
 
@@ -59,7 +59,7 @@
 | `/ontology/scopes`、`/ontology/scopes/new`、`/ontology/scopes/:id`、`/ontology/scopes/:id/edit` | 階層分類號一覽/詳情/新增/編輯 |
 | `/ontology/relations`、`/ontology/relations/new`、`/ontology/relations/:id`、`/ontology/relations/:id/edit` | 述詞一覽/詳情/新增/編輯。被任何邊引用的述詞，編輯頁裡主詞/受詞/名稱/子類號會鎖成唯讀（只剩備註能改） |
 
-`Technique`／`Implementation`／`Documentation` 這三種實體本身（不是上面的分類/述詞定義）目前完全靠後端 GitHub sync 自動建立，還沒有任何介面能手動編輯，列在 `my-dev-grid-skills` 的 `management-debt-ledger.md` 技術債。
+`Technique`／`Implementation`／`Documentation` 這三種實體本身（不是上面的分類/述詞定義）目前完全靠後端 GitHub sync 自動建立，還沒有任何介面能手動編輯（已知的技術債）。
 
 ## 文章內文的渲染
 
@@ -79,8 +79,6 @@
 - `develop` 是整合分支。feature 分支從 `develop` 分出、PR 對 `develop`。要上線時才由 `develop` 開 PR 進 `main`，用 squash 合併（repo 不允許 merge commit），合併後要把 `main` 合併回 `develop`（`git merge --no-ff origin/main`），細節見 `CLAUDE.md`。
 - CI（`.github/workflows/ci.yml`）在兩個分支的 PR 都會跑 lint／type-check／test／build。
 - Cloudflare 也會替每個分支建一份預覽部署。SPA 的路由 fallback 設在 `wrangler.jsonc` 的 `assets.not_found_handling`，不要用 `public/_redirects`（會觸發無限迴圈，原因見檔案裡的註解）。
-
-Cloudflare 這邊的完整設定（網域、Access 鎖定、預覽部署）見 `daily-claude-summary` 的 `reports/cloudflare-workers-spa-deployment-guide.md`。
 
 ## 更新紀錄
 
