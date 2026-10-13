@@ -7,7 +7,7 @@ import router from '@/router'
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
 
 /**
- * Sanctum API token 模式（decision-register.md D-56）：帶
+ * Sanctum API token 模式（D-56）：帶
  * `Authorization: Bearer`，不是 cookie，所以一般請求不用 `credentials: 'include'`
  * （只有登入／換發／登出那幾支會碰 refresh cookie，在 useAuthStore 裡另外處理）。
  * `useAuthStore()` 在一般 component 外的模組層級呼叫也能用——Pinia 在
@@ -66,7 +66,7 @@ export function describeLoadError(e: unknown): string {
 
 /**
  * 4xx／5xx 回應在 console 記一行 error：方法、路徑、狀態碼跟 `X-Request-Id`，
- * 站主回報問題時可以拿這個 id 去後端 log 對（T-26／D-128）。只寫 console，不顯示在畫面上。
+ * 站主回報問題時可以拿這個 id 去後端 log 對（D-128）。只寫 console，不顯示在畫面上。
  * 後端要在 CORS `exposed_headers` 公開這個 header，前端跨來源才讀得到；還沒公開
  * （或後端沒回）時 `get` 回 null，印 `(none)`，不影響原本的錯誤處理。
  */
@@ -106,8 +106,8 @@ async function authorizedFetch(
  * GET 失敗時重試的等待時間（毫秒），陣列長度就是重試次數。
  *
  * 後端 Cloud Run 閒置會縮到 0 台，下一個請求要等容器冷啟動；啟動那一下 nginx 比 php-fpm 先
- * 就緒，前一兩個請求會拿到 502（2026-10-04 部署切換時實測到）。站主回報「文章常常打不到
- * 資料庫就顯示示範資料」——文章頁一次打兩支 API，只要其中一支碰到就整頁退回示範資料。
+ * 就緒，前一兩個請求會拿到 502（2026-10-04 部署切換時實測到）。實際症狀是文章常常打不到
+ * 資料庫、顯示示範資料——文章頁一次打兩支 API，只要其中一支碰到就整頁退回示範資料。
  * 後端的根治（啟動檢查改打 /up）先不動，前端對「重試一下多半就好」的失敗自己再試：
  * 只重試 GET（冪等），只重試 502／503／504 跟網路層失敗（fetch 丟 TypeError），
  * 404、500、401 這些重試也不會變的照舊直接丟。測試環境不等，免得拖慢測試。

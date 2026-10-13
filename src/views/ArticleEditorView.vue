@@ -478,7 +478,7 @@ const publish = () => saveWithStatus(true)
                   variant="ghost"
                   type="button"
                   disabled
-                  title="Notion／HackMD 等外部平台匯入還沒串接，規劃中（見 management-debt-ledger.md）"
+                  title="Notion／HackMD 等外部平台匯入還沒串接，規劃中"
                 >
                   從網站匯入
                 </BaseButton>

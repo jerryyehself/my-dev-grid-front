@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from './useAuthStore'
 
-// 登入／登出結果的提示（AuthNotice 顯示的 notice）。2026-10-03 使用者：「登入成功與否要有提示」
-// 以及「重新整理後維持登入」：restore()／refresh() 用 httpOnly refresh cookie 換回登入狀態。
+// 登入／登出結果的提示（AuthNotice 顯示的 notice）。2026-10-03 起登入成功與否都要有提示，
+// 以及重新整理後維持登入：restore()／refresh() 用 httpOnly refresh cookie 換回登入狀態。
 
 const SESSION_HINT_KEY = 'mdg_auth_session'
 const USER = { id: 1, name: 'Jerry', email: 'j@example.com' }
