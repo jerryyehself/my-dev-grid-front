@@ -1,6 +1,6 @@
 # 測試
 
-工具是 Vitest＋`@vue/test-utils`。寫法參考 `src/components/BaseSwitch.spec.ts`。
+工具是 Vitest＋`@vue/test-utils`。寫法參考 `src/components/BaseSelect.spec.ts`。
 
 ## 格式
 
