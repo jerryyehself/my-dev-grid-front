@@ -8,6 +8,10 @@
 
 程式碼本身(變數名、函式名、檔名、CSS class)、技術術語、套件名稱、既有的英文專有名詞(例如 Vue、Tailwind、Laravel)維持原文，不用硬翻。
 
+# 程式慣例（2026-10-26 使用者確認）
+
+檔案結構與命名規則寫在 [`docs/conventions/`](docs/conventions/README.md)，Claude、Codex、人都照同一份。新增檔案或元件、搬動檔案前先讀 `structure.md` 與 `naming.md`；新功能放 `src/features/<功能名>/`，舊功能要大改時才整個搬過去。
+
 # Git commit/push 授權（2026-09-12 使用者確認）
 
 一般的 commit/push（審查過的變更、正常工作流程的一部分）不用每次都先問過使用者才動作，做完覺得可以收尾了就直接 commit/push，不用停下來等確認。

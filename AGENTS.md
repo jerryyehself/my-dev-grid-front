@@ -72,6 +72,8 @@ Closes #<issue 編號>
 
 ## 程式慣例
 
+檔案放哪裡、怎麼命名，見 [`docs/conventions/`](docs/conventions/README.md)。新增檔案或元件前先讀 `structure.md` 與 `naming.md`。
+
 - **語言**：commit message、程式碼註解、PR 說明用繁體中文。變數名、函式名、檔名、CSS class、套件名稱維持英文原文。
 - **註解寫「為什麼」**：這個 repo 的註解習慣說明選擇的理由與否決過的做法，不是逐行翻譯程式碼。新程式照同樣的密度寫。
 - **元件**：優先用 `src/components/Base*.vue` 既有的元件，不要另外刻一個樣式相近的。
