@@ -291,8 +291,8 @@ function cancel() {
         <BaseField label="反向關係">
           <label class="flex items-center gap-2 text-sm text-(--text-ink-main)">
             <input
-              type="checkbox"
               v-model="hasReverse"
+              type="checkbox"
               :disabled="!canToggleReverse"
               class="h-4 w-4 accent-(--text-accent) disabled:opacity-40"
             />

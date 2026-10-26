@@ -38,5 +38,4 @@
 
 下次改到這些檔案時順手修正，不需要為它們單獨開 PR：
 
-- `src/views/AboutView.vue` 在同一個檔案裡用 `defineComponent` 定義了幾個小元件。
-- `src/components/graph/graphDetail.ts` 有一個結尾帶底線的變數 `byLabel_`。
+- `src/views/AboutView.vue` 在同一個檔案裡用 `defineComponent` 定義了幾個小元件。這些小元件共用頁面裡的 `MONO`、`mix()` 與型別，拆出去要一起搬，所以這個檔案用 `eslint-disable vue/one-component-per-file` 暫時放行；拆開後把那行拿掉。

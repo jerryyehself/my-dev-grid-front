@@ -110,7 +110,7 @@ describe('useAuthStore：登入結果提示', () => {
     }],
     ['後端 500', () => new Response(null, { status: 500 })],
     ['被限流 429', () => new Response(null, { status: 429 })],
-  ])('登出失敗（%s）：保留登入狀態跟旗標、顯示錯誤，不假裝已登出', async (_label, handler) => {
+  ])('登出失敗（%s）：保留登入狀態跟旗標、顯示錯誤，不假裝已登出', async (label, handler) => {
     mockFetch(handler)
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const auth = useAuthStore()
