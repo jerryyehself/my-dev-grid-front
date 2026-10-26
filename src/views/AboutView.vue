@@ -403,7 +403,7 @@
             :title="l.label"
             class="inline-flex items-center justify-center w-11 h-11 rounded-[6px] border hover:bg-(--accent-brass) hover:text-(--bg-band-strong) transition-colors"
             :style="{ borderColor: mix('--accent-brass', 50) }"
-            v-bind="l.external ? { target: '_blank', rel: 'noopener' } : {}"
+            v-bind="l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {}"
           >
             <svg
               v-if="l.icon === 'github'"

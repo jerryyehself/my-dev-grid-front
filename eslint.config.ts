@@ -64,6 +64,41 @@ export default defineConfigWithVueTs(
     },
   },
 
+  {
+    // 模板慣例：不用 v-html（字串直接當 HTML 塞進頁面，繞過 Vue 的渲染），
+    // 外連一律帶 rel。目前全站沒有用到 v-html（Markdown 內文走 AST 轉 vnode，見 MarkdownBody.vue）。
+    name: 'app/template-conventions',
+    files: ['**/*.vue'],
+    rules: {
+      'vue/no-v-html': 'error',
+      // target="_blank" 的連結一律要帶 rel="noopener noreferrer"
+      'vue/no-template-target-blank': 'error',
+    },
+  },
+
+  {
+    // 動態執行字串當程式碼的寫法（eval、new Function、setTimeout('字串')）
+    // 目前全站沒有用到，列成規則是為了不讓之後的新程式引進來。
+    name: 'app/no-dynamic-code',
+    files: ['**/*.{vue,ts,mts,tsx}'],
+    languageOptions: {
+      // no-implied-eval 要靠「setTimeout 是全域變數」才認得出 setTimeout('字串')；
+      // 這份設定沒有宣告瀏覽器全域，不補的話這條規則永遠不會報。
+      globals: {
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        execScript: 'readonly',
+        window: 'readonly',
+        globalThis: 'readonly',
+      },
+    },
+    rules: {
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'no-new-func': 'error',
+    },
+  },
+
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
   skipFormatting,
