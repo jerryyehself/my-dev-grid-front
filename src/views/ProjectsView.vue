@@ -264,6 +264,7 @@ watch([selectedId, filteredProjects], async () => {
               <a
                 :href="`https://github.com/jerryyehself/${selected.repo}`"
                 target="_blank"
+                rel="noopener noreferrer"
                 class="text-[13px] text-(--text-ink-main) hover:text-(--text-accent) hover:underline"
               >
                 {{ selected.repo }}

@@ -101,16 +101,16 @@ const GROUP_ORDER = ['版本', '技術', '實作', '文件']
 export function relationGroupsOf(index: GraphDetailIndex, id: string): RelationGroup[] {
   if (!index.nodes.has(id)) return []
   const myVersions = index.versions.get(id)
-  const byLabel_ = new Map<string, DetailNode[]>()
+  const byLabelMap = new Map<string, DetailNode[]>()
   for (const otherId of index.neighbors.get(id) ?? []) {
     const other = index.nodes.get(otherId)!
     const label = relationFromNode(other.domainType, myVersions?.has(otherId) ?? false)
-    if (!byLabel_.has(label)) byLabel_.set(label, [])
-    byLabel_.get(label)!.push(toDetail(other))
+    if (!byLabelMap.has(label)) byLabelMap.set(label, [])
+    byLabelMap.get(label)!.push(toDetail(other))
   }
-  return GROUP_ORDER.filter((l) => byLabel_.has(l)).map((label) => ({
+  return GROUP_ORDER.filter((l) => byLabelMap.has(l)).map((label) => ({
     label,
-    nodes: byLabel_.get(label)!.sort(byLabel),
+    nodes: byLabelMap.get(label)!.sort(byLabel),
   }))
 }
 

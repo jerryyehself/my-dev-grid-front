@@ -403,7 +403,7 @@
             :title="l.label"
             class="inline-flex items-center justify-center w-11 h-11 rounded-[6px] border hover:bg-(--accent-brass) hover:text-(--bg-band-strong) transition-colors"
             :style="{ borderColor: mix('--accent-brass', 50) }"
-            v-bind="l.external ? { target: '_blank', rel: 'noopener' } : {}"
+            v-bind="l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {}"
           >
             <svg
               v-if="l.icon === 'github'"
@@ -563,6 +563,10 @@ const LINKS = [
 ]
 
 // ---- 這頁專用的小元件：只在這裡用，抽成獨立檔案反而要多跳一層才看得懂 ----
+
+// 下面幾個小元件共用這頁的 MONO、mix() 和由頁面資料推出來的型別，拆成獨立檔案要連這些一起搬，
+// 不是單純的搬移；所以這個檔案先不套用「一個檔案一個元件」，之後整頁重構時再一起處理。
+/* eslint-disable vue/one-component-per-file */
 
 /** 切換卡裡的一筆條目：上面是分類號，下面是條目名。focus 是「從哪一頭看」的那一筆，框線改成強調色 */
 const EntryChip = defineComponent({
