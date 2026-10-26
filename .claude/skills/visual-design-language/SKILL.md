@@ -91,13 +91,11 @@ header systems, not just a rename.
 
 ## Component naming
 
-Vue's own style guide defines two prefixes, and this project should stick to
-exactly those two — don't invent a third:
-- **`Base*`** — presentational components with no business logic, meant to be
-  reused anywhere (`BaseButton.vue`). This is where a style decision from the
-  chain above turns into something concrete and shared, instead of getting
-  re-implemented per view (see the button variants below).
-- **`The*`** — components that exist exactly once per page (`TheNavbar.vue`).
+The naming rules themselves (prefixes, file names, events, props) live in
+[`docs/conventions/naming.md`](../../../docs/conventions/naming.md) — don't
+restate them here. What matters visually: **`Base*`** components are where a
+style decision from the chain above turns into something concrete and shared,
+instead of getting re-implemented per view (see the button variants below).
 
 `SiteHeader.vue` / `SiteFooter.vue` used a `Site*` prefix that isn't part of
 Vue's convention — one more reason (beyond being dead code, above) they didn't
@@ -364,6 +362,31 @@ node highlight, once that feature exists.
 - **Aesthetic and minimalist design** — every element competes with the ones
   that actually matter for attention; an element with no justification should
   be cut, not rationalized into staying.
+
+### Concrete interaction rules
+
+These turn the lenses above into checks for every interactive element. They
+use this project's tokens and `Base*` components — never raw Tailwind colors
+like `bg-red-600`.
+- **Clickable things look clickable, and nothing else does.** Buttons and
+  links get a visible signifier (border, underline, hover change,
+  `cursor-pointer`); plain text and decorative cards don't borrow button
+  styling or hover lift.
+- **Every action gives feedback.** A pressed state on buttons; anything async
+  (API calls, login) shows a loading state right away — `BaseLoadingBlock`
+  for content areas, a disabled/pending button for actions.
+- **No double submits.** A submit/save button is disabled while its request
+  is pending (`LoginView`'s `:disabled="submitting"` is the pattern).
+- **Destructive actions confirm first.** Delete, overwrite or anything that
+  can't be undone asks before acting and says what will be lost
+  (`ArticleManageView`'s delete and `ArticleEditorView`'s file overwrite use
+  `window.confirm` with that wording). Their styling must never read as the
+  primary or positive action; it does not need a new red — see the
+  `BaseTag` example above on reaching for a semantic color only when a real
+  alert-level distinction exists. Errors use `--text-error`.
+- **One primary action per area.** The main action uses `BaseButton`
+  `primary`; secondary ones (cancel, back) use `ghost` or a text link, so the
+  eye lands on the right first step.
 
 ### Avoiding AI-generated-design clichés
 Both Anthropic's `artifact-design` skill and the official `frontend-design`
