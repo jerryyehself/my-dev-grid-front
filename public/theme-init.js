@@ -5,6 +5,6 @@ try {
   if (localStorage.getItem('theme') === 'terminal') {
     document.documentElement.classList.add('theme-terminal')
   }
-} catch (e) {
+} catch {
   // 私密瀏覽模式擋 storage 時，就用預設主題，不影響網頁能不能用。
 }
