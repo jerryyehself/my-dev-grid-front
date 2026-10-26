@@ -79,7 +79,7 @@ Closes #<issue 編號>
 - **元件**：優先用 `src/components/Base*.vue` 既有的元件，不要另外刻一個樣式相近的。
 - **樣式**：用 `src/assets` 裡定義好的 CSS 變數（例如 `--text-ink-main`、`--border-shelf`），不要直接寫色碼。視覺規則見 `.claude/skills/visual-design-language/`。
 - **訪客看得到的文字**：用語與格式見 `.claude/skills/copy-language/`。issue 沒有要求改文案就不要改。
-- **測試**：用 Vitest＋`@vue/test-utils`，測試檔放在元件旁邊，命名為 `<元件名>.spec.ts`。寫法參考 `src/components/BaseSwitch.spec.ts`；`describe`／`it` 的說明用中文寫成「它應該怎樣」。
+- **測試**：用 Vitest＋`@vue/test-utils`，測試檔放在元件旁邊，命名為 `<元件名>.spec.ts`。寫法參考 `src/components/BaseSwitch.spec.ts`；`it` 的說明用中文寫成「它應該怎樣」；`describe` 寫被測對象（元件或函式名稱），不加「它應該」。ESLint 會檢查（`vitest/valid-title`），`eslint.config.ts` 裡列了還沒改的舊檔，新檔一律要符合。
 
 ## 這是公開 repo
 

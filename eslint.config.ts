@@ -2,6 +2,7 @@ import { globalIgnores } from 'eslint/config'
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
 import pluginVue from 'eslint-plugin-vue'
 import pluginOxlint from 'eslint-plugin-oxlint'
+import pluginVitest from '@vitest/eslint-plugin'
 import skipFormatting from 'eslint-config-prettier/flat'
 
 // To allow more languages other than `ts` in `.vue` files, uncomment the following lines:
@@ -96,6 +97,68 @@ export default defineConfigWithVueTs(
       'no-eval': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error',
+    },
+  },
+
+  {
+    // 把 AGENTS.md 的測試命名規則變成機器檢查：it／test 的說明寫「它應該…」；
+    // describe 寫被測對象（元件、函式或情境名稱），所以不能寫成「它應該…」。
+    name: 'app/vitest-titles',
+    files: ['**/*.spec.ts'],
+    ignores: [
+      // 舊檔還沒改成「它應該」句型；改到某個檔案時順手改標題，並把它移出清單。新檔一律要符合。
+      'src/api/articles.spec.ts',
+      'src/api/client.spec.ts',
+      'src/api/graph.spec.ts',
+      'src/api/ontology.spec.ts',
+      'src/api/projects.spec.ts',
+      'src/api/techniqueLabel.spec.ts',
+      'src/components/ArticleEditLink.spec.ts',
+      'src/components/AuthNotice.spec.ts',
+      'src/components/AuthOnly.spec.ts',
+      'src/components/AuthStatus.spec.ts',
+      'src/components/BaseSegmented.spec.ts',
+      'src/components/BaseSwitch.spec.ts',
+      'src/components/BaseTextarea.spec.ts',
+      'src/components/TheNavbar.spec.ts',
+      'src/components/ThemeToggle.spec.ts',
+      'src/components/graph/GraphShortcutsHelp.spec.ts',
+      'src/components/graph/clusterForce.spec.ts',
+      'src/components/graph/colorScale.spec.ts',
+      'src/components/graph/derivedEdges.spec.ts',
+      'src/components/graph/fitView.spec.ts',
+      'src/components/graph/graphDetail.spec.ts',
+      'src/components/graph/labels.spec.ts',
+      'src/components/graph/layeredLayout.spec.ts',
+      'src/components/graph/viewMath.spec.ts',
+      'src/components/graphNodeLink.spec.ts',
+      'src/components/graphRelationPhrase.spec.ts',
+      'src/components/markdown/MarkdownBody.spec.ts',
+      'src/components/markdown/safeLink.spec.ts',
+      'src/composables/useProjectsFilter.spec.ts',
+      'src/composables/useTheme.spec.ts',
+      'src/data/articles.spec.ts',
+      'src/router/index.spec.ts',
+      'src/siteMeta.spec.ts',
+      'src/stores/useAuthStore.spec.ts',
+      'src/views/ArticlesView.spec.ts',
+      'src/views/NotFoundView.spec.ts',
+    ],
+    plugins: { vitest: pluginVitest },
+    rules: {
+      'vitest/valid-title': [
+        'error',
+        {
+          mustMatch: {
+            describe: [
+              '^(?!它應該)',
+              'describe 寫被測對象（元件、函式或情境），「它應該…」留給 it／test',
+            ],
+            it: ['^它應該', 'it 的說明要以「它應該」開頭（見 AGENTS.md「測試」）'],
+            test: ['^它應該', 'test 的說明要以「它應該」開頭（見 AGENTS.md「測試」）'],
+          },
+        },
+      ],
     },
   },
 
