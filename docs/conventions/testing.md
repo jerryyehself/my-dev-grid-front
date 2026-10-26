@@ -5,7 +5,7 @@
 ## 格式
 
 - 測試檔放在被測檔案旁邊，命名為 `<檔名>.spec.ts`。
-- `it` 的說明用中文，寫成「它應該…」，條件放在後面：`它應該在 open 為 false 時不渲染面板`。（lint：`vitest/valid-title`）
+- `describe` 寫受測對象（元件或函式名稱）；`it` 的說明用中文，寫成「它應該…」，條件放在後面：`它應該在 open 為 false 時不渲染面板`。（lint：`vitest/valid-title`。這條規則訂得比多數測試晚，舊檔列在 `eslint.config.ts` 的例外清單；改到某個舊檔時順手改標題，並把它移出清單）
 
 ## 好的測試
 
