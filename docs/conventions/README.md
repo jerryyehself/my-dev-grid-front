@@ -9,6 +9,7 @@
 | [`components.md`](components.md) | 元件設計：props 只收用得到的、邏輯放哪裡                              |
 | [`testing.md`](testing.md)       | 測試格式與「好的測試」七條                                            |
 | [`security.md`](security.md)     | HTML 與程式執行、網址、憑證與秘密、部署設定                           |
+| [`issues.md`](issues.md)         | 開 issue：段落、大小、合併或拆開、標籤、不能寫的內容                  |
 
 已經成文、不在這裡的規則：
 
