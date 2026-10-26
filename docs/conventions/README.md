@@ -2,10 +2,10 @@
 
 這個資料夾是前端程式慣例的唯一來源。不管是人、Claude 還是 Codex，寫程式前都照這裡的規則；`AGENTS.md`、`CLAUDE.md` 只放連結，不重複內容。
 
-| 檔案 | 管什麼 |
-|---|---|
-| [`structure.md`](structure.md) | 檔案放哪裡：`src/features/` 與共用資料夾的分工、舊功能怎麼搬 |
-| [`naming.md`](naming.md) | 元件、檔案、資料夾、composable、store、事件、prop、型別、常數怎麼命名 |
+| 檔案                           | 管什麼                                                                |
+| ------------------------------ | --------------------------------------------------------------------- |
+| [`structure.md`](structure.md) | 檔案放哪裡：`src/features/` 與共用資料夾的分工、舊功能怎麼搬          |
+| [`naming.md`](naming.md)       | 元件、檔案、資料夾、composable、store、事件、prop、型別、常數怎麼命名 |
 
 已經成文、不在這裡的規則：
 

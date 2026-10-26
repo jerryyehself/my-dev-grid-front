@@ -24,13 +24,13 @@ src/features/graph/
 
 兩個以上功能會用到的，放在下面這些位置：
 
-| 位置 | 放什麼 |
-|---|---|
-| `src/components/` | `Base*` 基礎元件、`The*` 全站唯一元件、跨功能共用元件 |
-| `src/composables/` | 跨功能共用的 composable（例如 `useTheme`） |
-| `src/stores/` | 全站狀態（例如登入狀態 `useAuthStore`） |
-| `src/api/client.ts` | API 用戶端本身；各功能的端點呼叫放進功能資料夾 |
-| `src/layouts/`、`src/router/`、`src/assets/` | 維持原樣 |
+| 位置                                         | 放什麼                                                |
+| -------------------------------------------- | ----------------------------------------------------- |
+| `src/components/`                            | `Base*` 基礎元件、`The*` 全站唯一元件、跨功能共用元件 |
+| `src/composables/`                           | 跨功能共用的 composable（例如 `useTheme`）            |
+| `src/stores/`                                | 全站狀態（例如登入狀態 `useAuthStore`）               |
+| `src/api/client.ts`                          | API 用戶端本身；各功能的端點呼叫放進功能資料夾        |
+| `src/layouts/`、`src/router/`、`src/assets/` | 維持原樣                                              |
 
 ## 功能之間的界線
 
