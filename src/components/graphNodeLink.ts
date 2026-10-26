@@ -1,5 +1,6 @@
 import type { RouteLocationRaw } from 'vue-router'
 import type { GraphNodeType } from '@/api/graph'
+import { safeLink } from './markdown/safeLink'
 
 // 圖譜節點「連去哪」：首頁知識網路的彈窗跟 /graph 的詳情卡共用同一套規則，
 // 不要兩邊各寫一份。規則全部從資料推得出來，新增文章或專案不用回來維護這裡。
@@ -48,7 +49,9 @@ export function graphNodeLink(node: LinkableGraphNode): GraphNodeLink | null {
   if (id == null) return null
 
   if (node.domainType === 'documentation') {
-    if (node.url) return { kind: 'external', href: node.url, text: '前往原始網站 ↗' }
+    // 網址來自資料庫，跟 Markdown 連結走同一套白名單：協定不對（javascript: 之類）就不給連結
+    const link = safeLink(node.url)
+    if (link) return { kind: 'external', href: link.href, text: '前往原始網站 ↗' }
     return null
   }
 

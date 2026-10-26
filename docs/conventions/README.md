@@ -6,10 +6,12 @@
 | ------------------------------ | --------------------------------------------------------------------- |
 | [`structure.md`](structure.md) | 檔案放哪裡：`src/features/` 與共用資料夾的分工、舊功能怎麼搬          |
 | [`naming.md`](naming.md)       | 元件、檔案、資料夾、composable、store、事件、prop、型別、常數怎麼命名 |
+| [`testing.md`](testing.md)     | 測試格式與「好的測試」七條                                            |
+| [`security.md`](security.md)   | HTML 與程式執行、網址、憑證與秘密、部署設定                           |
 
 已經成文、不在這裡的規則：
 
-- 語言、註解、Base 元件、CSS 變數、測試寫法：`AGENTS.md`「程式慣例」
+- 語言、註解、Base 元件、CSS 變數：`AGENTS.md`「程式慣例」
 - 視覺：`.claude/skills/visual-design-language/`
 - 訪客看得到的文字：`.claude/skills/copy-language/`
 

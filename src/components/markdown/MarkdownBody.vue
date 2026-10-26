@@ -137,15 +137,19 @@ function render(node: MdNode): VNode[] {
         : [h('a', { href: link.href, target: '_blank', rel: 'noopener noreferrer', class: cls }, kids(node))]
     }
 
-    case 'image':
+    case 'image': {
+      // 圖片網址跟連結用同一套白名單；mailto 不是圖片，一併擋掉。不合格就只留替代文字
+      const img = safeLink(node.url)
+      if (!img || img.href.startsWith('mailto:')) return node.alt ? [h('span', node.alt)] : []
       return [
         h('img', {
-          src: node.url,
+          src: img.href,
           alt: node.alt ?? '',
           class: 'max-w-full rounded-[5px] border border-(--border-shelf) my-4',
           loading: 'lazy',
         }),
       ]
+    }
 
     case 'list':
       return [

@@ -121,4 +121,15 @@ describe('MarkdownBody', () => {
       expect(links[0]!.attributes('rel')).toBe('noopener noreferrer')
     })
   })
+
+  it('它應該照常渲染 https 圖片', async () => {
+    const w = await mountMd('![示意圖](https://example.com/a.png)')
+    expect(w.find('img').attributes('src')).toBe('https://example.com/a.png')
+  })
+
+  it('它應該在圖片網址協定不在白名單時只留替代文字', async () => {
+    const w = await mountMd('![示意圖](javascript:alert(1))')
+    expect(w.find('img').exists()).toBe(false)
+    expect(w.text()).toContain('示意圖')
+  })
 })
