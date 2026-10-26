@@ -13,6 +13,7 @@ import BaseInput from '@/components/BaseInput.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseHint from '@/components/BaseHint.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { safeRedirect } from '@/router/safeRedirect'
 
 const route = useRoute()
 const router = useRouter()
@@ -54,8 +55,7 @@ async function handleSubmit() {
       return
     }
     // 沒有指定要回哪一頁（不是被路由守衛擋下來才來登入）就去後台入口，登入就是為了管理
-    const redirect = (route.query.redirect as string) || '/admin'
-    router.push(redirect)
+    router.push(safeRedirect(route.query.redirect, '/admin'))
   } finally {
     submitting.value = false
   }
