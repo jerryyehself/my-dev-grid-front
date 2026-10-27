@@ -32,15 +32,15 @@
 
 CSP 寫在 `public/_headers`，瀏覽器只會載入白名單裡的來源，不在名單上的會直接被擋、功能壞掉。新增任何外部來源的東西，要在同一個 PR 裡把來源加進對應的指令：
 
-| 要引入的東西 | 加到哪個指令 | 例子 |
-| --- | --- | --- |
-| 外部 script（分析工具、SDK、地圖） | `script-src` | `https://static.cloudflareinsights.com` |
-| 程式會打的 API（`fetch`、WebSocket） | `connect-src` | API 換網域、接第三方 API；WebSocket 要寫 `wss://` |
-| 外部字型 | `font-src`（字型檔）與 `style-src`（字型的 CSS） | Google Fonts 已放行 |
-| 外部 CSS | `style-src` | |
-| 嵌入其他網站（YouTube、CodePen） | 新增 `frame-src` | `frame-src https://www.youtube-nocookie.com` |
-| `data:`、`blob:` 圖片（貼上 base64 圖、畫布匯出預覽） | `img-src` 加 `data:` 或 `blob:` | |
-| http（非 https）圖片 | 不放行 | 改用 https 網址 |
+| 要引入的東西                                          | 加到哪個指令                                     | 例子                                              |
+| ----------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------- |
+| 外部 script（分析工具、SDK、地圖）                    | `script-src`                                     | `https://static.cloudflareinsights.com`           |
+| 程式會打的 API（`fetch`、WebSocket）                  | `connect-src`                                    | API 換網域、接第三方 API；WebSocket 要寫 `wss://` |
+| 外部字型                                              | `font-src`（字型檔）與 `style-src`（字型的 CSS） | Google Fonts 已放行                               |
+| 外部 CSS                                              | `style-src`                                      |                                                   |
+| 嵌入其他網站（YouTube、CodePen）                      | 新增 `frame-src`                                 | `frame-src https://www.youtube-nocookie.com`      |
+| `data:`、`blob:` 圖片（貼上 base64 圖、畫布匯出預覽） | `img-src` 加 `data:` 或 `blob:`                  |                                                   |
+| http（非 https）圖片                                  | 不放行                                           | 改用 https 網址                                   |
 
 - 只加用得到的網域，不要用 `*` 或 `https:` 整個放行（`img-src` 是例外：文章可以嵌入任何外部圖片）。
 - API 網址換掉（`VITE_API_BASE_URL`）時，`connect-src` 一定要一起改，不然整站讀不到資料。
