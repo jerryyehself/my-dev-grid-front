@@ -53,3 +53,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # 只檢查正式環境會用到的套件，high 以上的漏洞讓 job 失敗。
+      # npm audit 只讀 package-lock.json，不需要先 npm ci
+      - run: npm audit --omit=dev --audit-level=high
