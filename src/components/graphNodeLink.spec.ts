@@ -16,6 +16,12 @@ describe('graphNodeLink', () => {
     ).toEqual({ kind: 'external', href: 'https://www.php.net/docs.php', text: '前往原始網站 ↗' })
   })
 
+  it('它應該在外部網址的協定不在白名單時不給連結', () => {
+    expect(
+      graphNodeLink({ id: 'documentation-2', domainType: 'documentation', subtype: 'sourcesite', url: 'javascript:alert(1)' }),
+    ).toBeNull()
+  })
+
   it('沒有 subtype 也沒有網址的文章（舊的示範資料）不給連結', () => {
     expect(graphNodeLink({ id: 'documentation-3', domainType: 'documentation' })).toBeNull()
   })

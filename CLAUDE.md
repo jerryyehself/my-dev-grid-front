@@ -8,6 +8,10 @@
 
 程式碼本身(變數名、函式名、檔名、CSS class)、技術術語、套件名稱、既有的英文專有名詞(例如 Vue、Tailwind、Laravel)維持原文，不用硬翻。
 
+# 程式慣例（2026-10-26 使用者確認）
+
+檔案結構與命名規則寫在 [`docs/conventions/`](docs/conventions/README.md)，Claude、Codex、人都照同一份。新增檔案或元件、搬動檔案前先讀 `structure.md` 與 `naming.md`；新功能放 `src/features/<功能名>/`，舊功能要大改時才整個搬過去。
+
 # Git commit/push 授權（2026-09-12 使用者確認）
 
 一般的 commit/push（審查過的變更、正常工作流程的一部分）不用每次都先問過使用者才動作，做完覺得可以收尾了就直接 commit/push，不用停下來等確認。
@@ -18,7 +22,7 @@
 
 **2026-09-14 追加（刪分支的例外）**：分支對應的 PR 已經合併的話，刪那個分支（本地端跟遠端都算）不用先問，直接刪；還沒合併、或不確定有沒有合併的分支，維持原規則、刪之前要先問。
 
-**2026-09-14 追加（PR 合併授權，套用 `my-dev-grid-skills/docs/engineering-principles.md` 的「What needs the user's input, and what doesn't — a tiering standard」）**：自己開的 PR，同時符合以下**驗證條件**跟**範圍條件**才直接合併，不用先問使用者：
+**2026-09-14 追加（PR 合併授權，依「哪些事要問使用者、哪些不用」的分級標準）**：自己開的 PR，同時符合以下**驗證條件**跟**範圍條件**才直接合併，不用先問使用者：
 
 驗證條件（缺一不可）：
 - CI 全部通過（lint/type-check/build/test 等各項 check）

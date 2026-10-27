@@ -76,8 +76,8 @@ const KEYS: { keys: string[]; text: string }[] = [
       <div
         ref="body"
         tabindex="0"
-        @scroll.passive="updateMoreBelow"
         class="min-h-0 overflow-y-auto px-4 pb-3.5 pt-1 grid gap-3 @min-[640px]:grid-cols-2 @min-[640px]:gap-x-6 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent) rounded-b-xl"
+        @scroll.passive="updateMoreBelow"
       >
         <section class="@min-[640px]:row-span-2 [@media(hover:none)_and_(pointer:coarse)]:hidden">
           <h4 class="text-[13px] text-(--text-ink-muted) mb-1">

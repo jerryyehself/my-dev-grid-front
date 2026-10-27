@@ -1,7 +1,6 @@
 <template>
   <!-- About 頁：照設計稿 canvas HcnHo2yYoWQdFypRg7Y2qU 的 E 版（Catalog.dc.html，版本 25）實作。
-       決定與理由見 my-dev-grid-skills/docs/about-visual-redesign-2026-09-29.md（§1 共 19 條）、
-       D-58（這頁介紹網站，不介紹作者；拿掉 Timeline 與自我介紹）、D-59（配色）、D-60（字型）。
+       2026-09-29 改版的主要決定：D-58（這頁介紹網站，不介紹作者；拿掉 Timeline 與自我介紹）、D-59（配色）、D-60（字型）。
        整頁由滿版色帶組成，route meta 設了 fullBleed，MainLayout 不套內容欄寬度也不留上下白。
        顏色一律走 token，設計稿裡沒有對應 token 的值才寫成 color-mix()，理由寫在各處註解。 -->
   <!-- leading-[normal]：設計稿沒指定行高的文字都是瀏覽器預設的 normal，不是 body 的 1.5。
@@ -404,7 +403,7 @@
             :title="l.label"
             class="inline-flex items-center justify-center w-11 h-11 rounded-[6px] border hover:bg-(--accent-brass) hover:text-(--bg-band-strong) transition-colors"
             :style="{ borderColor: mix('--accent-brass', 50) }"
-            v-bind="l.external ? { target: '_blank', rel: 'noopener' } : {}"
+            v-bind="l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {}"
           >
             <svg
               v-if="l.icon === 'github'"
@@ -564,6 +563,10 @@ const LINKS = [
 ]
 
 // ---- 這頁專用的小元件：只在這裡用，抽成獨立檔案反而要多跳一層才看得懂 ----
+
+// 下面幾個小元件共用這頁的 MONO、mix() 和由頁面資料推出來的型別，拆成獨立檔案要連這些一起搬，
+// 不是單純的搬移；所以這個檔案先不套用「一個檔案一個元件」，之後整頁重構時再一起處理。
+/* eslint-disable vue/one-component-per-file */
 
 /** 切換卡裡的一筆條目：上面是分類號，下面是條目名。focus 是「從哪一頭看」的那一筆，框線改成強調色 */
 const EntryChip = defineComponent({

@@ -10,7 +10,7 @@ management and idea incubation. That framing is why visual decisions here get
 checked against more than taste: a choice that looks fine but doesn't mean
 anything (see the nav dot example below) is a bug, not a style preference.
 
-**Current themes** (since 2026-09-29, decision-register D-59): both
+**Current themes** (since 2026-09-29, D-59): both
 `.theme-library` (light, default) and `.theme-terminal` (dark, toggled via
 `useTheme.ts` / `ThemeToggle.vue`) are filled with the **navy v2** palette —
 card-stock ground, navy (`--bg-nav-footer`/`--bg-band-strong`), wine accent in
@@ -91,13 +91,11 @@ header systems, not just a rename.
 
 ## Component naming
 
-Vue's own style guide defines two prefixes, and this project should stick to
-exactly those two — don't invent a third:
-- **`Base*`** — presentational components with no business logic, meant to be
-  reused anywhere (`BaseButton.vue`). This is where a style decision from the
-  chain above turns into something concrete and shared, instead of getting
-  re-implemented per view (see the button variants below).
-- **`The*`** — components that exist exactly once per page (`TheNavbar.vue`).
+The naming rules themselves (prefixes, file names, events, props) live in
+[`docs/conventions/naming.md`](../../../docs/conventions/naming.md) — don't
+restate them here. What matters visually: **`Base*`** components are where a
+style decision from the chain above turns into something concrete and shared,
+instead of getting re-implemented per view (see the button variants below).
 
 `SiteHeader.vue` / `SiteFooter.vue` used a `Site*` prefix that isn't part of
 Vue's convention — one more reason (beyond being dead code, above) they didn't
@@ -365,6 +363,31 @@ node highlight, once that feature exists.
   that actually matter for attention; an element with no justification should
   be cut, not rationalized into staying.
 
+### Concrete interaction rules
+
+These turn the lenses above into checks for every interactive element. They
+use this project's tokens and `Base*` components — never raw Tailwind colors
+like `bg-red-600`.
+- **Clickable things look clickable, and nothing else does.** Buttons and
+  links get a visible signifier (border, underline, hover change,
+  `cursor-pointer`); plain text and decorative cards don't borrow button
+  styling or hover lift.
+- **Every action gives feedback.** A pressed state on buttons; anything async
+  (API calls, login) shows a loading state right away — `BaseLoadingBlock`
+  for content areas, a disabled/pending button for actions.
+- **No double submits.** A submit/save button is disabled while its request
+  is pending (`LoginView`'s `:disabled="submitting"` is the pattern).
+- **Destructive actions confirm first.** Delete, overwrite or anything that
+  can't be undone asks before acting and says what will be lost
+  (`ArticleManageView`'s delete and `ArticleEditorView`'s file overwrite use
+  `window.confirm` with that wording). Their styling must never read as the
+  primary or positive action; it does not need a new red — see the
+  `BaseTag` example above on reaching for a semantic color only when a real
+  alert-level distinction exists. Errors use `--text-error`.
+- **One primary action per area.** The main action uses `BaseButton`
+  `primary`; secondary ones (cancel, back) use `ghost` or a text link, so the
+  eye lands on the right first step.
+
 ### Avoiding AI-generated-design clichés
 Both Anthropic's `artifact-design` skill and the official `frontend-design`
 skill (`anthropics/claude-code`) name the same three defaults that AI-driven
@@ -424,12 +447,11 @@ outside it. Don't burn turns retrying them. Use this instead:
   (commit messages/comments/replies default to Traditional Chinese) —
   cross-linked here rather than duplicated.
 - Exploratory visual work (new theme candidates, unproven directions) follows
-  the general engineering principle recorded in the `my-dev-grid-skills`
-  marketplace repo (`docs/engineering-principles.md`): open a branch before
-  writing any code, not after.
+  the general engineering principle: open a branch before writing any code,
+  not after.
 - Implementing *from* a design mockup (this project's Claude Design canvas,
   or any other visual spec with concrete style values) follows the
-  `mockup-fidelity` skill in the `my-dev-grid-skills` marketplace repo:
+  `mockup-fidelity` skill (from the project's skills marketplace):
   extract exact values instead of eyeballing the nearest Tailwind default,
   and verify with `getComputedStyle` rather than a screenshot alone —
   screenshots only catch structural problems (duplication, misalignment),

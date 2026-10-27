@@ -96,7 +96,7 @@ describe('createScope / updateScope', () => {
 
   it('非 422/401 的失敗仍然是一般 Error，不會被誤當成驗證失敗', async () => {
     // 401 現在有自己專門的處理（client.ts 的 handleUnauthorized，
-    // decision-register.md D-56 上線後：導去登入頁，見 client.spec.ts），
+    // D-56 上線後：導去登入頁，見 client.spec.ts），
     // 不再落到這條「一般 Error」路徑，這裡改用 500 驗證同一件事：
     // 非 422、也不是登入過期，一樣不能被歸進欄位錯誤。
     mockFetch.mockResolvedValue(jsonResponse({ message: 'Server Error.' }, 500))

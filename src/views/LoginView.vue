@@ -1,9 +1,8 @@
 <script setup lang="ts">
 // 內容結構沿用 my-dev-grid（Triple 後台）已經 mockup-fidelity 簽核過的登入頁
 // （`resources/js/pages/AppLogin.vue`，direction B：品牌/情境說明 + Google/LINE
-// OAuth 按鈕 + email/password 備援表單，2026-09-13 簽核，見
-// my-dev-grid-skills/docs/design-artifacts.md「Triple 後台登入頁」列）——
-// 這不是新設計，是同一組 v1 登入需求（decision-register.md D-34）在第二個
+// OAuth 按鈕 + email/password 備援表單，2026-09-13 簽核）——
+// 這不是新設計，是同一組 v1 登入需求（D-34）在第二個
 // repo 的實作，所以不重新畫一份 mockup，直接用這個專案既有的 Base* 元件
 // 跟 CSS token 重建同樣的資訊結構。
 import { ref } from 'vue'
@@ -14,6 +13,7 @@ import BaseInput from '@/components/BaseInput.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseHint from '@/components/BaseHint.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { safeRedirect } from '@/router/safeRedirect'
 
 const route = useRoute()
 const router = useRouter()
@@ -55,8 +55,7 @@ async function handleSubmit() {
       return
     }
     // 沒有指定要回哪一頁（不是被路由守衛擋下來才來登入）就去後台入口，登入就是為了管理
-    const redirect = (route.query.redirect as string) || '/admin'
-    router.push(redirect)
+    router.push(safeRedirect(route.query.redirect, '/admin'))
   } finally {
     submitting.value = false
   }
