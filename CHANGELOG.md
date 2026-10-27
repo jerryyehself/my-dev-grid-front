@@ -4,6 +4,12 @@
 
 格式依循 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.1.0/)，版本號依循[語意化版本](https://semver.org/lang/zh-TW/)。前端與後端（[`my-dev-grid`](https://github.com/jerryyehself/my-dev-grid)）各自獨立編版號。`v1.0.0` 是網站正式公開（移除 Cloudflare Access）的那一版，在那之前的內部版本都視為預發行，不逐版列出。
 
+## [1.0.3] - 2026-10-27
+
+### 修正
+
+- 內容安全政策放行 Cloudflare Web Analytics（`static.cloudflareinsights.com` 的 script 與回傳資料的 `cloudflareinsights.com`）。1.0.2 正式啟用內容安全政策後，正式站的流量統計 script 被擋下，網站功能不受影響，但訪客統計停止記錄。
+
 ## [1.0.2] - 2026-10-27
 
 安全性強化版本，網站功能沒有變動。
@@ -110,6 +116,7 @@ About
 - 系統設定為「減少動態」時，動畫與轉場會停用（#57）。
 - 登入結果提示以 `aria-live` 通知輔助科技；圖譜檢視切換有文字標籤；在圖譜詳情卡內點選節點後，鍵盤焦點會移到新標題（#116, #119）。
 
+[1.0.3]: https://github.com/jerryyehself/my-dev-grid-front/releases/tag/v1.0.3
 [1.0.2]: https://github.com/jerryyehself/my-dev-grid-front/releases/tag/v1.0.2
 [1.0.1]: https://github.com/jerryyehself/my-dev-grid-front/releases/tag/v1.0.1
 [1.0.0]: https://github.com/jerryyehself/my-dev-grid-front/releases/tag/v1.0.0

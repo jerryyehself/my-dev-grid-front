@@ -6,8 +6,10 @@
 # - connect-src 的 API 網址要跟建置時的 VITE_API_BASE_URL 一致，API 換網域時一起改。
 # - style-src 暫時放行 'unsafe-inline'：元件的 :style 綁定與繪圖程式會直接寫 style 屬性。
 # - img-src 放行所有 https：文章可以嵌入外部網站的圖片。
+# - cloudflareinsights.com：正式站開了 Cloudflare Web Analytics，Cloudflare 會在頁面插入它的 script
+#   （script-src）並把資料送回（connect-src）。預覽站沒有開，所以預覽站看不到這兩個來源。
 /*
-  Content-Security-Policy:default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https:; connect-src 'self' https://my-dev-grid-api-112870689436.asia-east1.run.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https:; connect-src 'self' https://my-dev-grid-api-112870689436.asia-east1.run.app https://cloudflareinsights.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
