@@ -1,13 +1,13 @@
 # Cloudflare Workers static assets 的回應標頭（https://developers.cloudflare.com/workers/static-assets/headers/）。
 # 改這個檔案屬於部署設定，合併前要先問維護者（CLAUDE.md「PR 合併授權」）。
 #
-# CSP 目前是 Report-Only：只在瀏覽器主控台回報違規、不阻擋。確認預覽站各頁都沒有違規後，
-# 再把標頭名稱改成 Content-Security-Policy 正式啟用。
+# CSP 正式啟用：不在白名單上的來源會被瀏覽器擋下。引入外部資源（script、API、字型、嵌入）時，
+# 照 docs/conventions/security.md「引入外部資源時更新 CSP」在同一個 PR 更新這裡。
 # - connect-src 的 API 網址要跟建置時的 VITE_API_BASE_URL 一致，API 換網域時一起改。
 # - style-src 暫時放行 'unsafe-inline'：元件的 :style 綁定與繪圖程式會直接寫 style 屬性。
 # - img-src 放行所有 https：文章可以嵌入外部網站的圖片。
 /*
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https:; connect-src 'self' https://my-dev-grid-api-112870689436.asia-east1.run.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy:default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https:; connect-src 'self' https://my-dev-grid-api-112870689436.asia-east1.run.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY

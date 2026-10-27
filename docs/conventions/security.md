@@ -27,3 +27,23 @@
 ## 部署設定
 
 - 安全標頭（CSP 等）屬於部署設定，改動前要先問維護者，見 `CLAUDE.md`「PR 合併授權」的範圍條件。`index.html` 不要新增行內 script，否則之後的 CSP 要另外放行。
+
+### 引入外部資源時更新 CSP
+
+CSP 寫在 `public/_headers`，瀏覽器只會載入白名單裡的來源，不在名單上的會直接被擋、功能壞掉。新增任何外部來源的東西，要在同一個 PR 裡把來源加進對應的指令：
+
+| 要引入的東西 | 加到哪個指令 | 例子 |
+| --- | --- | --- |
+| 外部 script（分析工具、SDK、地圖） | `script-src` | `https://static.cloudflareinsights.com` |
+| 程式會打的 API（`fetch`、WebSocket） | `connect-src` | API 換網域、接第三方 API；WebSocket 要寫 `wss://` |
+| 外部字型 | `font-src`（字型檔）與 `style-src`（字型的 CSS） | Google Fonts 已放行 |
+| 外部 CSS | `style-src` | |
+| 嵌入其他網站（YouTube、CodePen） | 新增 `frame-src` | `frame-src https://www.youtube-nocookie.com` |
+| `data:`、`blob:` 圖片（貼上 base64 圖、畫布匯出預覽） | `img-src` 加 `data:` 或 `blob:` | |
+| http（非 https）圖片 | 不放行 | 改用 https 網址 |
+
+- 只加用得到的網域，不要用 `*` 或 `https:` 整個放行（`img-src` 是例外：文章可以嵌入任何外部圖片）。
+- API 網址換掉（`VITE_API_BASE_URL`）時，`connect-src` 一定要一起改，不然整站讀不到資料。
+- 改完在預覽站打開用到的頁面，看瀏覽器主控台（F12 → Console）有沒有 `Content-Security-Policy` 開頭的錯誤。
+- 不確定會不會壞時，可以先把新來源加進一份 `Content-Security-Policy-Report-Only` 標頭（只回報、不阻擋），確認沒有違規再搬進正式的 `Content-Security-Policy`。
+- Cloudflare 後台開某些功能會自動在頁面塞 script（Web Analytics、Rocket Loader、Zaraz），開之前也要先加白名單。
