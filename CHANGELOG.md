@@ -4,6 +4,26 @@
 
 格式依循 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.1.0/)，版本號依循[語意化版本](https://semver.org/lang/zh-TW/)。前端與後端（[`my-dev-grid`](https://github.com/jerryyehself/my-dev-grid)）各自獨立編版號。`v1.0.0` 是網站正式公開（移除 Cloudflare Access）的那一版，在那之前的內部版本都視為預發行，不逐版列出。
 
+## [1.0.2] - 2026-10-27
+
+安全性強化版本，網站功能沒有變動。
+
+### 新增
+
+- 回應加上安全標頭：`Content-Security-Policy`、`X-Content-Type-Options`、`Referrer-Policy`、`X-Frame-Options`、`Permissions-Policy`。內容安全政策先以僅回報模式上線觀察，確認沒有誤擋後正式啟用，不在白名單上的來源會被瀏覽器擋下（#174, #184）。
+- API 回應是 4xx／5xx 時，在瀏覽器 console 記錄方法、路徑、狀態碼與 `X-Request-Id`，回報問題時可以對照後端紀錄；只寫在 console，畫面上不顯示（#147）。
+
+### 變更
+
+- 主題初始化的行內 script 搬到 `theme-init.js`，配合內容安全政策不放行行內 script；行為不變，畫面繪製前仍會先套用主題（#174, #184）。
+
+### 修正
+
+- 登入後的 `redirect` 參數只接受站內路徑，不再導向其他網站（#183）。
+- 圖譜節點的外部連結與文章 Markdown 內的圖片，改用與文章連結相同的協定白名單，不合格的網址不再產生連結或圖片（#172）。
+- 站外連結一律加上 `rel="noopener noreferrer"`（#173）。
+- 更新開發工具的相依套件（`undici`、`vitest` 等）以修補已知漏洞；這些套件只用於開發與建置，不會進到網站（#153, #185）。
+
 ## [1.0.1] - 2026-10-06
 
 安全性修補版本。
@@ -90,5 +110,6 @@ About
 - 系統設定為「減少動態」時，動畫與轉場會停用（#57）。
 - 登入結果提示以 `aria-live` 通知輔助科技；圖譜檢視切換有文字標籤；在圖譜詳情卡內點選節點後，鍵盤焦點會移到新標題（#116, #119）。
 
+[1.0.2]: https://github.com/jerryyehself/my-dev-grid-front/releases/tag/v1.0.2
 [1.0.1]: https://github.com/jerryyehself/my-dev-grid-front/releases/tag/v1.0.1
 [1.0.0]: https://github.com/jerryyehself/my-dev-grid-front/releases/tag/v1.0.0
