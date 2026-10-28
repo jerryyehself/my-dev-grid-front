@@ -37,10 +37,17 @@ export function slugify(text: string): string {
 /** 把同名標題後面補流水號，免得兩個 id 撞在一起讓錨點指到第一個。 */
 function dedupe(slugs: string[]): string[] {
   const seen = new Map<string, number>()
+  const used = new Set<string>()
   return slugs.map((s) => {
-    const n = (seen.get(s) ?? 0) + 1
+    let n = (seen.get(s) ?? 0) + 1
+    let candidate = n === 1 ? s : `${s}-${n}`
+    while (used.has(candidate)) {
+      n += 1
+      candidate = `${s}-${n}`
+    }
     seen.set(s, n)
-    return n === 1 ? s : `${s}-${n}`
+    used.add(candidate)
+    return candidate
   })
 }
 
