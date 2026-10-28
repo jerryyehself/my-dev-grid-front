@@ -42,12 +42,40 @@ describe('extractHeadings', () => {
     ])
   })
 
-  it('它應該記錄原標題自帶流水號時目前仍可能產生相同 slug', () => {
-    // 目前依原始 slug 計數，沒有避開其他標題已經使用的流水號；此任務只加測試。
+  it('它應該避開原標題已經使用的流水號', () => {
     expect(extractHeadings('# A\n\n# A-2\n\n# A').map((heading) => heading.slug)).toEqual([
       'a',
       'a-2',
+      'a-3',
+    ])
+  })
+
+  it('它應該在自帶流水號的標題先出現時仍依序避開衝突', () => {
+    expect(extractHeadings('# A-2\n\n# A\n\n# A').map((heading) => heading.slug)).toEqual([
       'a-2',
+      'a',
+      'a-3',
+    ])
+  })
+
+  it('它應該連續跳過已用流水號並避開產生過的 slug', () => {
+    const source = '# A\n\n# A-2\n\n# A-3\n\n# A\n\n# A-4\n\n# A'
+
+    expect(extractHeadings(source).map((heading) => heading.slug)).toEqual([
+      'a',
+      'a-2',
+      'a-3',
+      'a-4',
+      'a-4-2',
+      'a-5',
+    ])
+  })
+
+  it('它應該在空標題使用預設 slug 時避開既有的流水號', () => {
+    expect(extractHeadings('#\n\n# section-2\n\n#').map((heading) => heading.slug)).toEqual([
+      'section',
+      'section-2',
+      'section-3',
     ])
   })
 })
