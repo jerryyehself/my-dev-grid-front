@@ -23,12 +23,12 @@ describe('previewFullCallNumber', () => {
   // 這個函式存在的唯一理由是「跟後端的推導一致」,所以測的就是那個一致性。
   // 後端是 SetCURIEAttribute::getFullCallNumberAttribute():class_number . call_number,
   // 字串相接,沒有分隔符也沒有補零。
-  it('就是分類號接子類號，沒有分隔符', () => {
+  it('它應該將分類號接上子類號且不加分隔符', () => {
     expect(previewFullCallNumber('00', '30')).toBe('0030')
     expect(previewFullCallNumber('10', '40')).toBe('1040')
   })
 
-  it('子類號留空時只剩分類號兩碼——不自己補 00', () => {
+  it('它應該在子類號留空時只保留分類號兩碼，不自己補 00', () => {
     // 補 '00' 會讓預覽顯示成 '0000',而後端實際存出來是 '00'。
     // 預覽說謊比預覽不完整糟糕得多。
     expect(previewFullCallNumber('00', '')).toBe('00')
@@ -37,7 +37,7 @@ describe('previewFullCallNumber', () => {
 })
 
 describe('createScope / updateScope', () => {
-  it('兩個動詞送同一份 payload，欄位名是 parent_class（D-51／#61）', async () => {
+  it('它應該讓兩個動詞送同一份 payload，欄位名是 parent_class（D-51／#61）', async () => {
     mockFetch.mockResolvedValue(jsonResponse({ data: { id: 9 }, message: 'Scope created.' }, 201))
 
     const payload = {
@@ -65,7 +65,7 @@ describe('createScope / updateScope', () => {
     expect(JSON.parse(createInit.body)).not.toHaveProperty('class_number')
   })
 
-  it('422 攤平成欄位錯誤，丟 ApiValidationError 而不是一般 Error', async () => {
+  it('它應該在 422 時攤平成欄位錯誤並丟 ApiValidationError 而不是一般 Error', async () => {
     mockFetch.mockResolvedValue(
       jsonResponse(
         {
@@ -94,7 +94,7 @@ describe('createScope / updateScope', () => {
     }
   })
 
-  it('非 422/401 的失敗仍然是一般 Error，不會被誤當成驗證失敗', async () => {
+  it('它應該在非 422/401 的失敗時仍丟一般 Error，不會誤當成驗證失敗', async () => {
     // 401 現在有自己專門的處理（client.ts 的 handleUnauthorized，
     // D-56 上線後：導去登入頁，見 client.spec.ts），
     // 不再落到這條「一般 Error」路徑，這裡改用 500 驗證同一件事：
@@ -115,7 +115,7 @@ describe('createScope / updateScope', () => {
 
 describe('fetchTechniqueOptions', () => {
   // 版本是獨立的一筆、title 相同（後端 2026-09-30）：挑選器上只顯示 title 的話 Vue 和 Vue 3 分不出來
-  it('技術的名稱帶版本，版本留空就只有 title', async () => {
+  it('它應該讓技術名稱帶版本，在版本留空時只保留 title', async () => {
     mockFetch.mockResolvedValue(
       jsonResponse({
         type: 'techniques',
@@ -131,7 +131,7 @@ describe('fetchTechniqueOptions', () => {
     ])
   })
 
-  it('沒有 version 欄位的族（文件）名稱不變', async () => {
+  it('它應該在族（文件）沒有 version 欄位時保留名稱不變', async () => {
     mockFetch.mockResolvedValue(jsonResponse({ type: 'documentations', data: [{ id: 5, title: 'Vue 官方文件', scope: null }] }))
     expect(await fetchDocumentationOptions()).toEqual([{ id: 5, title: 'Vue 官方文件', scope: null }])
   })
