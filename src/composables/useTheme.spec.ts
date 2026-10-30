@@ -21,14 +21,14 @@ describe('useTheme', () => {
     localStorage.clear()
   })
 
-  it('初始狀態是 library', async () => {
+  it('它應該以 library 為初始狀態', async () => {
     const useTheme = await freshUseTheme()
     const { theme } = useTheme()
 
     expect(theme.value).toBe('library')
   })
 
-  it('toggleTheme 會把 library 切成 terminal，並掛上對應的 class', async () => {
+  it('它應該在呼叫 toggleTheme 時把 library 切成 terminal，並掛上對應的 class', async () => {
     const useTheme = await freshUseTheme()
     const { theme, toggleTheme } = useTheme()
 
@@ -38,7 +38,7 @@ describe('useTheme', () => {
     expect(document.documentElement.classList.contains('theme-terminal')).toBe(true)
   })
 
-  it('連續呼叫兩次 toggleTheme 會切回原本的主題', async () => {
+  it('它應該在連續呼叫兩次 toggleTheme 時切回原本的主題', async () => {
     const useTheme = await freshUseTheme()
     const { theme, toggleTheme } = useTheme()
 
@@ -49,7 +49,7 @@ describe('useTheme', () => {
     expect(document.documentElement.classList.contains('theme-terminal')).toBe(false)
   })
 
-  it('toggleTheme 後會把選擇寫進 localStorage', async () => {
+  it('它應該在 toggleTheme 後把選擇寫進 localStorage', async () => {
     const useTheme = await freshUseTheme()
     const { toggleTheme } = useTheme()
 
@@ -58,7 +58,7 @@ describe('useTheme', () => {
     expect(localStorage.getItem('theme')).toBe('terminal')
   })
 
-  it('文件上已經是 terminal 主題時，初始狀態要讀成 terminal', async () => {
+  it('它應該在文件上已經是 terminal 主題時將初始狀態讀成 terminal', async () => {
     document.documentElement.classList.add('theme-terminal')
     const useTheme = await freshUseTheme()
     const { theme } = useTheme()
