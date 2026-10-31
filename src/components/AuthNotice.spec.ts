@@ -15,13 +15,13 @@ describe('AuthNotice', () => {
     vi.useRealTimers()
   })
 
-  it('沒有提示：只留一個空的 aria-live 區塊', () => {
+  it('它應該在沒有提示時只留一個空的 aria-live 區塊', () => {
     const wrapper = mount(AuthNotice)
     expect(wrapper.attributes('aria-live')).toBe('polite')
     expect(wrapper.text()).toBe('')
   })
 
-  it('成功提示：顯示文字，5 秒後自己消失', async () => {
+  it('它應該在成功提示時顯示文字，並在 5 秒後自己消失', async () => {
     const auth = useAuthStore()
     const wrapper = mount(AuthNotice)
     auth.setNotice({ tone: 'success', text: '已登入：Jerry' })
@@ -34,7 +34,7 @@ describe('AuthNotice', () => {
     expect(wrapper.text()).toBe('')
   })
 
-  it('錯誤提示：用 role="alert"，不會自己消失，按關閉才收起來', async () => {
+  it('它應該在錯誤提示時使用 role="alert"，不會自己消失，按關閉才收起來', async () => {
     const auth = useAuthStore()
     const wrapper = mount(AuthNotice)
     auth.setNotice({ tone: 'error', text: '登入失敗' })

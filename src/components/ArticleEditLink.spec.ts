@@ -31,12 +31,12 @@ describe('ArticleEditLink', () => {
     setActivePinia(createPinia())
   })
 
-  it('沒登入時什麼都不渲染', async () => {
+  it('它應該在沒登入時什麼都不渲染', async () => {
     const wrapper = await mountLink()
     expect(wrapper.find('a').exists()).toBe(false)
   })
 
-  it('登入後連到那篇文章的編輯頁，呼叫端給的 class 落在連結上', async () => {
+  it('它應該在登入後連到那篇文章的編輯頁，並把呼叫端給的 class 放在連結上', async () => {
     useAuthStore().token = 'test-token'
     const wrapper = await mountLink({ label: '編輯這篇', title: 'Vite 筆記' })
     const link = wrapper.find('a')

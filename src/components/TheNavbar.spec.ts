@@ -41,7 +41,7 @@ describe('TheNavbar', () => {
     localStorage.clear()
   })
 
-  it('目前路由對應的連結，active 色條要亮起來（scale-x-100）', async () => {
+  it('它應該讓目前路由對應連結的 active 色條亮起來（scale-x-100）', async () => {
     const wrapper = await mountNavbar('/about')
 
     const aboutLink = wrapper.findAll('a').find((a) => a.text() === 'ABOUT')
@@ -49,7 +49,7 @@ describe('TheNavbar', () => {
     expect(indicator.classes()).toContain('scale-x-100')
   })
 
-  it('沒有對應到目前路由的連結，active 色條不會亮', async () => {
+  it('它應該讓沒有對應到目前路由的連結不亮 active 色條', async () => {
     const wrapper = await mountNavbar('/about')
 
     const articlesLink = wrapper.findAll('a').find((a) => a.text() === 'ARTICLES')
@@ -57,7 +57,7 @@ describe('TheNavbar', () => {
     expect(indicator.classes()).not.toContain('scale-x-100')
   })
 
-  it('切換路由後，active 色條會跟著換到新的連結上', async () => {
+  it('它應該在切換路由後把 active 色條換到新的連結上', async () => {
     const router = makeRouter()
     router.push('/about')
     await router.isReady()
@@ -71,7 +71,7 @@ describe('TheNavbar', () => {
     expect(indicator.classes()).toContain('scale-x-100')
   })
 
-  it('預設不顯示手機版選單，點漢堡按鈕後才展開', async () => {
+  it('它應該預設不顯示手機版選單，點漢堡按鈕後才展開', async () => {
     const wrapper = await mountNavbar('/')
 
     expect(wrapper.find('[aria-expanded="true"]').exists()).toBe(false)
@@ -82,7 +82,7 @@ describe('TheNavbar', () => {
     expect(menuButton.attributes('aria-expanded')).toBe('true')
   })
 
-  it('切換路由時，展開中的手機版選單會自動收合', async () => {
+  it('它應該在切換路由時自動收合展開中的手機版選單', async () => {
     const router = makeRouter()
     router.push('/')
     await router.isReady()
