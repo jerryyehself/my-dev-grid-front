@@ -7,7 +7,7 @@ const n = (id: string, domainType: 'documentation' | 'technique' | 'implementati
 })
 
 describe('computeDerivedEdges', () => {
-  it('兩份文件連到同一項技術就推出一條間接關聯，via 記錄共同鄰居', () => {
+  it('它應該推出一條間接關聯並以 via 記錄共同鄰居，當兩份文件連到同一項技術時', () => {
     const nodes = [n('d1', 'documentation'), n('d2', 'documentation'), n('t1', 'technique')]
     const links = [
       { source: 'd1', target: 't1' },
@@ -18,7 +18,7 @@ describe('computeDerivedEdges', () => {
     ])
   })
 
-  it('實作要共用至少 3 項技術才算', () => {
+  it('它應該在實作共用至少 3 項技術時才算間接關聯', () => {
     const nodes = [
       n('i1', 'implementation'),
       n('i2', 'implementation'),
@@ -37,7 +37,7 @@ describe('computeDerivedEdges', () => {
     expect(computeDerivedEdges(nodes, three)).toHaveLength(1)
   })
 
-  it('技術之間不推導；已有真實同類關係的配對跳過', () => {
+  it('它應該不推導技術之間的關聯，並跳過已有真實同類關係的配對', () => {
     const nodes = [
       n('t1', 'technique'),
       n('t2', 'technique'),
@@ -53,7 +53,7 @@ describe('computeDerivedEdges', () => {
     expect(computeDerivedEdges(nodes, links)).toEqual([])
   })
 
-  it('力模擬改寫成物件的端點也認得', () => {
+  it('它應該認得被力模擬改寫成物件的端點', () => {
     const nodes = [n('d1', 'documentation'), n('d2', 'documentation'), n('t1', 'technique')]
     const links = [
       { source: { id: 'd1' }, target: { id: 't1' } },
@@ -64,7 +64,7 @@ describe('computeDerivedEdges', () => {
 })
 
 describe('derivedStrength', () => {
-  it('剛好壓線是 0，門檻 +3 封頂是 1', () => {
+  it('它應該在剛好壓線時為 0，門檻 +3 封頂時為 1', () => {
     expect(derivedStrength(1, 'documentation')).toBe(0)
     expect(derivedStrength(4, 'documentation')).toBe(1)
     expect(derivedStrength(3, 'implementation')).toBe(0)

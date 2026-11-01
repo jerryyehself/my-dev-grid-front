@@ -21,7 +21,7 @@ const toScreen = (
 })
 
 describe('centerForAnchor', () => {
-  it('縮放後錨點仍在同一個螢幕位置', () => {
+  it('它應該讓錨點仍在同一個螢幕位置，當縮放後', () => {
     const world = { x: 40, y: -12 }
     const screen = { x: 120, y: 300 }
     const c = centerForAnchor(world, screen, 2.5, 800, 460)
@@ -32,7 +32,7 @@ describe('centerForAnchor', () => {
 })
 
 describe('wheelZoomFactor', () => {
-  it('滾輪往前（deltaY 負）放大、往後縮小，滑鼠一格不會一次縮放好幾倍', () => {
+  it('它應該在滾輪往前（deltaY 負）時放大、往後時縮小，滑鼠一格不會一次縮放好幾倍', () => {
     expect(wheelZoomFactor(-100, 0)).toBeGreaterThan(1)
     expect(wheelZoomFactor(100, 0)).toBeLessThan(1)
     expect(wheelZoomFactor(100, 0)).toBeGreaterThan(0.8)
@@ -41,7 +41,7 @@ describe('wheelZoomFactor', () => {
 })
 
 describe('pinchView', () => {
-  it('兩指張開一倍就放大一倍，中點底下的點跟著手指', () => {
+  it('它應該在兩指張開一倍時放大一倍，中點底下的點跟著手指', () => {
     const start = { world: { x: 10, y: 10 }, dist: 100, k: 1 }
     const { k, center } = pinchView(start, { x: 250, y: 200 }, 200, 500, 400)
     expect(k).toBe(2)
@@ -50,7 +50,7 @@ describe('pinchView', () => {
     expect(back.y).toBeCloseTo(200)
   })
 
-  it('倍率夾在上下限內', () => {
+  it('它應該讓倍率夾在上下限內', () => {
     expect(
       pinchView({ world: { x: 0, y: 0 }, dist: 10, k: 1 }, { x: 0, y: 0 }, 10000, 100, 100).k,
     ).toBe(MAX_ZOOM)

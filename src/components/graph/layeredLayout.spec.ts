@@ -8,7 +8,7 @@ import {
 } from './layeredLayout'
 
 describe('layeredLayout', () => {
-  it('三層中心沿對角線錯開，技術在畫布正中', () => {
+  it('它應該讓三層中心沿對角線錯開，技術在畫布正中', () => {
     const t = layerTargets(1000, 500, { documentation: 4, technique: 9, implementation: 16 })
     expect(t.technique).toEqual({
       cx: 500,
@@ -21,7 +21,7 @@ describe('layeredLayout', () => {
     expect(t.implementation.cy).toBeGreaterThan(250)
   })
 
-  it('countByType 依類別計數', () => {
+  it('它應該讓 countByType 依類別計數', () => {
     expect(
       countByType([
         { domainType: 'technique' },
@@ -35,7 +35,7 @@ describe('layeredLayout', () => {
     })
   })
 
-  it('clampToLayer 把超出圓框的節點拉回框內，框內的不動', () => {
+  it('它應該讓 clampToLayer 把超出圓框的節點拉回框內，框內的不動', () => {
     const target = { cx: 0, cy: 0, r: 100 }
     const out = { x: 300, y: 0, domainType: 'technique' as const }
     clampToLayer(out, target, 10)

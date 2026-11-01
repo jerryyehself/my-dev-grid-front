@@ -5,7 +5,7 @@ type T = 'documentation' | 'technique' | 'implementation'
 const mk = (x: number, y: number, domainType: T) => ({ x, y, vx: 0, vy: 0, domainType })
 
 describe('typeClusterForce', () => {
-  it('節點往自己類別的重心拉，不往別的類別拉', () => {
+  it('它應該讓節點往自己類別的重心拉，不往別的類別拉', () => {
     const nodes = [mk(0, 0, 'documentation'), mk(10, 0, 'documentation'), mk(100, 100, 'technique')]
     const f = typeClusterForce(() => 0.1)
     f.initialize(nodes)
@@ -17,7 +17,7 @@ describe('typeClusterForce', () => {
     expect(nodes[2]!.vy).toBe(0)
   })
 
-  it('同一類別的拉力加總為零：不會讓整張圖漂移', () => {
+  it('它應該讓同一類別的拉力加總為零，不會讓整張圖漂移', () => {
     const nodes = [
       mk(0, 0, 'implementation'),
       mk(30, 5, 'implementation'),
@@ -30,7 +30,7 @@ describe('typeClusterForce', () => {
     expect(nodes.reduce((s, n) => s + n.vy, 0)).toBeCloseTo(0)
   })
 
-  it('強度 0 等於關掉', () => {
+  it('它應該在強度為 0 時等於關掉', () => {
     const nodes = [mk(0, 0, 'technique'), mk(10, 0, 'technique')]
     const f = typeClusterForce(() => 0)
     f.initialize(nodes)
@@ -38,7 +38,7 @@ describe('typeClusterForce', () => {
     expect(nodes[0]!.vx).toBe(0)
   })
 
-  it('typeCentroids 依類別算平均座標', () => {
+  it('它應該讓 typeCentroids 依類別算平均座標', () => {
     const c = typeCentroids([mk(0, 0, 'technique'), mk(4, 2, 'technique')])
     expect(c.get('technique')).toEqual({ x: 2, y: 1 })
   })
