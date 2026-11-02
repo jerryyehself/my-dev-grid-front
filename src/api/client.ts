@@ -36,6 +36,18 @@ function handleUnauthorized(): never {
 }
 
 /**
+ * 帶 token 的請求收到 401、換發卻暫時失敗（連不上後端、5xx、429）時丟的錯誤。
+ * 這時後端的登入多半還活著，所以不清登入狀態、不導去登入頁——以前會導過去，
+ * 編輯器裡還沒存的內容就跟著不見了。呼叫端把它當成「稍後再試」的錯誤顯示即可。
+ */
+export class AuthRefreshUnavailableError extends Error {
+  constructor() {
+    super('暫時無法更新登入狀態（伺服器沒有回應），目前仍是登入狀態，請稍後再試一次')
+    this.name = 'AuthRefreshUnavailableError'
+  }
+}
+
+/**
  * GET 收到非 2xx 時丟的錯誤，帶著 HTTP 狀態碼。呼叫端要分「查無此資料（404）」跟
  * 「伺服器壞了（5xx）」時看 `status`，不要去猜 `message` 字串。
  * 網路層失敗（fetch 本身丟 TypeError）不會是這個類別，沒有 `status`。
@@ -81,7 +93,8 @@ function logErrorResponse(method: string, path: string, res: Response): void {
 /**
  * 送出請求；帶著 token 卻收到 401（access token 只活 15 分鐘，過期是常態），
  * 先用 refresh cookie 換一支新的 token、再重送一次。只重試一次：換到新 token
- * 重送還是 401，或根本換不到，就當成真的沒登入。沒帶 token 的請求收到 401
+ * 重送還是 401，或後端說 refresh cookie 也無效，就當成真的沒登入。換發暫時失敗
+ * 時丟 AuthRefreshUnavailableError，不清登入狀態也不導頁。沒帶 token 的請求收到 401
  * 不換發，照舊直接導去登入頁。header 每次送出前重新組，重送時才會帶到新 token。
  */
 async function authorizedFetch(
@@ -94,8 +107,13 @@ async function authorizedFetch(
 
   const sentWithToken = 'Authorization' in authHeaders()
   let res = await send()
-  if (res.status === 401 && sentWithToken && (await useAuthStore().refresh())) {
-    res = await send()
+  if (res.status === 401 && sentWithToken) {
+    const outcome = await useAuthStore().refresh()
+    if (outcome === 'unavailable') {
+      logErrorResponse(init.method ?? 'GET', path, res)
+      throw new AuthRefreshUnavailableError()
+    }
+    if (outcome === 'refreshed') res = await send()
   }
   logErrorResponse(init.method ?? 'GET', path, res)
   if (res.status === 401) handleUnauthorized()

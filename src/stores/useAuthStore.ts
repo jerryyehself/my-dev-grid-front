@@ -69,6 +69,28 @@ function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
 export const REFRESH_CONFLICT_RETRY_MS = 300
 
 /**
+ * 換發碰到 502／503／504 或網路層失敗（fetch 丟 TypeError）時重試的等待時間（毫秒），
+ * 陣列長度就是重試次數。後端 Cloud Run 冷啟動時前一兩個請求會 502（跟 api/client.ts 的
+ * RETRY_DELAYS_MS 同一個原因）：開站的 restore() 只換發一次，碰到就會被當成沒登入。
+ * 重送換發是安全的：請求沒到後端就沒有用掉 refresh token；到了但回應沒傳回來，瀏覽器帶的
+ * 還是舊 cookie，後端在寬限秒數（10 秒）內會從剛換出來的那支接著換發，所以等待總長要遠小於
+ * 寬限秒數。測試環境不等。
+ */
+const REFRESH_RETRY_DELAYS_MS = import.meta.env.MODE === 'test' ? [0, 0] : [800, 2000]
+const REFRESH_RETRYABLE_STATUS = new Set([502, 503, 504])
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * 換發的結果：
+ * - `refreshed`：換到新的 access token。
+ * - `unauthorized`：refresh cookie 無效、過期或被撤銷（後端 401），登入狀態已清掉，要重新登入。
+ * - `unavailable`：連不上後端、後端暫時出錯（5xx、429），或 409 重試後還是 409。
+ *   後端那邊的登入多半還活著，所以不清登入狀態、不清旗標，呼叫端當成「稍後再試」。
+ */
+export type RefreshOutcome = 'refreshed' | 'unauthorized' | 'unavailable'
+
+/**
  * Access token 只存在記憶體裡（一個 ref），不落 localStorage/sessionStorage——
  * 跨 origin 的 Sanctum API token 模式（D-56），token 存
  * Web Storage 的話任何跑在頁面上的 script（含 XSS 注入）都能直接讀到。
@@ -115,47 +137,53 @@ export const useAuthStore = defineStore('auth', () => {
     writeSessionHint(false)
   }
 
-  let refreshInFlight: Promise<boolean> | null = null
+  let refreshInFlight: Promise<RefreshOutcome> | null = null
+
+  /** 送一次換發；502／503／504 跟網路層失敗照 REFRESH_RETRY_DELAYS_MS 重試 */
+  async function sendRefresh(): Promise<Response> {
+    for (let attempt = 0; ; attempt++) {
+      const canRetry = attempt < REFRESH_RETRY_DELAYS_MS.length
+      try {
+        const res = await withRefreshLock(() =>
+          fetch(`${BASE_URL}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { Accept: 'application/json' },
+          }),
+        )
+        if (!REFRESH_RETRYABLE_STATUS.has(res.status) || !canRetry) return res
+      } catch (e) {
+        if (!(e instanceof TypeError) || !canRetry) throw e
+      }
+      await sleep(REFRESH_RETRY_DELAYS_MS[attempt]!)
+    }
+  }
 
   /**
    * 用 refresh cookie 換一組新的 token。同一個分頁同時有好幾個請求 401 時，
    * 共用同一次換發（refresh token 單次使用，各換各的只會互相作廢）。
-   * 成功回 true；cookie 無效／過期（401）會清掉登入狀態，回 false。
-   * 網路斷線或後端暫時出錯（5xx、429）也回 false，但保留「上次是登入狀態」的旗標，
-   * 下次開站還會再試。
+   * 結果分三種（見 RefreshOutcome）：只有後端明確回 401 才清掉登入狀態；
+   * 暫時失敗不動目前的登入狀態，旗標也保留，下次開站還會再試。
    */
-  function refresh(): Promise<boolean> {
-    refreshInFlight ??= (async () => {
+  function refresh(): Promise<RefreshOutcome> {
+    refreshInFlight ??= (async (): Promise<RefreshOutcome> => {
       try {
-        const send = () =>
-          withRefreshLock(() =>
-            fetch(`${BASE_URL}/auth/refresh`, {
-              method: 'POST',
-              credentials: 'include',
-              headers: { Accept: 'application/json' },
-            }),
-          )
-        let res = await send()
+        let res = await sendRefresh()
         // 409：同一支 refresh token 剛被另一個分頁用掉，稍等用新 cookie 重試一次。
-        // 重試還是 409 就當成暫時失敗（下面的非 401 分支：保留旗標、下次再試）
+        // 重試還是 409 就當成暫時失敗（下面的 unavailable）
         if (res.status === 409) {
-          await new Promise((resolve) => setTimeout(resolve, REFRESH_CONFLICT_RETRY_MS))
-          res = await send()
+          await sleep(REFRESH_CONFLICT_RETRY_MS)
+          res = await sendRefresh()
         }
-        if (!res.ok) {
-          if (res.status === 401) clearSession()
-          else {
-            token.value = null
-            user.value = null
-          }
-          return false
+        if (res.status === 401) {
+          clearSession()
+          return 'unauthorized'
         }
+        if (!res.ok) return 'unavailable'
         applySession(await res.json())
-        return true
+        return 'refreshed'
       } catch {
-        token.value = null
-        user.value = null
-        return false
+        return 'unavailable'
       } finally {
         refreshInFlight = null
       }
@@ -169,13 +197,15 @@ export const useAuthStore = defineStore('auth', () => {
    * 開機時呼叫一次（main.ts），之後重複呼叫拿到的都是同一個 Promise——
    * 路由守衛在進 requiresAuth 頁面前 await 它，整頁重新整理 /admin 才不會
    * 先被當成未登入導去 /login。成功失敗都不顯示提示：這是背景動作，不是使用者按的登入。
+   * 換發暫時失敗（重試完還是連不上）時清掉快取的 Promise，下一次呼叫（路由守衛下次
+   * 進需要登入的頁面）會再試一次，不會整個分頁都卡在未登入。
    */
   function restore(): Promise<void> {
     restorePromise ??= (async () => {
       if (token.value || !readSessionHint()) return
       restoring.value = true
       try {
-        await refresh()
+        if ((await refresh()) === 'unavailable') restorePromise = null
       } finally {
         restoring.value = false
       }

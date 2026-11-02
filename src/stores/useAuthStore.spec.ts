@@ -148,7 +148,7 @@ describe('useAuthStore：refresh() 收到 409（另一個分頁剛用掉同一�
         : Response.json({ token: 'after-retry', expires_in: 900, data: USER }),
     )
     const auth = useAuthStore()
-    expect(await auth.refresh()).toBe(true)
+    expect(await auth.refresh()).toBe('refreshed')
     expect(auth.token).toBe('after-retry')
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
@@ -157,7 +157,7 @@ describe('useAuthStore：refresh() 收到 409（另一個分頁剛用掉同一�
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const fetchMock = mockFetch(() => new Response(null, { status: 409 }))
     const auth = useAuthStore()
-    expect(await auth.refresh()).toBe(false)
+    expect(await auth.refresh()).toBe('unavailable')
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(auth.isAuthenticated).toBe(false)
     expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
@@ -213,6 +213,41 @@ describe('useAuthStore：restore()（重新整理後換回登入狀態）', () =
     expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
   })
 
+  it('它應該在後端冷啟動回 502 時重試換發，重試成功就換回登入狀態', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    let attempt = 0
+    const fetchMock = mockFetch(() =>
+      ++attempt === 1
+        ? new Response(null, { status: 502 })
+        : Response.json({ token: 'restored', data: USER }),
+    )
+    const auth = useAuthStore()
+
+    await auth.restore()
+
+    expect(auth.token).toBe('restored')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('它應該在換發重試完仍暫時失敗時讓下一次 restore() 再試一次', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    let available = false
+    mockFetch(() =>
+      available
+        ? Response.json({ token: 'restored', data: USER })
+        : new Response(null, { status: 503 }),
+    )
+    const auth = useAuthStore()
+
+    await auth.restore()
+    expect(auth.isAuthenticated).toBe(false)
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
+
+    available = true
+    await auth.restore()
+    expect(auth.token).toBe('restored')
+  })
+
   it('它應該在沒有「上次是登入狀態」的旗標（一般訪客）時完全不打 API', async () => {
     const fetchMock = mockFetch(() => Response.json({}))
     const auth = useAuthStore()
@@ -260,8 +295,52 @@ describe('useAuthStore：refresh()', () => {
 
     const results = await Promise.all([auth.refresh(), auth.refresh(), auth.refresh()])
 
-    expect(results).toEqual([true, true, true])
+    expect(results).toEqual(['refreshed', 'refreshed', 'refreshed'])
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(auth.token).toBe('fresh')
+  })
+
+  it('它應該在 refresh cookie 無效（401）時回 unauthorized，清掉登入狀態跟旗標', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    mockFetch(() => new Response(null, { status: 401 }))
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    auth.user = USER
+
+    expect(await auth.refresh()).toBe('unauthorized')
+    expect(auth.token).toBeNull()
+    expect(auth.user).toBeNull()
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
+  })
+
+  it.each([
+    ['後端連不上', () => {
+      throw new TypeError('Failed to fetch')
+    }],
+    ['後端一直 503', () => new Response(null, { status: 503 })],
+    ['後端 500', () => new Response(null, { status: 500 })],
+    ['被限流 429', () => new Response(null, { status: 429 })],
+  ])('它應該在暫時失敗（%s）時回 unavailable，保留目前的登入狀態跟旗標', async (label, handler) => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    mockFetch(handler)
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    auth.user = USER
+
+    expect(await auth.refresh()).toBe('unavailable')
+    expect(auth.token).toBe('expired')
+    expect(auth.user).toEqual(USER)
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
+  })
+
+  it('它應該只重試 502／503／504 跟網路層失敗，最多重試兩次', async () => {
+    const fetchMock = mockFetch(() => new Response(null, { status: 504 }))
+    const auth = useAuthStore()
+    expect(await auth.refresh()).toBe('unavailable')
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+
+    const fetch500 = mockFetch(() => new Response(null, { status: 500 }))
+    expect(await auth.refresh()).toBe('unavailable')
+    expect(fetch500).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { apiDelete, apiGet, apiPost } from './client'
+import { AuthRefreshUnavailableError, apiDelete, apiGet, apiPost } from './client'
 import { useAuthStore } from '@/stores/useAuthStore'
 
 const mockFetch = vi.fn()
@@ -151,6 +151,28 @@ describe('401 → refresh → retry', () => {
       ([url]) => pathOf(url as string) === '/auth/refresh',
     )
     expect(refreshCalls).toHaveLength(1)
+  })
+
+  it.each([
+    ['後端一直 503', () => jsonResponse({}, 503)],
+    ['後端連不上', () => {
+      throw new TypeError('Failed to fetch')
+    }],
+  ])('它應該在換發暫時失敗（%s）時丟可重試的錯誤，保留登入狀態、不導去登入頁', async (label, refreshHandler) => {
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    auth.user = { id: 1, name: 'J', email: 'j@x' }
+    mockFetch.mockImplementation(async (url: string) =>
+      pathOf(url) === '/auth/refresh' ? refreshHandler() : jsonResponse({}, 401),
+    )
+
+    await expect(apiPost('/documentations', { title: '還沒存的內容' })).rejects.toBeInstanceOf(
+      AuthRefreshUnavailableError,
+    )
+
+    expect(auth.token).toBe('expired')
+    expect(auth.user).toEqual({ id: 1, name: 'J', email: 'j@x' })
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it('它應該在沒帶 token 的請求收到 401 時不換發，直接導去登入頁', async () => {
