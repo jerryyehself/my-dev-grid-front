@@ -50,6 +50,8 @@ describe('authHeaders', () => {
     await apiGet('/scopes')
     await apiPost('/scopes', { name: 'x' })
 
+    // 先確定真的送了兩次，下面的迴圈才不會在一次都沒送時空轉通過
+    expect(mockFetch).toHaveBeenCalledTimes(2)
     for (const [, init] of mockFetch.mock.calls) {
       const headers = init?.headers as Record<string, string> | undefined
       expect(headers?.Authorization).toBe('Bearer plain-text-token')
@@ -158,12 +160,27 @@ describe('401 → refresh → retry', () => {
       return bearer === 'Bearer fresh' ? jsonResponse({ data: [] }) : jsonResponse({}, 401)
     })
 
-    await Promise.all([apiGet('/scopes'), apiGet('/relations'), apiGet('/techniques')])
+    await expect(
+      Promise.all([apiGet('/scopes'), apiGet('/relations'), apiGet('/techniques')]),
+    ).resolves.toEqual([{ data: [] }, { data: [] }, { data: [] }])
 
     const refreshCalls = mockFetch.mock.calls.filter(
       ([url]) => pathOf(url as string) === '/auth/refresh',
     )
     expect(refreshCalls).toHaveLength(1)
+    // 三個請求各送兩次：第一次帶過期的 token，重送帶換到的新 token
+    const sent = mockFetch.mock.calls
+      .filter(([url]) => pathOf(url as string) !== '/auth/refresh')
+      .map(([url, init]) => [
+        pathOf(url as string),
+        (init.headers as Record<string, string>).Authorization,
+      ])
+    expect(sent).toHaveLength(6)
+    for (const path of ['/scopes', '/relations', '/techniques']) {
+      expect(sent).toContainEqual([path, 'Bearer expired'])
+      expect(sent).toContainEqual([path, 'Bearer fresh'])
+    }
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it('它應該在舊 token 的 401 於換發完成後才回來時直接用新 token 重送，不再換發', async () => {
@@ -286,7 +303,9 @@ describe('GET 重試', () => {
   it('它應該不重試非冪等的 POST 請求', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 502))
 
-    await expect(apiPost('/documentations', {})).rejects.toBeTruthy()
+    await expect(apiPost('/documentations', {})).rejects.toThrow(
+      'API 請求失敗（502）：POST /documentations',
+    )
     expect(mockFetch).toHaveBeenCalledTimes(1)
   })
 })
