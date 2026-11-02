@@ -31,7 +31,7 @@ function mockScopesAndImplementations(implementations: unknown[]) {
 }
 
 describe('fetchProjects', () => {
-  it('依 name 動態查出 project scope id，帶進 implementations 的 ?type= 查詢', async () => {
+  it('它應該依 name 動態查出 project scope id，帶進 implementations 的 ?type= 查詢', async () => {
     mockScopesAndImplementations([])
     await fetchProjects()
 
@@ -39,7 +39,7 @@ describe('fetchProjects', () => {
     expect(implCall?.[0]).toContain('type=12')
   })
 
-  it('把 ImplementationResource 形狀轉成既有的 Project 型別', async () => {
+  it('它應該把 ImplementationResource 形狀轉成既有的 Project 型別', async () => {
     mockScopesAndImplementations([
       {
         id: 1,
@@ -72,7 +72,7 @@ describe('fetchProjects', () => {
     ])
   })
 
-  it('maintain_status 為 false 對應 Archived、true 對應 Active，null 則隱藏徽章（不是預設 Active）', async () => {
+  it('它應該在 maintain_status 為 false 時對應 Archived、true 時對應 Active、null 時隱藏徽章（不是預設 Active）', async () => {
     // null 代表「這欄位從沒被賦值過」，不是「已知未封存」——如果 null 也顯示 Active，
     // 等於在 backend 補齊 GitHub archived 同步之前，把真的已封存的專案顯示成還在維護。
     mockScopesAndImplementations([
@@ -90,7 +90,7 @@ describe('fetchProjects', () => {
     ])
   })
 
-  it('description 為 null 時 desc 是空字串，不是 null', async () => {
+  it('它應該在 description 為 null 時讓 desc 是空字串而不是 null', async () => {
     mockScopesAndImplementations([
       { id: 1, title: 'a', description: null, git_repo_created_at: '2026-01-01 00:00:00', maintain_status: null, techniques: [] },
     ])
@@ -100,7 +100,7 @@ describe('fetchProjects', () => {
     expect(projects[0]!.desc).toBe('')
   })
 
-  it('同一年內依建立時間新到舊，從 01 開始編號；跨年各自重新起算', async () => {
+  it('它應該在同一年內依建立時間新到舊從 01 開始編號，跨年各自重新起算', async () => {
     mockScopesAndImplementations([
       { id: 1, title: 'older-2025', description: null, git_repo_created_at: '2025-02-01 00:00:00', maintain_status: null, techniques: [] },
       { id: 2, title: 'newer-2025', description: null, git_repo_created_at: '2025-11-01 00:00:00', maintain_status: null, techniques: [] },
@@ -123,7 +123,7 @@ describe('toProjectTechniques', () => {
     [9, 'framework'],
   ])
 
-  it('標籤帶版本、分類換成後端的 scope 名稱', () => {
+  it('它應該讓標籤帶版本並將分類換成後端的 scope 名稱', () => {
     expect(
       toProjectTechniques(
         [
@@ -138,7 +138,7 @@ describe('toProjectTechniques', () => {
     ])
   })
 
-  it('同時有「Vue」和「Vue 3」時只留 Vue 3（升級前的邊還留著，但版本已經知道了）', () => {
+  it('它應該在同時有「Vue」和「Vue 3」時只留 Vue 3（升級前的邊還留著，但版本已經知道了）', () => {
     const out = toProjectTechniques(
       [
         { title: 'Vue', version: null, type: 9 },
@@ -150,18 +150,18 @@ describe('toProjectTechniques', () => {
     expect(out.map((t) => `${t.name} ${t.version}`)).toEqual(['Vue 3', 'Vue 2'])
   })
 
-  it('查不到分類時留空字串，不猜', () => {
+  it('它應該在查不到分類時留空字串，不猜', () => {
     expect(toProjectTechniques([{ title: 'x', type: 999 }], scopes)).toEqual([{ name: 'x', version: null, category: '' }])
   })
 })
 
 describe('fetchProjectsOrDemo', () => {
-  it('成功時回真實資料，loadError 為 null', async () => {
+  it('它應該在成功時回傳真實資料且 loadError 為 null', async () => {
     mockScopesAndImplementations([])
     expect(await fetchProjectsOrDemo()).toEqual({ projects: [], loadError: null })
   })
 
-  it('網路錯誤時退回快照並回報 loadError', async () => {
+  it('它應該在網路錯誤時退回快照並回報 loadError', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {})
     mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
     expect(await fetchProjectsOrDemo()).toEqual({
@@ -170,7 +170,7 @@ describe('fetchProjectsOrDemo', () => {
     })
   })
 
-  it('HTTP 500 時退回快照並回報 loadError', async () => {
+  it('它應該在 HTTP 500 時退回快照並回報 loadError', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {})
     mockFetch.mockResolvedValue({ ok: false, status: 500, json: async () => ({}) })
     const result = await fetchProjectsOrDemo()

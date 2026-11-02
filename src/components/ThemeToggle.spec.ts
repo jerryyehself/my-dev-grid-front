@@ -21,7 +21,7 @@ describe('ThemeToggle', () => {
     localStorage.clear()
   })
 
-  it('預設顯示「☀ 淺色」（目前是 library 主題）', async () => {
+  it('它應該預設顯示「☀ 淺色」（目前是 library 主題）', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
@@ -29,7 +29,7 @@ describe('ThemeToggle', () => {
     expect(wrapper.text()).toContain('淺色')
   })
 
-  it('點擊後切換主題，圖示與文字跟著變成「☽ 深色」', async () => {
+  it('它應該在點擊後切換主題，圖示與文字跟著變成「☽ 深色」', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
@@ -40,7 +40,7 @@ describe('ThemeToggle', () => {
     expect(document.documentElement.classList.contains('theme-terminal')).toBe(true)
   })
 
-  it('aria-pressed 會隨主題切換更新（深色主題＝pressed）', async () => {
+  it('它應該隨主題切換更新 aria-pressed（深色主題＝pressed）', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 

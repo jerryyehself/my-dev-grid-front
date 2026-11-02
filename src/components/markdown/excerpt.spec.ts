@@ -25,8 +25,25 @@ describe('excerptOf', () => {
     },
   )
 
-  it('它應該記錄首段只有圖片時目前回傳空字串，不繼續取後面的正文', () => {
-    // 只記錄目前選取第一個 paragraph 的行為；是否跳過圖片段落由另一個修正處理。
-    expect(excerptOf('![圖片說明](https://example.com/image.png)\n\n後面的正文。')).toBe('')
+  it('它應該跳過首段只有圖片的段落，取後面的正文', () => {
+    expect(excerptOf('![圖片說明](https://example.com/image.png)\n\n後面的正文。')).toBe(
+      '後面的正文。',
+    )
+  })
+
+  it('它應該在圖片和文字同段時保留那段的文字', () => {
+    expect(excerptOf('![圖](x.png) 文字\n\n後面的正文。')).toBe(' 文字')
+  })
+
+  it('它應該跳過純文字只有空白的段落', () => {
+    expect(excerptOf('`   `\n\n後面的正文。')).toBe('後面的正文。')
+  })
+
+  it('它應該在全部段落都沒有非空白文字時回傳空字串', () => {
+    expect(excerptOf('![圖](x.png)\n\n`   `\n\n![另一張圖](y.png)')).toBe('')
+  })
+
+  it('它應該保留只有一般連結的首段文字', () => {
+    expect(excerptOf('[連結](https://example.com)\n\n後面的正文。')).toBe('連結')
   })
 })
