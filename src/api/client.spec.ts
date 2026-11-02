@@ -153,6 +153,54 @@ describe('401 → refresh → retry', () => {
     expect(refreshCalls).toHaveLength(1)
   })
 
+  it('它應該在舊 token 的 401 於換發完成後才回來時直接用新 token 重送，不再換發', async () => {
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    let issued = 0
+    let releaseSlow!: () => void
+    const slowGate = new Promise<void>((resolve) => (releaseSlow = resolve))
+    mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      const path = pathOf(url)
+      if (path === '/auth/refresh') {
+        issued++
+        return jsonResponse({ token: `fresh-${issued}`, data: {} })
+      }
+      const bearer = (init.headers as Record<string, string>).Authorization
+      // 跟後端一樣：每換發一次，上一次換出來的 access token 就作廢，只認最新的那支
+      if (issued > 0 && bearer === `Bearer fresh-${issued}`) return jsonResponse({ path })
+      // /slow 帶舊 token 的那次 401 晚一點才回來（換發已經做完了）
+      if (path === '/slow' && bearer === 'Bearer expired') await slowGate
+      return jsonResponse({}, 401)
+    })
+
+    const slow = apiGet('/slow')
+    await expect(apiGet('/fast')).resolves.toEqual({ path: '/fast' })
+    releaseSlow()
+    await expect(slow).resolves.toEqual({ path: '/slow' })
+
+    const refreshCalls = mockFetch.mock.calls.filter(
+      ([url]) => pathOf(url as string) === '/auth/refresh',
+    )
+    expect(refreshCalls).toHaveLength(1)
+    expect(auth.token).toBe('fresh-1')
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('它應該在 401 回來時登入狀態已被清掉（例如已登出）就不換發，直接導去登入頁', async () => {
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    mockFetch.mockImplementation(async (url: string) => {
+      if (pathOf(url) === '/auth/refresh') return jsonResponse({ token: 'fresh', data: {} })
+      auth.token = null
+      return jsonResponse({}, 401)
+    })
+
+    await expect(apiGet('/scopes')).rejects.toThrow('Unauthorized')
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockPush).toHaveBeenCalled()
+  })
+
   it.each([
     ['後端一直 503', () => jsonResponse({}, 503)],
     ['後端連不上', () => {

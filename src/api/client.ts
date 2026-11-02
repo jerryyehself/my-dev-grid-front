@@ -19,10 +19,8 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api
  * Pinia 的 app，沒有這層防呆的話 `useAuthStore()` 會直接丟
  * "no active Pinia" 例外，把本來跟認證無關的測試也弄壞。
  */
-function authHeaders(): Record<string, string> {
-  if (!getActivePinia()) return {}
-  const token = useAuthStore().token
-  return token ? { Authorization: `Bearer ${token}` } : {}
+function currentToken(): string | null {
+  return getActivePinia() ? useAuthStore().token : null
 }
 
 /**
@@ -95,25 +93,40 @@ function logErrorResponse(method: string, path: string, res: Response): void {
  * 先用 refresh cookie 換一支新的 token、再重送一次。只重試一次：換到新 token
  * 重送還是 401，或後端說 refresh cookie 也無效，就當成真的沒登入。換發暫時失敗
  * 時丟 AuthRefreshUnavailableError，不清登入狀態也不導頁。沒帶 token 的請求收到 401
- * 不換發，照舊直接導去登入頁。header 每次送出前重新組，重送時才會帶到新 token。
+ * 不換發，照舊直接導去登入頁。
+ *
+ * 401 回來時先看目前的 token 還是不是送出時那一支：
+ * - 已經換成別支（送出之後別的請求換發過了）：直接用目前的 token 重送，不再換發。
+ *   refresh token 單次使用，再換一次後端會把上一次剛換出來的 access token 作廢
+ *   （RefreshTokenFamilies::rotateUnused() 會刪掉被用掉那支 refresh token 綁定的
+ *   access token），正拿著它重送的其他請求又會 401。
+ * - 已經清掉（登出了，或換發確定失效）：不換發，照沒登入處理。
  */
 async function authorizedFetch(
   path: string,
   init: RequestInit = {},
   extraHeaders: Record<string, string> = {},
 ): Promise<Response> {
-  const send = () =>
-    fetch(`${BASE_URL}${path}`, { ...init, headers: { ...extraHeaders, ...authHeaders() } })
+  const send = (token: string | null) =>
+    fetch(`${BASE_URL}${path}`, {
+      ...init,
+      headers: { ...extraHeaders, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    })
 
-  const sentWithToken = 'Authorization' in authHeaders()
-  let res = await send()
-  if (res.status === 401 && sentWithToken) {
-    const outcome = await useAuthStore().refresh()
-    if (outcome === 'unavailable') {
-      logErrorResponse(init.method ?? 'GET', path, res)
-      throw new AuthRefreshUnavailableError()
+  const sentToken = currentToken()
+  let res = await send(sentToken)
+  if (res.status === 401 && sentToken !== null) {
+    const latest = currentToken()
+    if (latest !== null && latest !== sentToken) {
+      res = await send(latest)
+    } else if (latest !== null) {
+      const outcome = await useAuthStore().refresh()
+      if (outcome === 'unavailable') {
+        logErrorResponse(init.method ?? 'GET', path, res)
+        throw new AuthRefreshUnavailableError()
+      }
+      if (outcome === 'refreshed') res = await send(currentToken())
     }
-    if (outcome === 'refreshed') res = await send()
   }
   logErrorResponse(init.method ?? 'GET', path, res)
   if (res.status === 401) handleUnauthorized()
