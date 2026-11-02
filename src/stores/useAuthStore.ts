@@ -69,26 +69,37 @@ function withRefreshLock<T>(task: () => Promise<T>): Promise<T> {
 export const REFRESH_CONFLICT_RETRY_MS = 300
 
 /**
- * 換發碰到 502／503／504 或網路層失敗（fetch 丟 TypeError）時重試的等待時間（毫秒），
- * 陣列長度就是重試次數。後端 Cloud Run 冷啟動時前一兩個請求會 502（跟 api/client.ts 的
- * RETRY_DELAYS_MS 同一個原因）：開站的 restore() 只換發一次，碰到就會被當成沒登入。
- * 重送換發是安全的：請求沒到後端就沒有用掉 refresh token；到了但回應沒傳回來，瀏覽器帶的
- * 還是舊 cookie，後端在寬限秒數（10 秒）內會從剛換出來的那支接著換發，所以等待總長要遠小於
- * 寬限秒數。測試環境不等。
+ * 換發碰到 502／503／504 時重試的等待時間（毫秒），陣列長度就是重試次數。後端 Cloud Run
+ * 冷啟動時前一兩個請求會 502（跟 api/client.ts 的 RETRY_DELAYS_MS 同一個原因）：開站的
+ * restore() 只換發一次，碰到就會被當成沒登入。測試環境不等。
+ *
+ * 重送換發會再送一次同一支 refresh token。後端只在「上一次用掉它」之後的寬限秒數內
+ * （預設 10 秒）把重送當成正常重試；超過就當成 token 被偷，撤銷整個登入。所以：
+ * - 網路層失敗（fetch 丟 TypeError）不重試：請求可能已經到後端、換發也做完了，只是回應
+ *   沒傳回來，不知道什麼時候做完的，重送可能已經在寬限外。
+ * - 502／503／504 才重試，而且從第一次送出算起超過 REFRESH_RETRY_BUDGET_MS 就不再送。
+ *   這個時間包含每次請求本身花的時間跟排隊等 Web Locks 的時間，不是只算等待間隔——
+ *   光看等待間隔加總保證不了什麼，請求本身可能就卡了好幾秒。
  */
 const REFRESH_RETRY_DELAYS_MS = import.meta.env.MODE === 'test' ? [0, 0] : [800, 2000]
 const REFRESH_RETRYABLE_STATUS = new Set([502, 503, 504])
+export const REFRESH_RETRY_BUDGET_MS = 4000
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * 換發的結果：
- * - `refreshed`：換到新的 access token。
+ * - `refreshed`：換到新的 access token，而且這段期間還是同一次登入。
  * - `unauthorized`：refresh cookie 無效、過期或被撤銷（後端 401），登入狀態已清掉，要重新登入。
  * - `unavailable`：連不上後端、後端暫時出錯（5xx、429），或 409 重試後還是 409。
  *   後端那邊的登入多半還活著，所以不清登入狀態、不清旗標，呼叫端當成「稍後再試」。
+ * - `superseded`：換發期間登入狀態換掉了（登出、重新登入、換帳號，見 loginGeneration），
+ *   結果直接丟掉。原本的請求是上一次登入送的，呼叫端不能拿目前的 token 重送，也不要登出。
  */
-export type RefreshOutcome = 'refreshed' | 'unauthorized' | 'unavailable'
+export type RefreshOutcome = 'refreshed' | 'unauthorized' | 'unavailable' | 'superseded'
+
+/** sendRefresh 在出發前就發現登入狀態換掉了，沒有送出 */
+const SUPERSEDED = Symbol('superseded')
 
 /**
  * 帳密登入失敗、但不是帳號密碼錯的時候顯示的訊息（登入頁看得到，照 copy-language
@@ -135,93 +146,135 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * 登入狀態的世代：每次寫入或清掉登入狀態都 +1。換發出發時記下世代，回來時世代變了
-   * （等待期間使用者登出，或 OAuth 回呼／帳密登入換上了新的登入），就把結果丟掉，
-   * 不讓晚到的舊結果蓋掉比較新的狀態。main.ts 開機的 restore() 不 await，
-   * 它的換發可能比 OAuth 回呼的 /auth/session 晚回來。
+   * 登入世代：「是哪一次登入」的編號。登入（帳密、OAuth、開站從沒有 token 換回登入狀態）
+   * 跟清掉登入狀態（登出、換發確定失效、請求確定沒登入）都 +1；同一次登入裡換發 access
+   * token 不變。
+   *
+   * 用途有兩個：
+   * - 換發出發時記下世代，回來時世代變了（等待期間使用者登出，或 OAuth 回呼／帳密登入換上了
+   *   新的登入）就把結果丟掉，不讓晚到的舊結果蓋掉比較新的狀態。main.ts 開機的 restore()
+   *   不 await，它的換發可能比 OAuth 回呼的 /auth/session 晚回來。
+   * - api/client.ts 每個請求送出時記下世代，401 回來時世代變了就不重送：那個請求是上一次
+   *   登入（可能是另一個帳號）送的，拿目前的 token 重送等於用別人的身分做原本的操作。
+   *
+   * 所有寫入、清掉登入狀態的地方都要經過 startSession／rotateSession／clearSession，
+   * 不要直接改 token、user，不然世代不會更新，上面兩個保護都會失效。
    */
-  let sessionEpoch = 0
+  let loginGeneration = 0
 
-  function applySession(body: TokenPairResponse) {
-    sessionEpoch++
+  function writeSession(body: TokenPairResponse) {
     token.value = body.token
     user.value = body.data
     writeSessionHint(true)
   }
 
+  /** 換上一次新的登入 */
+  function startSession(body: TokenPairResponse) {
+    loginGeneration++
+    writeSession(body)
+  }
+
+  /** 換發成功：原本就有 token 是同一次登入換新 token，世代不變；原本沒有就是換回登入狀態，算新的一次 */
+  function rotateSession(body: TokenPairResponse) {
+    if (token.value === null) loginGeneration++
+    writeSession(body)
+  }
+
+  /** 清掉登入狀態跟旗標。api/client.ts 確定請求沒登入時也呼叫這支 */
   function clearSession() {
-    sessionEpoch++
+    loginGeneration++
     token.value = null
     user.value = null
     writeSessionHint(false)
   }
 
-  /** 進行中的換發，跟它出發時的世代。世代變了就不共用，另外送一次 */
-  let refreshInFlight: { epoch: number; promise: Promise<RefreshOutcome> } | null = null
+  /** 目前的登入世代（見 loginGeneration） */
+  function currentLoginGeneration(): number {
+    return loginGeneration
+  }
 
-  /** 送一次換發；502／503／504 跟網路層失敗照 REFRESH_RETRY_DELAYS_MS 重試 */
-  async function sendRefresh(): Promise<Response> {
+  /** 進行中的換發，跟它出發時的世代。世代變了就不共用，另外送一次 */
+  let refreshInFlight: { generation: number; promise: Promise<RefreshOutcome> } | null = null
+
+  /**
+   * 送一次換發；502／503／504 照 REFRESH_RETRY_DELAYS_MS 重試，總時間不超過
+   * REFRESH_RETRY_BUDGET_MS。網路層失敗直接往外丟，不重試（原因見 REFRESH_RETRY_DELAYS_MS）。
+   *
+   * 每次送出前（拿到 Web Locks 之後）先看登入狀態有沒有換掉：換掉了就不送。瀏覽器這時帶的
+   * 已經是新登入的 refresh cookie，送出去會用掉新登入的 refresh token，換回來的結果又會被
+   * 丟掉，新登入手上那支 access token 也跟著被後端作廢。
+   */
+  async function sendRefresh(superseded: () => boolean): Promise<Response | typeof SUPERSEDED> {
+    const startedAt = Date.now()
+    let last: Response | null = null
     for (let attempt = 0; ; attempt++) {
-      const canRetry = attempt < REFRESH_RETRY_DELAYS_MS.length
-      try {
-        const res = await withRefreshLock(() =>
-          fetch(`${BASE_URL}/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { Accept: 'application/json' },
-          }),
-        )
-        if (!REFRESH_RETRYABLE_STATUS.has(res.status) || !canRetry) return res
-      } catch (e) {
-        if (!(e instanceof TypeError) || !canRetry) throw e
-      }
-      await sleep(REFRESH_RETRY_DELAYS_MS[attempt]!)
+      const previous: Response | null = last
+      const res = await withRefreshLock(async (): Promise<Response | typeof SUPERSEDED> => {
+        if (superseded()) return SUPERSEDED
+        // 排隊等鎖的時間也算：等到的時候已經超過預算就不送，回上一次的結果
+        if (previous && Date.now() - startedAt > REFRESH_RETRY_BUDGET_MS) return previous
+        return fetch(`${BASE_URL}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { Accept: 'application/json' },
+        })
+      })
+      if (res === SUPERSEDED || res === previous) return res
+      last = res
+      const delay = REFRESH_RETRY_DELAYS_MS[attempt]
+      if (!REFRESH_RETRYABLE_STATUS.has(res.status) || delay === undefined) return res
+      if (Date.now() - startedAt + delay > REFRESH_RETRY_BUDGET_MS) return res
+      await sleep(delay)
     }
   }
 
   /**
    * 用 refresh cookie 換一組新的 token。同一個分頁同時有好幾個請求 401 時，
    * 共用同一次換發（refresh token 單次使用，各換各的只會互相作廢）。
-   * 結果分三種（見 RefreshOutcome）：只有後端明確回 401 才清掉登入狀態；
+   * 結果分四種（見 RefreshOutcome）：只有後端明確回 401 才清掉登入狀態；
    * 暫時失敗不動目前的登入狀態，旗標也保留，下次開站還會再試。
-   * 換發期間登入狀態被換掉（見 sessionEpoch）時不寫入結果：目前有登入就回 refreshed
-   * （呼叫端用目前的 token 重送），沒有就回 unauthorized。
+   * 換發期間登入世代變了，不管後端回什麼（成功、401、5xx、連不上）都不寫入，回 superseded。
    */
   function refresh(): Promise<RefreshOutcome> {
-    if (refreshInFlight?.epoch === sessionEpoch) return refreshInFlight.promise
+    if (refreshInFlight?.generation === loginGeneration) return refreshInFlight.promise
 
-    const flight = { epoch: sessionEpoch } as { epoch: number; promise: Promise<RefreshOutcome> }
-    // 先登記再出發：就算換發同步就結束，finally 也清得到這一筆
+    const generation = loginGeneration
+    const superseded = () => generation !== loginGeneration
+
+    const flight: { generation: number; promise: Promise<RefreshOutcome> } = {
+      generation,
+      promise: run(),
+    }
     refreshInFlight = flight
-    const superseded = () => flight.epoch !== sessionEpoch
-    const currentOutcome = (): RefreshOutcome => (token.value ? 'refreshed' : 'unauthorized')
+    return flight.promise
 
-    flight.promise = (async (): Promise<RefreshOutcome> => {
+    // finally 讀得到 flight：async 函式至少 await 一次才會跑到 finally，那時上面已經指定好了
+    async function run(): Promise<RefreshOutcome> {
       try {
-        let res = await sendRefresh()
+        let res = await sendRefresh(superseded)
         // 409：同一支 refresh token 剛被另一個分頁用掉，稍等用新 cookie 重試一次。
         // 重試還是 409 就當成暫時失敗（下面的 unavailable）
-        if (res.status === 409) {
+        if (res !== SUPERSEDED && res.status === 409) {
           await sleep(REFRESH_CONFLICT_RETRY_MS)
-          res = await sendRefresh()
+          res = await sendRefresh(superseded)
         }
+        if (res === SUPERSEDED || superseded()) return 'superseded'
         if (res.status === 401) {
-          if (superseded()) return currentOutcome()
           clearSession()
           return 'unauthorized'
         }
         if (!res.ok) return 'unavailable'
         const body: TokenPairResponse = await res.json()
-        if (superseded()) return currentOutcome()
-        applySession(body)
+        if (superseded()) return 'superseded'
+        rotateSession(body)
         return 'refreshed'
       } catch {
-        return 'unavailable'
+        return superseded() ? 'superseded' : 'unavailable'
       } finally {
+        // 只清自己這一筆：世代換過之後，新世代的換發可能已經登記在這裡
         if (refreshInFlight === flight) refreshInFlight = null
       }
-    })()
-    return flight.promise
+    }
   }
 
   let restorePromise: Promise<void> | null = null
@@ -231,7 +284,8 @@ export const useAuthStore = defineStore('auth', () => {
    * 路由守衛在進 requiresAuth 頁面前 await 它，整頁重新整理 /admin 才不會
    * 先被當成未登入導去 /login。成功失敗都不顯示提示：這是背景動作，不是使用者按的登入。
    * 換發暫時失敗（重試完還是連不上）時清掉快取的 Promise，下一次呼叫（路由守衛下次
-   * 進需要登入的頁面）會再試一次，不會整個分頁都卡在未登入。
+   * 進需要登入的頁面）會再試一次，不會整個分頁都卡在未登入。換發期間已經登入或登出
+   * （superseded）就不用再試了。
    */
   function restore(): Promise<void> {
     restorePromise ??= (async () => {
@@ -276,7 +330,7 @@ export const useAuthStore = defineStore('auth', () => {
       return { ok: false, message }
     }
 
-    applySession(await res.json())
+    startSession(await res.json())
     notice.value = { tone: 'success', text: `已登入：${displayName.value}` }
     return { ok: true }
   }
@@ -302,7 +356,7 @@ export const useAuthStore = defineStore('auth', () => {
         clearSession()
         return false
       }
-      applySession(await res.json())
+      startSession(await res.json())
     } catch {
       clearSession()
       return false
@@ -356,5 +410,7 @@ export const useAuthStore = defineStore('auth', () => {
     refresh,
     restore,
     setTokenFromOAuthCallback,
+    clearSession,
+    currentLoginGeneration,
   }
 })

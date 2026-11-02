@@ -333,7 +333,7 @@ describe('useAuthStore：refresh()', () => {
     expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
   })
 
-  it('它應該只重試 502／503／504 跟網路層失敗，最多重試兩次', async () => {
+  it('它應該只重試 502／503／504，最多重試兩次', async () => {
     const fetchMock = mockFetch(() => new Response(null, { status: 504 }))
     const auth = useAuthStore()
     expect(await auth.refresh()).toBe('unavailable')
@@ -342,6 +342,64 @@ describe('useAuthStore：refresh()', () => {
     const fetch500 = mockFetch(() => new Response(null, { status: 500 }))
     expect(await auth.refresh()).toBe('unavailable')
     expect(fetch500).toHaveBeenCalledTimes(1)
+  })
+
+  // 換發可能已經在後端做完、只是回應沒傳回來；重送同一支 refresh token 可能落在後端寬限外，
+  // 被當成 token 被偷、撤銷整個登入
+  it('它應該在網路層失敗（TypeError）時不重試換發', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    const fetchMock = mockFetch(() => {
+      throw new TypeError('Failed to fetch')
+    })
+    const auth = useAuthStore()
+    auth.token = 'expired'
+
+    expect(await auth.refresh()).toBe('unavailable')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(auth.token).toBe('expired')
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
+  })
+
+  describe('重試的總時間上限', () => {
+    beforeEach(() => {
+      // 只假造 Date：重試間隔在測試環境是 0，setTimeout 照常跑
+      vi.useFakeTimers({ toFake: ['Date'] })
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('它應該在從第一次送出算起超過時間上限時就不再重試 502，請求本身花的時間也算', async () => {
+      const fetchMock = mockFetch(() => {
+        // 每次換發請求都卡 2.5 秒才回 502：第二次回來時已經超過上限，不送第三次
+        vi.setSystemTime(Date.now() + 2500)
+        return new Response(null, { status: 502 })
+      })
+      const auth = useAuthStore()
+
+      expect(await auth.refresh()).toBe('unavailable')
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+    })
+
+    it('它應該把排隊等 Web Locks 的時間也算進上限，等到鎖時已經超過就不送', async () => {
+      let lockRequests = 0
+      vi.stubGlobal('navigator', {
+        locks: {
+          request: async (...args: [string, () => Promise<unknown>]) => {
+            // 第二次排隊等了 5 秒（例如另一個分頁正在換發）
+            if (++lockRequests === 2) vi.setSystemTime(Date.now() + 5000)
+            return args[1]()
+          },
+        },
+      })
+      const fetchMock = mockFetch(() => new Response(null, { status: 503 }))
+      const auth = useAuthStore()
+
+      expect(await auth.refresh()).toBe('unavailable')
+      expect(lockRequests).toBe(2)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
   })
 })
 
@@ -368,10 +426,76 @@ describe('useAuthStore：換發結果晚到時不蓋掉比較新的登入狀態'
     expect(await auth.logout()).toBe(true)
     pending[0]!(Response.json({ token: 'late', data: USER }))
 
-    expect(await refreshing).toBe('unauthorized')
+    expect(await refreshing).toBe('superseded')
     expect(auth.token).toBeNull()
     expect(auth.user).toBeNull()
     expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
+  })
+
+  it.each([
+    ['後端 503', () => new Response(null, { status: 503 })],
+    ['後端連不上', () => {
+      throw new TypeError('Failed to fetch')
+    }],
+  ])('它應該在換發進行中登出、換發之後暫時失敗（%s）時回 superseded，不說「仍是登入狀態」', async (label, lateRefresh) => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    let release!: () => void
+    const held = new Promise<void>((resolve) => (release = resolve))
+    const fetchMock = mockFetch(async (url) => {
+      if (pathOf(url) !== '/auth/refresh') return Response.json({ message: '已登出。' })
+      await held
+      return lateRefresh()
+    })
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    auth.user = USER
+
+    const refreshing = auth.refresh()
+    expect(await auth.logout()).toBe(true)
+    release()
+
+    const outcome = await refreshing
+    // 登出之後不再重試換發：瀏覽器這時已經沒有這次登入的 refresh cookie 了
+    expect(fetchMock.mock.calls.filter(([url]) => pathOf(url) === '/auth/refresh')).toHaveLength(1)
+    expect(auth.token).toBeNull()
+    expect(outcome).toBe('superseded')
+  })
+
+  it('它應該在換發進行中換成別的登入、舊的換發回 401 時回 superseded，不回 refreshed', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    const USER_B = { id: 2, name: 'B', email: 'b@example.com' }
+    const { pending } = holdRefresh(() => Response.json({ token: 'B', data: USER_B }))
+    const auth = useAuthStore()
+    auth.token = 'A'
+    auth.user = USER
+
+    const refreshing = auth.refresh()
+    await auth.login('b@example.com', 'pw')
+    pending[0]!(new Response(null, { status: 401 }))
+
+    // 回 refreshed 的話，呼叫端會拿 B 的 token 重送 A 的請求
+    expect(await refreshing).toBe('superseded')
+    expect(auth.token).toBe('B')
+    expect(auth.user).toEqual(USER_B)
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
+  })
+
+  it('它應該在 502 重試的等待期間登入狀態換掉時不再重試，不用掉新登入的 refresh cookie', async () => {
+    let refreshCalls = 0
+    const auth = useAuthStore()
+    auth.token = 'A'
+    mockFetch(async (url) => {
+      if (pathOf(url) === '/auth/login') return Response.json({ token: 'B', data: USER })
+      refreshCalls++
+      // 第一次換發回 502 之前，使用者已經用別的帳號登入了
+      await auth.login('b@example.com', 'pw')
+      return new Response(null, { status: 502 })
+    })
+
+    const outcome = await auth.refresh()
+    expect(refreshCalls).toBe(1)
+    expect(auth.token).toBe('B')
+    expect(outcome).toBe('superseded')
   })
 
   it.each([
@@ -400,13 +524,42 @@ describe('useAuthStore：換發結果晚到時不蓋掉比較新的登入狀態'
     await auth.login('j@example.com', 'pw')
     const second = auth.refresh()
 
-    expect(second).not.toBe(first)
+    // Pinia 的 action 每次呼叫都包一個新的 Promise，比對 Promise 本身看不出有沒有共用；
+    // 要看實際送了幾次換發，以及兩個呼叫是不是各自跟著自己那次換發結束
     const refreshCalls = fetchMock.mock.calls.filter(([url]) => pathOf(url) === '/auth/refresh')
     expect(refreshCalls).toHaveLength(2)
-    pending[0]!(Response.json({ token: 'stale', data: USER }))
+    let firstSettled = false
+    void first.then(() => (firstSettled = true))
     pending[1]!(Response.json({ token: 'fresh', data: USER }))
-    expect(await first).toBe('refreshed')
     expect(await second).toBe('refreshed')
+    expect(firstSettled).toBe(false)
+    expect(auth.token).toBe('fresh')
+
+    pending[0]!(Response.json({ token: 'stale', data: USER }))
+    expect(await first).toBe('superseded')
+    expect(auth.token).toBe('fresh')
+  })
+
+  it('它應該在舊登入的換發晚回來時不把新登入進行中的換發清掉，第三個呼叫照樣共用新的那次', async () => {
+    const { fetchMock, pending } = holdRefresh(() => Response.json({ token: 'login', data: USER }))
+    const auth = useAuthStore()
+    const refreshCalls = () =>
+      fetchMock.mock.calls.filter(([url]) => pathOf(url) === '/auth/refresh').length
+
+    const first = auth.refresh()
+    await auth.login('j@example.com', 'pw')
+    const second = auth.refresh()
+    pending[0]!(Response.json({ token: 'stale', data: USER }))
+    expect(await first).toBe('superseded')
+
+    // 舊的那次結束時如果把進行中的登記一起清掉，這裡會再送一次換發，跟 second 用同一顆
+    // cookie 撞在一起（refresh token 單次使用，會互相作廢）
+    const third = auth.refresh()
+    expect(refreshCalls()).toBe(2)
+
+    pending[1]!(Response.json({ token: 'fresh', data: USER }))
+    expect(await second).toBe('refreshed')
+    expect(await third).toBe('refreshed')
     expect(auth.token).toBe('fresh')
   })
 })
