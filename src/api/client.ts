@@ -26,10 +26,14 @@ function currentToken(): string | null {
 /**
  * 換發也救不回來的 401（refresh cookie 無效／過期），統一導去登入頁並帶上原本要去的
  * 路徑——跟 Triple 後台 `useFetchAPI.js` 既有的 401 處理邏輯是同一個模式。
+ * 已經在登入頁就不再導一次：不然 redirect 會變成 /login，登入成功後又停在登入頁。
  */
 function handleUnauthorized(): never {
   if (getActivePinia()) useAuthStore().$patch({ token: null, user: null })
-  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+  const current = router.currentRoute.value
+  if (current.name !== 'login') {
+    router.push({ name: 'login', query: { redirect: current.fullPath } })
+  }
   throw new Error('Unauthorized')
 }
 

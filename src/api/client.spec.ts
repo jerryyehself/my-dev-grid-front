@@ -7,14 +7,17 @@ const mockFetch = vi.fn()
 
 // vi.mock 的 factory 會被 hoist 到檔案最上面，裡面引用的變數要用
 // vi.hoisted 宣告，不能直接用外面的 const（那樣會撞到 TDZ）。
-const { mockPush } = vi.hoisted(() => ({ mockPush: vi.fn() }))
+const { mockPush, mockCurrentRoute } = vi.hoisted(() => ({
+  mockPush: vi.fn(),
+  mockCurrentRoute: { value: { name: 'article-manage', fullPath: '/articles/manage' } },
+}))
 
 // client.ts 的 401 處理要導頁，這裡假路由，不吃真的 router/views——
 // 那些是 client.ts 認證邏輯以外的東西，不該被這份測試間接載入。
 vi.mock('@/router', () => ({
   default: {
     push: mockPush,
-    currentRoute: { value: { fullPath: '/articles/manage' } },
+    currentRoute: mockCurrentRoute,
   },
 }))
 
@@ -25,6 +28,7 @@ function jsonResponse(body: unknown, status = 200) {
 beforeEach(() => {
   mockFetch.mockReset()
   mockPush.mockReset()
+  mockCurrentRoute.value = { name: 'article-manage', fullPath: '/articles/manage' }
   vi.stubGlobal('fetch', mockFetch)
   setActivePinia(createPinia())
 })
@@ -67,6 +71,15 @@ describe('401 handling', () => {
       name: 'login',
       query: { redirect: '/articles/manage' },
     })
+  })
+
+  it('它應該在已經停在登入頁時不再導一次，免得登入後的 redirect 變成 /login', async () => {
+    mockCurrentRoute.value = { name: 'login', fullPath: '/login?redirect=/admin' }
+    mockFetch.mockResolvedValue(jsonResponse({ message: 'Unauthenticated.' }, 401))
+
+    await expect(apiGet('/scopes')).rejects.toThrow('Unauthorized')
+
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })
 
