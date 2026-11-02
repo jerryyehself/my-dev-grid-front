@@ -19,11 +19,15 @@ function plainText(node: MdNode): string {
 }
 
 /**
- * 取內文第一個段落節點的純文字（跳過標題、程式碼區塊、圖片、表格……），
- * 粗體/連結/行內程式碼都拆成純文字，不保留 Markdown 語法。沒有段落就回傳空字串。
+ * 取內文第一個有非空白純文字的段落（跳過標題、程式碼區塊、圖片、表格……），
+ * 粗體/連結/行內程式碼都拆成純文字，不保留 Markdown 語法。沒有文字就回傳空字串。
  */
 export function excerptOf(source: string): string {
   const tree = processor.parse(source) as unknown as MdNode
-  const firstParagraph = (tree.children ?? []).find((n) => n.type === 'paragraph')
-  return firstParagraph ? plainText(firstParagraph) : ''
+  for (const node of tree.children ?? []) {
+    if (node.type !== 'paragraph') continue
+    const text = plainText(node)
+    if (text.trim()) return text
+  }
+  return ''
 }
