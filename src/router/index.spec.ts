@@ -11,19 +11,19 @@ describe('router：/admin', () => {
     await router.push('/about')
   })
 
-  it('路由設定標了 requiresAuth', () => {
+  it('它應該在路由設定標上 requiresAuth', () => {
     const resolved = router.resolve('/admin')
     expect(resolved.name).toBe('admin')
     expect(resolved.meta.requiresAuth).toBe(true)
   })
 
-  it('沒登入：導去登入頁，redirect 帶回 /admin', async () => {
+  it('它應該在沒登入時導去登入頁，redirect 帶回 /admin', async () => {
     await router.push('/admin')
     expect(router.currentRoute.value.name).toBe('login')
     expect(router.currentRoute.value.query.redirect).toBe('/admin')
   })
 
-  it('登入後：進得去', async () => {
+  it('它應該在登入後進入 /admin', async () => {
     useAuthStore().token = 'test-token'
     await router.push('/admin')
     expect(router.currentRoute.value.name).toBe('admin')
@@ -37,13 +37,13 @@ describe('router：auth_error', () => {
     await router.push('/about')
   })
 
-  it('首頁帶 auth_error：轉去登入頁，錯誤代碼一起帶過去', async () => {
+  it('它應該在首頁帶 auth_error 時轉去登入頁，錯誤代碼一起帶過去', async () => {
     await router.push('/?auth_error=not_authorized')
     expect(router.currentRoute.value.name).toBe('login')
     expect(router.currentRoute.value.query.auth_error).toBe('not_authorized')
   })
 
-  it('沒有 auth_error：首頁照常', async () => {
+  it('它應該在沒有 auth_error 時照常顯示首頁', async () => {
     await router.push('/')
     expect(router.currentRoute.value.name).not.toBe('login')
   })
@@ -63,7 +63,7 @@ describe('router：等 restore() 做完再判斷', () => {
     window.localStorage.clear()
   })
 
-  it('上次是登入狀態、cookie 有效：換發完成前不導頁，完成後進得去 /admin', async () => {
+  it('它應該在上次是登入狀態且 cookie 有效時等換發完成才導頁，完成後進入 /admin', async () => {
     window.localStorage.setItem('mdg_auth_session', '1')
     let resolve!: (r: Response) => void
     vi.stubGlobal(
@@ -85,7 +85,7 @@ describe('router：等 restore() 做完再判斷', () => {
     expect(router.currentRoute.value.name).toBe('admin')
   })
 
-  it('cookie 無效：換發失敗後才導去登入頁', async () => {
+  it('它應該在 cookie 無效時等換發失敗才導去登入頁', async () => {
     window.localStorage.setItem('mdg_auth_session', '1')
     vi.stubGlobal(
       'fetch',
@@ -98,7 +98,7 @@ describe('router：等 restore() 做完再判斷', () => {
     expect(router.currentRoute.value.query.redirect).toBe('/admin')
   })
 
-  it('不需要登入的頁面不等 restore', async () => {
+  it('它應該在頁面不需要登入時不等 restore', async () => {
     window.localStorage.setItem('mdg_auth_session', '1')
     vi.stubGlobal(
       'fetch',
@@ -114,13 +114,13 @@ describe('router：等 restore() 做完再判斷', () => {
 
 // 對不到任何路由的網址：兜底到 404 頁（以前只剩空白頁）
 describe('router：not-found', () => {
-  it('不存在的網址解析到 not-found，原路徑保留在網址上', () => {
+  it('它應該將不存在的網址解析到 not-found，並將原路徑保留在網址上', () => {
     const resolved = router.resolve('/no/such/page?x=1')
     expect(resolved.name).toBe('not-found')
     expect(resolved.fullPath).toBe('/no/such/page?x=1')
   })
 
-  it('既有的頁面不會被兜底路由搶走', () => {
+  it('它應該讓既有的頁面不被兜底路由搶走', () => {
     expect(router.resolve('/articles/12').name).toBe('article-detail')
     expect(router.resolve('/graph').name).toBe('graph')
   })
