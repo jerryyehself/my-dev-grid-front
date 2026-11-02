@@ -23,13 +23,13 @@ describe('GraphShortcutsHelp', () => {
     vi.unstubAllGlobals()
   })
 
-  it('open 為 false 時應該不渲染面板', () => {
+  it('它應該在 open 為 false 時不渲染面板', () => {
     const wrapper = mount(GraphShortcutsHelp, { props: { open: false, isMac: false } })
 
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
   })
 
-  it('open 為 true 時應該渲染非強制對話框並連結標題', () => {
+  it('它應該在 open 為 true 時渲染非強制對話框並連結標題', () => {
     const wrapper = mount(GraphShortcutsHelp, { props: { open: true, isMac: false } })
     const dialog = wrapper.get('[role="dialog"]')
 
@@ -38,7 +38,7 @@ describe('GraphShortcutsHelp', () => {
     expect(wrapper.get('#kg-help-title').text()).toBe('操作說明')
   })
 
-  it('應該顯示放大、縮小與全部置中的鍵盤快捷鍵', () => {
+  it('它應該顯示放大、縮小與全部置中的鍵盤快捷鍵', () => {
     const wrapper = mount(GraphShortcutsHelp, { props: { open: true, isMac: false } })
     const rows = wrapper.findAll('dl dd').map((row) => row.text())
 
@@ -47,7 +47,7 @@ describe('GraphShortcutsHelp', () => {
     expect(rows).toContain('全部置中')
   })
 
-  it('從關閉切到打開時應該把焦點移到關閉按鈕', async () => {
+  it('它應該在從關閉切到打開時把焦點移到關閉按鈕', async () => {
     const wrapper = mount(GraphShortcutsHelp, {
       attachTo: document.body,
       props: { open: false, isMac: false },
@@ -60,7 +60,7 @@ describe('GraphShortcutsHelp', () => {
     wrapper.unmount()
   })
 
-  it('點關閉按鈕時應該 emit close', async () => {
+  it('它應該在點關閉按鈕時 emit close', async () => {
     const wrapper = mount(GraphShortcutsHelp, { props: { open: true, isMac: false } })
 
     await wrapper.get('button[aria-label="關閉操作說明"]').trigger('click')
@@ -71,13 +71,13 @@ describe('GraphShortcutsHelp', () => {
   it.each([
     { isMac: true, modifier: '⌘' },
     { isMac: false, modifier: 'Ctrl' },
-  ])('isMac 為 $isMac 時應該顯示 $modifier 滑鼠快捷鍵', ({ isMac, modifier }) => {
+  ])('它應該在 isMac 為 $isMac 時顯示 $modifier 滑鼠快捷鍵', ({ isMac, modifier }) => {
     const wrapper = mount(GraphShortcutsHelp, { props: { open: true, isMac } })
 
     expect(wrapper.text()).toContain(`按住 ${modifier} 再滾動滾輪：縮放`)
   })
 
-  it('面板打開過且元件卸載時應該中止尺寸觀察', async () => {
+  it('它應該在面板打開過且元件卸載時中止尺寸觀察', async () => {
     const wrapper = mount(GraphShortcutsHelp, { props: { open: false, isMac: false } })
 
     await wrapper.setProps({ open: true })
