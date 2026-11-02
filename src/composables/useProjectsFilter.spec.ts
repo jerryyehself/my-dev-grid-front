@@ -18,14 +18,14 @@ function fakeProject(overrides: Partial<Project> = {}): Project {
 }
 
 describe('useProjectsFilter', () => {
-  it('沒有選任何 tag 時，filteredProjects 回傳全部專案', () => {
+  it('它應該在沒有選任何 tag 時讓 filteredProjects 回傳全部專案', () => {
     const projects = [fakeProject({ id: 'a' }), fakeProject({ id: 'b' })]
     const { filteredProjects } = useProjectsFilter(ref(projects))
 
     expect(filteredProjects.value).toEqual(projects)
   })
 
-  it('選了 tag 之後，filteredProjects 只留下命中的專案（OR 邏輯）', () => {
+  it('它應該在選了 tag 之後讓 filteredProjects 只留下命中的專案（OR 邏輯）', () => {
     const projects = [
       fakeProject({ id: 'a', tags: ['Vue'] }),
       fakeProject({ id: 'b', tags: ['python'] }),
@@ -38,7 +38,7 @@ describe('useProjectsFilter', () => {
     expect(filteredProjects.value.map((p) => p.id)).toEqual(['a', 'c'])
   })
 
-  it('同時選兩個 tag 時，命中任一個就算，不要求同時符合', () => {
+  it('它應該在同時選兩個 tag 時保留命中任一個的專案，不要求同時符合', () => {
     const projects = [
       fakeProject({ id: 'a', tags: ['Vue'] }),
       fakeProject({ id: 'b', tags: ['python'] }),
@@ -52,7 +52,7 @@ describe('useProjectsFilter', () => {
     expect(filteredProjects.value.map((p) => p.id).sort()).toEqual(['a', 'b'])
   })
 
-  it('再次 toggleTag 同一個 tag 會取消選取', () => {
+  it('它應該在再次 toggleTag 同一個 tag 時取消選取', () => {
     const projects = [fakeProject({ id: 'a', tags: ['Vue'] }), fakeProject({ id: 'b', tags: [] })]
     const { toggleTag, filteredProjects } = useProjectsFilter(ref(projects))
 
@@ -62,7 +62,7 @@ describe('useProjectsFilter', () => {
     expect(filteredProjects.value).toEqual(projects)
   })
 
-  it('clearFilter 清空所有已選取的 tag', () => {
+  it('它應該在呼叫 clearFilter 時清空所有已選取的 tag', () => {
     const projects = [fakeProject({ id: 'a', tags: ['Vue'] }), fakeProject({ id: 'b', tags: [] })]
     const { toggleTag, clearFilter, selectedTags, filteredProjects } = useProjectsFilter(ref(projects))
 
@@ -73,7 +73,7 @@ describe('useProjectsFilter', () => {
     expect(filteredProjects.value).toEqual(projects)
   })
 
-  it('依後端的技術子類分組（language→語言、framework→框架…），不再用手寫的對照表', () => {
+  it('它應該依後端的技術子類分組（language→語言、framework→框架…），不再用手寫的對照表', () => {
     const projects = [
       fakeProject({
         tags: ['Vue 3', 'laravel', 'appscript', 'PHP'],
@@ -94,7 +94,7 @@ describe('useProjectsFilter', () => {
     ])
   })
 
-  it('同一個技術的不同版本合成一個篩選項，選了會找出用任何一個版本的專案', () => {
+  it('它應該將同一個技術的不同版本合成一個篩選項，選了會找出用任何一個版本的專案', () => {
     const projects = [
       fakeProject({ id: 'a', tags: ['Vue 2'], techniques: [{ name: 'Vue', version: '2', category: 'framework' }] }),
       fakeProject({ id: 'b', tags: ['Vue 3'], techniques: [{ name: 'Vue', version: '3', category: 'framework' }] }),
@@ -109,7 +109,7 @@ describe('useProjectsFilter', () => {
     expect(filteredProjects.value.map((p) => p.id)).toEqual(['a', 'b'])
   })
 
-  it('沒有 techniques 的專案（示範資料快照）照 tags 篩選，分類落到「其他」', () => {
+  it('它應該讓沒有 techniques 的專案（示範資料快照）照 tags 篩選，分類落到「其他」', () => {
     const projects = [fakeProject({ tags: ['some-unmapped-tag'] })]
     const { filterGroups } = useProjectsFilter(ref(projects))
 
@@ -117,7 +117,7 @@ describe('useProjectsFilter', () => {
     expect(other?.tags.map((t) => t.label)).toEqual(['some-unmapped-tag'])
   })
 
-  it('filterGroups 裡每個 tag 帶正確的出現次數', () => {
+  it('它應該讓 filterGroups 裡每個 tag 帶正確的出現次數', () => {
     const lang = (name: string) => ({ name, version: null, category: 'language' })
     const projects = [
       fakeProject({ id: 'a', tags: ['Vue'], techniques: [lang('Vue')] }),
@@ -131,7 +131,7 @@ describe('useProjectsFilter', () => {
     expect(group?.tags.find((t) => t.label === 'Python')?.count).toBe(1)
   })
 
-  it('toggleTag 之後，filterGroups 裡對應 tag 的 selected 會變成 true', () => {
+  it('它應該在 toggleTag 之後讓 filterGroups 裡對應 tag 的 selected 變成 true', () => {
     const projects = [fakeProject({ tags: ['Vue'] })]
     const { toggleTag, filterGroups } = useProjectsFilter(ref(projects))
 
@@ -141,14 +141,14 @@ describe('useProjectsFilter', () => {
     expect(vueTag?.selected).toBe(true)
   })
 
-  it('沒有任何專案掛某個分類的 tag 時，filterGroups 不會出現空分類', () => {
+  it('它應該在沒有任何專案掛某個分類的 tag 時讓 filterGroups 不出現空分類', () => {
     const projects = [fakeProject({ tags: ['Vue'] })]
     const { filterGroups } = useProjectsFilter(ref(projects))
 
     expect(filterGroups.value.map((g) => g.label)).toEqual(['其他'])
   })
 
-  it('同一類裡用得多的排前面，同樣多的照名稱', () => {
+  it('它應該將同一類裡用得多的排前面，同樣多的照名稱', () => {
     const lang = (name: string) => ({ name, version: null, category: 'language' })
     const projects = [
       fakeProject({ id: 'a', techniques: [lang('Shell'), lang('PHP')] }),
@@ -159,7 +159,7 @@ describe('useProjectsFilter', () => {
     expect(filterGroups.value[0]!.tags.map((t) => t.label)).toEqual(['PHP', 'CSS', 'Shell'])
   })
 
-  it('orderedTechniques 照篩選器的分類順序排，框架在前', () => {
+  it('它應該讓 orderedTechniques 照篩選器的分類順序排，框架在前', () => {
     const p = fakeProject({
       techniques: [
         { name: 'json', version: null, category: 'packagetool' },

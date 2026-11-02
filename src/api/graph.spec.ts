@@ -15,13 +15,13 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 describe('fetchGraphOrDemo', () => {
-  it('成功時回真實資料，loadError 為 null', async () => {
+  it('它應該在成功時回傳真實資料且 loadError 為 null', async () => {
     const real = { nodes: [], edges: [] }
     mockFetch.mockResolvedValue(jsonResponse(real))
     expect(await fetchGraphOrDemo()).toEqual({ dto: real, loadError: null })
   })
 
-  it('網路錯誤時退回快照並回報 loadError', async () => {
+  it('它應該在網路錯誤時退回快照並回報 loadError', async () => {
     mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
     expect(await fetchGraphOrDemo()).toEqual({
       dto: graphDemoFixture,
@@ -29,7 +29,7 @@ describe('fetchGraphOrDemo', () => {
     })
   })
 
-  it('HTTP 500 時退回快照並回報 loadError', async () => {
+  it('它應該在 HTTP 500 時退回快照並回報 loadError', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 500))
     expect(await fetchGraphOrDemo()).toEqual({
       dto: graphDemoFixture,

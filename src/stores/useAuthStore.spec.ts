@@ -31,7 +31,7 @@ afterEach(() => {
 })
 
 describe('useAuthStore：登入結果提示', () => {
-  it('OAuth 回呼成功：打 /auth/session 換正式 token，回傳 true，提示「已登入：名字」', async () => {
+  it('它應該在 OAuth 回呼成功時打 /auth/session 換正式 token，回傳 true，提示「已登入：名字」', async () => {
     const fetchMock = mockFetch(() =>
       Response.json({ token: 'access', expires_in: 900, data: USER }),
     )
@@ -49,7 +49,7 @@ describe('useAuthStore：登入結果提示', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer callback-token')
   })
 
-  it('OAuth 回呼拿到 token 但換發失敗：回傳 false、不算登入、不提示成功', async () => {
+  it('它應該在 OAuth 回呼拿到 token 但換發失敗時回傳 false、不算登入、不提示成功', async () => {
     mockFetch(() => new Response(null, { status: 401 }))
     const auth = useAuthStore()
     expect(await auth.setTokenFromOAuthCallback('bad')).toBe(false)
@@ -57,7 +57,7 @@ describe('useAuthStore：登入結果提示', () => {
     expect(auth.notice).toBeNull()
   })
 
-  it('OAuth 回呼時後端連不上：同樣算失敗，token 不留著', async () => {
+  it('它應該在 OAuth 回呼時後端連不上時同樣算失敗，token 不留著', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => {
@@ -69,7 +69,7 @@ describe('useAuthStore：登入結果提示', () => {
     expect(auth.token).toBeNull()
   })
 
-  it('帳密登入成功：帶 credentials 讓瀏覽器存下 refresh cookie，提示「已登入：名字」', async () => {
+  it('它應該在帳密登入成功時帶 credentials 讓瀏覽器存下 refresh cookie，提示「已登入：名字」', async () => {
     const fetchMock = mockFetch(() => Response.json({ token: 't', expires_in: 900, data: USER }))
     const auth = useAuthStore()
     expect(await auth.login('j@example.com', 'pw')).toEqual({ ok: true })
@@ -78,7 +78,7 @@ describe('useAuthStore：登入結果提示', () => {
     expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
   })
 
-  it('登出：帶 Bearer 跟 credentials，清掉登入狀態，提示「已登出」', async () => {
+  it('它應該在登出時帶 Bearer 跟 credentials，清掉登入狀態，提示「已登出」', async () => {
     const fetchMock = mockFetch(() => Response.json({ message: '已登出。' }))
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const auth = useAuthStore()
@@ -94,7 +94,7 @@ describe('useAuthStore：登入結果提示', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer t')
   })
 
-  it('登出只打一次 /auth/logout：access token 過期也不先換發（後端靠 refresh cookie 就能撤銷）', async () => {
+  it('它應該在登出時只打一次 /auth/logout，access token 過期也不先換發（後端靠 refresh cookie 就能撤銷）', async () => {
     const fetchMock = mockFetch(() => Response.json({ message: '已登出。' }))
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const auth = useAuthStore()
@@ -110,7 +110,7 @@ describe('useAuthStore：登入結果提示', () => {
     }],
     ['後端 500', () => new Response(null, { status: 500 })],
     ['被限流 429', () => new Response(null, { status: 429 })],
-  ])('登出失敗（%s）：保留登入狀態跟旗標、顯示錯誤，不假裝已登出', async (label, handler) => {
+  ])('它應該在登出失敗（%s）時保留登入狀態跟旗標、顯示錯誤，不假裝已登出', async (label, handler) => {
     mockFetch(handler)
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const auth = useAuthStore()
@@ -123,7 +123,7 @@ describe('useAuthStore：登入結果提示', () => {
     expect(auth.notice?.tone).toBe('error')
   })
 
-  it('登出失敗後再按一次、這次成功：才清掉登入狀態', async () => {
+  it('它應該在登出失敗後再按一次且這次成功時才清掉登入狀態', async () => {
     let attempt = 0
     mockFetch(() =>
       ++attempt === 1 ? new Response(null, { status: 503 }) : Response.json({ message: '已登出。' }),
@@ -140,7 +140,7 @@ describe('useAuthStore：登入結果提示', () => {
 })
 
 describe('useAuthStore：refresh() 收到 409（另一個分頁剛用掉同一支 refresh token）', () => {
-  it('稍等再重試一次，成功就算換發成功', async () => {
+  it('它應該稍等再重試一次，成功就算換發成功', async () => {
     let attempt = 0
     const fetchMock = mockFetch(() =>
       ++attempt === 1
@@ -153,7 +153,7 @@ describe('useAuthStore：refresh() 收到 409（另一個分頁剛用掉同一�
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
-  it('只重試一次；重試還是 409 就當暫時失敗：不算登入，但保留旗標下次再試', async () => {
+  it('它應該只重試一次；重試還是 409 就當暫時失敗：不算登入，但保留旗標下次再試', async () => {
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const fetchMock = mockFetch(() => new Response(null, { status: 409 }))
     const auth = useAuthStore()
@@ -165,7 +165,7 @@ describe('useAuthStore：refresh() 收到 409（另一個分頁剛用掉同一�
 })
 
 describe('useAuthStore：restore()（重新整理後換回登入狀態）', () => {
-  it('上次是登入狀態、refresh cookie 有效：安靜地換回 token 跟使用者，不顯示提示', async () => {
+  it('它應該在上次是登入狀態且 refresh cookie 有效時安靜地換回 token 跟使用者，不顯示提示', async () => {
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const fetchMock = mockFetch(() =>
       Response.json({ token: 'restored', expires_in: 900, data: USER }),
@@ -185,7 +185,7 @@ describe('useAuthStore：restore()（重新整理後換回登入狀態）', () =
     expect((init.headers as Record<string, string>).Authorization).toBeUndefined()
   })
 
-  it('refresh cookie 無效（401）：維持未登入、清掉旗標，不顯示提示', async () => {
+  it('它應該在 refresh cookie 無效（401）時維持未登入、清掉旗標，不顯示提示', async () => {
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     mockFetch(() => Response.json({ message: '登入已過期' }, { status: 401 }))
     const auth = useAuthStore()
@@ -197,7 +197,7 @@ describe('useAuthStore：restore()（重新整理後換回登入狀態）', () =
     expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
   })
 
-  it('後端連不上：維持未登入，但保留旗標，下次開站再試', async () => {
+  it('它應該在後端連不上時維持未登入，但保留旗標，下次開站再試', async () => {
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     vi.stubGlobal(
       'fetch',
@@ -213,7 +213,7 @@ describe('useAuthStore：restore()（重新整理後換回登入狀態）', () =
     expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
   })
 
-  it('沒有「上次是登入狀態」的旗標（一般訪客）：完全不打 API', async () => {
+  it('它應該在沒有「上次是登入狀態」的旗標（一般訪客）時完全不打 API', async () => {
     const fetchMock = mockFetch(() => Response.json({}))
     const auth = useAuthStore()
 
@@ -223,7 +223,7 @@ describe('useAuthStore：restore()（重新整理後換回登入狀態）', () =
     expect(auth.isAuthenticated).toBe(false)
   })
 
-  it('只跑一次：重複呼叫拿到同一個結果，不會重打', async () => {
+  it('它應該只跑一次，重複呼叫拿到同一個結果，不會重打', async () => {
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     const fetchMock = mockFetch(() => Response.json({ token: 'restored', data: USER }))
     const auth = useAuthStore()
@@ -234,7 +234,7 @@ describe('useAuthStore：restore()（重新整理後換回登入狀態）', () =
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  it('換發進行中 restoring 是 true，做完變回 false', async () => {
+  it('它應該在換發進行中讓 restoring 是 true，做完變回 false', async () => {
     window.localStorage.setItem(SESSION_HINT_KEY, '1')
     let resolve!: (r: Response) => void
     vi.stubGlobal(
@@ -254,7 +254,7 @@ describe('useAuthStore：restore()（重新整理後換回登入狀態）', () =
 })
 
 describe('useAuthStore：refresh()', () => {
-  it('同時好幾個呼叫共用同一次換發（refresh token 單次使用，各換各的會互相作廢）', async () => {
+  it('它應該在同時好幾個呼叫時共用同一次換發（refresh token 單次使用，各換各的會互相作廢）', async () => {
     const fetchMock = mockFetch(() => Response.json({ token: 'fresh', data: USER }))
     const auth = useAuthStore()
 

@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm'
 const proc = unified().use(remarkParse).use(remarkGfm)
 
 describe('假資料的 Markdown 內文', () => {
-  it('每篇都有 body 而且 parse 得出結構', () => {
+  it('它應該讓每篇都有 body 而且 parse 得出結構', () => {
     for (const a of articles) {
       expect(a.body, a.id).toBeTruthy()
       const tree = proc.parse(a.body) as { children: { type: string }[] }
@@ -17,7 +17,7 @@ describe('假資料的 Markdown 內文', () => {
     }
   })
 
-  it('整批合起來有涵蓋到 walker 支援的節點型別', () => {
+  it('它應該讓整批合起來涵蓋到 walker 支援的節點型別', () => {
     const seen = new Set<string>()
     const walk = (n: { type: string; children?: unknown[] }) => {
       seen.add(n.type)
@@ -30,7 +30,7 @@ describe('假資料的 Markdown 內文', () => {
     }
   })
 
-  it('站內連結指向真的存在的路由', () => {
+  it('它應該讓站內連結指向真的存在的路由', () => {
     const routes = ['/', '/about', '/projects', '/articles', '/articles/manage', '/graph']
     const internal: string[] = []
     const walk = (n: { type: string; url?: string; children?: unknown[] }) => {

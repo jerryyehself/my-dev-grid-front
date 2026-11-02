@@ -30,7 +30,7 @@ beforeEach(() => {
 })
 
 describe('authHeaders', () => {
-  it('沒有 token 時不帶 Authorization header', async () => {
+  it('它應該在沒有 token 時不帶 Authorization header', async () => {
     mockFetch.mockResolvedValue(jsonResponse({ data: [] }))
 
     await apiGet('/scopes')
@@ -39,7 +39,7 @@ describe('authHeaders', () => {
     expect(init?.headers as Record<string, string>).not.toHaveProperty('Authorization')
   })
 
-  it('有 token 時每個請求都帶 Authorization: Bearer', async () => {
+  it('它應該在有 token 時讓每個請求都帶 Authorization: Bearer', async () => {
     useAuthStore().token = 'plain-text-token'
     mockFetch.mockResolvedValue(jsonResponse({ data: [] }))
 
@@ -54,7 +54,7 @@ describe('authHeaders', () => {
 })
 
 describe('401 handling', () => {
-  it('換發也失敗：清掉 token/user 並導去登入頁，帶上原本要去的路徑', async () => {
+  it('它應該在換發也失敗時清掉 token/user 並導去登入頁，帶上原本要去的路徑', async () => {
     const auth = useAuthStore()
     auth.token = 'expired-token'
     mockFetch.mockResolvedValue(jsonResponse({ message: 'Unauthenticated.' }, 401))
@@ -76,7 +76,7 @@ describe('401 → refresh → retry', () => {
     return url.replace(/^.*\/api/, '')
   }
 
-  it('GET：換到新 token 後用新 token 重送一次，呼叫端拿到正常結果', async () => {
+  it('它應該在 GET 換到新 token 後用新 token 重送一次，讓呼叫端拿到正常結果', async () => {
     const auth = useAuthStore()
     auth.token = 'expired'
     mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
@@ -96,7 +96,7 @@ describe('401 → refresh → retry', () => {
     expect(mockPush).not.toHaveBeenCalled()
   })
 
-  it('POST／DELETE 也一樣，重送時 body、method 跟原本相同', async () => {
+  it('它應該在重送 POST／DELETE 時保留原本的 body、method', async () => {
     const auth = useAuthStore()
     auth.token = 'expired'
     mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
@@ -117,7 +117,7 @@ describe('401 → refresh → retry', () => {
     expect((mockFetch.mock.calls[2]![1] as RequestInit).method).toBe('DELETE')
   })
 
-  it('只重試一次：換到新 token 重送還是 401，就導去登入頁', async () => {
+  it('它應該只重試一次，在換到新 token 重送還是 401 時導去登入頁', async () => {
     const auth = useAuthStore()
     auth.token = 'expired'
     mockFetch.mockImplementation(async (url: string) =>
@@ -136,7 +136,7 @@ describe('401 → refresh → retry', () => {
     })
   })
 
-  it('同時好幾個請求 401：共用同一次換發', async () => {
+  it('它應該在同時好幾個請求收到 401 時共用同一次換發', async () => {
     const auth = useAuthStore()
     auth.token = 'expired'
     mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
@@ -153,7 +153,7 @@ describe('401 → refresh → retry', () => {
     expect(refreshCalls).toHaveLength(1)
   })
 
-  it('沒帶 token 的請求收到 401：不換發，直接導去登入頁', async () => {
+  it('它應該在沒帶 token 的請求收到 401 時不換發，直接導去登入頁', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 401))
 
     await expect(apiGet('/scopes')).rejects.toThrow('Unauthorized')
@@ -165,7 +165,7 @@ describe('401 → refresh → retry', () => {
 
 // 後端冷啟動時前一兩個請求會 502：GET 自己重試，不要一碰到就退回示範資料（2026-10-04 站主回報）
 describe('GET 重試', () => {
-  it('502 之後重試，第二次成功就回正常結果', async () => {
+  it('它應該在 502 之後重試，第二次成功就回正常結果', async () => {
     mockFetch
       .mockResolvedValueOnce(jsonResponse({}, 502))
       .mockResolvedValueOnce(jsonResponse({ data: [1] }))
@@ -174,7 +174,7 @@ describe('GET 重試', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2)
   })
 
-  it('網路層失敗（TypeError）也重試', async () => {
+  it('它應該在網路層失敗（TypeError）時也重試', async () => {
     mockFetch
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
       .mockResolvedValueOnce(jsonResponse({ data: [] }))
@@ -182,14 +182,14 @@ describe('GET 重試', () => {
     await expect(apiGet('/scopes')).resolves.toEqual({ data: [] })
   })
 
-  it('最多重試兩次，三次都 503 就丟出 ApiHttpError', async () => {
+  it('它應該最多重試兩次，在三次都 503 時丟出 ApiHttpError', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 503))
 
     await expect(apiGet('/scopes')).rejects.toMatchObject({ name: 'ApiHttpError', status: 503 })
     expect(mockFetch).toHaveBeenCalledTimes(3)
   })
 
-  it('404、500 重試也不會變：不重試，直接丟', async () => {
+  it('它應該在 404、500 時不重試，直接丟錯', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 404))
     await expect(apiGet('/documentations/9')).rejects.toMatchObject({ status: 404 })
     expect(mockFetch).toHaveBeenCalledTimes(1)
@@ -200,7 +200,7 @@ describe('GET 重試', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1)
   })
 
-  it('POST 不重試（不是冪等的）', async () => {
+  it('它應該不重試非冪等的 POST 請求', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 502))
 
     await expect(apiPost('/documentations', {})).rejects.toBeTruthy()
@@ -226,7 +226,7 @@ describe('錯誤回應的 console.error', () => {
     return { ok: false, status, headers, json: async () => ({}) }
   }
 
-  it('4xx 有 X-Request-Id：記方法、路徑、狀態碼跟 request id', async () => {
+  it('它應該在 4xx 有 X-Request-Id 時記錄方法、路徑、狀態碼跟 request id', async () => {
     mockFetch.mockResolvedValue(errorResponse(404, 'req-abc-123'))
 
     await expect(apiGet('/documentations/9')).rejects.toMatchObject({ status: 404 })
@@ -239,7 +239,7 @@ describe('錯誤回應的 console.error', () => {
     expect(line).toContain('request id: req-abc-123')
   })
 
-  it('4xx 沒有 X-Request-Id：印 (none)', async () => {
+  it('它應該在 4xx 沒有 X-Request-Id 時印出 (none)', async () => {
     mockFetch.mockResolvedValue(errorResponse(403))
 
     await expect(apiDelete('/scopes/1')).rejects.toThrow()
@@ -252,7 +252,7 @@ describe('錯誤回應的 console.error', () => {
     expect(line).toContain('request id: (none)')
   })
 
-  it('5xx 有 X-Request-Id：記下來', async () => {
+  it('它應該在 5xx 有 X-Request-Id 時記錄 request id', async () => {
     mockFetch.mockResolvedValue(errorResponse(500, 'req-500-xyz'))
 
     await expect(apiPost('/scopes', { name: 'x' })).rejects.toThrow()
@@ -265,7 +265,7 @@ describe('錯誤回應的 console.error', () => {
     expect(line).toContain('request id: req-500-xyz')
   })
 
-  it('5xx 沒有 X-Request-Id：印 (none)', async () => {
+  it('它應該在 5xx 沒有 X-Request-Id 時印出 (none)', async () => {
     mockFetch.mockResolvedValue(errorResponse(500))
 
     await expect(apiGet('/scopes')).rejects.toMatchObject({ status: 500 })
@@ -274,7 +274,7 @@ describe('錯誤回應的 console.error', () => {
     expect(errorSpy.mock.calls[0]![0]).toContain('request id: (none)')
   })
 
-  it('2xx 不記', async () => {
+  it('它應該在 2xx 時不記錄錯誤', async () => {
     mockFetch.mockResolvedValue(jsonResponse({ data: [] }))
 
     await apiGet('/scopes')
