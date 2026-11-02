@@ -91,6 +91,15 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 export type RefreshOutcome = 'refreshed' | 'unauthorized' | 'unavailable'
 
 /**
+ * 帳密登入失敗、但不是帳號密碼錯的時候顯示的訊息（登入頁看得到，照 copy-language
+ * 的錯誤訊息格式：發生什麼事、該怎麼做）。跟「請確認帳號密碼」分開，免得使用者以為打錯了。
+ */
+export const LOGIN_ERROR_MESSAGES = {
+  network: '登入失敗：連不上伺服器，請確認網路連線後再試一次。',
+  server: '登入失敗：伺服器暫時出了問題，請稍後再試一次。',
+} as const
+
+/**
  * Access token 只存在記憶體裡（一個 ref），不落 localStorage/sessionStorage——
  * 跨 origin 的 Sanctum API token 模式（D-56），token 存
  * Web Storage 的話任何跑在頁面上的 script（含 XSS 注入）都能直接讀到。
@@ -242,12 +251,21 @@ export const useAuthStore = defineStore('auth', () => {
     password: string,
   ): Promise<{ ok: true } | { ok: false; message: string }> {
     // credentials: 'include'：跨 origin 的回應要讓瀏覽器存下 refresh cookie，一定要帶
-    const res = await fetch(`${BASE_URL}/auth/login`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
+    let res: Response
+    try {
+      res = await fetch(`${BASE_URL}/auth/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+    } catch {
+      return { ok: false, message: LOGIN_ERROR_MESSAGES.network }
+    }
+
+    // 5xx（含冷啟動的 502）跟帳號密碼無關，不能顯示「請確認帳號密碼」，也不顯示後端的
+    // 英文訊息（例如 Server Error）
+    if (res.status >= 500) return { ok: false, message: LOGIN_ERROR_MESSAGES.server }
 
     if (!res.ok) {
       const body: { message?: string; errors?: Record<string, string[] | string> } = await res
