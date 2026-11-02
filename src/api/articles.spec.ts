@@ -27,14 +27,14 @@ function mockDocumentations(respond: () => unknown) {
 const demoId = (articlesDemoFixture as { id: number }[])[0]!.id
 
 describe('fetchArticlesOrDemo', () => {
-  it('成功時回真實資料，loadError 為 null', async () => {
+  it('它應該在成功時回傳真實資料且 loadError 為 null', async () => {
     mockDocumentations(async () => jsonResponse({ data: [] }))
     const result = await fetchArticlesOrDemo()
     expect(result.loadError).toBeNull()
     expect(result.articles).toEqual([])
   })
 
-  it('網路錯誤時退回填充內容並回報 loadError', async () => {
+  it('它應該在網路錯誤時退回填充內容並回報 loadError', async () => {
     mockDocumentations(async () => {
       throw new TypeError('Failed to fetch')
     })
@@ -43,7 +43,7 @@ describe('fetchArticlesOrDemo', () => {
     expect(result.articles).toEqual(articlesDemoFixture)
   })
 
-  it('HTTP 500 時退回填充內容並回報 loadError', async () => {
+  it('它應該在 HTTP 500 時退回填充內容並回報 loadError', async () => {
     mockDocumentations(async () => jsonResponse({ message: 'Server Error' }, 500))
     const result = await fetchArticlesOrDemo()
     expect(result.loadError).toBe('資料載入失敗：GET /documentations 回傳 HTTP 500，下面先放示範資料。')
@@ -52,7 +52,7 @@ describe('fetchArticlesOrDemo', () => {
 })
 
 describe('fetchArticleOrDemo', () => {
-  it('成功時回真實文章，loadError 為 null', async () => {
+  it('它應該在成功時回傳真實文章且 loadError 為 null', async () => {
     const real = { id: demoId, title: 'real', techniques: [], implementations: [] }
     mockFetch.mockResolvedValue(jsonResponse(real))
     const result = await fetchArticleOrDemo(demoId)
@@ -60,26 +60,26 @@ describe('fetchArticleOrDemo', () => {
     expect(result.article).toEqual(real)
   })
 
-  it('網路錯誤時退回同 id 的填充文章並回報 loadError', async () => {
+  it('它應該在網路錯誤時退回同 id 的填充文章並回報 loadError', async () => {
     mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
     const result = await fetchArticleOrDemo(demoId)
     expect(result.loadError).toContain('Failed to fetch')
     expect(result.article.id).toBe(demoId)
   })
 
-  it('HTTP 500 時退回同 id 的填充文章並回報 loadError', async () => {
+  it('它應該在 HTTP 500 時退回同 id 的填充文章並回報 loadError', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 500))
     const result = await fetchArticleOrDemo(demoId)
     expect(result.loadError).toContain('GET /documentations/'+demoId+' 回傳 HTTP 500')
     expect(result.article.id).toBe(demoId)
   })
 
-  it('HTTP 404 是真的不存在，不拿填充文章頂替（即使 demo 有同 id）', async () => {
+  it('它應該在 HTTP 404 時回報不存在，即使 demo 有同 id 也不拿填充文章頂替', async () => {
     mockFetch.mockResolvedValue(jsonResponse({ message: 'Not Found' }, 404))
     await expect(fetchArticleOrDemo(demoId)).rejects.toMatchObject({ status: 404 })
   })
 
-  it('錯誤且 demo 清單沒有這個 id 時照樣丟錯', async () => {
+  it('它應該在發生錯誤且 demo 清單沒有這個 id 時照樣丟錯', async () => {
     mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))
     await expect(fetchArticleOrDemo(999999)).rejects.toThrow()
   })
@@ -103,19 +103,19 @@ describe('技術名稱帶版本', () => {
     implementations: [{ id: 20, title: 'my-dev-grid-front', relation_id: 8 }],
   }
 
-  it('技術的 title 換成帶版本的顯示名稱，實作不動', () => {
+  it('它應該將技術的 title 換成帶版本的顯示名稱並保留實作不動', () => {
     const a = withTechniqueLabels(raw)
     expect(a.techniques.map((t) => t.title)).toEqual(['Vue 3', 'Vue'])
     expect(a.implementations).toEqual(raw.implementations)
   })
 
-  it('version 轉完就丟掉，套第二次不會變成「Vue 3 3」', () => {
+  it('它應該在轉換後移除 version，套第二次不會變成「Vue 3 3」', () => {
     const once = withTechniqueLabels(raw)
     expect(once.techniques[0]).not.toHaveProperty('version')
     expect(withTechniqueLabels(once)).toEqual(once)
   })
 
-  it('fetchArticle／fetchArticles 回來的就已經帶版本，畫面不用自己拼', async () => {
+  it('它應該讓 fetchArticle／fetchArticles 回傳的名稱已經帶版本，畫面不用自己拼', async () => {
     mockDocumentations(async () => jsonResponse({ data: [raw] }))
     const { articles } = await fetchArticlesOrDemo()
     expect(articles[0]!.techniques.map((t) => t.title)).toEqual(['Vue 3', 'Vue'])

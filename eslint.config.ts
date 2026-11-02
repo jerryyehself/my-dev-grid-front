@@ -107,12 +107,6 @@ export default defineConfigWithVueTs(
     files: ['**/*.spec.ts'],
     ignores: [
       // 舊檔還沒改成「它應該」句型；改到某個檔案時順手改標題，並把它移出清單。新檔一律要符合。
-      'src/api/articles.spec.ts',
-      'src/api/client.spec.ts',
-      'src/api/graph.spec.ts',
-      'src/api/ontology.spec.ts',
-      'src/api/projects.spec.ts',
-      'src/api/techniqueLabel.spec.ts',
       'src/components/ArticleEditLink.spec.ts',
       'src/components/AuthNotice.spec.ts',
       'src/components/AuthOnly.spec.ts',
