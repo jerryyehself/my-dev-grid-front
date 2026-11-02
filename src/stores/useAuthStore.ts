@@ -125,19 +125,30 @@ export const useAuthStore = defineStore('auth', () => {
     return token.value ? { Authorization: `Bearer ${token.value}` } : {}
   }
 
+  /**
+   * 登入狀態的世代：每次寫入或清掉登入狀態都 +1。換發出發時記下世代，回來時世代變了
+   * （等待期間使用者登出，或 OAuth 回呼／帳密登入換上了新的登入），就把結果丟掉，
+   * 不讓晚到的舊結果蓋掉比較新的狀態。main.ts 開機的 restore() 不 await，
+   * 它的換發可能比 OAuth 回呼的 /auth/session 晚回來。
+   */
+  let sessionEpoch = 0
+
   function applySession(body: TokenPairResponse) {
+    sessionEpoch++
     token.value = body.token
     user.value = body.data
     writeSessionHint(true)
   }
 
   function clearSession() {
+    sessionEpoch++
     token.value = null
     user.value = null
     writeSessionHint(false)
   }
 
-  let refreshInFlight: Promise<RefreshOutcome> | null = null
+  /** 進行中的換發，跟它出發時的世代。世代變了就不共用，另外送一次 */
+  let refreshInFlight: { epoch: number; promise: Promise<RefreshOutcome> } | null = null
 
   /** 送一次換發；502／503／504 跟網路層失敗照 REFRESH_RETRY_DELAYS_MS 重試 */
   async function sendRefresh(): Promise<Response> {
@@ -164,9 +175,19 @@ export const useAuthStore = defineStore('auth', () => {
    * 共用同一次換發（refresh token 單次使用，各換各的只會互相作廢）。
    * 結果分三種（見 RefreshOutcome）：只有後端明確回 401 才清掉登入狀態；
    * 暫時失敗不動目前的登入狀態，旗標也保留，下次開站還會再試。
+   * 換發期間登入狀態被換掉（見 sessionEpoch）時不寫入結果：目前有登入就回 refreshed
+   * （呼叫端用目前的 token 重送），沒有就回 unauthorized。
    */
   function refresh(): Promise<RefreshOutcome> {
-    refreshInFlight ??= (async (): Promise<RefreshOutcome> => {
+    if (refreshInFlight?.epoch === sessionEpoch) return refreshInFlight.promise
+
+    const flight = { epoch: sessionEpoch } as { epoch: number; promise: Promise<RefreshOutcome> }
+    // 先登記再出發：就算換發同步就結束，finally 也清得到這一筆
+    refreshInFlight = flight
+    const superseded = () => flight.epoch !== sessionEpoch
+    const currentOutcome = (): RefreshOutcome => (token.value ? 'refreshed' : 'unauthorized')
+
+    flight.promise = (async (): Promise<RefreshOutcome> => {
       try {
         let res = await sendRefresh()
         // 409：同一支 refresh token 剛被另一個分頁用掉，稍等用新 cookie 重試一次。
@@ -176,19 +197,22 @@ export const useAuthStore = defineStore('auth', () => {
           res = await sendRefresh()
         }
         if (res.status === 401) {
+          if (superseded()) return currentOutcome()
           clearSession()
           return 'unauthorized'
         }
         if (!res.ok) return 'unavailable'
-        applySession(await res.json())
+        const body: TokenPairResponse = await res.json()
+        if (superseded()) return currentOutcome()
+        applySession(body)
         return 'refreshed'
       } catch {
         return 'unavailable'
       } finally {
-        refreshInFlight = null
+        if (refreshInFlight === flight) refreshInFlight = null
       }
     })()
-    return refreshInFlight
+    return flight.promise
   }
 
   let restorePromise: Promise<void> | null = null

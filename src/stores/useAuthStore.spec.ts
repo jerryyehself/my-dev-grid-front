@@ -344,3 +344,69 @@ describe('useAuthStore：refresh()', () => {
     expect(fetch500).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('useAuthStore：換發結果晚到時不蓋掉比較新的登入狀態', () => {
+  /** /auth/refresh 先掛著，由測試決定什麼時候、回什麼；其他端點照 handler 立刻回 */
+  function holdRefresh(handler: Handler) {
+    const pending: Array<(r: Response) => void> = []
+    const fetchMock = mockFetch((url, init) =>
+      pathOf(url) === '/auth/refresh'
+        ? new Promise<Response>((resolve) => pending.push(resolve))
+        : handler(url, init),
+    )
+    return { fetchMock, pending }
+  }
+
+  it('它應該在換發進行中登出時丟掉晚到的換發結果，維持已登出', async () => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    const { pending } = holdRefresh(() => Response.json({ message: '已登出。' }))
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    auth.user = USER
+
+    const refreshing = auth.refresh()
+    expect(await auth.logout()).toBe(true)
+    pending[0]!(Response.json({ token: 'late', data: USER }))
+
+    expect(await refreshing).toBe('unauthorized')
+    expect(auth.token).toBeNull()
+    expect(auth.user).toBeNull()
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBeNull()
+  })
+
+  it.each([
+    ['換發成功', () => Response.json({ token: 'old-family', data: USER })],
+    ['換發 401', () => new Response(null, { status: 401 })],
+  ])('它應該在開機的 restore() 比 OAuth 登入晚回來（%s）時保留 OAuth 登入的狀態', async (label, lateRefresh) => {
+    window.localStorage.setItem(SESSION_HINT_KEY, '1')
+    const { pending } = holdRefresh(() => Response.json({ token: 'oauth', data: USER }))
+    const auth = useAuthStore()
+
+    const restoring = auth.restore()
+    expect(await auth.setTokenFromOAuthCallback('callback-token')).toBe(true)
+    pending[0]!(lateRefresh())
+    await restoring
+
+    expect(auth.token).toBe('oauth')
+    expect(auth.user).toEqual(USER)
+    expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
+  })
+
+  it('它應該在登入狀態換過之後另外送一次換發，不共用舊的那次', async () => {
+    const { fetchMock, pending } = holdRefresh(() => Response.json({ token: 'login', data: USER }))
+    const auth = useAuthStore()
+
+    const first = auth.refresh()
+    await auth.login('j@example.com', 'pw')
+    const second = auth.refresh()
+
+    expect(second).not.toBe(first)
+    const refreshCalls = fetchMock.mock.calls.filter(([url]) => pathOf(url) === '/auth/refresh')
+    expect(refreshCalls).toHaveLength(2)
+    pending[0]!(Response.json({ token: 'stale', data: USER }))
+    pending[1]!(Response.json({ token: 'fresh', data: USER }))
+    expect(await first).toBe('refreshed')
+    expect(await second).toBe('refreshed')
+    expect(auth.token).toBe('fresh')
+  })
+})
