@@ -10,7 +10,7 @@ import {
 const node = (x: number, y: number, labelW = 0): FitItem => ({ x, y, r: 5, labelW, labelH: 18 })
 
 describe('fitTransform', () => {
-  it('沒有標籤時，寬的那一邊剛好貼齊可用寬度', () => {
+  it('它應該讓寬的那一邊剛好貼齊可用寬度，當沒有標籤時', () => {
     const items = [node(0, 0), node(200, 0)]
     const fit = fitTransform(items, 420, 400, 10)!
     // 寬度 = (200 + 2×5) × k = 400
@@ -18,7 +18,7 @@ describe('fitTransform', () => {
     expect(fit.cx).toBeCloseTo(100, 3)
   })
 
-  it('長標籤只佔固定螢幕寬度，不會像舊做法一樣讓四邊都留一半標籤寬', () => {
+  it('它應該讓長標籤只佔固定螢幕寬度，不會像舊做法一樣讓四邊都留一半標籤寬', () => {
     const items = [node(0, 0, 240), node(400, 0), node(0, 300), node(400, 300)]
     const fit = fitTransform(items, 1000, 460, 16)!
     const e = screenExtent(items, fit.k)
@@ -28,24 +28,24 @@ describe('fitTransform', () => {
     expect(fit.k).toBeGreaterThan(1.2)
   })
 
-  it('框景中心把標籤的螢幕範圍也算進去', () => {
+  it('它應該讓框景中心把標籤的螢幕範圍也算進去', () => {
     const items = [node(0, 0, 300), node(100, 0)]
     const fit = fitTransform(items, 2000, 500, 0)!
     const e = screenExtent(items, fit.k)
     expect(fit.cx * fit.k).toBeCloseTo((e.minX + e.maxX) / 2, 6)
   })
 
-  it('小圖不會無限放大', () => {
+  it('它應該避免小圖無限放大', () => {
     expect(fitTransform([node(0, 0)], 800, 600, 10, 3)!.k).toBe(3)
   })
 
-  it('沒有節點回傳 null', () => {
+  it('它應該在沒有節點時回傳 null', () => {
     expect(fitTransform([], 800, 600, 10)).toBeNull()
   })
 })
 
 describe('fitTransformWithInset', () => {
-  it('底邊被蓋住時，整張圖（含標籤）落在上方剩下的區域裡', () => {
+  it('它應該讓整張圖（含標籤）落在上方剩下的區域裡，當底邊被蓋住時', () => {
     const items = [node(0, 0), node(100, 0), node(0, 300), node(100, 300, 80)]
     const W = 358
     const H = 358
@@ -61,7 +61,7 @@ describe('fitTransformWithInset', () => {
     expect(top).toBeGreaterThanOrEqual(pad - 1e-6)
   })
 
-  it('寬畫布不留底邊', () => {
+  it('它應該在寬畫布不留底邊', () => {
     expect(controlsBottomInset(976, 16)).toBe(0)
   })
 })

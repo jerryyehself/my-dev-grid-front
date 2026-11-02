@@ -108,14 +108,6 @@ export default defineConfigWithVueTs(
     ignores: [
       // 舊檔還沒改成「它應該」句型；改到某個檔案時順手改標題，並把它移出清單。新檔一律要符合。
       'src/components/graph/GraphShortcutsHelp.spec.ts',
-      'src/components/graph/clusterForce.spec.ts',
-      'src/components/graph/colorScale.spec.ts',
-      'src/components/graph/derivedEdges.spec.ts',
-      'src/components/graph/fitView.spec.ts',
-      'src/components/graph/graphDetail.spec.ts',
-      'src/components/graph/labels.spec.ts',
-      'src/components/graph/layeredLayout.spec.ts',
-      'src/components/graph/viewMath.spec.ts',
       'src/components/graphNodeLink.spec.ts',
       'src/components/graphRelationPhrase.spec.ts',
       'src/components/markdown/MarkdownBody.spec.ts',

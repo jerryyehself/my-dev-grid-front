@@ -63,7 +63,7 @@ const index = buildGraphDetailIndex(dto)
 const labels = (ns: { label: string }[]) => ns.map((n) => n.label)
 
 describe('relationGroupsOf', () => {
-  it('技術：依對方類別分組（技術→實作→文件），組內依名稱排序', () => {
+  it('它應該依對方類別分組（技術→實作→文件）並在組內依名稱排序，當查詢技術時', () => {
     const groups = relationGroupsOf(index, 'technique-29')
     expect(groups.map((g) => [g.label, labels(g.nodes)])).toEqual([
       ['技術', ['JavaScript']],
@@ -72,23 +72,23 @@ describe('relationGroupsOf', () => {
     ])
   })
 
-  it('實作：技術一組，不管邊存的方向', () => {
+  it('它應該把技術放在一組且不受邊存的方向影響，當查詢實作時', () => {
     expect(
       relationGroupsOf(index, 'implementation-2').map((g) => [g.label, labels(g.nodes)]),
     ).toEqual([['技術', ['JavaScript', 'TypeScript', 'vue']]])
   })
 
-  it('文件：技術', () => {
+  it('它應該回傳技術分組，當查詢文件時', () => {
     expect(
       relationGroupsOf(index, 'documentation-5').map((g) => [g.label, labels(g.nodes)]),
     ).toEqual([['技術', ['vue']]])
   })
 
-  it('沒有關係或查不到的節點回空陣列', () => {
+  it('它應該回空陣列，當節點沒有關係或查不到時', () => {
     expect(relationGroupsOf(index, 'nope')).toEqual([])
   })
 
-  it('版本：主技術那端把版本另成一組排最前；版本那端看主技術就是「技術」', () => {
+  it('它應該把版本另成一組排在主技術那端最前，並在版本那端把主技術視為「技術」', () => {
     const v = buildGraphDetailIndex({
       nodes: [
         node('technique-1', 'technique', 'Vue'),
@@ -116,7 +116,7 @@ describe('relationGroupsOf', () => {
 })
 
 describe('indirectRelationsOf', () => {
-  it('跟畫布同一套推算：兩個實作共用 3 項技術才算，列出兩邊都連到的節點', () => {
+  it('它應該跟畫布用同一套推算，在兩個實作共用 3 項技術時才算並列出兩邊都連到的節點', () => {
     expect(indirectRelationsOf(index, 'implementation-2')).toEqual([
       {
         node: { id: 'implementation-4', label: 'isbn-scanner', domainType: 'implementation' },
@@ -133,12 +133,12 @@ describe('indirectRelationsOf', () => {
     ])
   })
 
-  it('共用不夠多、或是技術節點（不推算），就沒有間接關聯', () => {
+  it('它應該沒有間接關聯，當共用不夠多或是技術節點（不推算）時', () => {
     expect(indirectRelationsOf(index, 'implementation-1')).toEqual([])
     expect(indirectRelationsOf(index, 'technique-29')).toEqual([])
   })
 
-  it('共同連到越多的排越前面', () => {
+  it('它應該讓共同連到越多的排越前面', () => {
     const big = buildGraphDetailIndex({
       nodes: [
         node('d1', 'documentation', 'A'),
@@ -163,7 +163,7 @@ describe('indirectRelationsOf', () => {
 })
 
 describe('nodeSelectionOf', () => {
-  it('組出跟畫布點節點時一樣的選取格式，關係數不重複計算', () => {
+  it('它應該組出跟畫布點節點時一樣的選取格式，關係數不重複計算', () => {
     expect(nodeSelectionOf(index, 'documentation-5')).toEqual({
       kind: 'node',
       id: 'documentation-5',
@@ -180,7 +180,7 @@ describe('nodeSelectionOf', () => {
 })
 
 describe('detailNodeOf', () => {
-  it('索引還沒載入或查不到時回 null', () => {
+  it('它應該回 null，當索引還沒載入或查不到時', () => {
     expect(detailNodeOf(null, 'technique-29')).toBeNull()
     expect(detailNodeOf(index, 'nope')).toBeNull()
     expect(detailNodeOf(index, 'technique-29')).toEqual({
