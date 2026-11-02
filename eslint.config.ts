@@ -107,15 +107,6 @@ export default defineConfigWithVueTs(
     files: ['**/*.spec.ts'],
     ignores: [
       // 舊檔還沒改成「它應該」句型；改到某個檔案時順手改標題，並把它移出清單。新檔一律要符合。
-      'src/components/ArticleEditLink.spec.ts',
-      'src/components/AuthNotice.spec.ts',
-      'src/components/AuthOnly.spec.ts',
-      'src/components/AuthStatus.spec.ts',
-      'src/components/BaseSegmented.spec.ts',
-      'src/components/BaseSwitch.spec.ts',
-      'src/components/BaseTextarea.spec.ts',
-      'src/components/TheNavbar.spec.ts',
-      'src/components/ThemeToggle.spec.ts',
       'src/components/graph/GraphShortcutsHelp.spec.ts',
       'src/components/graph/clusterForce.spec.ts',
       'src/components/graph/colorScale.spec.ts',

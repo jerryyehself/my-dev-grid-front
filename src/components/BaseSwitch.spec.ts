@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import BaseSwitch from './BaseSwitch.vue'
 
 describe('BaseSwitch', () => {
-  it('是 role="switch"，aria-checked 跟著 v-model', async () => {
+  it('它應該具有 role="switch"，且 aria-checked 跟著 v-model', async () => {
     const wrapper = mount(BaseSwitch, {
       props: { label: '間接關聯', modelValue: false, 'onUpdate:modelValue': (v: boolean) => wrapper.setProps({ modelValue: v }) },
     })

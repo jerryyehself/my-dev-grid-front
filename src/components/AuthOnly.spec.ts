@@ -15,11 +15,11 @@ describe('AuthOnly', () => {
     setActivePinia(createPinia())
   })
 
-  it('沒登入時不渲染裡面的寫入入口', () => {
+  it('它應該在沒登入時不渲染裡面的寫入入口', () => {
     expect(mountWithSlot().find('.write-entry').exists()).toBe(false)
   })
 
-  it('登入後才渲染', () => {
+  it('它應該在登入後才渲染', () => {
     useAuthStore().token = 'test-token'
     expect(mountWithSlot().find('.write-entry').exists()).toBe(true)
   })
