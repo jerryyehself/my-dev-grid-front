@@ -11,7 +11,7 @@ const router = createRouter({
 const robotsMeta = () => document.head.querySelector('meta[name="robots"]')
 
 describe('NotFoundView', () => {
-  it('說明找不到，並給首頁、文章、專案、圖譜四個出口', () => {
+  it('它應該說明找不到，並給首頁、文章、專案、圖譜四個出口', () => {
     const wrapper = mount(NotFoundView, { global: { plugins: [router] } })
     expect(wrapper.find('h1').text()).toBe('找不到這個頁面')
     expect(wrapper.findAll('nav a').map((a) => a.attributes('href'))).toEqual([
@@ -23,7 +23,7 @@ describe('NotFoundView', () => {
     wrapper.unmount()
   })
 
-  it('在的時候加 robots noindex，離開就拿掉', () => {
+  it('它應該在掛載時加上 robots noindex，離開時拿掉', () => {
     const wrapper = mount(NotFoundView, { global: { plugins: [router] } })
     expect(robotsMeta()?.getAttribute('content')).toBe('noindex')
     wrapper.unmount()
