@@ -17,22 +17,52 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api
  * 先檢查 `getActivePinia()`：這個專案既有的 API 單元測試（例如
  * `projects.spec.ts`）直接呼叫 `fetchProjects()`，不會先 mount 一個掛了
  * Pinia 的 app，沒有這層防呆的話 `useAuthStore()` 會直接丟
- * "no active Pinia" 例外，把本來跟認證無關的測試也弄壞。
+ * "no active Pinia" 例外，把本來跟認證無關的測試也弄壞。沒有 Pinia 就當成沒登入。
  */
-function authHeaders(): Record<string, string> {
-  if (!getActivePinia()) return {}
-  const token = useAuthStore().token
-  return token ? { Authorization: `Bearer ${token}` } : {}
+function activeAuthStore(): ReturnType<typeof useAuthStore> | null {
+  return getActivePinia() ? useAuthStore() : null
 }
 
 /**
  * 換發也救不回來的 401（refresh cookie 無效／過期），統一導去登入頁並帶上原本要去的
  * 路徑——跟 Triple 後台 `useFetchAPI.js` 既有的 401 處理邏輯是同一個模式。
+ * 已經在登入頁就不再導一次：不然 redirect 會變成 /login，登入成功後又停在登入頁。
+ *
+ * 清登入狀態走 store 的 clearSession()，不直接改 token：登入世代要跟著換，還在進行的換發
+ * 回來時才知道結果要丟掉，不會在導去登入頁之後又把登入狀態寫回來；「上次是登入狀態」的
+ * 旗標也一起清掉，下次開站不用再白打一次換發。
  */
 function handleUnauthorized(): never {
-  if (getActivePinia()) useAuthStore().$patch({ token: null, user: null })
-  router.push({ name: 'login', query: { redirect: router.currentRoute.value.fullPath } })
+  if (getActivePinia()) useAuthStore().clearSession()
+  const current = router.currentRoute.value
+  if (current.name !== 'login') {
+    router.push({ name: 'login', query: { redirect: current.fullPath } })
+  }
   throw new Error('Unauthorized')
+}
+
+/**
+ * 帶 token 的請求收到 401、換發卻暫時失敗（連不上後端、5xx、429）時丟的錯誤。
+ * 這時後端的登入多半還活著，所以不清登入狀態、不導去登入頁——以前會導過去，
+ * 編輯器裡還沒存的內容就跟著不見了。呼叫端把它當成「稍後再試」的錯誤顯示即可。
+ */
+export class AuthRefreshUnavailableError extends Error {
+  constructor() {
+    super('暫時無法更新登入狀態（伺服器沒有回應），目前仍是登入狀態，請稍後再試一次')
+    this.name = 'AuthRefreshUnavailableError'
+  }
+}
+
+/**
+ * 帶 token 的請求收到 401，但送出之後登入狀態已經換掉了（登出、重新登入、換帳號）時丟的錯誤。
+ * 這個請求是上一次登入送的：不用目前的 token 重送（可能是另一個帳號，等於用別人的身分做
+ * 原本的操作），也不清登入狀態、不導頁（目前的登入跟這個 401 無關）。
+ */
+export class AuthSessionChangedError extends Error {
+  constructor() {
+    super('送出之後登入狀態已經改變（登出或重新登入），這個操作沒有完成，請確認後再試一次')
+    this.name = 'AuthSessionChangedError'
+  }
 }
 
 /**
@@ -79,26 +109,83 @@ function logErrorResponse(method: string, path: string, res: Response): void {
 }
 
 /**
+ * 帶 token 的請求收到 401 之後最多再送幾次。正常過期只要一次（換發後重送）；最多兩次是給
+ * 「送出時那支 token 已經被別的請求換掉，換上的那支也已經失效」的情況：先用目前的 token
+ * 重送一次，還是 401 再換發一次、重送一次。
+ */
+const MAX_RESENDS_AFTER_401 = 2
+
+/**
  * 送出請求；帶著 token 卻收到 401（access token 只活 15 分鐘，過期是常態），
- * 先用 refresh cookie 換一支新的 token、再重送一次。只重試一次：換到新 token
- * 重送還是 401，或根本換不到，就當成真的沒登入。沒帶 token 的請求收到 401
- * 不換發，照舊直接導去登入頁。header 每次送出前重新組，重送時才會帶到新 token。
+ * 先用 refresh cookie 換一支新的 token、再重送。換發最多一次、重送最多
+ * MAX_RESENDS_AFTER_401 次，用完還是 401，或後端說 refresh cookie 也無效，就當成真的
+ * 沒登入。換發暫時失敗時丟 AuthRefreshUnavailableError，不清登入狀態也不導頁。
+ * 沒帶 token 的請求收到 401 不換發，照舊直接導去登入頁（送出之後已經登入的話，跟下面
+ * 「世代變了」一樣丟 AuthSessionChangedError，不把剛登入的狀態清掉）。
+ *
+ * 送出時記下登入世代（見 useAuthStore 的 loginGeneration）。401 回來時：
+ * - 世代變了（送出之後登出、重新登入或換了帳號）：丟 AuthSessionChangedError。不重送、
+ *   不換發、不清登入狀態——這個請求屬於上一次登入，不能拿目前的 token 代替它送。
+ * - 世代沒變、token 已經換成別支（同一次登入裡別的請求換發過了）：直接用目前的 token
+ *   重送，不再換發。refresh token 單次使用，再換一次後端會把上一次剛換出來的 access token
+ *   作廢，正拿著它重送的其他請求又會 401。
+ * - 世代沒變、token 還是送出時那一支：換發後用新的 token 重送。
+ * 換發期間世代變了（store 回 superseded）一樣丟 AuthSessionChangedError。
  */
 async function authorizedFetch(
   path: string,
   init: RequestInit = {},
   extraHeaders: Record<string, string> = {},
 ): Promise<Response> {
-  const send = () =>
-    fetch(`${BASE_URL}${path}`, { ...init, headers: { ...extraHeaders, ...authHeaders() } })
+  const method = init.method ?? 'GET'
+  const send = (token: string | null) =>
+    fetch(`${BASE_URL}${path}`, {
+      ...init,
+      headers: { ...extraHeaders, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    })
 
-  const sentWithToken = 'Authorization' in authHeaders()
-  let res = await send()
-  if (res.status === 401 && sentWithToken && (await useAuthStore().refresh())) {
-    res = await send()
+  const auth = activeAuthStore()
+  const sentGeneration = auth?.currentLoginGeneration() ?? null
+  const sessionChanged = () => auth !== null && auth.currentLoginGeneration() !== sentGeneration
+  const fail = (res: Response, error: Error): never => {
+    logErrorResponse(method, path, res)
+    throw error
   }
-  logErrorResponse(init.method ?? 'GET', path, res)
-  if (res.status === 401) handleUnauthorized()
+
+  const sentToken = auth?.token ?? null
+  let res = await send(sentToken)
+
+  if (auth && sentToken !== null) {
+    let tried = sentToken
+    let refreshUsed = false
+    for (let resends = 0; res.status === 401 && resends < MAX_RESENDS_AFTER_401; resends++) {
+      if (sessionChanged()) fail(res, new AuthSessionChangedError())
+      let next = auth.token
+      if (next === null) break
+      if (next === tried) {
+        if (refreshUsed) break
+        refreshUsed = true
+        const outcome = await auth.refresh()
+        if (outcome === 'unavailable') fail(res, new AuthRefreshUnavailableError())
+        if (outcome === 'superseded') fail(res, new AuthSessionChangedError())
+        next = auth.token
+        // unauthorized：換發已經清掉登入狀態（世代也換了，是這個請求自己造成的），直接導登入頁
+        if (outcome === 'unauthorized' || next === null) {
+          logErrorResponse(method, path, res)
+          handleUnauthorized()
+        }
+      }
+      tried = next
+      res = await send(next)
+    }
+  }
+
+  logErrorResponse(method, path, res)
+  if (res.status === 401) {
+    // 最後這次 401 回來之前登入狀態已經換掉：不能把新的登入清掉
+    if (sessionChanged()) throw new AuthSessionChangedError()
+    handleUnauthorized()
+  }
   return res
 }
 

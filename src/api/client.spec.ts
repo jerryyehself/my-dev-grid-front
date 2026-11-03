@@ -1,20 +1,29 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { apiDelete, apiGet, apiPost } from './client'
+import {
+  AuthRefreshUnavailableError,
+  AuthSessionChangedError,
+  apiDelete,
+  apiGet,
+  apiPost,
+} from './client'
 import { useAuthStore } from '@/stores/useAuthStore'
 
 const mockFetch = vi.fn()
 
 // vi.mock 的 factory 會被 hoist 到檔案最上面，裡面引用的變數要用
 // vi.hoisted 宣告，不能直接用外面的 const（那樣會撞到 TDZ）。
-const { mockPush } = vi.hoisted(() => ({ mockPush: vi.fn() }))
+const { mockPush, mockCurrentRoute } = vi.hoisted(() => ({
+  mockPush: vi.fn(),
+  mockCurrentRoute: { value: { name: 'article-manage', fullPath: '/articles/manage' } },
+}))
 
 // client.ts 的 401 處理要導頁，這裡假路由，不吃真的 router/views——
 // 那些是 client.ts 認證邏輯以外的東西，不該被這份測試間接載入。
 vi.mock('@/router', () => ({
   default: {
     push: mockPush,
-    currentRoute: { value: { fullPath: '/articles/manage' } },
+    currentRoute: mockCurrentRoute,
   },
 }))
 
@@ -25,6 +34,7 @@ function jsonResponse(body: unknown, status = 200) {
 beforeEach(() => {
   mockFetch.mockReset()
   mockPush.mockReset()
+  mockCurrentRoute.value = { name: 'article-manage', fullPath: '/articles/manage' }
   vi.stubGlobal('fetch', mockFetch)
   setActivePinia(createPinia())
 })
@@ -46,6 +56,8 @@ describe('authHeaders', () => {
     await apiGet('/scopes')
     await apiPost('/scopes', { name: 'x' })
 
+    // 先確定真的送了兩次，下面的迴圈才不會在一次都沒送時空轉通過
+    expect(mockFetch).toHaveBeenCalledTimes(2)
     for (const [, init] of mockFetch.mock.calls) {
       const headers = init?.headers as Record<string, string> | undefined
       expect(headers?.Authorization).toBe('Bearer plain-text-token')
@@ -67,6 +79,15 @@ describe('401 handling', () => {
       name: 'login',
       query: { redirect: '/articles/manage' },
     })
+  })
+
+  it('它應該在已經停在登入頁時不再導一次，免得登入後的 redirect 變成 /login', async () => {
+    mockCurrentRoute.value = { name: 'login', fullPath: '/login?redirect=/admin' }
+    mockFetch.mockResolvedValue(jsonResponse({ message: 'Unauthenticated.' }, 401))
+
+    await expect(apiGet('/scopes')).rejects.toThrow('Unauthorized')
+
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })
 
@@ -145,12 +166,285 @@ describe('401 → refresh → retry', () => {
       return bearer === 'Bearer fresh' ? jsonResponse({ data: [] }) : jsonResponse({}, 401)
     })
 
-    await Promise.all([apiGet('/scopes'), apiGet('/relations'), apiGet('/techniques')])
+    await expect(
+      Promise.all([apiGet('/scopes'), apiGet('/relations'), apiGet('/techniques')]),
+    ).resolves.toEqual([{ data: [] }, { data: [] }, { data: [] }])
 
     const refreshCalls = mockFetch.mock.calls.filter(
       ([url]) => pathOf(url as string) === '/auth/refresh',
     )
     expect(refreshCalls).toHaveLength(1)
+    // 三個請求各送兩次：第一次帶過期的 token，重送帶換到的新 token
+    const sent = mockFetch.mock.calls
+      .filter(([url]) => pathOf(url as string) !== '/auth/refresh')
+      .map(([url, init]) => [
+        pathOf(url as string),
+        (init.headers as Record<string, string>).Authorization,
+      ])
+    expect(sent).toHaveLength(6)
+    for (const path of ['/scopes', '/relations', '/techniques']) {
+      expect(sent).toContainEqual([path, 'Bearer expired'])
+      expect(sent).toContainEqual([path, 'Bearer fresh'])
+    }
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('它應該在舊 token 的 401 於換發完成後才回來時直接用新 token 重送，不再換發', async () => {
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    let issued = 0
+    let releaseSlow!: () => void
+    const slowGate = new Promise<void>((resolve) => (releaseSlow = resolve))
+    mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      const path = pathOf(url)
+      if (path === '/auth/refresh') {
+        issued++
+        return jsonResponse({ token: `fresh-${issued}`, data: {} })
+      }
+      const bearer = (init.headers as Record<string, string>).Authorization
+      // 跟後端一樣：每換發一次，上一次換出來的 access token 就作廢，只認最新的那支
+      if (issued > 0 && bearer === `Bearer fresh-${issued}`) return jsonResponse({ path })
+      // /slow 帶舊 token 的那次 401 晚一點才回來（換發已經做完了）
+      if (path === '/slow' && bearer === 'Bearer expired') await slowGate
+      return jsonResponse({}, 401)
+    })
+
+    const slow = apiGet('/slow')
+    await expect(apiGet('/fast')).resolves.toEqual({ path: '/fast' })
+    releaseSlow()
+    await expect(slow).resolves.toEqual({ path: '/slow' })
+
+    const refreshCalls = mockFetch.mock.calls.filter(
+      ([url]) => pathOf(url as string) === '/auth/refresh',
+    )
+    expect(refreshCalls).toHaveLength(1)
+    expect(auth.token).toBe('fresh-1')
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('它應該在 401 回來之前已經登出時不換發、不重送也不導頁，丟 AuthSessionChangedError', async () => {
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    mockFetch.mockImplementation(async (url: string) => {
+      const path = pathOf(url)
+      if (path === '/auth/refresh') return jsonResponse({ token: 'fresh', data: {} })
+      if (path === '/auth/logout') return jsonResponse({ message: '已登出。' })
+      await auth.logout()
+      return jsonResponse({}, 401)
+    })
+
+    await expect(apiGet('/scopes')).rejects.toBeInstanceOf(AuthSessionChangedError)
+
+    expect(mockFetch.mock.calls.map(([url]) => pathOf(url as string))).toEqual([
+      '/scopes',
+      '/auth/logout',
+    ])
+    expect(auth.token).toBeNull()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('它應該在舊帳號的寫入請求 401 晚回來、期間已經換成別的帳號登入時不拿新帳號的 token 重送', async () => {
+    const auth = useAuthStore()
+    auth.token = 'token-A'
+    auth.user = { id: 1, name: 'A', email: 'a@x' }
+    let releaseA!: () => void
+    const gateA = new Promise<void>((resolve) => (releaseA = resolve))
+    mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      const path = pathOf(url)
+      if (path === '/auth/login') {
+        return jsonResponse({ token: 'token-B', data: { id: 2, name: 'B', email: 'b@x' } })
+      }
+      if (path === '/auth/refresh') return jsonResponse({ token: 'refreshed', data: {} })
+      const bearer = (init.headers as Record<string, string>).Authorization
+      if (bearer === 'Bearer token-A') {
+        await gateA
+        return jsonResponse({}, 401)
+      }
+      return jsonResponse({ savedAs: bearer })
+    })
+
+    const pending = apiPost('/documentations', { title: 'A 的草稿' })
+    await auth.login('b@x', 'pw')
+    releaseA()
+
+    await expect(pending).rejects.toBeInstanceOf(AuthSessionChangedError)
+    const paths = mockFetch.mock.calls.map(([url]) => pathOf(url as string))
+    expect(paths).toEqual(['/documentations', '/auth/login'])
+    expect(auth.token).toBe('token-B')
+    expect(auth.user).toEqual({ id: 2, name: 'B', email: 'b@x' })
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['換發成功', () => jsonResponse({ token: 'A-rotated', data: { id: 1, name: 'A', email: 'a@x' } })],
+    ['換發 401', () => jsonResponse({}, 401)],
+    ['換發 503', () => jsonResponse({}, 503)],
+  ])('它應該在換發進行中換成別的登入時（舊換發%s）不重送原本的請求，也不清掉新的登入', async (label, lateRefresh) => {
+    const auth = useAuthStore()
+    auth.token = 'token-A'
+    let refreshSent!: () => void
+    const refreshStarted = new Promise<void>((resolve) => (refreshSent = resolve))
+    let releaseRefresh!: () => void
+    const refreshGate = new Promise<void>((resolve) => (releaseRefresh = resolve))
+    mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      const path = pathOf(url)
+      if (path === '/auth/login') {
+        return jsonResponse({ token: 'token-B', data: { id: 2, name: 'B', email: 'b@x' } })
+      }
+      if (path === '/auth/refresh') {
+        refreshSent()
+        await refreshGate
+        return lateRefresh()
+      }
+      const bearer = (init.headers as Record<string, string>).Authorization
+      return bearer === 'Bearer token-A' ? jsonResponse({}, 401) : jsonResponse({ savedAs: bearer })
+    })
+
+    const pending = apiPost('/documentations', { title: 'A 的草稿' })
+    await refreshStarted
+    await auth.login('b@x', 'pw')
+    releaseRefresh()
+
+    await expect(pending).rejects.toBeInstanceOf(AuthSessionChangedError)
+    const documentationCalls = mockFetch.mock.calls.filter(
+      ([url]) => pathOf(url as string) === '/documentations',
+    )
+    expect(documentationCalls).toHaveLength(1)
+    expect(auth.token).toBe('token-B')
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('它應該在同一次登入裡目前的 token 也已經失效時再換發一次、用換到的 token 重送', async () => {
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    let issued = 0
+    // 後端目前只認的那支 access token
+    let accepted: string | null = null
+    let releaseSlow!: () => void
+    const slowGate = new Promise<void>((resolve) => (releaseSlow = resolve))
+    mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      const path = pathOf(url)
+      if (path === '/auth/refresh') {
+        accepted = `fresh-${++issued}`
+        return jsonResponse({ token: accepted, data: {} })
+      }
+      const bearer = (init.headers as Record<string, string>).Authorization
+      if (bearer === `Bearer ${accepted}`) return jsonResponse({ path })
+      if (path === '/slow' && bearer === 'Bearer expired') await slowGate
+      return jsonResponse({}, 401)
+    })
+
+    const slow = apiGet('/slow')
+    await expect(apiGet('/fast')).resolves.toEqual({ path: '/fast' })
+    // 另一個分頁接著換發：後端作廢這個分頁手上的 fresh-1，cookie 也換成新的了
+    accepted = `fresh-${++issued}`
+    releaseSlow()
+
+    await expect(slow).resolves.toEqual({ path: '/slow' })
+    const slowBearers = mockFetch.mock.calls
+      .filter(([url]) => pathOf(url as string) === '/slow')
+      .map(([, init]) => (init.headers as Record<string, string>).Authorization)
+    expect(slowBearers).toEqual(['Bearer expired', 'Bearer fresh-1', 'Bearer fresh-3'])
+    expect(auth.token).toBe('fresh-3')
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('它應該在目前的 token 失效、再換發一次重送還是 401 時就停，只換發一次並導去登入頁', async () => {
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    let issued = 0
+    let accepted: string | null = null
+    let backendRejectsAll = false
+    let releaseSlow!: () => void
+    const slowGate = new Promise<void>((resolve) => (releaseSlow = resolve))
+    mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      const path = pathOf(url)
+      if (path === '/auth/refresh') {
+        const token = `fresh-${++issued}`
+        if (!backendRejectsAll) accepted = token
+        return jsonResponse({ token, data: {} })
+      }
+      const bearer = (init.headers as Record<string, string>).Authorization
+      if (bearer === `Bearer ${accepted}`) return jsonResponse({ path })
+      if (path === '/slow' && bearer === 'Bearer expired') await slowGate
+      return jsonResponse({}, 401)
+    })
+
+    const slow = apiGet('/slow')
+    await expect(apiGet('/fast')).resolves.toEqual({ path: '/fast' })
+    backendRejectsAll = true
+    accepted = null
+    releaseSlow()
+
+    await expect(slow).rejects.toThrow('Unauthorized')
+    const paths = mockFetch.mock.calls.map(([url]) => pathOf(url as string))
+    expect(paths.filter((p) => p === '/auth/refresh')).toHaveLength(2)
+    expect(paths.filter((p) => p === '/slow')).toHaveLength(3)
+    expect(auth.token).toBeNull()
+    expect(mockPush).toHaveBeenCalledTimes(1)
+  })
+
+  it('它應該在確定沒登入、清掉狀態時讓進行中的換發結果作廢，不在導去登入頁之後又登入回來', async () => {
+    window.localStorage.setItem('mdg_auth_session', '1')
+    const auth = useAuthStore()
+    auth.token = 'T0'
+    let refreshes = 0
+    let userRequests = 0
+    let sentRetry!: () => void
+    const retrySent = new Promise<void>((resolve) => (sentRetry = resolve))
+    let releaseRetry!: () => void
+    const retryGate = new Promise<void>((resolve) => (releaseRetry = resolve))
+    let releaseLateRefresh!: () => void
+    const lateRefreshGate = new Promise<void>((resolve) => (releaseLateRefresh = resolve))
+    mockFetch.mockImplementation(async (url: string) => {
+      if (pathOf(url) === '/auth/refresh') {
+        if (++refreshes === 1) return jsonResponse({ token: 'T1', data: {} })
+        await lateRefreshGate
+        return jsonResponse({ token: 'late', data: { id: 1, name: 'J', email: 'j@x' } })
+      }
+      if (++userRequests === 1) return jsonResponse({}, 401)
+      sentRetry()
+      await retryGate
+      return jsonResponse({}, 401)
+    })
+
+    const request = apiGet('/user')
+    await retrySent
+    // 換到的 T1 重送還在路上時，另一個呼叫端開始了下一次換發
+    const lateRefresh = auth.refresh()
+    releaseRetry()
+    await expect(request).rejects.toThrow('Unauthorized')
+    expect(auth.token).toBeNull()
+    expect(mockPush).toHaveBeenCalledTimes(1)
+
+    releaseLateRefresh()
+    const outcome = await lateRefresh
+    expect(auth.token).toBeNull()
+    expect(auth.user).toBeNull()
+    expect(window.localStorage.getItem('mdg_auth_session')).toBeNull()
+    expect(outcome).toBe('superseded')
+  })
+
+  it.each([
+    ['後端一直 503', () => jsonResponse({}, 503)],
+    ['後端連不上', () => {
+      throw new TypeError('Failed to fetch')
+    }],
+  ])('它應該在換發暫時失敗（%s）時丟可重試的錯誤，保留登入狀態、不導去登入頁', async (label, refreshHandler) => {
+    const auth = useAuthStore()
+    auth.token = 'expired'
+    auth.user = { id: 1, name: 'J', email: 'j@x' }
+    mockFetch.mockImplementation(async (url: string) =>
+      pathOf(url) === '/auth/refresh' ? refreshHandler() : jsonResponse({}, 401),
+    )
+
+    await expect(apiPost('/documentations', { title: '還沒存的內容' })).rejects.toBeInstanceOf(
+      AuthRefreshUnavailableError,
+    )
+
+    expect(auth.token).toBe('expired')
+    expect(auth.user).toEqual({ id: 1, name: 'J', email: 'j@x' })
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it('它應該在沒帶 token 的請求收到 401 時不換發，直接導去登入頁', async () => {
@@ -203,7 +497,9 @@ describe('GET 重試', () => {
   it('它應該不重試非冪等的 POST 請求', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 502))
 
-    await expect(apiPost('/documentations', {})).rejects.toBeTruthy()
+    await expect(apiPost('/documentations', {})).rejects.toThrow(
+      'API 請求失敗（502）：POST /documentations',
+    )
     expect(mockFetch).toHaveBeenCalledTimes(1)
   })
 })
