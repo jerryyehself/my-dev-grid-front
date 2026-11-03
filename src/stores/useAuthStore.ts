@@ -91,7 +91,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
  * 換發的結果：
  * - `refreshed`：換到新的 access token，而且這段期間還是同一次登入。
  * - `unauthorized`：refresh cookie 無效、過期或被撤銷（後端 401），登入狀態已清掉，要重新登入。
- * - `unavailable`：連不上後端、後端暫時出錯（5xx、429），或 409 重試後還是 409。
+ * - `unavailable`：連不上後端、後端暫時出錯（5xx、429），或 409 重試後還是 409
+ *   （409 回來時已經超過 REFRESH_RETRY_BUDGET_MS 就不重試，也是這個）。
  *   後端那邊的登入多半還活著，所以不清登入狀態、不清旗標，呼叫端當成「稍後再試」。
  * - `superseded`：換發期間登入狀態換掉了（登出、重新登入、換帳號，見 loginGeneration），
  *   結果直接丟掉。原本的請求是上一次登入送的，呼叫端不能拿目前的 token 重送，也不要登出。
@@ -197,16 +198,23 @@ export const useAuthStore = defineStore('auth', () => {
   let refreshInFlight: { generation: number; promise: Promise<RefreshOutcome> } | null = null
 
   /**
-   * 送一次換發；502／503／504 照 REFRESH_RETRY_DELAYS_MS 重試，總時間不超過
-   * REFRESH_RETRY_BUDGET_MS。網路層失敗直接往外丟，不重試（原因見 REFRESH_RETRY_DELAYS_MS）。
+   * 送一次換發；502／503／504 照 REFRESH_RETRY_DELAYS_MS 重試，從 startedAt 算起的總時間
+   * 不超過 REFRESH_RETRY_BUDGET_MS。網路層失敗直接往外丟，不重試（原因見 REFRESH_RETRY_DELAYS_MS）。
+   *
+   * startedAt 是整次換發（含 409 之後的重試）第一次送出前的時間，所有重送共用同一個上限。
+   * `initial` 是這次之前已經拿到的回應（409 重試時傳那個 409）：有的話，第一次送出前也要
+   * 檢查上限，超過就不送，直接回它。
    *
    * 每次送出前（拿到 Web Locks 之後）先看登入狀態有沒有換掉：換掉了就不送。瀏覽器這時帶的
    * 已經是新登入的 refresh cookie，送出去會用掉新登入的 refresh token，換回來的結果又會被
    * 丟掉，新登入手上那支 access token 也跟著被後端作廢。
    */
-  async function sendRefresh(superseded: () => boolean): Promise<Response | typeof SUPERSEDED> {
-    const startedAt = Date.now()
-    let last: Response | null = null
+  async function sendRefresh(
+    superseded: () => boolean,
+    startedAt: number,
+    initial: Response | null = null,
+  ): Promise<Response | typeof SUPERSEDED> {
+    let last: Response | null = initial
     for (let attempt = 0; ; attempt++) {
       const previous: Response | null = last
       const res = await withRefreshLock(async (): Promise<Response | typeof SUPERSEDED> => {
@@ -251,12 +259,15 @@ export const useAuthStore = defineStore('auth', () => {
     // finally 讀得到 flight：async 函式至少 await 一次才會跑到 finally，那時上面已經指定好了
     async function run(): Promise<RefreshOutcome> {
       try {
-        let res = await sendRefresh(superseded)
+        const startedAt = Date.now()
+        let res = await sendRefresh(superseded, startedAt)
         // 409：同一支 refresh token 剛被另一個分頁用掉，稍等用新 cookie 重試一次。
-        // 重試還是 409 就當成暫時失敗（下面的 unavailable）
+        // 重試還是 409 就當成暫時失敗（下面的 unavailable）。重試跟上面共用同一個時間上限：
+        // 409 晚到、已經超過上限就不送（cookie 若還是舊的那支，可能已經在後端寬限外），
+        // sendRefresh 直接回這個 409，下面當成 unavailable
         if (res !== SUPERSEDED && res.status === 409) {
           await sleep(REFRESH_CONFLICT_RETRY_MS)
-          res = await sendRefresh(superseded)
+          res = await sendRefresh(superseded, startedAt, res)
         }
         if (res === SUPERSEDED || superseded()) return 'superseded'
         if (res.status === 401) {

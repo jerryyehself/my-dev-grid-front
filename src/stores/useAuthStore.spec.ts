@@ -162,6 +162,52 @@ describe('useAuthStore：refresh() 收到 409（另一個分頁剛用掉同一�
     expect(auth.isAuthenticated).toBe(false)
     expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
   })
+
+  // 409 的重試跟 502 重試共用同一個時間上限（從第一次送出算起）：409 晚到時 cookie 可能還是
+  // 舊的那支，重送可能落在後端寬限外，被當成 token 被偷、撤銷整個登入
+  describe('跟 502 重試共用的總時間上限', () => {
+    beforeEach(() => {
+      // 只假造 Date：409 之後的等待用真的 setTimeout
+      vi.useFakeTimers({ toFake: ['Date'] })
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('它應該在 409 回來時已經超過上限就不重試，回 unavailable，保留目前的登入狀態跟旗標', async () => {
+      window.localStorage.setItem(SESSION_HINT_KEY, '1')
+      const fetchMock = mockFetch(() => {
+        // 409 因為網路延遲 9.9 秒後才回來
+        vi.setSystemTime(Date.now() + 9900)
+        return new Response(null, { status: 409 })
+      })
+      const auth = useAuthStore()
+      auth.token = 'expired'
+      auth.user = USER
+
+      expect(await auth.refresh()).toBe('unavailable')
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      expect(auth.token).toBe('expired')
+      expect(auth.user).toEqual(USER)
+      expect(window.localStorage.getItem(SESSION_HINT_KEY)).toBe('1')
+    })
+
+    it('它應該在 409 很快回來（還在上限內）時照樣重試，成功就算換發成功', async () => {
+      let attempt = 0
+      const fetchMock = mockFetch(() => {
+        if (++attempt > 1) return Response.json({ token: 'after-retry', expires_in: 900, data: USER })
+        vi.setSystemTime(Date.now() + 500)
+        return new Response(null, { status: 409 })
+      })
+      const auth = useAuthStore()
+      auth.token = 'expired'
+
+      expect(await auth.refresh()).toBe('refreshed')
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(auth.token).toBe('after-retry')
+    })
+  })
 })
 
 describe('useAuthStore：restore()（重新整理後換回登入狀態）', () => {
