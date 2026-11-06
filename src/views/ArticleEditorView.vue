@@ -75,6 +75,8 @@ const BODY_MODES = [
   { value: 'preview', label: '預覽' },
 ] as const
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const FILE_OVERWRITE_CONFIRM = '目前已經有內容，確定要用檔案內容覆蓋嗎？這個動作可以再手動復原。'
+let fileImportSequence = 0
 const margins = ref<ArticleMarginNote[]>([])
 const tags = ref<string[]>([])
 const links = ref<DraftLink[]>([])
@@ -268,11 +270,15 @@ function onFileSelected(e: Event) {
   const file = input.files?.[0]
   input.value = '' // 清空，不然選同一個檔案兩次不會觸發 change
   if (!file) return
-  if (body.value.trim() && !window.confirm('目前已經有內容，確定要用檔案內容覆蓋嗎？這個動作可以再手動復原。')) {
+  const sequence = ++fileImportSequence
+  if (body.value.trim() && !window.confirm(FILE_OVERWRITE_CONFIRM)) {
     return
   }
+  const bodyBeforeRead = body.value
   const reader = new FileReader()
   reader.onload = () => {
+    if (sequence !== fileImportSequence) return
+    if (body.value !== bodyBeforeRead && !window.confirm(FILE_OVERWRITE_CONFIRM)) return
     body.value = typeof reader.result === 'string' ? reader.result : ''
     touch()
   }
@@ -320,6 +326,17 @@ async function saveWithStatus(statusPublished: boolean) {
 
   const byName = new Map(allRelations.map((r) => [r.name, r.id]))
   const graphLinks = links.value.filter((l) => l.family !== 'documentation')
+  const missingPredicateMessage = '找不到這條連結的述詞，請刪除後重新建立'
+  let hasMissingPredicate = false
+  for (const link of graphLinks) {
+    if (byName.has(link.predicate)) continue
+    linkErrors.value.set(link, missingPredicateMessage)
+    hasMissingPredicate = true
+  }
+  if (hasMissingPredicate) {
+    saving.value = false
+    return
+  }
   // 錯誤索引屬於各自的 payload 陣列，保留送出時的連結身分以免刪除後錯置。
   const sentLinks = {
     techniques: graphLinks.filter((l) => l.family === 'technique'),
