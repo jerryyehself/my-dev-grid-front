@@ -88,6 +88,7 @@ const loadError = ref(false)
 const saving = ref(false)
 const saveError = ref('')
 const fieldErrors = ref<Record<string, string>>({})
+const linkErrors = ref(new Map<DraftLink, string>())
 
 let allRelations: RelationDto[] = []
 
@@ -108,6 +109,7 @@ function toDraftLink(
 async function load() {
   loadError.value = false
   ready.value = false
+  linkErrors.value.clear()
   try {
     allRelations = await fetchRelations()
 
@@ -163,6 +165,7 @@ function touch() {
 // --- 分類號 ----------------------------------------------------------------
 // 0000 族的子分類從後端撈,不在前端寫死:後端之後多一個子分類,這裡要跟著出現。
 const docScopes = ref<ScopeDto[]>([])
+const subjectScopeId = computed(() => docScopes.value.find((s) => s.full_call_number === scopeCall.value)?.id)
 const scopeError = ref(false)
 fetchScopes()
   .then((all) => {
@@ -248,6 +251,7 @@ function onCreateLink(payload: DraftLink) {
 }
 
 function removeLink(link: DraftLink) {
+  linkErrors.value.delete(link)
   links.value = links.value.filter((l) => l !== link)
   touch()
 }
@@ -305,6 +309,7 @@ async function saveWithStatus(statusPublished: boolean) {
   saving.value = true
   saveError.value = ''
   fieldErrors.value = {}
+  linkErrors.value.clear()
 
   const type = docScopes.value.find((s) => s.full_call_number === scopeCall.value)?.id
   if (!type) {
@@ -315,6 +320,11 @@ async function saveWithStatus(statusPublished: boolean) {
 
   const byName = new Map(allRelations.map((r) => [r.name, r.id]))
   const graphLinks = links.value.filter((l) => l.family !== 'documentation')
+  // 錯誤索引屬於各自的 payload 陣列，保留送出時的連結身分以免刪除後錯置。
+  const sentLinks = {
+    techniques: graphLinks.filter((l) => l.family === 'technique'),
+    implementations: graphLinks.filter((l) => l.family === 'implementation'),
+  }
   const techniques = graphLinks
     .filter((l) => l.family === 'technique')
     .map((l) => ({ id: l.entity.id, relation_id: byName.get(l.predicate)! }))
@@ -348,6 +358,13 @@ async function saveWithStatus(statusPublished: boolean) {
   } catch (error) {
     if (error instanceof ApiValidationError) {
       fieldErrors.value = error.fieldErrors
+      for (const [key, message] of Object.entries(error.fieldErrors)) {
+        const match = /^(techniques|implementations)\.(\d+)\.relation_id$/.exec(key)
+        if (!match) continue
+        const family = match[1] as keyof typeof sentLinks
+        const link = sentLinks[family][Number(match[2])]
+        if (link && links.value.includes(link)) linkErrors.value.set(link, message)
+      }
     } else {
       saveError.value = error instanceof Error ? error.message : '儲存失敗'
     }
@@ -693,6 +710,9 @@ const publish = () => saveWithStatus(true)
                   {{ link.predicate }}
                 </span>
               </div>
+              <BaseHint v-if="linkErrors.get(link)" tone="error" role="alert" class="block">
+                {{ linkErrors.get(link) }}
+              </BaseHint>
               <BaseHint dim class="block leading-5">
                 反向：{{ link.entity.title }} {{ link.reverse }} 這篇文章 · {{ storageTargetOf(link.family) }}
               </BaseHint>
@@ -706,6 +726,7 @@ const publish = () => saveWithStatus(true)
           <GraphLinkPicker
             v-if="pickerOpen"
             :existing-keys="existingKeys"
+            :subject-scope-id="subjectScopeId"
             :preset-family="presetFamily"
             :preset-entity-title="presetTitle"
             @cancel="pickerOpen = false"
