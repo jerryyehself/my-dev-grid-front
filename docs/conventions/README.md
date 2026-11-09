@@ -7,7 +7,7 @@
 | [`structure.md`](structure.md)   | 檔案放哪裡：`src/features/` 與共用資料夾的分工、舊功能怎麼搬          |
 | [`naming.md`](naming.md)         | 元件、檔案、資料夾、composable、store、事件、prop、型別、常數怎麼命名 |
 | [`components.md`](components.md) | 元件設計：props 只收用得到的、邏輯放哪裡                              |
-| [`testing.md`](testing.md)       | 測試格式與「好的測試」七條                                            |
+| [`testing.md`](testing.md)       | 測試格式、「好的測試」七條、邊界必測清單、非同步結果寫回、改壞程式檢查測試 |
 | [`security.md`](security.md)     | HTML 與程式執行、網址、憑證與秘密、部署設定                           |
 | [`issues.md`](issues.md)         | 開 issue：段落、大小、合併或拆開、標籤、不能寫的內容                  |
 

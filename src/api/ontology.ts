@@ -39,9 +39,12 @@ export interface EntityOption {
   title: string
   /** 例如 '1040 framework'；後端查不到 scope 時為 null，不自己編一個。 */
   scope: string | null
+  /** 實體的分類外鍵；缺少時不推測分類。 */
+  scopeId?: number | null
 }
 
 interface RawEntity {
+  type?: number | null
   id: number
   title: string
   /** 只有技術有這個欄位；文件、實作沒有，視同留空 */
@@ -52,7 +55,12 @@ interface RawEntity {
 function toOption(r: RawEntity): EntityOption {
   const n = r.scope?.full_call_number
   const name = r.scope?.name
-  return { id: r.id, title: techniqueLabel(r.title, r.version), scope: n && name ? `${n} ${name}` : null }
+  return {
+    id: r.id,
+    title: techniqueLabel(r.title, r.version),
+    scope: n && name ? `${n} ${name}` : null,
+    ...(r.type !== undefined ? { scopeId: r.type } : {}),
+  }
 }
 
 export function fetchScopes(): Promise<ScopeDto[]> {

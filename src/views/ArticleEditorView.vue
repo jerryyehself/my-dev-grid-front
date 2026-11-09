@@ -75,6 +75,8 @@ const BODY_MODES = [
   { value: 'preview', label: '預覽' },
 ] as const
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const FILE_OVERWRITE_CONFIRM = '目前已經有內容，確定要用檔案內容覆蓋嗎？這個動作可以再手動復原。'
+let fileImportSequence = 0
 const margins = ref<ArticleMarginNote[]>([])
 const tags = ref<string[]>([])
 const links = ref<DraftLink[]>([])
@@ -88,6 +90,7 @@ const loadError = ref(false)
 const saving = ref(false)
 const saveError = ref('')
 const fieldErrors = ref<Record<string, string>>({})
+const linkErrors = ref(new Map<DraftLink, string>())
 
 let allRelations: RelationDto[] = []
 
@@ -108,6 +111,7 @@ function toDraftLink(
 async function load() {
   loadError.value = false
   ready.value = false
+  linkErrors.value.clear()
   try {
     allRelations = await fetchRelations()
 
@@ -163,6 +167,7 @@ function touch() {
 // --- 分類號 ----------------------------------------------------------------
 // 0000 族的子分類從後端撈,不在前端寫死:後端之後多一個子分類,這裡要跟著出現。
 const docScopes = ref<ScopeDto[]>([])
+const subjectScopeId = computed(() => docScopes.value.find((s) => s.full_call_number === scopeCall.value)?.id)
 const scopeError = ref(false)
 fetchScopes()
   .then((all) => {
@@ -248,6 +253,7 @@ function onCreateLink(payload: DraftLink) {
 }
 
 function removeLink(link: DraftLink) {
+  linkErrors.value.delete(link)
   links.value = links.value.filter((l) => l !== link)
   touch()
 }
@@ -264,11 +270,15 @@ function onFileSelected(e: Event) {
   const file = input.files?.[0]
   input.value = '' // 清空，不然選同一個檔案兩次不會觸發 change
   if (!file) return
-  if (body.value.trim() && !window.confirm('目前已經有內容，確定要用檔案內容覆蓋嗎？這個動作可以再手動復原。')) {
+  const sequence = ++fileImportSequence
+  if (body.value.trim() && !window.confirm(FILE_OVERWRITE_CONFIRM)) {
     return
   }
+  const bodyBeforeRead = body.value
   const reader = new FileReader()
   reader.onload = () => {
+    if (sequence !== fileImportSequence) return
+    if (body.value !== bodyBeforeRead && !window.confirm(FILE_OVERWRITE_CONFIRM)) return
     body.value = typeof reader.result === 'string' ? reader.result : ''
     touch()
   }
@@ -305,6 +315,7 @@ async function saveWithStatus(statusPublished: boolean) {
   saving.value = true
   saveError.value = ''
   fieldErrors.value = {}
+  linkErrors.value.clear()
 
   const type = docScopes.value.find((s) => s.full_call_number === scopeCall.value)?.id
   if (!type) {
@@ -315,6 +326,22 @@ async function saveWithStatus(statusPublished: boolean) {
 
   const byName = new Map(allRelations.map((r) => [r.name, r.id]))
   const graphLinks = links.value.filter((l) => l.family !== 'documentation')
+  const missingPredicateMessage = '找不到這條連結的述詞，請刪除後重新建立'
+  let hasMissingPredicate = false
+  for (const link of graphLinks) {
+    if (byName.has(link.predicate)) continue
+    linkErrors.value.set(link, missingPredicateMessage)
+    hasMissingPredicate = true
+  }
+  if (hasMissingPredicate) {
+    saving.value = false
+    return
+  }
+  // 錯誤索引屬於各自的 payload 陣列，保留送出時的連結身分以免刪除後錯置。
+  const sentLinks = {
+    techniques: graphLinks.filter((l) => l.family === 'technique'),
+    implementations: graphLinks.filter((l) => l.family === 'implementation'),
+  }
   const techniques = graphLinks
     .filter((l) => l.family === 'technique')
     .map((l) => ({ id: l.entity.id, relation_id: byName.get(l.predicate)! }))
@@ -348,6 +375,13 @@ async function saveWithStatus(statusPublished: boolean) {
   } catch (error) {
     if (error instanceof ApiValidationError) {
       fieldErrors.value = error.fieldErrors
+      for (const [key, message] of Object.entries(error.fieldErrors)) {
+        const match = /^(techniques|implementations)\.(\d+)\.relation_id$/.exec(key)
+        if (!match) continue
+        const family = match[1] as keyof typeof sentLinks
+        const link = sentLinks[family][Number(match[2])]
+        if (link && links.value.includes(link)) linkErrors.value.set(link, message)
+      }
     } else {
       saveError.value = error instanceof Error ? error.message : '儲存失敗'
     }
@@ -693,6 +727,9 @@ const publish = () => saveWithStatus(true)
                   {{ link.predicate }}
                 </span>
               </div>
+              <BaseHint v-if="linkErrors.get(link)" tone="error" role="alert" class="block">
+                {{ linkErrors.get(link) }}
+              </BaseHint>
               <BaseHint dim class="block leading-5">
                 反向：{{ link.entity.title }} {{ link.reverse }} 這篇文章 · {{ storageTargetOf(link.family) }}
               </BaseHint>
@@ -706,6 +743,7 @@ const publish = () => saveWithStatus(true)
           <GraphLinkPicker
             v-if="pickerOpen"
             :existing-keys="existingKeys"
+            :subject-scope-id="subjectScopeId"
             :preset-family="presetFamily"
             :preset-entity-title="presetTitle"
             @cancel="pickerOpen = false"

@@ -56,13 +56,13 @@ describe('ArticlesView 的編輯連結', () => {
     setActivePinia(createPinia())
   })
 
-  it('沒登入：清單照常顯示，但沒有任何編輯連結', async () => {
+  it('它應該在沒登入時照常顯示清單，但沒有任何編輯連結', async () => {
     const wrapper = await mountView()
     expect(wrapper.text()).toContain('建置工具問答')
     expect(editHrefs(wrapper)).toEqual([])
   })
 
-  it('登入後：每篇都有一個連到自己編輯頁的「編輯」', async () => {
+  it('它應該在登入後讓每篇都有一個連到自己編輯頁的「編輯」', async () => {
     useAuthStore().token = 'test-token'
     const wrapper = await mountView()
     expect(editHrefs(wrapper).sort()).toEqual(['/articles/6/edit', '/articles/7/edit'])

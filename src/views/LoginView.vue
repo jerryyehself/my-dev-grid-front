@@ -12,7 +12,7 @@ import BaseField from '@/components/BaseField.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseHint from '@/components/BaseHint.vue'
-import { useAuthStore } from '@/stores/useAuthStore'
+import { LOGIN_ERROR_MESSAGES, useAuthStore } from '@/stores/useAuthStore'
 import { safeRedirect } from '@/router/safeRedirect'
 
 const route = useRoute()
@@ -56,6 +56,10 @@ async function handleSubmit() {
     }
     // 沒有指定要回哪一頁（不是被路由守衛擋下來才來登入）就去後台入口，登入就是為了管理
     router.push(safeRedirect(route.query.redirect, '/admin'))
+  } catch {
+    // login() 自己會把連不上、5xx 轉成訊息；走到這裡是意料外的失敗（例如回應不是 JSON），
+    // 至少讓使用者看到登入沒成功，不要畫面完全沒反應
+    errorMessage.value = LOGIN_ERROR_MESSAGES.server
   } finally {
     submitting.value = false
   }

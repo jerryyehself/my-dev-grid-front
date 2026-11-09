@@ -4,19 +4,22 @@
 // 之所以硬性要求第三步，是因為三張 pivot 表與 entity_relations 都帶 relation_id：
 // 只選對象不選述詞，存進去的就只是標籤，不是圖譜。所以「建立關聯」在述詞選定之前
 // 一律不可按，而且畫面上一直顯示這條邊正反兩個方向長什麼樣子。
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onWatcherCleanup } from 'vue'
 import BaseHint from '@/components/BaseHint.vue'
 import {
   FAMILY_COLOR,
   FAMILY_LABEL,
   SAME_TYPE_PREDICATES,
   fetchEntityOptions,
-  fetchRelations,
+  fetchRelationCandidateList,
+  fetchScopeList,
   storageTargetOf,
   type EntityFamily,
   type EntityOption,
-  type RelationDto,
+  type RelationCandidateDto,
+  type ScopeListDto,
 } from '@/api/ontology'
+import { filterPredicates } from './predicateFilter'
 import BaseCard from '@/components/BaseCard.vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import BaseInput from '@/components/BaseInput.vue'
@@ -24,6 +27,7 @@ import BaseInput from '@/components/BaseInput.vue'
 const props = defineProps<{
   /** 已經連過的實體，避免重複建立同一條邊。key 是 `${family}:${id}`。 */
   existingKeys: string[]
+  subjectScopeId?: number | null
   /** 從「這個標籤其實是圖譜實體」那條提示過來時，直接把族與實體帶進來，不用再挑一次。 */
   presetFamily?: EntityFamily
   presetEntityTitle?: string
@@ -40,23 +44,31 @@ const picked = ref<EntityOption | null>(null)
 const predicate = ref<string | null>(null)
 
 const options = ref<EntityOption[]>([])
-const relations = ref<RelationDto[]>([])
+const relations = ref<RelationCandidateDto[]>([])
 const loadError = ref<string | null>(null)
 
-fetchRelations()
+fetchRelationCandidateList()
   .then((r) => (relations.value = r))
   .catch(() => (loadError.value = '讀不到述詞清單'))
+
+const scopes = ref<ScopeListDto[]>([])
+fetchScopeList()
+  .then((r) => (scopes.value = r))
+  .catch(() => (loadError.value = '讀不到分類號清單'))
 
 // 換族就整批重抓,順便把已選的實體與述詞清掉——留著上一族的選擇會做出對不上的邊
 watch(
   family,
   (f) => {
+    let current = true
+    onWatcherCleanup(() => { current = false })
     picked.value = null
     predicate.value = null
     query.value = ''
     options.value = []
     fetchEntityOptions(f)
       .then((r) => {
+        if (!current) return
         options.value = r
         // 預設實體只在第一次載入這一族時套用:使用者後來自己換族,就不該再被拉回來
         if (props.presetEntityTitle && f === props.presetFamily) {
@@ -64,7 +76,7 @@ watch(
           if (hit) picked.value = hit
         }
       })
-      .catch(() => (loadError.value = '讀不到實體清單'))
+      .catch(() => { if (current) loadError.value = '讀不到實體清單' })
   },
   { immediate: true },
 )
@@ -85,8 +97,18 @@ const predicateOptions = computed(() => {
   if (family.value === 'documentation') {
     return relations.value.filter((r) => (SAME_TYPE_PREDICATES as readonly string[]).includes(r.name))
   }
-  return relations.value.filter((r) => !(SAME_TYPE_PREDICATES as readonly string[]).includes(r.name))
+  const crossType = relations.value.filter((r) => !(SAME_TYPE_PREDICATES as readonly string[]).includes(r.name))
+  if (!picked.value) return crossType
+  return filterPredicates(
+    crossType.map((r) => ({ ...r, subject_id: r.subject, object_id: r.object })),
+    scopes.value, props.subjectScopeId, picked.value.scopeId,
+  )
 })
+
+// 換對象或文章分類後，不能沿用已經不合用的述詞。
+watch(predicateOptions, (available) => {
+  if (predicate.value && !available.some((r) => r.name === predicate.value)) predicate.value = null
+}, { flush: 'sync' })
 
 const reverseName = computed(() => {
   const r = relations.value.find((x) => x.name === predicate.value)
