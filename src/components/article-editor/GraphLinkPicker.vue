@@ -105,6 +105,18 @@ const predicateOptions = computed(() => {
   )
 })
 
+// 述詞清單載入後仍然一個都不剩時，說明為什麼沒有、可以怎麼做，不要留一塊空白。
+const noPredicateNotice = computed(() => {
+  // 述詞清單與分類號清單都載入完才判斷，載入中或讀取失敗時交給上面的錯誤訊息，不要閃過一句錯的原因
+  if (loadError.value || !relations.value.length || !scopes.value.length || predicateOptions.value.length) return null
+  if (family.value === 'documentation') return '述詞清單裡沒有可用在文章對文章的述詞。'
+  if (!picked.value) return '述詞清單裡沒有可用的述詞。'
+  // 編輯頁的分類號一定有預設值，這裡拿不到 id 代表分類號清單沒載入，或這篇文章存的分類號不在可用的分類底下
+  if (props.subjectScopeId == null) return '這篇文章的分類號目前不能用來挑述詞（分類號清單沒載入，或不在可用的分類底下），判斷不出哪些述詞適用。'
+  if (picked.value.scopeId == null) return `「${picked.value.title}」沒有分類，判斷不出哪些述詞適用。換一個對象試試。`
+  return `沒有述詞適用這個組合：述詞限定了兩端的分類，「${picked.value.title}」跟這篇文章對不上。換一個對象，或改這篇文章的分類號。`
+})
+
 // 換對象或文章分類後，不能沿用已經不合用的述詞。
 watch(predicateOptions, (available) => {
   if (predicate.value && !available.some((r) => r.name === predicate.value)) predicate.value = null
@@ -225,6 +237,9 @@ function submit() {
           {{ r.name }}
         </button>
       </div>
+      <p v-if="noPredicateNotice" class="font-mono text-[11px] leading-5 text-(--text-ink-muted)" role="status">
+        {{ noPredicateNotice }}
+      </p>
     </div>
 
     <!-- 這條邊長什麼樣子。正反兩向都畫出來,因為述詞成對可逆是這套本體論的核心 -->

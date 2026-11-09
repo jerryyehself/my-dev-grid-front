@@ -27,6 +27,7 @@ import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseTextarea from '@/components/BaseTextarea.vue'
 import GraphLinkPicker from '@/components/article-editor/GraphLinkPicker.vue'
+import { describeFieldError, isFieldErrorShownInPlace } from '@/components/article-editor/fieldErrorMessage'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { ApiValidationError } from '@/api/client'
 import { type ArticleMarginNote } from '@/data/articles'
@@ -374,14 +375,19 @@ async function saveWithStatus(statusPublished: boolean) {
     }
   } catch (error) {
     if (error instanceof ApiValidationError) {
-      fieldErrors.value = error.fieldErrors
-      for (const [key, message] of Object.entries(error.fieldErrors)) {
+      // 後端訊息可能夾著內部欄位名，先整理成給人看的中文再顯示。
+      const described = Object.entries(error.fieldErrors).map(([key, message]) => [key, describeFieldError(key, message)] as const)
+      fieldErrors.value = Object.fromEntries(described)
+      for (const [key, message] of described) {
         const match = /^(techniques|implementations)\.(\d+)\.relation_id$/.exec(key)
         if (!match) continue
         const family = match[1] as keyof typeof sentLinks
         const link = sentLinks[family][Number(match[2])]
         if (link && links.value.includes(link)) linkErrors.value.set(link, message)
       }
+      // 沒有位置可以顯示的欄位（分類號、連結的對象…）集中放在整頁訊息，不要靜默消失。
+      const elsewhere = described.filter(([key]) => !isFieldErrorShownInPlace(key)).map(([, message]) => message)
+      if (elsewhere.length) saveError.value = [...new Set(elsewhere)].join('；')
     } else {
       saveError.value = error instanceof Error ? error.message : '儲存失敗'
     }

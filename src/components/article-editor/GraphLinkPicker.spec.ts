@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import GraphLinkPicker from './GraphLinkPicker.vue'
-import { fetchEntityOptions } from '@/api/ontology'
+import { fetchEntityOptions, fetchScopeList } from '@/api/ontology'
 
 vi.mock('@/api/ontology', async (original) => ({
   ...await original<typeof import('@/api/ontology')>(),
@@ -87,4 +87,62 @@ describe('GraphLinkPicker', () => {
     wrapper.unmount()
   })
 
+  describe('沒有任何述詞可用時', () => {
+    const notice = (wrapper: ReturnType<typeof mount>) => wrapper.find('[role="status"]')
+    const entity = (wrapper: ReturnType<typeof mount>, title: string) => wrapper.findAll('button').find((b) => b.text().startsWith(title))!
+
+    it('它應該說明這個組合沒有適用的述詞，並建議換對象或改文章分類', async () => {
+      const wrapper = mount(GraphLinkPicker, { props: { existingKeys: [], subjectScopeId: 1 } })
+      await flushPromises()
+      expect(notice(wrapper).exists()).toBe(false)
+      await entity(wrapper, '其他技術').trigger('click')
+      expect(button(wrapper, 'documents')).toBeUndefined()
+      expect(notice(wrapper).text()).toBe(
+        '沒有述詞適用這個組合：述詞限定了兩端的分類，「其他技術」跟這篇文章對不上。換一個對象，或改這篇文章的分類號。',
+      )
+      await entity(wrapper, 'Vue 3').trigger('click')
+      expect(notice(wrapper).exists()).toBe(false)
+      expect(button(wrapper, 'documents')).toBeDefined()
+      wrapper.unmount()
+    })
+    it('它應該在拿不到文章分類號時說明是分類號不能用，而不是叫使用者去選', async () => {
+      const wrapper = mount(GraphLinkPicker, { props: { existingKeys: [] } })
+      await flushPromises()
+      await entity(wrapper, 'Vue 3').trigger('click')
+      expect(notice(wrapper).text()).toBe(
+        '這篇文章的分類號目前不能用來挑述詞（分類號清單沒載入，或不在可用的分類底下），判斷不出哪些述詞適用。',
+      )
+      expect(notice(wrapper).text()).not.toContain('還沒選')
+      wrapper.unmount()
+    })
+    it('它應該在分類號清單還沒載入完時不顯示任何空狀態', async () => {
+      let resolve!: (value: Awaited<ReturnType<typeof fetchScopeList>>) => void
+      vi.mocked(fetchScopeList).mockImplementationOnce(() => new Promise((r) => { resolve = r }))
+      const wrapper = mount(GraphLinkPicker, { props: { existingKeys: [], subjectScopeId: 1 } })
+      await flushPromises()
+      await entity(wrapper, '其他技術').trigger('click')
+      expect(notice(wrapper).exists()).toBe(false)
+      resolve([{ id: 1, parent_class: null }, { id: 20, parent_class: null }] as Awaited<ReturnType<typeof fetchScopeList>>)
+      await flushPromises()
+      expect(notice(wrapper).text()).toContain('沒有述詞適用這個組合')
+      wrapper.unmount()
+    })
+    it('它應該在分類號清單讀取失敗時只顯示讀取錯誤', async () => {
+      vi.mocked(fetchScopeList).mockRejectedValueOnce(new Error('fail'))
+      const wrapper = mount(GraphLinkPicker, { props: { existingKeys: [], subjectScopeId: 1 } })
+      await flushPromises()
+      await entity(wrapper, '其他技術').trigger('click')
+      expect(wrapper.text()).toContain('讀不到分類號清單')
+      expect(notice(wrapper).exists()).toBe(false)
+      wrapper.unmount()
+    })
+    it('它應該在對象沒有分類時說明原因而不是留白', async () => {
+      vi.mocked(fetchEntityOptions).mockResolvedValue([{ id: 7, title: '無分類技術', scope: null }])
+      const wrapper = mount(GraphLinkPicker, { props: { existingKeys: [], subjectScopeId: 1 } })
+      await flushPromises()
+      await entity(wrapper, '無分類技術').trigger('click')
+      expect(notice(wrapper).text()).toBe('「無分類技術」沒有分類，判斷不出哪些述詞適用。換一個對象試試。')
+      wrapper.unmount()
+    })
+  })
 })
