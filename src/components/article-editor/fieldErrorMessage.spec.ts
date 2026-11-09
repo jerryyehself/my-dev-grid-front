@@ -17,8 +17,21 @@ describe('describeFieldError', () => {
     ['techniques.1.relation_id', ''],
   ])('它應該在連結述詞的訊息不能直接給人看時（%s）改用固定句', (key, raw) => {
     const message = describeFieldError(key, raw)
-    expect(message).toBe('這個述詞不能用在這兩端的分類，請換一個述詞，或移除這條關聯。')
+    expect(message).toBe('這條關聯的述詞沒通過檢查，請換一個述詞，或移除這條關聯。')
     expect(message).not.toMatch(RAW_KEYS)
+  })
+  it('它應該把受詞端訊息裡的 model 類別名與 id 換成「對象」', () => {
+    const message = describeFieldError(
+      'implementations.0.relation_id',
+      'implementations.0：關係「documents」的受詞端必須屬於分類「implementation」（含其子分類），但所連結的 Implementation（id 5）的分類是「framework」。',
+    )
+    expect(message).toBe('關係「documents」的受詞端必須屬於分類「implementation」（含其子分類），但所連結的對象的分類是「framework」。')
+    expect(message).not.toMatch(/Implementation|id 5/)
+  })
+  it('它應該對非分類不符的述詞錯誤（例如述詞已被刪除）不說成分類不合', () => {
+    const message = describeFieldError('techniques.0.relation_id', 'The selected techniques.0.relation id is invalid.')
+    expect(message).toBe('這條關聯的述詞沒通過檢查，請換一個述詞，或移除這條關聯。')
+    expect(message).not.toContain('分類')
   })
   it.each([
     ['title', ' title 必填', '標題 必填'],
