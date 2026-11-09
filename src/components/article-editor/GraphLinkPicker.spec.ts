@@ -87,4 +87,38 @@ describe('GraphLinkPicker', () => {
     wrapper.unmount()
   })
 
+  describe('沒有任何述詞可用時', () => {
+    const notice = (wrapper: ReturnType<typeof mount>) => wrapper.find('[role="status"]')
+    const entity = (wrapper: ReturnType<typeof mount>, title: string) => wrapper.findAll('button').find((b) => b.text().startsWith(title))!
+
+    it('它應該說明這個組合沒有適用的述詞，並建議換對象或改文章分類', async () => {
+      const wrapper = mount(GraphLinkPicker, { props: { existingKeys: [], subjectScopeId: 1 } })
+      await flushPromises()
+      expect(notice(wrapper).exists()).toBe(false)
+      await entity(wrapper, '其他技術').trigger('click')
+      expect(button(wrapper, 'documents')).toBeUndefined()
+      expect(notice(wrapper).text()).toBe(
+        '沒有述詞適用這個組合：述詞限定了兩端的分類，「其他技術」跟這篇文章對不上。換一個對象，或改這篇文章的分類號。',
+      )
+      await entity(wrapper, 'Vue 3').trigger('click')
+      expect(notice(wrapper).exists()).toBe(false)
+      expect(button(wrapper, 'documents')).toBeDefined()
+      wrapper.unmount()
+    })
+    it('它應該在文章還沒選分類號時請使用者先選分類號', async () => {
+      const wrapper = mount(GraphLinkPicker, { props: { existingKeys: [] } })
+      await flushPromises()
+      await entity(wrapper, 'Vue 3').trigger('click')
+      expect(notice(wrapper).text()).toBe('這篇文章還沒選分類號，判斷不出哪些述詞適用。先選好分類號再來挑。')
+      wrapper.unmount()
+    })
+    it('它應該在對象沒有分類時說明原因而不是留白', async () => {
+      vi.mocked(fetchEntityOptions).mockResolvedValue([{ id: 7, title: '無分類技術', scope: null }])
+      const wrapper = mount(GraphLinkPicker, { props: { existingKeys: [], subjectScopeId: 1 } })
+      await flushPromises()
+      await entity(wrapper, '無分類技術').trigger('click')
+      expect(notice(wrapper).text()).toBe('「無分類技術」沒有分類，判斷不出哪些述詞適用。換一個對象試試。')
+      wrapper.unmount()
+    })
+  })
 })

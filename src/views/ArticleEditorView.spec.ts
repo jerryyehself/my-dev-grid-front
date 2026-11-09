@@ -189,5 +189,24 @@ describe('ArticleEditorView', () => {
     expect(row('技術三').textContent).toContain('新增技術不符')
     wrapper.unmount()
   })
-
+  it('它應該不顯示 422 訊息裡的內部欄位名，對不上位置的欄位改放整頁訊息', async () => {
+    vi.mocked(updateArticle).mockRejectedValue(new ApiValidationError({
+      'techniques.1.relation_id': 'techniques.1：關係「documents」的主詞端必須屬於分類「post」，但這筆資料的分類是「framework」。',
+      'implementations.0.relation_id': 'The selected implementations.0.relation id is invalid.',
+      title: ' title 必填',
+      type: 'The selected type is invalid.',
+      'techniques.0.id': 'The selected techniques.0.id is invalid.',
+      status: 'status 格式錯誤',
+    }))
+    const wrapper = await mountView()
+    await wrapper.findAll('button').find((b) => b.text() === '存草稿')!.trigger('click')
+    await flushPromises()
+    const row = (name: string) => wrapper.get(`button[aria-label="移除跟 ${name} 的關聯"]`).element.parentElement!.parentElement!
+    expect(row('技術二').textContent).toContain('關係「documents」的主詞端必須屬於分類「post」')
+    expect(row('實作一').textContent).toContain('這個述詞不能用在這兩端的分類，請換一個述詞，或移除這條關聯。')
+    expect(wrapper.text()).toContain('標題 必填')
+    expect(wrapper.text()).toContain('分類號沒有通過檢查，請修正後再儲存。；這條關聯連到的對象已經找不到，請移除這條關聯後重新加入。；有欄位沒通過檢查，請確認內容後再儲存。')
+    expect(wrapper.text()).not.toMatch(/(techniques|implementations)\.\d|relation id|title 必填|status 格式/i)
+    wrapper.unmount()
+  })
 })
