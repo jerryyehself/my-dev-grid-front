@@ -17,3 +17,5 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+        # 只把小版本、修補版合成一個 PR；大版本各自開 PR，另外檢查。
+        update-types: ["minor", "patch"]
