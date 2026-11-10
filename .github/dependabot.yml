@@ -1,0 +1,19 @@
+# Dependabot 設定
+#
+# - workflow 裡的 Actions 都用完整 commit SHA 固定版本（後面註解標明版本號），
+#   由 Dependabot 每週開一個 PR 統一更新 SHA 與註解。
+# - cooldown 7 天：新版本發佈滿 7 天才會提 PR，降低剛發佈就被竄改的版本直接進來的風險。
+#   安全性更新不受 cooldown 影響，不會被延遲；安全性更新一律開在 repo 的預設分支（main）。
+# - 版本更新的 PR 對 develop（target-branch），合併不會觸發正式環境部署。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]

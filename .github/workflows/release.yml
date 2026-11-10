@@ -27,7 +27,7 @@ jobs:
     steps:
       # 腳本要從完整的 first-parent 歷史找出每個版本上線的 commit，也要看到既有 tag，
       # 所以要 fetch-depth: 0，不能用預設的 shallow clone
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
       - run: bash .github/scripts/release-from-changelog.sh
