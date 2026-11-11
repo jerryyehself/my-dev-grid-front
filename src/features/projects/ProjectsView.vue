@@ -42,8 +42,21 @@ const selectedId = ref(linkedId)
 const selected = computed(() => filteredProjects.value.find((p) => p.id === selectedId.value))
 
 const isDesktop = useIsDesktop()
-const pick = (id: string) => {
+// 桌機版詳情頂端要停的位置：跟左欄面板 sticky 的 top 一樣（見 ProjectsListPanel），
+// 導覽列、捲動追蹤列底下再留 16px
+const DETAIL_SCROLL_TOP = 125
+const detail = ref<InstanceType<typeof ProjectsDetail>>()
+const pick = async (id: string) => {
   selectedId.value = id
+  // 頁面捲下去之後，詳情的頂端可能在導覽列後面，點了清單卻看不到換了什麼。
+  // 只有使用者在清單裡選的時候才捲（深層連結載入不走這裡）；原本就看得到頂端就不動。
+  // 瞬間捲過去，不做捲動動畫（任務型頁面不加動態）。手機版沒有這個 ref（詳情在 ProjectsMobileLayout
+  // 裡，自己捲），所以只有桌機版會往下走
+  await nextTick()
+  const el = detail.value?.$el as HTMLElement | undefined
+  if (!el) return
+  const top = el.getBoundingClientRect().top
+  if (top < DETAIL_SCROLL_TOP) window.scrollTo({ top: window.scrollY + top - DETAIL_SCROLL_TOP, behavior: 'instant' })
 }
 
 // 篩選把目前選中的專案擠出清單時，自動切到篩選後清單的第一筆，不留一個選不到的空白詳情面板；
@@ -103,7 +116,7 @@ watch([selectedId, filteredProjects], async () => {
           @clear-filter="clearFilter"
         />
       </div>
-      <ProjectsDetail v-if="selected" :project="selected" />
+      <ProjectsDetail v-if="selected" ref="detail" :project="selected" />
     </div>
 
     <!-- 手機：維持原本的版面，之後另外重做 -->

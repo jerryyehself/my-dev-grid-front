@@ -272,7 +272,7 @@ full explanatory sentences sat at 12px and some labels at 9–10px.
 | Running prose | 16px (see above) | article body, About paragraphs |
 | Full sentences a visitor reads | 14px (`text-sm`/`text-[14px]`) | page explanations, empty/error/demo-data notices, list-item titles |
 | Secondary sans text | 12px | tech-stack lines, legends, popover rows |
-| Mono uppercase labels (Latin/digits only) | 11px | dates, `PROJ-` ids, status badges, `STARTED`/`ROLE` |
+| Mono uppercase labels (Latin/digits only) | 11px | dates, status badges, `STARTED`/`REPO` |
 | Chinese labels | 13px, tracking ≤ 0.05em | 節點顏色, 語言／套件, 起點／終點, 所有文章 →, nav 淺色／登入 |
 | Chinese section headings | 15px bold | 近期知識網路, 近況板, 路徑查詢 |
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ProjectsFilterGroup from './ProjectsFilterGroup.vue'
-import type { ProjectsFilterGroup as FilterGroupData } from './useProjectsFilter'
+import type { ProjectsFilterGroupData } from './useProjectsFilter'
 import { useScrollFade } from './useScrollFade'
 
 // 左欄內原地展開的篩選面板（不是浮層）。高度上限 360px，超過在面板內部捲，
 // 上下緣有淡出提示還有內容。
-defineProps<{ groups: FilterGroupData[]; hasSelection: boolean }>()
+defineProps<{ groups: ProjectsFilterGroupData[]; hasSelection: boolean }>()
 const emit = defineEmits<{ toggleTag: [label: string]; clear: [] }>()
 
 const scroller = ref<HTMLElement>()

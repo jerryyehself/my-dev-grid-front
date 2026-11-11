@@ -3,7 +3,7 @@ import { computed, nextTick, ref } from 'vue'
 import BaseTag from '@/components/BaseTag.vue'
 import type { Project } from '@/api/projects'
 import { techniqueLabel } from '@/api/techniqueLabel'
-import { orderedTechniques, type ProjectsFilterGroup } from './useProjectsFilter'
+import { orderedTechniques, type ProjectsFilterGroupData } from './useProjectsFilter'
 
 // 手機版版面：2026-11 桌機版重做之後，手機版維持原本的樣子（篩選面板收合、清單與詳情上下堆疊），
 // 之後會另外檢視重做，到時整個檔案換掉。跟舊版的差別只有一個：PROJ-YYYY-NN 顯示編號沒有了
@@ -13,7 +13,7 @@ const props = defineProps<{
   /** 篩選前的專案總數 */
   totalCount: number
   selected: Project | undefined
-  filterGroups: ProjectsFilterGroup[]
+  filterGroups: ProjectsFilterGroupData[]
   selectedTags: ReadonlySet<string>
 }>()
 const emit = defineEmits<{ select: [id: string]; toggleTag: [label: string]; clearFilter: [] }>()

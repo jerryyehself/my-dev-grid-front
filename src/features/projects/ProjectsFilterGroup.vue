@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useId, watch } from 'vue'
-import type { ProjectsFilterGroup } from './useProjectsFilter'
+import type { ProjectsFilterGroupData } from './useProjectsFilter'
 
 // 篩選面板裡的一個技術分類（框架／語言／套件工具…）：一排晶片，每個晶片帶專案數。
 // 標籤多的分類（套件工具有 25 個）全部攤開太長，改成搜尋框＋建議清單：
 // 沒輸入時只列用得多（專案數 >= FEATURED_MIN_COUNT）和已選的，其餘靠搜尋；
-// 輸入時建議清單和下方晶片都縮到符合的（G3 設計稿：兩者都做）。
+// 輸入時建議清單和下方晶片都縮到符合的（設計稿：兩者都做）。
 // 搜尋框不用 BaseInput：這裡要 32px 高、16px 字，而且要帶 combobox 的 aria 屬性。
 const SEARCH_MIN_TAGS = 13
 const FEATURED_MIN_COUNT = 2
 const MAX_SUGGESTIONS = 6
 
-const props = defineProps<{ group: ProjectsFilterGroup }>()
+const props = defineProps<{ group: ProjectsFilterGroupData }>()
 const emit = defineEmits<{ toggle: [label: string] }>()
 
 const searchable = computed(() => props.group.tags.length >= SEARCH_MIN_TAGS)
@@ -41,7 +41,13 @@ const activeIndex = ref(0)
 watch(needle, () => {
   activeIndex.value = 0
 })
-const expanded = computed(() => suggestions.value.length > 0)
+// 搜尋框失焦就收起建議清單（aria-expanded 回到 false）；再聚焦或繼續輸入時重新展開。
+// 建議項目的 mousedown 有 preventDefault，點選項時搜尋框不會失焦，所以 click 還收得到
+const dismissed = ref(false)
+watch(query, () => {
+  dismissed.value = false
+})
+const expanded = computed(() => suggestions.value.length > 0 && !dismissed.value)
 
 // 篩選面板高度有上限、在內部捲：輸入時建議清單可能在面板可見範圍的下面，捲到看得到為止
 const listbox = ref<HTMLElement>()
@@ -101,6 +107,8 @@ function onKeydown(e: KeyboardEvent) {
         :aria-label="`搜尋${group.label}`"
         class="mb-2 block h-8 w-full rounded-[6px] border border-(--border-shelf) bg-(--bg-paper-light) px-3 text-base leading-6 text-(--text-ink-main) placeholder:text-(--text-ink-muted) placeholder:opacity-70 focus:border-(--text-accent) focus:shadow-[0_0_0_3px_var(--focus-ring)] focus:outline-none"
         @keydown="onKeydown"
+        @focus="dismissed = false"
+        @blur="dismissed = true"
       />
       <!-- 建議清單放在流程裡，不做浮層：左欄很窄，浮層會被面板的 overflow 裁掉 -->
       <ul

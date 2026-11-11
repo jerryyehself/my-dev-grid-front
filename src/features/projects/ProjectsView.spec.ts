@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import type { Project } from '@/api/projects'
 import { graphNodeLink } from '@/components/graphNodeLink'
+import ProjectsDetail from './ProjectsDetail.vue'
 import ProjectsView from './ProjectsView.vue'
 
 const fetchProjects = vi.fn<() => Promise<Project[]>>()
@@ -50,12 +51,17 @@ function stubMedia(matches: boolean) {
   }))
 }
 
+// jsdom 沒有實作 window.scrollTo；桌機版點清單會呼叫它
+const scrollTo = vi.fn()
 beforeEach(() => {
   fetchProjects.mockReset()
   fetchProjects.mockResolvedValue(projects)
   Element.prototype.scrollIntoView = vi.fn()
+  scrollTo.mockReset()
+  vi.spyOn(window, 'scrollTo').mockImplementation(scrollTo)
 })
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
   // @ts-expect-error 還原成 jsdom 原本沒有這個方法的狀態
   delete Element.prototype.scrollIntoView
@@ -145,10 +151,72 @@ describe('ProjectsView 桌機版', () => {
     expect(wrapper.text()).toContain('3 筆｜依開始日期')
   })
 
+  it('它應該在後端沒有任何專案時顯示「目前沒有可顯示的專案」', async () => {
+    stubMedia(true)
+    fetchProjects.mockResolvedValue([])
+    const wrapper = await mountAt('/projects')
+
+    expect(wrapper.text()).toContain('目前沒有可顯示的專案。')
+    expect(wrapper.text()).not.toContain('沒有符合篩選條件')
+  })
+
   it('它應該不顯示手機版的篩選鈕', async () => {
     stubMedia(true)
 
     expect((await mountAt('/projects')).find('#project-filter-panel').exists()).toBe(false)
+  })
+})
+
+describe('ProjectsView 桌機版選取後捲動', () => {
+  beforeEach(() => {
+    vi.stubGlobal('scrollY', 500)
+    stubMedia(true)
+  })
+
+  // jsdom 沒有版面，詳情頂端到視窗上緣的距離要自己指定
+  function setDetailTop(wrapper: Awaited<ReturnType<typeof mountAt>>, top: number) {
+    wrapper.findComponent(ProjectsDetail).element.getBoundingClientRect = () => ({ top }) as DOMRect
+  }
+  const clickRow = (wrapper: Awaited<ReturnType<typeof mountAt>>, title: string) =>
+    wrapper.findAll('button').find((b) => b.text().includes(title))!.trigger('click')
+
+  it('它應該在頁面捲下去、詳情頂端被導覽列蓋住時，點清單後立刻捲到詳情頂端', async () => {
+    const wrapper = await mountAt('/projects')
+    setDetailTop(wrapper, -300)
+
+    await clickRow(wrapper, 'beta')
+    await flushPromises()
+
+    // 目前捲動位置 500 ＋ 詳情頂端 -300 ＝ 詳情在頁面上的位置 200，再減掉停靠的 125
+    expect(scrollTo).toHaveBeenCalledTimes(1)
+    expect(scrollTo).toHaveBeenCalledWith({ top: 75, behavior: 'instant' })
+  })
+
+  it('它應該在詳情頂端本來就看得到時不捲動', async () => {
+    const wrapper = await mountAt('/projects')
+    setDetailTop(wrapper, 204)
+
+    await clickRow(wrapper, 'beta')
+    await flushPromises()
+
+    expect(detailTitle(wrapper)).toBe('beta')
+    expect(scrollTo).not.toHaveBeenCalled()
+  })
+
+  it('它應該在深層連結載入時不捲動整個頁面', async () => {
+    await mountAt('/projects?project=19')
+
+    expect(scrollTo).not.toHaveBeenCalled()
+  })
+
+  it('它應該在手機版不用 window.scrollTo（手機版自己捲到詳情）', async () => {
+    stubMedia(false)
+    const wrapper = await mountAt('/projects')
+
+    await clickRow(wrapper, 'gamma')
+    await flushPromises()
+
+    expect(scrollTo).not.toHaveBeenCalled()
   })
 })
 

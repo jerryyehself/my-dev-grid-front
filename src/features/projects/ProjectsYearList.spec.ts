@@ -90,3 +90,61 @@ describe('ProjectsYearList.revealSelected', () => {
     expect(scrollIntoView).not.toHaveBeenCalled()
   })
 })
+
+describe('ProjectsYearList 卡住的年份標頭', () => {
+  // jsdom 沒有版面：容器上緣 100、標頭高 28，每組的哨兵頂端與底端由測試指定
+  const CONTAINER_TOP = 100
+  const HEADER_HEIGHT = 28
+
+  function measure(wrapper: ReturnType<typeof render>, rects: Record<string, { sentinelTop: number; bottom: number }>) {
+    const root = wrapper.element as HTMLElement
+    root.getBoundingClientRect = () => ({ top: CONTAINER_TOP }) as DOMRect
+    for (const header of root.querySelectorAll<HTMLElement>('[data-year-header]')) {
+      Object.defineProperty(header, 'offsetHeight', { value: HEADER_HEIGHT, configurable: true })
+    }
+    for (const section of root.querySelectorAll<HTMLElement>('[data-year-group]')) {
+      const rect = rects[section.dataset.year!]!
+      section.getBoundingClientRect = () => ({ bottom: rect.bottom }) as DOMRect
+      section.querySelector<HTMLElement>('[data-sentinel]')!.getBoundingClientRect = () => ({ top: rect.sentinelTop }) as DOMRect
+    }
+  }
+  const hairline = (wrapper: ReturnType<typeof render>) =>
+    Object.fromEntries(wrapper.findAll('h3').map((h) => [h.text(), h.classes('border-(--border-shelf)')]))
+
+  it('它應該在沒有捲動時每個標頭都不畫髮絲線', () => {
+    expect(hairline(render())).toEqual({ '2026': false, '2025': false, 日期不詳: false })
+  })
+
+  it('它應該只替哨兵已捲出上緣、而且該組還沒捲完的標頭畫髮絲線', async () => {
+    const wrapper = render()
+    measure(wrapper, {
+      '2026': { sentinelTop: 20, bottom: 400 }, // 哨兵出去了、底端還遠：卡住
+      '2025': { sentinelTop: 450, bottom: 800 }, // 哨兵還在容器上緣下面：沒卡住
+      '': { sentinelTop: 50, bottom: 120 }, // 底端 120 <= 上緣 100 ＋ 標頭 28：快被下一組頂掉，不畫
+    })
+
+    await wrapper.trigger('scroll')
+
+    expect(hairline(wrapper)).toEqual({ '2026': true, '2025': false, 日期不詳: false })
+  })
+
+  it('它應該在捲回去之後把髮絲線收掉', async () => {
+    const wrapper = render()
+    measure(wrapper, {
+      '2026': { sentinelTop: 20, bottom: 400 },
+      '2025': { sentinelTop: 450, bottom: 800 },
+      '': { sentinelTop: 900, bottom: 1000 },
+    })
+    await wrapper.trigger('scroll')
+    expect(hairline(wrapper)['2026']).toBe(true)
+
+    measure(wrapper, {
+      '2026': { sentinelTop: 100, bottom: 500 },
+      '2025': { sentinelTop: 550, bottom: 900 },
+      '': { sentinelTop: 1000, bottom: 1100 },
+    })
+    await wrapper.trigger('scroll')
+
+    expect(hairline(wrapper)).toEqual({ '2026': false, '2025': false, 日期不詳: false })
+  })
+})
