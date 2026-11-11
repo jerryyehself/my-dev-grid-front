@@ -170,6 +170,9 @@ async function save() {
   } catch (error) {
     if (error instanceof ApiValidationError) {
       fieldErrors.value = error.fieldErrors
+      // 422 卻沒有任何欄位錯誤（body 沒有 errors，或解析失敗）：沒有地方可以掛，
+      // 用例外自帶的通用訊息補上，不要讓儲存失敗卻什麼都不顯示。
+      if (Object.keys(error.fieldErrors).length === 0) saveError.value = error.message
       // 後端可能回一個對不上任何輸入欄位的 key(規格 B2 記的就是這種情況:
       // `locked` 對不上任何欄位,於是訊息渲染不到任何地方,變成靜默失敗)。
       // 把對不上的都收進整頁訊息,寧可重複顯示也不要讓它消失。

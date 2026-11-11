@@ -8,9 +8,11 @@
  *    `StoreRelationRequest`／`UpdateRelationRequest` 仍是 `required|numeric` 的
  *    一般輸入，這裡要自己用 `deriveRelationClassNumber()` 算好兩碼族別編碼
  *    （主詞族＋受詞族）放進 payload，唯讀顯示不代表不用送。
- * 2. G1「反向關係一個 checkbox 就夠」沒有對應的候選端點——`fetchRelationCandidateList()`
- *    撈全部關係回來，前端自己重算一次 `ReverseIsAvailable`／`ReverseIsSwapped`
- *    的邏輯（`findReverseCandidate()`）才能顯示候選，不是後端算好給的。
+ * 2. G1 沒有對應的候選端點——`fetchRelationCandidateList()` 撈全部關係回來，
+ *    前端自己重算一次 `ReverseIsAvailable`／`ReverseIsSwapped` 的邏輯
+ *    （`findReverseCandidates()`）才能顯示候選，不是後端算好給的。後端不限制同一組
+ *    主詞受詞只能有一條可配對的述詞，所以候選可能不只一個：只有一個時勾選即可，
+ *    多個時另外給下拉讓使用者挑，不替他選。
  *
  * **鎖定（G5）**：一旦這條被任何邊引用，`subject_id`／`object_id`／`name`／
  * `call_number`（連帶 `class_number`）就不能再改，只剩 `note` 可以動——
@@ -35,7 +37,7 @@ import {
   fetchRelationCandidateList,
   fetchScopeList,
   fetchRelation,
-  findReverseCandidate,
+  findReverseCandidates,
   updateRelation,
   type RelationCandidateDto,
   type RelationDetailDto,
@@ -67,6 +69,8 @@ const callNumber = ref('')
 const name = ref('')
 const note = ref('')
 const hasReverse = ref(false)
+/** 使用者挑的（或載入時既有的）反向對象 id；null = 還沒挑。實際送出的值見 `selectedReverseId`。 */
+const reverseChoice = ref<number | null>(null)
 
 const saving = ref(false)
 const fieldErrors = ref<Record<string, string>>({})
@@ -88,20 +92,63 @@ const isSymmetric = computed(
   () => subjectId.value !== null && subjectId.value === objectId.value,
 )
 
-/** G1：主詞受詞已對調、還沒配對（或已配對給自己）的那一條，最多一個。 */
-const reverseCandidate = computed(() => {
-  if (isSymmetric.value || subjectId.value === null || objectId.value === null) return null
-  return findReverseCandidate(
+interface ReverseOption {
+  id: number
+  name: string
+  /** 把自己當作反向（對稱關係）。 */
+  self: boolean
+}
+
+/**
+ * G1：可以當作反向的述詞。主詞受詞對調、還沒配對（或已配對給這一筆）的都算；
+ * 主詞受詞相同時，編輯既有這一筆還可以指向自己（新增時還沒有 id 可以指）。
+ * 主詞受詞同型別不代表語意對稱，所以「自己」只是其中一個選項，不是唯一選項。
+ */
+const reverseCandidates = computed<ReverseOption[]>(() => {
+  if (subjectId.value === null || objectId.value === null) return []
+  const others = findReverseCandidates(
     allRelations.value,
     subjectId.value,
     objectId.value,
     editingId.value,
-  )
+  ).map((r) => ({ id: r.id, name: r.name, self: false }))
+  const self =
+    isSymmetric.value && editingId.value !== null
+      ? [{ id: editingId.value, name: name.value, self: true }]
+      : []
+  return [...others, ...self]
 })
 
-/** 對稱關係只有在編輯既有這一筆時才能把反向指向自己——新增時還沒有 id 可以指。 */
-const canToggleReverse = computed(() =>
-  isSymmetric.value ? isEditing.value : reverseCandidate.value !== null,
+const canToggleReverse = computed(() => reverseCandidates.value.length > 0)
+
+const reverseSelectOptions = computed<SelectOption[]>(() =>
+  reverseCandidates.value.map((c) => ({
+    value: c.id,
+    label: c.self ? `${c.name || '這一條'}（自己，對稱）` : c.name,
+  })),
+)
+
+/**
+ * 實際送出的 reverse_id。勾著時，使用者挑的（或載入時既有的）對象仍是候選就沿用，
+ * 不重新猜；只有一個候選時自動採用；多個候選又沒挑，就是 null（不能存檔）。
+ */
+const selectedReverseId = computed<number | null>(() => {
+  if (!hasReverse.value) return null
+  const candidates = reverseCandidates.value
+  const choice = reverseChoice.value
+  if (choice !== null && candidates.some((c) => c.id === choice)) return choice
+  return candidates.length === 1 ? candidates[0]!.id : null
+})
+
+const reverseSelectModel = computed<number | null>({
+  get: () => selectedReverseId.value,
+  set: (value) => {
+    reverseChoice.value = value
+  },
+})
+
+const soleReverseCandidate = computed(() =>
+  reverseCandidates.value.length === 1 ? reverseCandidates.value[0]! : null,
 )
 
 const lockedFields = computed(() => existing.value?.locked_fields ?? [])
@@ -134,6 +181,7 @@ async function load() {
       name.value = detail.name
       note.value = detail.note ?? ''
       hasReverse.value = detail.reverse_id !== null
+      reverseChoice.value = detail.reverse_id
     }
     ready.value = true
   } catch {
@@ -157,7 +205,8 @@ const canSave = computed(
     objectId.value !== null &&
     classNumber.value !== null &&
     name.value.trim() !== '' &&
-    !noteOverLimit.value,
+    !noteOverLimit.value &&
+    !(hasReverse.value && selectedReverseId.value === null),
 )
 
 async function save() {
@@ -166,12 +215,6 @@ async function save() {
   fieldErrors.value = {}
   saveError.value = ''
 
-  const reverseId = !hasReverse.value
-    ? null
-    : isSymmetric.value
-      ? editingId.value
-      : (reverseCandidate.value?.id ?? null)
-
   const payload: RelationWritePayload = {
     subject_id: subjectId.value!,
     object_id: objectId.value!,
@@ -179,7 +222,7 @@ async function save() {
     call_number: callNumber.value.trim(),
     name: name.value.trim(),
     note: note.value.trim(),
-    reverse_id: reverseId,
+    reverse_id: selectedReverseId.value,
   }
 
   try {
@@ -190,6 +233,9 @@ async function save() {
   } catch (error) {
     if (error instanceof ApiValidationError) {
       fieldErrors.value = error.fieldErrors
+      // 422 卻沒有任何欄位錯誤（body 沒有 errors，或解析失敗）：沒有地方可以掛，
+      // 用例外自帶的通用訊息補上，不要讓儲存失敗卻什麼都不顯示。
+      if (Object.keys(error.fieldErrors).length === 0) saveError.value = error.message
       // 規格 B2 記的情況：後端可能回一個對不上任何輸入欄位的 key（例如 `locked`）,
       // 訊息會渲染不到任何地方變成靜默失敗——收進整頁訊息,寧可重複顯示也不要消失。
       const known = ['subject_id', 'object_id', 'class_number', 'call_number', 'name', 'note', 'reverse_id']
@@ -286,8 +332,8 @@ function cancel() {
           }}</BaseHint>
         </BaseField>
 
-        <!-- G1：候選唯一或對稱時才給勾,其餘狀態直接講清楚沒東西可勾,不留一個
-             勾了也沒用的 checkbox。 -->
+        <!-- G1：沒有候選就講清楚沒東西可勾，不留一個勾了也沒用的 checkbox；
+             候選超過一個時另外給下拉，由使用者挑。 -->
         <BaseField label="反向關係">
           <label class="flex items-center gap-2 text-sm text-(--text-ink-main)">
             <input
@@ -298,14 +344,23 @@ function cancel() {
             />
             有反向關係
           </label>
-          <BaseHint v-if="isSymmetric && isEditing" class="mt-1 block">
+          <BaseSelect
+            v-if="hasReverse && reverseCandidates.length > 1"
+            v-model="reverseSelectModel"
+            :options="reverseSelectOptions"
+            placeholder="選一條反向述詞"
+          />
+          <BaseHint v-if="reverseCandidates.length > 1" class="mt-1 block">
+            有 {{ reverseCandidates.length }} 條可以配對，勾選後要自己挑一條
+          </BaseHint>
+          <BaseHint v-else-if="soleReverseCandidate?.self" class="mt-1 block">
             對稱關係，自己就是自己的反向
+          </BaseHint>
+          <BaseHint v-else-if="soleReverseCandidate" class="mt-1 block">
+            候選：{{ soleReverseCandidate.name }}
           </BaseHint>
           <BaseHint v-else-if="isSymmetric" class="mt-1 block" dim>
             主詞受詞相同，是對稱關係——但要先存檔拿到 id 才能把反向指向自己，這裡先不勾
-          </BaseHint>
-          <BaseHint v-else-if="reverseCandidate" class="mt-1 block">
-            候選：{{ reverseCandidate.name }}
           </BaseHint>
           <BaseHint v-else class="mt-1 block" dim>
             還沒有對調的那一條，要先建立主詞受詞對調的述詞才能勾選
