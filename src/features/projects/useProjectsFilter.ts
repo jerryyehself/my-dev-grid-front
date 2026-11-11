@@ -30,6 +30,18 @@ export function orderedTechniques(p: Project): ProjectTechnique[] {
   )
 }
 
+export interface ProjectsFilterTag {
+  label: string
+  /** 用到這個技術的專案數（不分版本） */
+  count: number
+  selected: boolean
+}
+
+export interface ProjectsFilterGroup {
+  label: string
+  tags: ProjectsFilterTag[]
+}
+
 // projects 收 Ref 而不是純陣列：專案清單現在是非同步從 API 載入，
 // 用 Ref 才能在資料到達後讓底下這些 computed 自動重新計算。
 export function useProjectsFilter(projects: Ref<Project[]>) {
@@ -51,7 +63,7 @@ export function useProjectsFilter(projects: Ref<Project[]>) {
 
   const selectedTags = ref<Set<string>>(new Set())
 
-  const filterGroups = computed(() => {
+  const filterGroups = computed<ProjectsFilterGroup[]>(() => {
     const byCategory: Record<string, string[]> = {}
     for (const [name, { category }] of techniqueStats.value) {
       const label = CATEGORY_LABEL[category] ?? '其他'
