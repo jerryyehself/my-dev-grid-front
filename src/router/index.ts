@@ -54,7 +54,7 @@ const router = createRouter({
     {
       path: '/projects',
       name: 'projects',
-      component: () => import('@/views/ProjectsView.vue'),
+      component: () => import('@/features/projects/ProjectsView.vue'),
       meta: {
         tag: 'Dashboard & Tools',
         title: 'Production Artifacts',

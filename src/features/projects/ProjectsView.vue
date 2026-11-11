@@ -5,7 +5,7 @@ import BaseTag from '@/components/BaseTag.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import { fetchProjects, type Project } from '@/api/projects'
 import { techniqueLabel } from '@/api/techniqueLabel'
-import { orderedTechniques, useProjectsFilter } from '@/composables/useProjectsFilter'
+import { orderedTechniques, useProjectsFilter } from './useProjectsFilter'
 
 const projects = ref<Project[]>([])
 const loading = ref(true)
