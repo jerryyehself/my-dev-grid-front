@@ -5,7 +5,7 @@ import { techniqueLabel } from '@/api/techniqueLabel'
 import { techIconOf } from './projectTechIcons'
 import { orderedTechniques } from './useProjectsFilter'
 
-// 桌機版右欄詳情。設計稿 G4d／G5b：沒有框、沒有標題上方的標籤；
+// 桌機版右欄詳情。設計稿：沒有框、沒有標題上方的標籤；
 // 三組（標題＋描述／技術標籤／STARTED＋REPO）組內 8～16、組間 40，不靠分隔線。
 // 型字只有 36/44（標題）、16/28（描述）、16/24（值）、13/20（小標籤）四種。
 const props = defineProps<{ project: Project }>()

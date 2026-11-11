@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ProjectsFilterGroup from './ProjectsFilterGroup.vue'
-import type { ProjectsFilterGroup as GroupData } from './useProjectsFilter'
+import type { ProjectsFilterGroupData as GroupData } from './useProjectsFilter'
 
 const tag = (label: string, count: number, selected = false) => ({ label, count, selected })
 
@@ -166,6 +166,52 @@ describe('ProjectsFilterGroup', () => {
       expect(input.attributes('aria-expanded')).toBe('true')
       const active = wrapper.find(`#${input.attributes('aria-activedescendant')}`)
       expect(active.text()).toContain('vuetify')
+    })
+
+    it('它應該在搜尋框失焦時收起建議清單，再聚焦時重新展開', async () => {
+      // isVisible 要元件掛在文件上才算得出來
+      const wrapper = mount(ProjectsFilterGroup, { props: { group: bigGroup }, attachTo: document.body })
+      const input = wrapper.find('input')
+      await input.setValue('vu')
+      expect(input.attributes('aria-expanded')).toBe('true')
+
+      await input.trigger('blur')
+
+      expect(input.attributes('aria-expanded')).toBe('false')
+      expect(input.attributes('aria-activedescendant')).toBeUndefined()
+      expect(wrapper.find('[role="listbox"]').isVisible()).toBe(false)
+      // 搜尋字還在，下方的晶片照舊縮到符合的
+      expect(chipNames(wrapper)).toEqual(['vuetify', 'vueuse-core'])
+
+      await input.trigger('focus')
+
+      expect(input.attributes('aria-expanded')).toBe('true')
+      expect(wrapper.find('[role="listbox"]').isVisible()).toBe(true)
+      wrapper.unmount()
+    })
+
+    it('它應該在失焦收起後繼續輸入時重新展開建議清單', async () => {
+      const wrapper = render(bigGroup)
+      const input = wrapper.find('input')
+      await input.setValue('vu')
+      await input.trigger('blur')
+
+      await input.setValue('vue')
+
+      expect(input.attributes('aria-expanded')).toBe('true')
+    })
+
+    it('它應該讓建議項目擋掉 mousedown 的預設行為，點選時搜尋框不失焦、click 仍能選取', async () => {
+      const wrapper = render(bigGroup)
+      await wrapper.find('input').setValue('vu')
+      const option = wrapper.findAll('[role="option"]')[1]!
+
+      const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+      option.element.dispatchEvent(mousedown)
+      await option.trigger('click')
+
+      expect(mousedown.defaultPrevented).toBe(true)
+      expect(wrapper.emitted('toggle')).toEqual([['vueuse-core']])
     })
 
     it('它應該用上下鍵移動目前選項，並循環', async () => {

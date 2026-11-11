@@ -37,7 +37,7 @@ export interface ProjectsFilterTag {
   selected: boolean
 }
 
-export interface ProjectsFilterGroup {
+export interface ProjectsFilterGroupData {
   label: string
   tags: ProjectsFilterTag[]
 }
@@ -63,7 +63,7 @@ export function useProjectsFilter(projects: Ref<Project[]>) {
 
   const selectedTags = ref<Set<string>>(new Set())
 
-  const filterGroups = computed<ProjectsFilterGroup[]>(() => {
+  const filterGroups = computed<ProjectsFilterGroupData[]>(() => {
     const byCategory: Record<string, string[]> = {}
     for (const [name, { category }] of techniqueStats.value) {
       const label = CATEGORY_LABEL[category] ?? '其他'

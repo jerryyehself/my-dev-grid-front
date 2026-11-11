@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import type { YearGroup } from './groupProjectsByYear'
 import { stuckYearHeaders } from './stuckYearHeaders'
 import { useScrollFade } from './useScrollFade'
 
 // 桌機版左欄的專案列表：依開始年份分組，每組一個年份標頭（捲動時卡在上緣），一列一個專案。
-// 設計稿 G4d／G5b：列高 48（上下 12＋行高 24）、沒有列分隔線；選中列是平面底色＋標題加粗。
+// 設計稿：列高 48（上下 12＋行高 24）、沒有列分隔線；選中列是平面底色＋標題加粗。
 // 狀態圓點：進行中＝實心強調色，封存＝空心灰圈（active／archived 只是「現在 vs 過去」，
 // 不另開狀態色，見 visual-design-language 的 BaseTag 範例）。
 const props = defineProps<{
@@ -52,13 +52,12 @@ watch(
   () => nextTick(updateStuck),
 )
 
-const statusDot = computed(() => (statusType: 'active' | 'archived' | undefined) =>
+const statusDot = (statusType: 'active' | 'archived' | undefined) =>
   statusType === 'active'
     ? 'bg-(--text-accent)'
     : statusType === 'archived'
       ? 'border-[1.5px] border-(--text-ink-muted)'
-      : 'invisible',
-)
+      : 'invisible'
 
 /** 把選中的那一列捲進列表可見範圍（從首頁或圖譜連過來時，選中的可能在捲動範圍外） */
 function revealSelected() {
