@@ -386,26 +386,25 @@ export function fetchRelationCandidateList(): Promise<RelationCandidateDto[]> {
 
 /**
  * G1：在「主詞受詞已對調」的關係裡，挑出還沒配對、或已經配對給正在編輯的這一筆
- * 的那一個。規格已經驗證過 15 條關係裡每一條的合法候選都剛好是 0 或 1 個
- * （對稱關係例外，見 `isSymmetric` 呼叫端）,所以這裡回單一個候選而不是清單。
+ * 的那些。後端的 `ReverseIsAvailable`／`ReverseIsSwapped` 並不限制同一組主詞受詞
+ * 只能有一條這樣的述詞，所以可能不只一個——回傳清單，由使用者挑，不替他選第一個。
  *
  * `selfId` 是正在編輯的這一筆自己的 id（新增時是 `null`）——候選清單要排除自己，
  * 而「目標已經指向自己」也要算可用（本來就是這一對，重送同樣的值）。
+ * 「把自己當作反向」（對稱關係）不在這裡處理，由呼叫端依主詞受詞是否相同另外加上。
  */
-export function findReverseCandidate(
+export function findReverseCandidates(
   all: RelationCandidateDto[],
   subjectId: number,
   objectId: number,
   selfId: number | null,
-): RelationCandidateDto | null {
-  return (
-    all.find(
-      (r) =>
-        r.id !== selfId &&
-        r.subject === objectId &&
-        r.object === subjectId &&
-        (r.reverse_id === null || r.reverse_id === selfId),
-    ) ?? null
+): RelationCandidateDto[] {
+  return all.filter(
+    (r) =>
+      r.id !== selfId &&
+      r.subject === objectId &&
+      r.object === subjectId &&
+      (r.reverse_id === null || r.reverse_id === selfId),
   )
 }
 
