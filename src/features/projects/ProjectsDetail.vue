@@ -114,7 +114,7 @@ function isNearBlack(hex: string): boolean {
 .tech-logo {
   fill: var(--brand);
 }
-:global(html.theme-terminal) .tech-logo--dark-brand {
+:global(html.theme-terminal .tech-logo--dark-brand) {
   fill: currentColor;
 }
 </style>
