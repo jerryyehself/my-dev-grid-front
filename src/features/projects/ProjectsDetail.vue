@@ -22,6 +22,15 @@ const textOnly = computed(() => techniques.value.filter((t) => !t.icon))
 
 const labelClass = 'text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)'
 const isArchived = computed(() => props.project.statusType === 'archived')
+
+// 品牌色的相對亮度很低（接近黑色）時，在深色主題會看不見
+function isNearBlack(hex: string): boolean {
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b! < 0.03
+}
 </script>
 
 <template>
@@ -45,8 +54,16 @@ const isArchived = computed(() => props.project.statusType === 'archived')
           :key="tech.label"
           class="inline-flex h-7 items-center gap-2 text-[13px] leading-5 tracking-[0.04em] text-(--text-ink-body)"
         >
-          <!-- 單色、跟文字同色（currentColor）；路徑資料來自 simple-icons，用 <path :d> 畫，不經過 v-html -->
-          <svg class="size-4 shrink-0 fill-current" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <!-- 第三方 logo 用品牌原色、不改圖；品牌色接近黑色的（GitHub Pages、JSON）在深色主題改用文字色，
+               對應品牌本身提供的反白版本。路徑資料來自 simple-icons，用 <path :d> 畫，不經過 v-html -->
+          <svg
+            class="tech-logo size-4 shrink-0"
+            :class="isNearBlack(tech.icon!.hex) && 'tech-logo--dark-brand'"
+            :style="{ '--brand': `#${tech.icon!.hex}` }"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
             <path :d="tech.icon!.path" />
           </svg>
           {{ tech.label }}
@@ -92,3 +109,12 @@ const isArchived = computed(() => props.project.statusType === 'archived')
     </dl>
   </div>
 </template>
+
+<style scoped>
+.tech-logo {
+  fill: var(--brand);
+}
+:global(html.theme-terminal) .tech-logo--dark-brand {
+  fill: currentColor;
+}
+</style>

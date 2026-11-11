@@ -80,12 +80,19 @@ describe('ProjectsDetail', () => {
       expect(texts!.find('svg').exists()).toBe(false)
     })
 
-    it('它應該讓圖示對螢幕報讀器隱藏，並用 currentColor 單色畫', () => {
+    it('它應該讓圖示對螢幕報讀器隱藏，並用品牌原色畫', () => {
       const svg = render({ techniques }).find('svg')
 
       expect(svg.attributes('aria-hidden')).toBe('true')
-      expect(svg.classes()).toContain('fill-current')
+      expect(svg.attributes('style')).toMatch(/--brand: #4FC08D/i)
+      expect(svg.classes()).not.toContain('tech-logo--dark-brand')
       expect(svg.find('path').attributes('d')).toMatch(/^M/)
+    })
+
+    it('它應該把接近黑色的品牌標成深色主題改用文字色', () => {
+      const svg = render({ techniques: [{ name: 'json', version: null, category: 'packagetool' }] }).find('svg')
+
+      expect(svg.classes()).toContain('tech-logo--dark-brand')
     })
 
     it('它應該在全部都有圖示時只畫一行，沒有空的文字標籤列', () => {
