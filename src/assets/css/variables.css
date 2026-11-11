@@ -38,7 +38,14 @@
     --bg-folder: #eaeff8;
     /* 淡藏青卡片底 */
     --bg-active-row: rgba(146, 46, 57, 0.08);
-    /* Projects 選中列專用的極淡 accent 透染，語意跟 --bg-folder 不同、不能借用 */
+    /* 極淡的 accent 透染，語意跟 --bg-folder 不同、不能借用。目前只有本體論範圍詳情的清單 hover 在用；
+       專案頁的選中列改用下面的 --bg-list-selected（要更濃，而且不能連帶改變 hover 的濃度） */
+    --bg-list-selected: rgba(146, 46, 57, 0.14);
+    /* 專案頁列表的選中列：平面底色，不再有側條。--bg-active-row 的 8% 在面板上對比只有 1.14:1，
+       14% 約 1.25:1（G5b 量測）；另開 token 是因為 --bg-active-row 還有別處在用，不能連帶變濃 */
+    --list-surface: var(--bg-paper-light);
+    /* 列表面板的不透明表面（專案頁左欄）。淺色沿用卡片底；深色改用 --bg-folder，因為
+       --bg-paper-light 剛好等於 body 暗角漸層的邊緣色，面板會隱形。只是別名，沒有新色值 */
     --focus-ring: rgba(146, 46, 57, 0.16);
     /* 輸入框聚焦時的外暈 */
 
@@ -99,6 +106,8 @@
     --border-shelf: rgba(179, 134, 55, 0.2);
     --bg-folder: #1e2c44;
     --bg-active-row: rgba(215, 172, 102, 0.12);
+    --bg-list-selected: rgba(215, 172, 102, 0.18);
+    --list-surface: var(--bg-folder);
     --focus-ring: rgba(215, 172, 102, 0.22);
 
     --node-doc: #ad4251;
