@@ -23,14 +23,10 @@ const { atTop, atBottom } = useScrollFade(scroller)
       <div class="flex flex-col gap-6">
         <ProjectsFilterGroup v-for="group in groups" :key="group.label" :group="group" @toggle="emit('toggleTag', $event)" />
       </div>
-      <!-- 說明與「清除篩選」放在最後：清除鈕如果在面板上方、選了才出現，會把整個面板往下推，
-           滑鼠底下的標籤跟著換掉 -->
-      <div class="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p class="m-0 text-left text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)">
-          小圓框裡是專案數。選一個技術會包含它的所有版本，例如選 Vue 也會找到用 Vue 3 的專案。
-        </p>
+      <!-- 「清除篩選」放在最後：清除鈕如果在面板上方、選了才出現，會把整個面板往下推，
+           滑鼠底下的標籤跟著換掉。不放說明句：圓框數字與版本包含規則靠畫面本身表達 -->
+      <div v-if="hasSelection" class="mt-6 flex justify-end">
         <button
-          v-if="hasSelection"
           type="button"
           class="cursor-pointer border-b border-(--text-accent) pb-0.5 text-[13px] leading-5 font-semibold tracking-[0.06em] text-(--text-accent) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
           @click="emit('clear')"
