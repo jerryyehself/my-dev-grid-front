@@ -10,6 +10,8 @@ export interface ProjectTechnique {
 }
 
 export interface Project {
+  /** 後端 Implementation 的 id（字串化）。列表選取、`?project=`／`?implementation=` 深層連結都用它。
+   *  以前是前端算的 PROJ-YYYY-NN 顯示編號，畫面不再顯示編號後拿掉了 */
   id: string
   title: string
   status?: string
@@ -22,9 +24,6 @@ export interface Project {
   started: string
   repo: string
   role?: string
-  /** 後端 Implementation 的 id。圖譜節點連到專案頁時用它選中那一筆（?implementation=<id>）；
-   *  2026-10-04 以前的示範資料快照沒有這個欄位 */
-  implementationId?: number
 }
 
 interface ScopeDto {
@@ -100,11 +99,11 @@ const toStatusType = (maintainStatus: boolean | null): 'active' | 'archived' | u
   return maintainStatus ? 'active' : 'archived'
 }
 
-const toProject = (raw: ImplementationDto, id: string, scopeNames: Map<number, string>): Project => {
+const toProject = (raw: ImplementationDto, scopeNames: Map<number, string>): Project => {
   const statusType = toStatusType(raw.maintain_status)
   const techniques = toProjectTechniques(raw.techniques, scopeNames)
   return {
-    id,
+    id: String(raw.id),
     title: raw.title,
     status: statusType === 'archived' ? 'Archived' : statusType === 'active' ? 'Active' : undefined,
     statusType,
@@ -113,12 +112,10 @@ const toProject = (raw: ImplementationDto, id: string, scopeNames: Map<number, s
     techniques,
     started: toStartedYm(raw.git_repo_created_at),
     repo: raw.title,
-    implementationId: raw.id,
   }
 }
 
-// 顯示用的 id（PROJ-YYYY-NN）不是後端欄位，是純前端計算——沿用原本
-// scripts/sync-projects.mjs 的規則：依建立時間由新到舊排序，同一年內從 01 起算。
+// 依建立時間由新到舊排序，專案頁的列表就照這個順序依年份分組
 export async function fetchProjects(): Promise<Project[]> {
   const scopeId = await getProjectScopeId()
   const scopeNames = await getScopeNames()
@@ -130,13 +127,7 @@ export async function fetchProjects(): Promise<Project[]> {
     return aDate < bDate ? 1 : aDate > bDate ? -1 : 0
   })
 
-  const yearCounters: Record<string, number> = {}
-  return sorted.map((raw) => {
-    const year = (raw.git_repo_created_at ?? '').slice(0, 4) || 'UNKNOWN'
-    yearCounters[year] = (yearCounters[year] ?? 0) + 1
-    const id = `PROJ-${year}-${String(yearCounters[year]).padStart(2, '0')}`
-    return toProject(raw, id, scopeNames)
-  })
+  return sorted.map((raw) => toProject(raw, scopeNames))
 }
 
 // 2026-10-04 從正式環境的 /scopes、/implementations 經 fetchProjects() 存下來的快照（16 個專案，

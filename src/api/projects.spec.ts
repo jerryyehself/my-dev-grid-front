@@ -55,7 +55,7 @@ describe('fetchProjects', () => {
 
     expect(projects).toEqual([
       {
-        id: 'PROJ-2026-01',
+        id: '1',
         title: 'my-dev-grid-front',
         status: 'Active',
         statusType: 'active',
@@ -67,7 +67,6 @@ describe('fetchProjects', () => {
         ],
         started: '2026.06',
         repo: 'my-dev-grid-front',
-        implementationId: 1,
       },
     ])
   })
@@ -100,19 +99,33 @@ describe('fetchProjects', () => {
     expect(projects[0]!.desc).toBe('')
   })
 
-  it('它應該在同一年內依建立時間新到舊從 01 開始編號，跨年各自重新起算', async () => {
+  it('它應該用後端 id（字串）當專案 id，並依建立時間新到舊排序', async () => {
     mockScopesAndImplementations([
-      { id: 1, title: 'older-2025', description: null, git_repo_created_at: '2025-02-01 00:00:00', maintain_status: null, techniques: [] },
-      { id: 2, title: 'newer-2025', description: null, git_repo_created_at: '2025-11-01 00:00:00', maintain_status: null, techniques: [] },
-      { id: 3, title: 'only-2024', description: null, git_repo_created_at: '2024-05-01 00:00:00', maintain_status: null, techniques: [] },
+      { id: 11, title: 'older-2025', description: null, git_repo_created_at: '2025-02-01 00:00:00', maintain_status: null, techniques: [] },
+      { id: 12, title: 'newer-2025', description: null, git_repo_created_at: '2025-11-01 00:00:00', maintain_status: null, techniques: [] },
+      { id: 13, title: 'only-2024', description: null, git_repo_created_at: '2024-05-01 00:00:00', maintain_status: null, techniques: [] },
     ])
 
     const projects = await fetchProjects()
 
     expect(projects.map((p) => [p.id, p.title])).toEqual([
-      ['PROJ-2025-01', 'newer-2025'],
-      ['PROJ-2025-02', 'older-2025'],
-      ['PROJ-2024-01', 'only-2024'],
+      ['12', 'newer-2025'],
+      ['11', 'older-2025'],
+      ['13', 'only-2024'],
+    ])
+  })
+
+  it('它應該讓沒有建立時間的專案排在最後', async () => {
+    mockScopesAndImplementations([
+      { id: 1, title: 'no-date', description: null, git_repo_created_at: null, maintain_status: null, techniques: [] },
+      { id: 2, title: 'dated', description: null, git_repo_created_at: '2020-01-01 00:00:00', maintain_status: null, techniques: [] },
+    ])
+
+    const projects = await fetchProjects()
+
+    expect(projects.map((p) => [p.id, p.started])).toEqual([
+      ['2', '2020.01'],
+      ['1', ''],
     ])
   })
 })
@@ -152,6 +165,14 @@ describe('toProjectTechniques', () => {
 
   it('它應該在查不到分類時留空字串，不猜', () => {
     expect(toProjectTechniques([{ title: 'x', type: 999 }], scopes)).toEqual([{ name: 'x', version: null, category: '' }])
+  })
+})
+
+describe('projectsDemoFixture', () => {
+  it('它應該讓每個專案的 id 都是不重複的後端 id（數字字串），跟 fetchProjects 的格式一致', () => {
+    const ids = (projectsDemoFixture as { id: string }[]).map((p) => p.id)
+    expect(ids.every((id) => /^\d+$/.test(id))).toBe(true)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 })
 

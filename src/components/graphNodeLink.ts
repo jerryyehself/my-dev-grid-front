@@ -7,8 +7,8 @@ import { safeLink } from './markdown/safeLink'
 //
 // - 文章（documentation，subtype = post）→ 站內文章頁
 // - 參考資料（documentation，例如 subtype = sourcesite 的官方文件）→ 它自己的外部網址
-// - 專案（implementation）→ 專案頁，用後端 id 選中那一筆（專案頁的 PROJ-YYYY-NN
-//   是前端算的顯示用編號，圖譜資料裡沒有）
+// - 專案（implementation）→ 專案頁，用後端 id 選中那一筆（?implementation=<id>；專案頁的
+//   Project.id 就是後端 id）
 // - 技術（technique）→ 站上沒有技術頁，不給連結
 //
 // subtype／url 是後端 2026-09-30 才加進 /api/graph 的欄位；舊的示範資料快照沒有，
