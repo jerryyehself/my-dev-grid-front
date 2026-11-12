@@ -28,14 +28,17 @@ visitor copy is not a "local detail".)
 
 Grounded in what the site already says (About, home), not invented:
 
-- **First person, plain.** About: 「只收我自己寫過的文章、用過的技術、做過的專案。」 Say what is there,
-  in the author's own voice. No marketing register (打造, 賦能, 一站式, 探索…的旅程).
+- **Objective and plain; no subject where none is needed; first person only on /about and only for a
+  stated judgement.** About: 「收錄自己寫的文章、用過的技術、做過的專案，以及這些技術的官方文件。」
+  Say what is there, as a fact about the catalogue. No marketing register (打造, 賦能, 一站式,
+  探索…的旅程).
 - **Catalogue vocabulary, because the site is a catalogue.** 目錄, 編, 類別, 關係 are literal
-  descriptions of how the site works — About: 「這套分類和雙向關係，來自我的圖書資訊學背景」 — not
-  decoration. Home: 「私人藏書，公開目錄」; 「文章、技術與專案，編成可以查詢的目錄」. Use this vocabulary
+  descriptions of how the site works — About: 「分類與雙向關係沿用圖書館編目的做法」 — not
+  decoration. Home: 「私人藏書，公開目錄」; 「文章、技術與專案的目錄，條目之間以雙向關係連結」. Use this vocabulary
   where it is literally true; don't stretch it onto things it doesn't describe.
 - **Specific over general.** A line that could sit on anyone's site (「做過的專案與技術」) is too plain
-  even if correct. Prefer the detail only this site has.
+  even if correct. Prefer the detail only this site has. Specific means facts, not flavour: a
+  concrete name, count or class, not a vivid phrase (「整個目錄就是一張可以點著走的圖」).
 - **Short.** Fewest words that keep the meaning (ux-copy principle 2).
 - **Write for the reader's background** (the user, 2026-10-01). Visitors are the four readers
   `mockup-fidelity:ux-review` already role-plays: a non-technical visitor, an engineer/recruiter
@@ -52,8 +55,11 @@ Grounded in what the site already says (About, home), not invented:
 | 直接關係 (recorded, solid line) / 間接關聯 (computed, dashed, home only) | 登記的關係, 推導關聯 | D-70 |
 | 類別, 三大類 | 型別 | D-68 |
 | Relation verbs from the two endpoint classes: 文件**說明**技術, 文件**記錄**實作, 技術**用在**實作 | per-predicate glosses; 「寫到」 for `specs` | D-73 (full table still open) |
-| Page titles as they are, English included (`My Articles`, `Production Artifacts`) | translating titles to Chinese | D-76 |
-| 收在目錄裡, 一筆一筆記下來 (for "recorded in the catalogue") | 登記 on visitor pages | the user, 2026-10-01 (D-82) |
+| Page titles as they are, English included (`Articles`, `Production Artifacts`); no first-person titles (`My Articles`) | translating titles to Chinese; 我的／My in a title | D-76; the user, 2026-11-13 |
+| 收在目錄裡 (for "recorded in the catalogue") | 登記 on visitor pages; 一筆一筆記下來 (retired: the GitHub sync creates links automatically, so "recorded one by one" is untrue for relations) | the user, 2026-10-01 (D-82); 一筆一筆記下來 retired 2026-11-13 |
+| 條目 (an entry of the catalogue, outside the graph views: subtitles, detail cards, the About page); 節點 stays only inside the graph views themselves (graph legend, display settings, loading text) | 節點 in non-graph copy | the user, 2026-11-13 |
+| Kickers (the small English line above a title) may repeat the title as a design element; they must still be accurate (`Projects`, not `Dashboard & Tools`) | an inaccurate kicker | the user, 2026-11-13 |
+| Path diagram segments show the Chinese short verb (使用／說明／記錄／需要／版本／相關) | `USES ▸`, `SPECS ▸` | the user, 2026-11-13 |
 | 關聯對象 (the column of things a relation points to, in `/graph` detail-card tables); 這兩個 (the pair at either end of an indirect link) | 節點, 連到的節點 (graph-theory jargon); 兩端 (read as a near-duplicate of 兩邊都連到) | the user, 2026-10-03 (D-88) |
 | `/graph` detail cards use short labels, not sentences: node card stacks groups (label above, names joined with 、) labelled 版本／技術／實作／文件; edge card is one line「a 類別　動詞 →　b 類別」with one verb — 使用 (實作→技術), 說明, 記錄, 需要, 版本, else 相關 — subject first | 用到它的實作, 說明它的文件, 相關的技術, 「Vue」用在「…」 in the detail cards (too colloquial for something rendered as a graph); 起點／終點 rows (graph-theory words, like 節點). Picked from mockup variants C + E2′ after ux-review. Since 2026-10-04 the home-page edge popup and hover tooltip use the same one-line form (mockup H; tooltip as plain text「a（類別） 動詞 → b（類別）」); `relationPhrase` sentences are gone | the user, 2026-10-03 (D-88); home extended 2026-10-04 |
 
@@ -68,11 +74,14 @@ When a new term is settled with the user, add a row here **and** record the deci
 - Put the information-carrying words first: "if users see only the first 2 words, they should
   still get the gist" ([NN/g](https://www.nngroup.com/articles/f-shaped-pattern-reading-web-content/)).
 - No trailing 。 (D-68).
-- Parallel with sibling pages: `My Articles` → 「開發筆記與技術文章」.
+- Parallel with sibling pages: `Articles` → 「開發筆記與技術文章」.
 
 **Section explanation** (a sentence or two under a section heading)
 - Full sentences, end with 。 (D-68). Explain what the reader is looking at and how to read it
-  (colour, size, lines), not how it was built (D-76).
+  (colour, size, lines), not how it was built (D-76). Explain what the reader sees, not how to
+  operate it, unless the control is not discoverable (e.g. 3D rotate and pan). Say a definition
+  once (the dashed line is derived, not a direct relation: in the display-settings note only) and
+  don't repeat it in popovers, cards and tooltips.
 
 **Admin pages** (article manage/editor, ontology edit pages — behind login)
 - **Functional wording is fine; the voice rules above don't apply.** The author is the only user
@@ -105,6 +114,13 @@ the plugin itself was not installed.)
   imagery works because the site really is one). Anything about the projects — what was built,
   what it used, what role, what result — must be literal and true: no metaphor standing in for
   a fact, no invented example (see "Claims must match the data"). Real case, 2026-10-01: a reviewer suggested 「我一筆一筆記下來」 for About, but the backend's GitHub sync creates the technique–project (`uses`) and `specs` links automatically, so "I recorded each one" would be false.
+
+## Where the words live
+
+Global text (navbar, footer, loading/error/empty-state strings used by more than one component) is in
+`src/copy/common.ts`; page titles, tags and subtitles are in `src/router/index.ts` meta; the site
+name is in `src/siteMeta.ts`; text used by one component stays in that component
+(`docs/conventions/structure.md`).
 
 ## Process
 
