@@ -177,13 +177,35 @@ function touch() {
 const docScopes = ref<ScopeDto[]>([])
 const subjectScopeId = computed(() => docScopes.value.find((s) => s.full_call_number === scopeCall.value)?.id)
 const scopeError = ref(false)
+const scopesLoaded = ref(false)
 fetchScopes()
   .then((all) => {
     docScopes.value = all.filter(
       (s) => s.full_call_number.startsWith('00') && s.full_call_number !== '0000',
     )
+    scopesLoaded.value = true
   })
   .catch(() => (scopeError.value = true))
+
+const SCOPE_RESELECT_MESSAGE = '還沒選分類號，請先在右側選一個分類'
+const SCOPE_LOADING_MESSAGE = '分類號清單還沒載入完成，稍等一下再試'
+
+/** 清單載入完成後,目前的分類號(例如詳情帶回來的)不在可選清單裡:跟沒選一樣,要使用者重選。 */
+const scopeNotInOptions = computed(
+  () =>
+    scopesLoaded.value &&
+    scopeCall.value !== null &&
+    !docScopes.value.some((s) => s.full_call_number === scopeCall.value),
+)
+/** 需要使用者重新選分類:原本的分類被刪除,或原本的分類不在可選清單裡。 */
+const scopeNeedsReselect = computed(() => (scopeDeleted.value && scopeCall.value === null) || scopeNotInOptions.value)
+
+function selectScope(callNumber: string) {
+  scopeCall.value = callNumber
+  // 整頁的「還沒選分類號」訊息是這個動作造成的,選好了就該收掉,不要留到下一次存檔
+  if (saveError.value === SCOPE_RESELECT_MESSAGE || saveError.value === SCOPE_LOADING_MESSAGE) saveError.value = ''
+  touch()
+}
 
 // --- 標籤 ------------------------------------------------------------------
 // 「tags 的兩種命運」：輸入的標籤先比對既有 Technique,對得上的就該升級成帶述詞的
@@ -325,14 +347,14 @@ async function saveWithStatus(statusPublished: boolean) {
   fieldErrors.value = {}
   linkErrors.value.clear()
 
-  if (scopeCall.value === null) {
-    saveError.value = '還沒選分類號，請先在右側選一個分類'
+  if (scopeCall.value === null || scopeNotInOptions.value) {
+    saveError.value = SCOPE_RESELECT_MESSAGE
     saving.value = false
     return
   }
   const type = docScopes.value.find((s) => s.full_call_number === scopeCall.value)?.id
   if (!type) {
-    saveError.value = '分類號清單還沒載入完成，稍等一下再試'
+    saveError.value = SCOPE_LOADING_MESSAGE
     saving.value = false
     return
   }
@@ -657,8 +679,8 @@ const publish = () => saveWithStatus(true)
             讀不到分類號清單——後端沒起來時這裡不會改用寫死的四個選項。
           </p>
 
-          <BaseHint v-if="scopeDeleted && scopeCall === null" tone="error" class="block leading-5">
-            原本的分類已被刪除，請重新選擇
+          <BaseHint v-if="scopeNeedsReselect" tone="error" class="block leading-5">
+            {{ scopeDeleted && scopeCall === null ? '原本的分類已被刪除，請重新選擇' : '原本的分類不在可選清單裡，請重新選擇' }}
           </BaseHint>
 
           <div class="flex flex-col gap-1">
@@ -672,7 +694,7 @@ const publish = () => saveWithStatus(true)
                   ? 'bg-(--bg-folder) border border-(--text-accent)'
                   : 'border border-transparent text-(--text-ink-muted) hover:text-(--text-ink-main)'
               "
-              @click="((scopeCall = s.full_call_number), touch())"
+              @click="selectScope(s.full_call_number)"
             >
               <span
                 class="font-mono text-[11px]"

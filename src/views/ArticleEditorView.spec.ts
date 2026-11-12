@@ -255,6 +255,60 @@ describe('ArticleEditorView', () => {
       wrapper.unmount()
     })
 
+    it('它應該在詳情的分類不在載入的可選清單裡時，跟分類被刪除一樣顯示重選提示並擋下存檔', async () => {
+      vi.mocked(fetchArticle).mockResolvedValue({
+        ...defaultArticle,
+        type: 9,
+        scope: { id: 9, name: 'legacy', full_call_number: '0090' },
+      })
+      const wrapper = await mountView()
+
+      expect(scopeButtons(wrapper).every((b) => !b.classes().includes('bg-(--bg-folder)'))).toBe(true)
+      expect(wrapper.text()).toContain('原本的分類不在可選清單裡，請重新選擇')
+
+      await saveDraftButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(updateArticle).not.toHaveBeenCalled()
+      expect(wrapper.get('[role="alert"]').text()).toContain('還沒選分類號')
+      expect(wrapper.text()).not.toContain('分類號清單還沒載入完成')
+      wrapper.unmount()
+    })
+
+    it('它應該在可選清單還沒載入完成前不顯示重選提示', async () => {
+      vi.mocked(fetchScopes).mockReturnValueOnce(new Promise(() => {}))
+      const wrapper = await mountView()
+
+      expect(wrapper.text()).not.toContain('請重新選擇')
+      wrapper.unmount()
+    })
+
+    it('它應該在重選有效分類後收掉整頁的「還沒選分類號」訊息', async () => {
+      vi.mocked(fetchArticle).mockResolvedValue(orphanArticle)
+      const wrapper = await mountView()
+      await saveDraftButton(wrapper).trigger('click')
+      await flushPromises()
+      expect(wrapper.find('[role="alert"]').exists()).toBe(true)
+
+      await scopeButtons(wrapper)[0]!.trigger('click')
+
+      expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+      expect(wrapper.text()).not.toContain('還沒選分類號')
+      wrapper.unmount()
+    })
+
+    it('它應該在重選分類時保留跟分類無關的整頁錯誤', async () => {
+      vi.mocked(updateArticle).mockRejectedValue(new Error('連線失敗'))
+      const wrapper = await mountView()
+      await saveDraftButton(wrapper).trigger('click')
+      await flushPromises()
+
+      await scopeButtons(wrapper)[0]!.trigger('click')
+
+      expect(wrapper.get('[role="alert"]').text()).toContain('連線失敗')
+      wrapper.unmount()
+    })
+
     it('它應該在 scope 有值時照原樣選中該分類且不顯示已刪除的提示', async () => {
       const wrapper = await mountView()
 

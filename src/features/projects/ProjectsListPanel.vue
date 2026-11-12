@@ -14,6 +14,9 @@ import type { ProjectsFilterGroupData } from './useProjectsFilter'
 // 詳情跟著頁面捲。sticky 的 top 用 STICKY_TOP_PX（算法見 layouts/stickyOffset.ts）。
 // 高度上限的 228px＝面板在頁面頂端時上緣的位置（約 204px）
 // 加下緣留白 24px，量過 1440×900；頁首（MainLayout 的通用表頭）高度改了要一起調。
+// 這個上限用 CSS 變數 --projects-list-max-h 往下傳：篩選面板展開時要從裡面扣掉
+// 表頭與列表的最小保留高度，不然矮視窗（例如 600px 高，上限只有 372px）下
+// 篩選面板會把空間吃光，列表看不到也點不到（見 ProjectsFilterPanel）。
 const props = defineProps<{
   projects: Project[]
   /** 篩選前的專案總數，沒有專案時的空狀態要分得出「沒有專案」跟「篩選後沒有」 */
@@ -34,8 +37,8 @@ defineExpose({ revealSelected: () => list.value?.revealSelected() })
 
 <template>
   <div
-    class="sticky flex max-h-[max(360px,calc(100vh-228px))] min-h-0 flex-col overflow-hidden rounded-xl border border-(--border-shelf) bg-(--list-surface)"
-    :style="{ top: `${STICKY_TOP_PX}px` }"
+    class="sticky flex max-h-(--projects-list-max-h) min-h-0 flex-col overflow-hidden rounded-xl border border-(--border-shelf) bg-(--list-surface)"
+    :style="{ top: `${STICKY_TOP_PX}px`, '--projects-list-max-h': 'max(360px, calc(100vh - 228px))' }"
   >
     <div class="flex flex-none items-center justify-between px-4 py-3">
       <p class="m-0 text-left text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)" aria-live="polite">
