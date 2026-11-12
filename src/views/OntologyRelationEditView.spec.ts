@@ -255,3 +255,67 @@ describe('OntologyRelationEditView 儲存失敗', () => {
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
   })
 })
+
+describe('OntologyRelationEditView 反向述詞已被刪除', () => {
+  // 編輯 1（Doc→Tech）：詳情的 reverse_id 是 10，但清單裡沒有 id 10（已軟刪除）。
+  const DELETED_HINT = '原本的反向述詞已被刪除'
+
+  it('它應該在沒有其他候選時顯示已刪除的提示、取消勾選，並送出 reverse_id 為 null', async () => {
+    const a = rel(1, 'documents', DOC, TECH, 10)
+    const { wrapper } = await mountView([a], a)
+
+    expect(wrapper.text()).toContain(DELETED_HINT)
+    expect((reverseCheckbox(wrapper).element as HTMLInputElement).checked).toBe(false)
+    await save(wrapper)
+
+    expect(vi.mocked(updateRelation).mock.calls[0]![1]).toMatchObject({ reverse_id: null })
+  })
+
+  it('它應該在剛好有一條其他候選時不自動配對，使用者勾選後才套用那一條', async () => {
+    const a = rel(1, 'documents', DOC, TECH, 10)
+    const b = rel(2, 'documentedBy', TECH, DOC, null)
+    const { wrapper } = await mountView([a, b], a)
+
+    expect(wrapper.text()).toContain(DELETED_HINT)
+    expect((reverseCheckbox(wrapper).element as HTMLInputElement).checked).toBe(false)
+    await save(wrapper)
+    expect(vi.mocked(updateRelation).mock.calls[0]![1]).toMatchObject({ reverse_id: null })
+
+    await reverseCheckbox(wrapper).setValue(true)
+    expect(wrapper.text()).not.toContain(DELETED_HINT)
+    await save(wrapper)
+    expect(vi.mocked(updateRelation).mock.calls[1]![1]).toMatchObject({ reverse_id: 2 })
+  })
+
+  it('它應該在有兩條以上其他候選時取消勾選、儲存鈕可按，並送出 reverse_id 為 null', async () => {
+    const a = rel(1, 'documents', DOC, TECH, 10)
+    const b = rel(2, 'explains', TECH, DOC, null)
+    const c = rel(3, 'describes', TECH, DOC, null)
+    const { wrapper } = await mountView([a, b, c], a)
+
+    expect(wrapper.text()).toContain(DELETED_HINT)
+    expect((reverseCheckbox(wrapper).element as HTMLInputElement).checked).toBe(false)
+    expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
+    await save(wrapper)
+
+    expect(vi.mocked(updateRelation).mock.calls[0]![1]).toMatchObject({ reverse_id: null })
+  })
+
+  it('它應該在反向仍在候選內時不顯示已刪除的提示', async () => {
+    const a = rel(1, 'documents', DOC, TECH, 2)
+    const b = rel(2, 'documentedBy', TECH, DOC, 1)
+    const { wrapper } = await mountView([a, b], a)
+
+    expect(wrapper.text()).not.toContain(DELETED_HINT)
+    expect((reverseCheckbox(wrapper).element as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('它應該在對稱述詞反向指向自己時不顯示已刪除的提示', async () => {
+    // 清單不含自己也一樣：指向自己不算已刪除。
+    const a = rel(10, '伴隨', TECH, TECH, 10)
+    const { wrapper } = await mountView([], a)
+
+    expect(wrapper.text()).not.toContain(DELETED_HINT)
+    expect((reverseCheckbox(wrapper).element as HTMLInputElement).checked).toBe(true)
+  })
+})

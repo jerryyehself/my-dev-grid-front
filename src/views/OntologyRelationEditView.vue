@@ -71,6 +71,8 @@ const note = ref('')
 const hasReverse = ref(false)
 /** 使用者挑的（或載入時既有的）反向對象 id；null = 還沒挑。實際送出的值見 `selectedReverseId`。 */
 const reverseChoice = ref<number | null>(null)
+/** 載入時詳情的 reverse_id 指向的述詞已不在清單裡(清單不含已刪除的資料)。 */
+const reverseDeleted = ref(false)
 
 const saving = ref(false)
 const fieldErrors = ref<Record<string, string>>({})
@@ -180,8 +182,16 @@ async function load() {
       callNumber.value = detail.call_number ?? ''
       name.value = detail.name
       note.value = detail.note ?? ''
-      hasReverse.value = detail.reverse_id !== null
-      reverseChoice.value = detail.reverse_id
+      // 反向原值不在候選清單裡(而且不是對稱述詞指向自己)時不照抄:照抄的話,
+      // 候選只剩一條會被悄悄改配對到它,沒有候選又會悄悄取消勾選。改成明講原本的
+      // 反向已被刪除,維持未勾選,使用者要的話自己勾,再走原本的候選邏輯。
+      const reverseMissing =
+        detail.reverse_id !== null &&
+        detail.reverse_id !== detail.id &&
+        !relations.some((r) => r.id === detail.reverse_id)
+      reverseDeleted.value = reverseMissing
+      hasReverse.value = detail.reverse_id !== null && !reverseMissing
+      reverseChoice.value = reverseMissing ? null : detail.reverse_id
     }
     ready.value = true
   } catch {
@@ -344,6 +354,9 @@ function cancel() {
             />
             有反向關係
           </label>
+          <BaseHint v-if="reverseDeleted && !hasReverse" class="mt-1 block" tone="error">
+            原本的反向述詞已被刪除，儲存後這條述詞不再有反向，需要時可重新勾選
+          </BaseHint>
           <BaseSelect
             v-if="hasReverse && reverseCandidates.length > 1"
             v-model="reverseSelectModel"

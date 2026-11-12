@@ -81,7 +81,10 @@ let fileImportSequence = 0
 const margins = ref<ArticleMarginNote[]>([])
 const tags = ref<string[]>([])
 const links = ref<DraftLink[]>([])
-const scopeCall = ref('0030')
+/** 選中的分類號;null = 還沒選(編輯時文章原本的分類已被刪除,見 `scopeDeleted`)。 */
+const scopeCall = ref<string | null>('0030')
+/** 編輯時文章有 type、詳情卻沒有對應的分類(後端的分類已被刪除)。 */
+const scopeDeleted = ref(false)
 const published = ref(false)
 const dirty = ref(false)
 const createdAt = ref<string | null>(null)
@@ -122,7 +125,10 @@ async function load() {
       body.value = a.body ?? ''
       published.value = a.status === 1
       createdAt.value = a.creation_date ?? a.created_at
-      scopeCall.value = a.scope?.full_call_number ?? '0030'
+      // scope 為 null 但 type 有值,是分類被刪掉了,不是新文章:不退回預設的 post,
+      // 否則存檔會悄悄把文章改掛到 post。改成未選並提示,要使用者自己重選。
+      scopeDeleted.value = a.scope === null && a.type !== null
+      scopeCall.value = scopeDeleted.value ? null : (a.scope?.full_call_number ?? '0030')
       links.value = [
         ...a.techniques.map((t) => toDraftLink('technique', t)),
         ...a.implementations.map((t) => toDraftLink('implementation', t)),
@@ -132,6 +138,7 @@ async function load() {
       body.value = ''
       published.value = false
       createdAt.value = null
+      scopeDeleted.value = false
       scopeCall.value = '0030'
       links.value = []
     }
@@ -318,6 +325,11 @@ async function saveWithStatus(statusPublished: boolean) {
   fieldErrors.value = {}
   linkErrors.value.clear()
 
+  if (scopeCall.value === null) {
+    saveError.value = '還沒選分類號，請先在右側選一個分類'
+    saving.value = false
+    return
+  }
   const type = docScopes.value.find((s) => s.full_call_number === scopeCall.value)?.id
   if (!type) {
     saveError.value = '分類號清單還沒載入完成，稍等一下再試'
@@ -644,6 +656,10 @@ const publish = () => saveWithStatus(true)
           <p v-if="scopeError" class="font-mono text-[10px] leading-5 text-(--text-error)">
             讀不到分類號清單——後端沒起來時這裡不會改用寫死的四個選項。
           </p>
+
+          <BaseHint v-if="scopeDeleted && scopeCall === null" tone="error" class="block leading-5">
+            原本的分類已被刪除，請重新選擇
+          </BaseHint>
 
           <div class="flex flex-col gap-1">
             <button

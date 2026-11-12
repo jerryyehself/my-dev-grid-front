@@ -33,10 +33,10 @@ const child = {
   note: '舊註釋',
 }
 
-async function mountView(editing: boolean) {
+async function mountView(editing: boolean, detail?: typeof child) {
   vi.mocked(fetchScopeList).mockResolvedValue([top, child] as never)
   vi.mocked(fetchScope).mockResolvedValue(
-    (editing ? child : { ...top, new_child_call_number: null }) as never,
+    (editing ? (detail ?? child) : { ...top, new_child_call_number: null }) as never,
   )
   const router = createRouter({
     history: createMemoryHistory(),
@@ -118,5 +118,44 @@ describe('OntologyScopeEditView 儲存失敗', () => {
 
     expect(wrapper.text()).toContain('名稱已被使用')
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+  })
+})
+
+describe('OntologyScopeEditView 父類已被刪除', () => {
+  // 清單裡沒有 id 9，就像後端軟刪除之後的 GET /scopes。
+  const orphan = { ...child, parent_class: 9 }
+  const saveButton = (w: Wrapper) => w.findAll('button').find((b) => b.text() === '儲存')!
+
+  it('它應該在父類不在頂層清單時顯示 placeholder、已刪除的提示，並停用儲存鈕', async () => {
+    const { wrapper } = await mountView(true, orphan)
+
+    const select = wrapper.get('select').element as HTMLSelectElement
+    expect(select.selectedIndex).toBe(0)
+    expect(select.options[0]!.text).toBe('選一個頂層分類')
+    expect(wrapper.text()).toContain('原本的父類已被刪除，請重新選擇')
+    expect(saveButton(wrapper).attributes('disabled')).toBeDefined()
+
+    await save(wrapper)
+    expect(updateScope).not.toHaveBeenCalled()
+  })
+
+  it('它應該在重選頂層分類後啟用儲存鈕，並送出重選的 id', async () => {
+    const { wrapper } = await mountView(true, orphan)
+
+    await wrapper.get('select').setValue(1)
+    expect(wrapper.text()).not.toContain('原本的父類已被刪除')
+    expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
+    vi.mocked(updateScope).mockResolvedValue({ data: { id: 5 }, message: '' } as never)
+    await save(wrapper)
+
+    expect(updateScope).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(updateScope).mock.calls[0]![1]).toMatchObject({ parent_class: 1 })
+  })
+
+  it('它應該在父類仍在頂層清單時不顯示已刪除的提示', async () => {
+    const { wrapper } = await mountView(true)
+
+    expect(wrapper.text()).not.toContain('已被刪除')
+    expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
   })
 })

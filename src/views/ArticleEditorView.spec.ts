@@ -5,6 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import ArticleEditorView from './ArticleEditorView.vue'
 import { ApiValidationError, apiPut } from '@/api/client'
 import { fetchArticle, updateArticle } from '@/api/articles'
+import { fetchScopes } from '@/api/ontology'
 
 const defaultArticle = vi.hoisted(() => ({
   id: 1, type: 3, title: '文章', body: '內文', status: 0,
@@ -25,12 +26,13 @@ vi.mock('@/api/ontology', async (original) => ({
   fetchTechniqueOptions: vi.fn().mockResolvedValue([]),
 }))
 
-async function mountView() {
+async function mountView(path = '/articles/1/edit') {
   const router = createRouter({ history: createMemoryHistory(), routes: [
+    { path: '/articles/new', name: 'article-new', component: ArticleEditorView },
     { path: '/articles/:id/edit', name: 'article-editor', component: ArticleEditorView },
     { path: '/articles/:id', name: 'article-detail', component: { template: '<div />' } },
   ] })
-  await router.push('/articles/1/edit')
+  await router.push(path)
   await router.isReady()
   const wrapper = mount(ArticleEditorView, { global: { plugins: [router], stubs: { MarkdownBody: true, GraphLinkPicker: {
     emits: ['create'],
@@ -208,5 +210,67 @@ describe('ArticleEditorView', () => {
     expect(wrapper.text()).toContain('分類號沒有通過檢查，請修正後再儲存。；這條關聯連到的對象已經找不到，請移除這條關聯後重新加入。；有欄位沒通過檢查，請確認內容後再儲存。')
     expect(wrapper.text()).not.toMatch(/(techniques|implementations)\.\d|relation id|title 必填|status 格式/i)
     wrapper.unmount()
+  })
+  describe('分類已被刪除', () => {
+    // 詳情的 type 還在、scope 已是 null：後端軟刪除分類之後的樣子。
+    const orphanArticle = { ...defaultArticle, type: 7, scope: null }
+    const scopeButtons = (w: Awaited<ReturnType<typeof mountView>>) =>
+      w.findAll('button').filter((b) => /^00\d0/.test(b.text()))
+    const saveDraftButton = (w: Awaited<ReturnType<typeof mountView>>) =>
+      w.findAll('button').find((b) => b.text() === '存草稿')!
+
+    it('它應該在 scope 為 null 時不選任何分類號、顯示已刪除的提示，且存草稿不送出請求', async () => {
+      vi.mocked(fetchArticle).mockResolvedValue(orphanArticle)
+      const wrapper = await mountView()
+
+      expect(scopeButtons(wrapper).length).toBeGreaterThan(0)
+      expect(scopeButtons(wrapper).every((b) => !b.classes().includes('bg-(--bg-folder)'))).toBe(true)
+      expect(wrapper.text()).toContain('原本的分類已被刪除，請重新選擇')
+
+      await saveDraftButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(updateArticle).not.toHaveBeenCalled()
+      expect(wrapper.get('[role="alert"]').text()).toContain('還沒選分類號')
+      expect(wrapper.text()).not.toContain('分類號清單還沒載入完成')
+      wrapper.unmount()
+    })
+
+    it('它應該在重選分類後送出選中的分類 id 並收起提示', async () => {
+      vi.mocked(fetchArticle).mockResolvedValue(orphanArticle)
+      vi.mocked(fetchScopes).mockResolvedValueOnce([
+        { id: 3, name: 'post', full_call_number: '0030' },
+        { id: 2, name: 'sourcesite', full_call_number: '0010' },
+      ] as never)
+      vi.mocked(updateArticle).mockResolvedValue({ data: { id: 1 } } as never)
+      const wrapper = await mountView()
+
+      await scopeButtons(wrapper).find((b) => b.text().includes('sourcesite'))!.trigger('click')
+      expect(wrapper.text()).not.toContain('原本的分類已被刪除')
+      await saveDraftButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(updateArticle).toHaveBeenCalledTimes(1)
+      expect(vi.mocked(updateArticle).mock.calls[0]?.[1]).toMatchObject({ type: 2 })
+      wrapper.unmount()
+    })
+
+    it('它應該在 scope 有值時照原樣選中該分類且不顯示已刪除的提示', async () => {
+      const wrapper = await mountView()
+
+      expect(wrapper.text()).not.toContain('已被刪除')
+      expect(scopeButtons(wrapper).filter((b) => b.classes().includes('bg-(--bg-folder)'))).toHaveLength(1)
+      wrapper.unmount()
+    })
+
+    it('它應該在新增文章時仍預設選中 0030', async () => {
+      const wrapper = await mountView('/articles/new')
+
+      expect(wrapper.text()).not.toContain('已被刪除')
+      const selected = scopeButtons(wrapper).filter((b) => b.classes().includes('bg-(--bg-folder)'))
+      expect(selected).toHaveLength(1)
+      expect(selected[0]!.text()).toContain('0030')
+      wrapper.unmount()
+    })
   })
 })

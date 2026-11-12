@@ -56,6 +56,8 @@ const ready = ref(false)
 const loadError = ref(false)
 
 const parentClass = ref<number | null>(null)
+/** 編輯時詳情回的父類不在頂層清單裡(清單不含已刪除的資料)。 */
+const parentDeleted = ref(false)
 const callNumber = ref('')
 const name = ref('')
 const comment = ref('')
@@ -93,7 +95,12 @@ async function load() {
 
     if (isEditing.value) {
       const detail = await fetchScope(editingId.value!)
-      parentClass.value = detail.parent_class
+      // 外鍵原值不在下拉選項裡時不能照抄:原生 <select> 會顯示空白、儲存鈕卻還能按,
+      // 送出去只會被後端 422 退回。改成未選並明講,讓使用者自己重選,不靜默換成別的值。
+      const parentMissing =
+        detail.parent_class !== null && !tops.value.some((s) => s.id === detail.parent_class)
+      parentDeleted.value = parentMissing
+      parentClass.value = parentMissing ? null : detail.parent_class
       callNumber.value = detail.call_number ?? ''
       name.value = detail.name
       comment.value = detail.comment ?? ''
@@ -223,6 +230,9 @@ function cancel() {
         <!-- G2：只列頂層,選完即時顯示推算出來的完整分類號。 -->
         <BaseField label="父類" hint="必填 · 只能選頂層分類">
           <BaseSelect v-model="parentClass" :options="parentOptions" placeholder="選一個頂層分類" />
+          <BaseHint v-if="parentDeleted && parentClass === null" tone="error">
+            原本的父類已被刪除，請重新選擇
+          </BaseHint>
           <BaseHint v-if="fieldErrors.parent_class" tone="error">{{
             fieldErrors.parent_class
           }}</BaseHint>
