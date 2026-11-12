@@ -43,9 +43,38 @@
       </p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-10 items-start">
+    <!-- 版面（註腳邊注，見 MarkdownBody 的 sidenotes）：
+         ≥1240px 三欄——目錄在左（188px）、正文、正文右邊留給邊注；
+         1000–1239px 正文單欄，邊注仍貼在正文右邊，目錄收成正文上方的一塊（<details>）；
+         <1000px 邊注改成點編號展開，版面同上。目錄從右欄搬到左欄，是因為右邊要讓給邊注。 -->
+    <div class="grid grid-cols-1 min-[1240px]:grid-cols-[188px_minmax(0,1fr)] gap-10 items-start">
       <div class="max-w-prose">
-        <MarkdownBody :source="article.body ?? ''" />
+        <details
+          v-if="headings.length"
+          class="group min-[1240px]:hidden mb-6 rounded-[6px] border border-(--border-shelf) bg-(--bg-folder)"
+        >
+          <summary
+            class="flex items-center justify-between gap-2 min-h-11 px-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-sm font-bold text-(--text-ink-main) rounded-[6px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+          >
+            本文結構（{{ headings.length }} 節）
+            <svg class="transition-transform duration-100 group-open:rotate-90" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 2l4 4-4 4" />
+            </svg>
+          </summary>
+          <ol class="flex flex-col gap-2 px-4 pb-3">
+            <li v-for="heading in headings" :key="heading.slug">
+              <a
+                :href="`#${heading.slug}`"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
+              >
+                {{ heading.text }}
+              </a>
+            </li>
+          </ol>
+        </details>
+
+        <MarkdownBody :source="article.body ?? ''" sidenotes />
 
         <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
           <router-link
@@ -76,9 +105,14 @@
         </div>
       </div>
 
-      <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
-      <div class="lg:sticky flex flex-col gap-8" :style="{ top: `${STICKY_TOP_PX}px` }">
-        <div v-if="headings.length">
+      <!-- 邊欄：跟正文分開卻仍在視野內，不打斷閱讀主線。≥1240px 在左欄（order-first）；
+           更窄時目錄已經收進正文上方，這裡只剩相關專案，沒有相關專案就整欄不佔位 -->
+      <div
+        class="min-[1240px]:sticky min-[1240px]:order-first flex flex-col gap-8"
+        :class="article.implementations.length ? '' : 'max-[1239px]:hidden'"
+        :style="{ top: `${STICKY_TOP_PX}px` }"
+      >
+        <div v-if="headings.length" class="hidden min-[1240px]:block">
           <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
             本文結構
           </div>

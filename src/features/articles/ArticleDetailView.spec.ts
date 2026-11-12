@@ -75,9 +75,25 @@ describe('ArticleDetailView', () => {
   it('它應該讓邊欄用共用的 STICKY_TOP_PX 當 sticky 的 top', async () => {
     fetchArticleOrDemo.mockResolvedValue({ article: LIST[2], loadError: null })
     const wrapper = await mountAt(3)
-    const sidebar = wrapper.find('.lg\\:sticky')
+    const sidebar = wrapper.find('.min-\\[1240px\\]\\:sticky')
 
     expect((sidebar.element as HTMLElement).style.top).toBe(`${STICKY_TOP_PX}px`)
+  })
+
+  it('它應該把註腳渲染成註釋清單，並收起的目錄（窄螢幕用）與左欄目錄指向同一組標題', async () => {
+    fetchArticleOrDemo.mockResolvedValue({
+      article: article(4, 'D 有註腳', '2026-08-01', '## 小節\n\n內文[^1]\n\n[^1]: 註釋內容'),
+      loadError: null,
+    })
+    const wrapper = await mountAt(4)
+
+    expect(wrapper.find('section h3').text()).toBe('註釋')
+    expect(wrapper.find('button[data-fn-number="1"]').exists()).toBe(true)
+    // 目錄有兩份：≥1240px 的左欄、較窄時正文上方的 <details>；內容必須一樣
+    const hrefs = (root: ReturnType<typeof wrapper.findAll>) => root.map((a) => a.attributes('href'))
+    expect(hrefs(wrapper.findAll('details a'))).toEqual(['#小節'])
+    expect(hrefs(wrapper.findAll('.min-\\[1240px\\]\\:sticky a'))).toEqual(['#小節'])
+    expect(wrapper.find('details summary').text()).toContain('1 節')
   })
 
   it('它應該讓日期不再套用 opacity-60', async () => {

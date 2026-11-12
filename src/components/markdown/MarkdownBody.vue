@@ -8,15 +8,27 @@
 //    把同一組值定義第二次——那正是這個專案最近才被燒到的問題。
 // 3. 不用消毒器。實測 marked(13.1KB) + dompurify(11.1KB) = 24.2KB，
 //    比 unified + remark-parse 的 20.6KB 還大，所以「AST 比較貴」是錯的。
-import { computed, h, type VNode } from 'vue'
+import { computed, h, onBeforeUnmount, onMounted, onUpdated, ref, shallowRef, useId, watch, type VNode } from 'vue'
 import { RouterLink } from 'vue-router'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { extractHeadings } from './headings'
 import { safeLink } from './safeLink'
+import { buildFootnoteIndex, stackSidenotes, type FootnoteInfo } from './footnotes'
 
-const props = defineProps<{ source: string }>()
+const props = withDefaults(
+  defineProps<{
+    source: string
+    /**
+     * 註釋要不要在寬螢幕貼到正文右邊當邊注。預設不要：編輯頁預覽這類窄容器右邊沒有留白，
+     * 邊注會長出容器外。要開的頁面（文章內頁）自己負責在寬螢幕留出右邊的欄位。
+     * 不管開不開，文末的「註釋」清單都在。
+     */
+    sidenotes?: boolean
+  }>(),
+  { sidenotes: false },
+)
 
 // mdast 的節點形狀。remark 的型別來自 @types/mdast，但我們只需要走訪用得到的欄位，
 // 所以這裡宣告一個夠用的最小介面，不把整棵樹的型別拉進來。
@@ -30,6 +42,8 @@ interface MdNode {
   ordered?: boolean | null
   start?: number | null
   checked?: boolean | null
+  identifier?: string
+  label?: string | null
   lang?: string | null
   align?: (('left' | 'right' | 'center') | null)[]
   children?: MdNode[]
@@ -41,6 +55,45 @@ const tree = computed(() => processor.parse(props.source) as unknown as MdNode)
 
 /** 這篇的所有標題，依文件順序。父層要拿去做目錄,所以 expose 出去。 */
 const headings = computed(() => extractHeadings(props.source))
+
+// --- 註腳（GFM 的 [^1]） ---
+//
+// 以前註腳整個被吃掉的原因：remark-gfm 其實有裝，也確實把 `[^1]` 解析成 footnoteReference、
+// 把 `[^1]: …` 解析成 footnoteDefinition，但下面的 render() 沒有這兩種節點的 case，
+// 全部掉進 default 分支。default 的規則是「往下 render children」：
+// footnoteReference 沒有 children，所以內文裡的 [^1] 憑空消失、讀者看不到任何標記；
+// footnoteDefinition 有 children（一個段落），所以註釋內容被當成普通段落，
+// 原地印在文章中間（通常是文末），沒有編號、沒有對應。
+// 現在兩種節點都有明確的 case；編號與孤兒定義的規則見 footnotes.ts。
+const footnotes = computed(() => buildFootnoteIndex(tree.value))
+
+// 同一頁可能有多個 MarkdownBody（例如編輯頁預覽），id 加上實例前綴才不會互相撞
+const uid = useId()
+const rootEl = ref<HTMLElement | null>(null)
+
+// 寬度夠（正文右邊有留白）才把註釋貼在正文旁；不夠就改成點編號在原地展開。
+// 1000px 的依據：邊注欄 232px ＋ 與正文的間距 28px ＋ 正文最寬 65ch，在 1000px 的內容區（952px）放得下，
+// 再窄就擠到正文了。文章內頁在 1240px 以上另外把目錄移到左欄，見 ArticleDetailView
+const SIDE_QUERY = '(min-width: 1000px)'
+const sideMode = ref(false)
+
+/** 窄螢幕下展開中的註釋，key 是「編號-第幾次引用」。換新 Set 觸發更新。 */
+const openNotes = shallowRef<Set<string>>(new Set())
+/** 寬螢幕下點過編號、固定標亮的註釋編號（觸控裝置沒有 hover，點一下要有回饋）。 */
+const pinnedNumber = ref<number | null>(null)
+
+watch(
+  () => props.source,
+  () => {
+    openNotes.value = new Set()
+    pinnedNumber.value = null
+  },
+)
+
+// 每次 render 歸零：同一則註釋被引用到第幾次，用來產生每個引用各自的 id
+let refSeen = new Map<number, number>()
+// >0 代表正在 render 註釋的內容：裡面不再產生註腳引用與有 id 的標題（見對應的 case）
+let noteDepth = 0
 
 // render() 走到第幾個 heading。每次從頭 render 都要歸零,
 // 否則第二次渲染會從上次的位置接下去,id 全部對不上
@@ -60,7 +113,7 @@ function kids(node: MdNode): VNode[] {
 function render(node: MdNode): VNode[] {
   switch (node.type) {
     case 'root':
-      return kids(node)
+      return [...kids(node), ...renderEndNotes()]
 
     case 'text':
       return [h('span', node.value ?? '')]
@@ -69,6 +122,9 @@ function render(node: MdNode): VNode[] {
       return [h('p', { class: 'text-base leading-[1.6] text-(--text-ink-body) text-left sm:text-justify' }, kids(node))]
 
     case 'heading': {
+      // 註釋內容裡的標題不編入目錄（extractHeadings 也略過了），這裡就不能去拿 headingCursor，
+      // 不然後面所有標題的 id 會錯開一格
+      if (noteDepth > 0) return [h('p', { class: 'font-bold text-(--text-ink-main)' }, kids(node))]
       // 粗體標題，深度越深字越小，但都維持同一個形狀，不另外發明第二套標題語彙。
       // 以前前面有 accent 色的 `//`：那是程式碼註解的造型，放在圖譜、本體論這類技術頁合理，
       // 放在長文閱讀裡是雜訊（2026-09-29 拿掉，文章列表與首頁文章列同步拿掉）。
@@ -91,6 +147,13 @@ function render(node: MdNode): VNode[] {
         ),
       ]
     }
+
+    case 'footnoteReference':
+      return renderFootnoteRef(node)
+
+    // 定義不在原地印：內容收進文末的「註釋」清單，以及各自引用處的邊注／展開框
+    case 'footnoteDefinition':
+      return []
 
     case 'strong':
       return [h('strong', { class: 'font-bold text-(--text-ink-main)' }, kids(node))]
@@ -207,9 +270,251 @@ function render(node: MdNode): VNode[] {
   }
 }
 
+/** 註釋內容。第一段接在編號後面同一行，之後的段落另起一行；清單、程式碼這類區塊照一般方式 render。 */
+function noteBody(definition: MdNode): VNode[] {
+  noteDepth++
+  try {
+    return (definition.children ?? []).flatMap((block, i) =>
+      block.type === 'paragraph' ? [h('span', { class: i > 0 ? 'block mt-1.5' : undefined }, kids(block))] : render(block),
+    )
+  } finally {
+    noteDepth--
+  }
+}
+
+function toggleNote(key: string) {
+  const next = new Set(openNotes.value)
+  if (!next.delete(key)) next.add(key)
+  openNotes.value = next
+}
+
+function closeNote(key: string) {
+  if (!openNotes.value.has(key)) return
+  const next = new Set(openNotes.value)
+  next.delete(key)
+  openNotes.value = next
+}
+
+/**
+ * 內文裡的編號 + 它的註釋。
+ *
+ * 一次引用產生兩個東西：上標的編號按鈕，以及緊跟在後面的註釋元素。
+ * 寬螢幕：第一次引用的註釋是右邊的邊注（絕對定位，top 由 layoutSidenotes 對齊引用那一行）；
+ *        同一則註釋的後續引用不再顯示（右邊只放一份），編號仍可 hover／聚焦時標亮那份邊注。
+ * 窄螢幕：註釋預設隱藏，點編號（或 Enter／Space）在編號後面原地展開，Esc 收起並把焦點還給編號。
+ * 註釋元素放在編號旁邊而不是文末，所以兩種模式都不需要另外算位置就能退化成「在那一行附近」。
+ */
+function renderFootnoteRef(node: MdNode): VNode[] {
+  const info = node.identifier ? footnotes.value.byId.get(node.identifier) : undefined
+  // 註釋內容裡的巢狀引用、或找不到定義的引用（remark-gfm 正常不會產生）：留成原本的文字，不吞掉
+  if (!info || noteDepth > 0) return [h('span', `[^${node.label ?? node.identifier ?? ''}]`)]
+
+  const n = info.number
+  const k = (refSeen.get(n) ?? 0) + 1
+  refSeen.set(n, k)
+  const key = `${n}-${k}`
+  const refId = `${uid}-fnref-${key}`
+  const noteId = `${uid}-fnnote-${key}`
+  const firstNoteId = `${uid}-fnnote-${n}-1`
+
+  const side = sideMode.value
+  const isFirst = k === 1
+  const open = openNotes.value.has(key)
+  const lit = pinnedNumber.value === n
+
+  // 這個狀態下編號用「選取」的外觀（跟 BaseSegmented／BaseSwitch 的「這是開著的」同一組 token）
+  const active = side ? lit : open
+  const markerClass = [
+    'relative inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 mx-0.5 rounded-full border',
+    'text-[11px] font-semibold leading-none cursor-pointer scroll-mt-36 transition-colors duration-100 ease-out',
+    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)',
+    // 加大點擊範圍到約 44px，手指點得到；上標的小圓鈕本身只有 18px
+    'after:content-[""] after:absolute after:-inset-x-2.5 after:-inset-y-3',
+    active
+      ? 'border-(--bg-selected) bg-(--bg-selected) text-(--text-on-selected)'
+      : 'border-(--text-ink-muted) bg-(--bg-paper-light) text-(--text-ink-main) hover:bg-(--bg-folder)',
+  ].join(' ')
+
+  const showAsSidenote = side && isFirst
+  const noteVisible = showAsSidenote || (!side && open)
+  const noteClass = showAsSidenote
+    ? [
+        // 欄寬與間距的來由見 SIDE_QUERY 的註解；1240px 以上目錄移到左欄，邊注欄就多給一點
+        'absolute block w-[232px] left-[calc(100%+28px)] min-[1240px]:w-[248px] min-[1240px]:left-[calc(100%+32px)]',
+        'pl-3 border-l-2 text-sm leading-[1.5] text-left',
+        lit
+          ? 'border-(--text-ink-main) text-(--text-ink-main)'
+          : 'border-(--border-shelf) text-(--text-ink-muted) peer-hover:border-(--text-ink-main) peer-hover:text-(--text-ink-main) peer-focus-within:border-(--text-ink-main) peer-focus-within:text-(--text-ink-main)',
+      ].join(' ')
+    : 'block my-2 px-4 py-3 border border-(--border-shelf) border-l-2 border-l-(--text-ink-main) rounded-r-[6px] bg-(--bg-folder) text-sm leading-[1.5] text-(--text-ink-body) text-left'
+
+  return [
+    h('sup', { class: 'peer' }, [
+      h(
+        'button',
+        {
+          type: 'button',
+          id: refId,
+          class: markerClass,
+          'aria-label': `註 ${n}`,
+          'data-fn-number': n,
+          // 寬螢幕註釋一直看得到，用 describedby 對上；窄螢幕是展開／收起，用 expanded + controls
+          ...(side
+            ? { 'aria-describedby': firstNoteId }
+            : { 'aria-expanded': String(open), 'aria-controls': noteId }),
+          onClick: () => {
+            if (side) pinnedNumber.value = lit ? null : n
+            else toggleNote(key)
+          },
+          onKeydown: (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !side && open) {
+              e.preventDefault()
+              closeNote(key)
+            }
+          },
+        },
+        String(n),
+      ),
+    ]),
+    h(
+      'span',
+      {
+        id: noteId,
+        class: noteVisible ? noteClass : 'hidden',
+        hidden: noteVisible ? undefined : true,
+        'data-fn-side': showAsSidenote ? '' : undefined,
+        'data-fn-marker': showAsSidenote ? refId : undefined,
+        onKeydown: (e: KeyboardEvent) => {
+          // 展開框裡的連結也能按 Esc 收起，焦點回到編號，鍵盤使用者不會掉到頁首
+          if (e.key === 'Escape' && !side && open) {
+            e.preventDefault()
+            e.stopPropagation()
+            closeNote(key)
+            document.getElementById(refId)?.focus()
+          }
+        },
+      },
+      [h('span', { class: 'inline-block min-w-[18px] mr-2 font-bold text-(--text-ink-main)' }, String(n)), ...noteBody(info.definition)],
+    ),
+  ]
+}
+
+/** 文末的「註釋」清單：每一則註釋的正規形式，不依賴邊注或展開框，任何螢幕寬度、版面計算失敗時都在。 */
+function renderEndNotes(): VNode[] {
+  const list = footnotes.value.list
+  if (!list.length) return []
+  const titleId = `${uid}-fn-title`
+  return [
+    h('section', { class: 'mt-12 border-t border-(--border-shelf) pt-4', 'aria-labelledby': titleId }, [
+      h('h3', { id: titleId, class: 'text-base font-bold text-(--text-ink-main) mb-2.5' }, '註釋'),
+      h(
+        'ol',
+        { class: 'list-decimal pl-6 space-y-1.5 text-sm leading-[1.5] text-(--text-ink-body) marker:text-(--text-accent)' },
+        list.map((info) =>
+          h('li', { id: `${uid}-fn-${info.number}`, class: 'pl-1 scroll-mt-32' }, [
+            ...noteBody(info.definition),
+            ...backLinks(info),
+          ]),
+        ),
+      ),
+    ]),
+  ]
+}
+
+/** 回到內文引用處的連結。被引用多次就每次一個；孤兒定義（沒有引用）沒有地方可回，不給。 */
+function backLinks(info: FootnoteInfo): VNode[] {
+  const links: VNode[] = []
+  for (let k = 1; k <= info.refCount; k++) {
+    links.push(
+      h(
+        'a',
+        {
+          href: `#${uid}-fnref-${info.number}-${k}`,
+          'aria-label': info.refCount > 1 ? `回到內文第 ${k} 處引用` : '回到內文引用',
+          class:
+            'ml-2 inline-block px-1 text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out whitespace-nowrap',
+        },
+        // U+FE0E 要求文字樣式，不然部分系統把 ↩ 畫成彩色 emoji
+        info.refCount > 1 ? `↩︎ ${k}` : '↩︎',
+      ),
+    )
+  }
+  return links
+}
+
+// --- 邊注排版 ---
+// 邊注是絕對定位的，top 要靠量出來的引用位置決定；註釋太密時後面的往下推，永遠不重疊。
+// 量的時機：掛載、重繪、視窗縮放、容器尺寸變動（圖片載入、換行改變）、字型載入完成。
+// 任何一步沒跑到也不會壞：沒有 top 的邊注會停在它被寫出來的那一行附近（絕對定位的預設位置），
+// 文末清單不受影響。
+function layoutSidenotes() {
+  const root = rootEl.value
+  if (!root) return
+  const notes = Array.from(root.querySelectorAll<HTMLElement>('[data-fn-side]'))
+  if (!sideMode.value) {
+    notes.forEach((note) => (note.style.top = ''))
+    return
+  }
+  const base = root.getBoundingClientRect().top
+  const placed: HTMLElement[] = []
+  const tops: number[] = []
+  const heights: number[] = []
+  for (const note of notes) {
+    const marker = document.getElementById(note.dataset.fnMarker ?? '')
+    if (!marker) continue
+    // -3px：讓邊注第一行的文字跟編號所在的那一行對齊（編號是上標，比行的中線高一點）
+    tops.push(marker.getBoundingClientRect().top - base - 3)
+    heights.push(note.offsetHeight)
+    placed.push(note)
+  }
+  stackSidenotes(tops, heights).forEach((top, i) => (placed[i]!.style.top = `${top}px`))
+}
+
+let layoutFrame = 0
+function scheduleLayout() {
+  if (layoutFrame) return
+  const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (fn: () => void) => setTimeout(fn, 0)
+  layoutFrame = raf(() => {
+    layoutFrame = 0
+    layoutSidenotes()
+  }) as unknown as number
+}
+
+let media: MediaQueryList | null = null
+let resizeObserver: ResizeObserver | null = null
+const onMediaChange = () => {
+  sideMode.value = !!media?.matches
+}
+
+onMounted(() => {
+  if (props.sidenotes && typeof window.matchMedia === 'function') {
+    media = window.matchMedia(SIDE_QUERY)
+    sideMode.value = media.matches
+    media.addEventListener('change', onMediaChange)
+  }
+  window.addEventListener('resize', scheduleLayout)
+  window.addEventListener('load', scheduleLayout)
+  if (typeof ResizeObserver === 'function' && rootEl.value) {
+    resizeObserver = new ResizeObserver(scheduleLayout)
+    resizeObserver.observe(rootEl.value)
+  }
+  void document.fonts?.ready.then(scheduleLayout)
+  scheduleLayout()
+})
+onUpdated(scheduleLayout)
+onBeforeUnmount(() => {
+  media?.removeEventListener('change', onMediaChange)
+  window.removeEventListener('resize', scheduleLayout)
+  window.removeEventListener('load', scheduleLayout)
+  resizeObserver?.disconnect()
+  if (layoutFrame && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(layoutFrame)
+})
+
 /** 見 template 下方註解:參考必須穩定，不能每次 render 都造一個新的。 */
 const Rendered = () => {
   headingCursor = 0
+  refSeen = new Map()
+  noteDepth = 0
   return render(tree.value)
 }
 
@@ -242,7 +547,7 @@ export default {}
 </script>
 
 <template>
-  <div class="markdown-body">
+  <div ref="rootEl" class="markdown-body relative">
     <component :is="Rendered" />
   </div>
 </template>
