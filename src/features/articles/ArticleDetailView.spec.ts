@@ -96,6 +96,53 @@ describe('ArticleDetailView', () => {
     expect(wrapper.find('details summary').text()).toContain('1 節')
   })
 
+  describe('版面順序（DOM 順序要等於畫面順序）', () => {
+    const withProjects = (id: number) => ({
+      ...article(id, 'E 有專案', '2026-08-02', '## 小節\n\n內文'),
+      implementations: [{ id: 7, title: '專案甲', relation_id: 1 }],
+    })
+    const before = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+    it('它應該讓左欄（目錄、相關專案）在正文前面，正文在窄版的相關專案前面', async () => {
+      fetchArticleOrDemo.mockResolvedValue({ article: withProjects(5), loadError: null })
+      const wrapper = await mountAt(5)
+      const root = wrapper.element as HTMLElement
+      const left = root.querySelector('.min-\\[1240px\\]\\:sticky')!
+      const body = root.querySelector('.markdown-body')!
+      const narrowRelated = root.querySelector('.min-\\[1240px\\]\\:hidden:not(details)')!
+
+      // 目錄連結（≥1240px 時鍵盤焦點會經過）在正文的第一個可聚焦元素前面
+      expect(before(left.querySelector('a')!, body)).toBe(true)
+      expect(left.textContent).toContain('Related Projects')
+      expect(before(body, narrowRelated)).toBe(true)
+      expect(narrowRelated.textContent).toContain('專案甲')
+      // 左欄不再用 order 換位置
+      expect(left.className).not.toContain('order-first')
+    })
+
+    it('它應該讓左欄只在 ≥1240px 顯示、窄版的相關專案只在 <1240px 顯示，兩邊的斷點沒有縫隙也不重疊', async () => {
+      fetchArticleOrDemo.mockResolvedValue({ article: withProjects(5), loadError: null })
+      const wrapper = await mountAt(5)
+      const root = wrapper.element as HTMLElement
+      const left = root.querySelector('.min-\\[1240px\\]\\:sticky')!
+      const narrowRelated = root.querySelector('.min-\\[1240px\\]\\:hidden:not(details)')!
+
+      // 同一個 1240：左欄在 <1240 隱藏（max-[1240px] 編成 width < 1240px，1240 本身不隱藏），
+      // 窄版相關專案在 ≥1240 隱藏（min-[1240px] 編成 width >= 1240px）
+      expect(left.classList.contains('max-[1240px]:hidden')).toBe(true)
+      expect(narrowRelated.classList.contains('min-[1240px]:hidden')).toBe(true)
+      // 不能殘留 1239 這種差一的斷點（width < 1239px 會在 1239 留一像素的縫）
+      expect(root.querySelectorAll('[class*="1239"]')).toHaveLength(0)
+    })
+
+    it('它應該在沒有相關專案時兩處都不畫相關專案', async () => {
+      fetchArticleOrDemo.mockResolvedValue({ article: LIST[2], loadError: null })
+      const wrapper = await mountAt(3)
+      expect(wrapper.text()).not.toContain('Related Projects')
+    })
+  })
+
   it('它應該讓日期不再套用 opacity-60', async () => {
     fetchArticleOrDemo.mockResolvedValue({ article: LIST[2], loadError: null })
     const wrapper = await mountAt(3)
