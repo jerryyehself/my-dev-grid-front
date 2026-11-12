@@ -158,7 +158,7 @@ const router = createRouter({
       // 連結指進來——那是規格的順序（先詳情後清單），現在入口補上了。
       path: '/ontology/scopes',
       name: 'ontology-scopes',
-      component: () => import('@/views/OntologyScopesView.vue'),
+      component: () => import('@/features/ontology/OntologyScopesView.vue'),
       meta: {
         tag: 'Ontology',
         title: '分類一覽',
@@ -172,7 +172,7 @@ const router = createRouter({
       // 讀得出「new 不是某個分類的 id」。
       path: '/ontology/scopes/new',
       name: 'ontology-scope-new',
-      component: () => import('@/views/OntologyScopeEditView.vue'),
+      component: () => import('@/features/ontology/OntologyScopeEditView.vue'),
       meta: {
         tag: 'Ontology',
         title: '新增分類',
@@ -184,7 +184,7 @@ const router = createRouter({
     {
       path: '/ontology/scopes/:id',
       name: 'ontology-scope',
-      component: () => import('@/views/OntologyScopeDetailView.vue'),
+      component: () => import('@/features/ontology/OntologyScopeDetailView.vue'),
       meta: {
         tag: 'Ontology',
         title: '分類詳情',
@@ -195,7 +195,7 @@ const router = createRouter({
     {
       path: '/ontology/scopes/:id/edit',
       name: 'ontology-scope-edit',
-      component: () => import('@/views/OntologyScopeEditView.vue'),
+      component: () => import('@/features/ontology/OntologyScopeEditView.vue'),
       meta: {
         tag: 'Ontology',
         title: '編輯分類',
@@ -207,7 +207,7 @@ const router = createRouter({
     {
       path: '/ontology/relations',
       name: 'ontology-relations',
-      component: () => import('@/views/OntologyRelationsView.vue'),
+      component: () => import('@/features/ontology/OntologyRelationsView.vue'),
       meta: {
         tag: 'Ontology',
         title: '述詞一覽',
@@ -220,7 +220,7 @@ const router = createRouter({
       // 靜態片段本來就排在動態片段之前，排在前面才讀得出「new 不是某個述詞的 id」。
       path: '/ontology/relations/new',
       name: 'ontology-relation-new',
-      component: () => import('@/views/OntologyRelationEditView.vue'),
+      component: () => import('@/features/ontology/OntologyRelationEditView.vue'),
       meta: {
         tag: 'Ontology',
         title: '新增述詞',
@@ -232,7 +232,7 @@ const router = createRouter({
     {
       path: '/ontology/relations/:id',
       name: 'ontology-relation',
-      component: () => import('@/views/OntologyRelationDetailView.vue'),
+      component: () => import('@/features/ontology/OntologyRelationDetailView.vue'),
       meta: {
         tag: 'Ontology',
         title: '述詞詳情',
@@ -243,7 +243,7 @@ const router = createRouter({
     {
       path: '/ontology/relations/:id/edit',
       name: 'ontology-relation-edit',
-      component: () => import('@/views/OntologyRelationEditView.vue'),
+      component: () => import('@/features/ontology/OntologyRelationEditView.vue'),
       meta: {
         tag: 'Ontology',
         title: '編輯述詞',
