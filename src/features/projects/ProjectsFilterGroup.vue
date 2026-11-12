@@ -72,6 +72,10 @@ function pick(label: string) {
 }
 
 function onKeydown(e: KeyboardEvent) {
+  // 注音／拼音等輸入法組字中，Enter 是確認選字、方向鍵是挑候選字、Escape 是取消組字，
+  // 都不是在操作建議清單。keyCode 229 是部分瀏覽器（Safari 在 compositionend 之後才送
+  // Enter 的 keydown）仍標成組字中的寫法
+  if (e.isComposing || e.keyCode === 229) return
   const n = suggestions.value.length
   if (e.key === 'ArrowDown' && n) {
     e.preventDefault()

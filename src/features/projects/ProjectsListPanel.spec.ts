@@ -34,6 +34,27 @@ describe('ProjectsListPanel', () => {
     expect(render().element.style.top).toBe(`${STICKY_TOP_PX}px`)
   })
 
+  describe('矮視窗的高度分配', () => {
+    // jsdom 不做版面計算，這裡只確認高度上限的來源有接好；實際高度要在瀏覽器看
+    it('它應該把左欄高度上限放在 --projects-list-max-h 並套用在最外層', () => {
+      const root = render().element
+
+      expect(root.style.getPropertyValue('--projects-list-max-h')).toBe('max(360px, calc(100vh - 228px))')
+      expect(root.className).toContain('max-h-(--projects-list-max-h)')
+    })
+
+    it('它應該讓展開的篩選面板最多只佔左欄上限扣掉表頭與列表保留高度的部分', async () => {
+      const wrapper = render()
+
+      await filterButton(wrapper).trigger('click')
+
+      const panel = wrapper.find(`[id="${filterButton(wrapper).attributes('aria-controls')}"]`)
+      expect(panel.classes().join(' ')).toContain('max-h-[min(360px,calc(var(--projects-list-max-h,572px)-212px))]')
+      // 內層捲動區沿用外層的上限，不另外寫死 360px，否則外層縮了內層還會撐開
+      expect(panel.find('.projects-filter-scroll').classes()).toContain('max-h-[inherit]')
+    })
+  })
+
   describe('篩選鈕', () => {
     it('它應該在面板收合時不帶 aria-controls，避免指向不存在的 id', () => {
       const button = filterButton(render())

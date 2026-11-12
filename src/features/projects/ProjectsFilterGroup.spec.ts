@@ -241,6 +241,31 @@ describe('ProjectsFilterGroup', () => {
       expect((input.element as HTMLInputElement).value).toBe('')
     })
 
+    it('它應該在輸入法組字中按 Enter 時不選取建議、不清空搜尋框', async () => {
+      const wrapper = render(bigGroup)
+      const input = wrapper.find('input')
+      await input.setValue('vu')
+
+      await input.trigger('keydown', { key: 'Enter', isComposing: true })
+      await input.trigger('keydown', { key: 'Enter', keyCode: 229 })
+
+      expect(wrapper.emitted('toggle')).toBeUndefined()
+      expect((input.element as HTMLInputElement).value).toBe('vu')
+    })
+
+    it('它應該在輸入法組字中按方向鍵與 Escape 時不動目前選項、不清空搜尋框', async () => {
+      const wrapper = render(bigGroup)
+      const input = wrapper.find('input')
+      await input.setValue('vu')
+      const active = input.attributes('aria-activedescendant')
+
+      await input.trigger('keydown', { key: 'ArrowDown', isComposing: true })
+      await input.trigger('keydown', { key: 'Escape', isComposing: true })
+
+      expect(input.attributes('aria-activedescendant')).toBe(active)
+      expect((input.element as HTMLInputElement).value).toBe('vu')
+    })
+
     it('它應該在沒有建議時按 Enter 不送出任何事件', async () => {
       const wrapper = render(bigGroup)
       const input = wrapper.find('input')
