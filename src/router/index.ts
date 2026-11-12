@@ -80,7 +80,7 @@ const router = createRouter({
     {
       path: '/articles',
       name: 'articles',
-      component: () => import('@/views/ArticlesView.vue'),
+      component: () => import('@/features/articles/ArticlesView.vue'),
       meta: {
         tag: 'Articles',
         title: 'My Articles',
@@ -123,7 +123,7 @@ const router = createRouter({
     {
       path: '/articles/:id',
       name: 'article-detail',
-      component: () => import('@/views/ArticleDetailView.vue'),
+      component: () => import('@/features/articles/ArticleDetailView.vue'),
       meta: {
         // title 留空：載入後 ArticleDetailView 用 siteMeta.ts 的 pageTitleOverride 換成真正的文章標題
         // （不直接改這裡的 meta，原因見 siteMeta.ts）。以前寫「Article Detail」當佔位，載入前會在分頁

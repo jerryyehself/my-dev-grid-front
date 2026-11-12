@@ -139,7 +139,7 @@ import {
 } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
 import AuthOnly from '@/components/AuthOnly.vue'
-import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
+import BackToArticlesLink from './BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
