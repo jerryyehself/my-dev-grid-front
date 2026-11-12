@@ -8,7 +8,18 @@
 //    把同一組值定義第二次——那正是這個專案最近才被燒到的問題。
 // 3. 不用消毒器。實測 marked(13.1KB) + dompurify(11.1KB) = 24.2KB，
 //    比 unified + remark-parse 的 20.6KB 還大，所以「AST 比較貴」是錯的。
-import { computed, h, onBeforeUnmount, onMounted, onUpdated, ref, shallowRef, useId, watch, type VNode } from 'vue'
+import {
+  computed,
+  h,
+  onBeforeUnmount,
+  onMounted,
+  onUpdated,
+  ref,
+  shallowRef,
+  useId,
+  watch,
+  type VNode,
+} from 'vue'
 import { RouterLink } from 'vue-router'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
@@ -100,7 +111,42 @@ let noteDepth = 0
 let headingCursor = 0
 
 function kids(node: MdNode): VNode[] {
-  return (node.children ?? []).flatMap(render)
+  const children = node.children ?? []
+  const out: VNode[] = []
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]!
+    const next = children[i + 1]
+    // 緊接在文字後面的註腳編號：把文字的最後一個字交給它，兩者綁在一起換行（見 renderFootnoteRef）
+    if (child.type === 'text' && next?.type === 'footnoteReference' && liveFootnote(next)) {
+      const [head, lead] = splitLastChar(child.value ?? '')
+      if (head) out.push(h('span', head))
+      out.push(...renderFootnoteRef(next, lead))
+      i++
+      continue
+    }
+    out.push(...render(child))
+  }
+  return out
+}
+
+/** 取出文字的最後一個字（以字形為單位，不會把組合字拆開）。結尾是空白就不拆：空白本來就是斷行點。 */
+function splitLastChar(value: string): [string, string] {
+  const chars =
+    typeof Intl.Segmenter === 'function'
+      ? Array.from(
+          new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(value),
+          (s) => s.segment,
+        )
+      : Array.from(value)
+  const last = chars[chars.length - 1]
+  if (!last || /\s/u.test(last)) return [value, '']
+  return [chars.slice(0, -1).join(''), last]
+}
+
+/** 這個引用對得到定義、而且不在註釋內容裡（註釋裡的巢狀引用不編號）才算「有效」。 */
+function liveFootnote(node: MdNode): FootnoteInfo | undefined {
+  if (noteDepth > 0) return undefined
+  return node.identifier ? footnotes.value.byId.get(node.identifier) : undefined
 }
 
 /**
@@ -119,7 +165,13 @@ function render(node: MdNode): VNode[] {
       return [h('span', node.value ?? '')]
 
     case 'paragraph':
-      return [h('p', { class: 'text-base leading-[1.6] text-(--text-ink-body) text-left sm:text-justify' }, kids(node))]
+      return [
+        h(
+          'p',
+          { class: 'text-base leading-[1.6] text-(--text-ink-body) text-left sm:text-justify' },
+          kids(node),
+        ),
+      ]
 
     case 'heading': {
       // 註釋內容裡的標題不編入目錄（extractHeadings 也略過了），這裡就不能去拿 headingCursor，
@@ -168,7 +220,10 @@ function render(node: MdNode): VNode[] {
       return [
         h(
           'code',
-          { class: 'font-mono text-[13px] [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5' },
+          {
+            class:
+              'font-mono text-[13px] [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5',
+          },
           node.value ?? '',
         ),
       ]
@@ -192,12 +247,19 @@ function render(node: MdNode): VNode[] {
       // 不在白名單裡（javascript:、data: …）就只留連結文字，不產生任何 href
       const link = safeLink(node.url)
       if (!link) return kids(node)
-      const cls = 'text-(--text-accent) underline underline-offset-2 hover:opacity-80 transition-opacity duration-100 ease-out'
+      const cls =
+        'text-(--text-accent) underline underline-offset-2 hover:opacity-80 transition-opacity duration-100 ease-out'
       // 站內連結用 RouterLink 而不是 <a>:這是走 AST 而不是 v-html 的主要理由之一。
       // v-html 塞出來的 <a href="/articles/x"> 會整頁重載，SPA 的狀態全部重來
       return link.internal
         ? [h(RouterLink, { to: link.href, class: cls }, () => kids(node))]
-        : [h('a', { href: link.href, target: '_blank', rel: 'noopener noreferrer', class: cls }, kids(node))]
+        : [
+            h(
+              'a',
+              { href: link.href, target: '_blank', rel: 'noopener noreferrer', class: cls },
+              kids(node),
+            ),
+          ]
     }
 
     case 'image': {
@@ -232,15 +294,30 @@ function render(node: MdNode): VNode[] {
       const box =
         node.checked === null || node.checked === undefined
           ? []
-          : [h('input', { type: 'checkbox', checked: node.checked, disabled: true, class: 'mr-2 accent-(--text-accent)' })]
-      return [h('li', { class: 'text-base leading-[1.6] text-(--text-ink-body)' }, [...box, ...kids(node)])]
+          : [
+              h('input', {
+                type: 'checkbox',
+                checked: node.checked,
+                disabled: true,
+                class: 'mr-2 accent-(--text-accent)',
+              }),
+            ]
+      return [
+        h('li', { class: 'text-base leading-[1.6] text-(--text-ink-body)' }, [
+          ...box,
+          ...kids(node),
+        ]),
+      ]
     }
 
     case 'blockquote':
       return [
         h(
           'blockquote',
-          { class: 'border-l-[3px] border-(--text-accent) pl-4 my-4 text-(--text-ink-body) opacity-90' },
+          {
+            class:
+              'border-l-[3px] border-(--text-accent) pl-4 my-4 text-(--text-ink-body) opacity-90',
+          },
           kids(node),
         ),
       ]
@@ -258,7 +335,11 @@ function render(node: MdNode): VNode[] {
         h('div', { class: 'overflow-x-auto my-4' }, [
           h('table', { class: 'w-full border-collapse text-[13.5px]' }, [
             head ? h('thead', {}, renderRow(head, node.align, true)) : null,
-            h('tbody', {}, body.map((r) => renderRow(r, node.align, false))),
+            h(
+              'tbody',
+              {},
+              body.map((r) => renderRow(r, node.align, false)),
+            ),
           ]),
         ]),
       ]
@@ -275,7 +356,9 @@ function noteBody(definition: MdNode): VNode[] {
   noteDepth++
   try {
     return (definition.children ?? []).flatMap((block, i) =>
-      block.type === 'paragraph' ? [h('span', { class: i > 0 ? 'block mt-1.5' : undefined }, kids(block))] : render(block),
+      block.type === 'paragraph'
+        ? [h('span', { class: i > 0 ? 'block mt-1.5' : undefined }, kids(block))]
+        : render(block),
     )
   } finally {
     noteDepth--
@@ -298,16 +381,17 @@ function closeNote(key: string) {
 /**
  * 內文裡的編號 + 它的註釋。
  *
- * 一次引用產生兩個東西：上標的編號按鈕，以及緊跟在後面的註釋元素。
+ * 一次引用產生兩個東西：上標的編號按鈕（連同前一個字包在 nowrap 的 span 裡，見下面 return），
+ * 以及緊跟在 span 後面的註釋元素。
  * 寬螢幕：第一次引用的註釋是右邊的邊注（絕對定位，top 由 layoutSidenotes 對齊引用那一行）；
  *        同一則註釋的後續引用不再顯示（右邊只放一份），編號仍可 hover／聚焦時標亮那份邊注。
  * 窄螢幕：註釋預設隱藏，點編號（或 Enter／Space）在編號後面原地展開，Esc 收起並把焦點還給編號。
  * 註釋元素放在編號旁邊而不是文末，所以兩種模式都不需要另外算位置就能退化成「在那一行附近」。
  */
-function renderFootnoteRef(node: MdNode): VNode[] {
-  const info = node.identifier ? footnotes.value.byId.get(node.identifier) : undefined
+function renderFootnoteRef(node: MdNode, lead = ''): VNode[] {
+  const info = liveFootnote(node)
   // 註釋內容裡的巢狀引用、或找不到定義的引用（remark-gfm 正常不會產生）：留成原本的文字，不吞掉
-  if (!info || noteDepth > 0) return [h('span', `[^${node.label ?? node.identifier ?? ''}]`)]
+  if (!info) return [h('span', `[^${node.label ?? node.identifier ?? ''}]`)]
 
   const n = info.number
   const k = (refSeen.get(n) ?? 0) + 1
@@ -322,17 +406,17 @@ function renderFootnoteRef(node: MdNode): VNode[] {
   const open = openNotes.value.has(key)
   const lit = pinnedNumber.value === n
 
-  // 這個狀態下編號用「選取」的外觀（跟 BaseSegmented／BaseSwitch 的「這是開著的」同一組 token）
+  // 編號是行內的小上標數字，不是徽章：不加底、不加框，也不撐高行高；
+  // 「開著」的狀態用粗體加底線表示（hover 只加底線，兩者看得出差別）
   const active = side ? lit : open
   const markerClass = [
-    'relative inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 mx-0.5 rounded-full border',
-    'text-[11px] font-semibold leading-none cursor-pointer scroll-mt-36 transition-colors duration-100 ease-out',
+    'relative inline px-[1px] py-0 rounded-[2px] leading-none tabular-nums cursor-pointer scroll-mt-36 transition-colors duration-100 ease-out',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)',
-    // 加大點擊範圍到約 44px，手指點得到；上標的小圓鈕本身只有 18px
-    'after:content-[""] after:absolute after:-inset-x-2.5 after:-inset-y-3',
+    // 加大點擊範圍到約 44px，手指點得到；上標的數字本身只有十來 px 高
+    'after:content-[""] after:absolute after:-inset-x-3.5 after:-inset-y-4',
     active
-      ? 'border-(--bg-selected) bg-(--bg-selected) text-(--text-on-selected)'
-      : 'border-(--text-ink-muted) bg-(--bg-paper-light) text-(--text-ink-main) hover:bg-(--bg-folder)',
+      ? 'font-bold text-(--text-accent) underline decoration-2 underline-offset-2'
+      : 'font-medium text-(--text-ink-main) underline-offset-2 hover:text-(--text-accent) hover:underline',
   ].join(' ')
 
   const showAsSidenote = side && isFirst
@@ -344,37 +428,44 @@ function renderFootnoteRef(node: MdNode): VNode[] {
         'pl-3 border-l-2 text-sm leading-[1.5] text-left',
         lit
           ? 'border-(--text-ink-main) text-(--text-ink-main)'
-          : 'border-(--border-shelf) text-(--text-ink-muted) peer-hover:border-(--text-ink-main) peer-hover:text-(--text-ink-main) peer-focus-within:border-(--text-ink-main) peer-focus-within:text-(--text-ink-main)',
+          : 'border-(--border-shelf) text-(--text-ink-muted) [:has(>sup:hover)+&]:border-(--text-ink-main) [:has(>sup:hover)+&]:text-(--text-ink-main) [:has(>sup:focus-within)+&]:border-(--text-ink-main) [:has(>sup:focus-within)+&]:text-(--text-ink-main)',
       ].join(' ')
     : 'block my-2 px-4 py-3 border border-(--border-shelf) border-l-2 border-l-(--text-ink-main) rounded-r-[6px] bg-(--bg-folder) text-sm leading-[1.5] text-(--text-ink-body) text-left'
 
   return [
-    h('sup', { class: 'peer' }, [
-      h(
-        'button',
-        {
-          type: 'button',
-          id: refId,
-          class: markerClass,
-          'aria-label': `註 ${n}`,
-          'data-fn-number': n,
-          // 寬螢幕註釋一直看得到，用 describedby 對上；窄螢幕是展開／收起，用 expanded + controls
-          ...(side
-            ? { 'aria-describedby': firstNoteId }
-            : { 'aria-expanded': String(open), 'aria-controls': noteId }),
-          onClick: () => {
-            if (side) pinnedNumber.value = lit ? null : n
-            else toggleNote(key)
+    // 前一個字（lead）跟編號包進同一個 nowrap 的 span：中文任兩字之間都能斷行，
+    // 編號是不能再拆的行內方塊，會被單獨推到下一行開頭、跟前一個字分開。試過在編號前放 U+2060
+    // （WORD JOINER），Chromium 對這種行內方塊不認，所以只能用 nowrap 把兩者綁在一起。
+    // 註釋元素（note）留在這個 span 外面：它是區塊或絕對定位，不能繼承 nowrap。
+    h('span', { class: 'whitespace-nowrap' }, [
+      lead,
+      h('sup', {}, [
+        h(
+          'button',
+          {
+            type: 'button',
+            id: refId,
+            class: markerClass,
+            'aria-label': `註 ${n}`,
+            'data-fn-number': n,
+            // 寬螢幕註釋一直看得到，用 describedby 對上；窄螢幕是展開／收起，用 expanded + controls
+            ...(side
+              ? { 'aria-describedby': firstNoteId }
+              : { 'aria-expanded': String(open), 'aria-controls': noteId }),
+            onClick: () => {
+              if (side) pinnedNumber.value = lit ? null : n
+              else toggleNote(key)
+            },
+            onKeydown: (e: KeyboardEvent) => {
+              if (e.key === 'Escape' && !side && open) {
+                e.preventDefault()
+                closeNote(key)
+              }
+            },
           },
-          onKeydown: (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !side && open) {
-              e.preventDefault()
-              closeNote(key)
-            }
-          },
-        },
-        String(n),
-      ),
+          String(n),
+        ),
+      ]),
     ]),
     h(
       'span',
@@ -394,7 +485,14 @@ function renderFootnoteRef(node: MdNode): VNode[] {
           }
         },
       },
-      [h('span', { class: 'inline-block min-w-[18px] mr-2 font-bold text-(--text-ink-main)' }, String(n)), ...noteBody(info.definition)],
+      [
+        h(
+          'span',
+          { class: 'inline-block min-w-[18px] mr-2 font-bold text-(--text-ink-main)' },
+          String(n),
+        ),
+        ...noteBody(info.definition),
+      ],
     ),
   ]
 }
@@ -405,19 +503,30 @@ function renderEndNotes(): VNode[] {
   if (!list.length) return []
   const titleId = `${uid}-fn-title`
   return [
-    h('section', { class: 'mt-12 border-t border-(--border-shelf) pt-4', 'aria-labelledby': titleId }, [
-      h('h3', { id: titleId, class: 'text-base font-bold text-(--text-ink-main) mb-2.5' }, '註釋'),
-      h(
-        'ol',
-        { class: 'list-decimal pl-6 space-y-1.5 text-sm leading-[1.5] text-(--text-ink-body) marker:text-(--text-accent)' },
-        list.map((info) =>
-          h('li', { id: `${uid}-fn-${info.number}`, class: 'pl-1 scroll-mt-32' }, [
-            ...noteBody(info.definition),
-            ...backLinks(info),
-          ]),
+    h(
+      'section',
+      { class: 'mt-12 border-t border-(--border-shelf) pt-4', 'aria-labelledby': titleId },
+      [
+        h(
+          'h3',
+          { id: titleId, class: 'text-base font-bold text-(--text-ink-main) mb-2.5' },
+          '註釋',
         ),
-      ),
-    ]),
+        h(
+          'ol',
+          {
+            class:
+              'list-decimal pl-6 space-y-1.5 text-sm leading-[1.5] text-(--text-ink-body) marker:text-(--text-accent)',
+          },
+          list.map((info) =>
+            h('li', { id: `${uid}-fn-${info.number}`, class: 'pl-1 scroll-mt-32' }, [
+              ...noteBody(info.definition),
+              ...backLinks(info),
+            ]),
+          ),
+        ),
+      ],
+    ),
   ]
 }
 
@@ -473,7 +582,10 @@ function layoutSidenotes() {
 let layoutFrame = 0
 function scheduleLayout() {
   if (layoutFrame) return
-  const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (fn: () => void) => setTimeout(fn, 0)
+  const raf =
+    typeof requestAnimationFrame === 'function'
+      ? requestAnimationFrame
+      : (fn: () => void) => setTimeout(fn, 0)
   layoutFrame = raf(() => {
     layoutFrame = 0
     layoutSidenotes()
