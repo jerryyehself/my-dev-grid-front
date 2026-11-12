@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
-import { buildFootnoteIndex, stackSidenotes } from './footnotes'
+import { buildFootnoteIndex, splitLastChar, stackSidenotes } from './footnotes'
 
 const parse = (source: string) =>
   unified().use(remarkParse).use(remarkGfm).parse(source) as unknown as Parameters<typeof buildFootnoteIndex>[0]
@@ -79,5 +79,17 @@ describe('stackSidenotes', () => {
 
   it('它應該容許空輸入', () => {
     expect(stackSidenotes([], [])).toEqual([])
+  })
+})
+
+describe('splitLastChar', () => {
+  it.each([
+    ['前面的句子結尾', ['前面的句子結', '尾']],
+    ['家人👨‍👩‍👧', ['家人', '👨‍👩‍👧']],
+    ['單', ['', '單']],
+    ['word ', ['word ', '']],
+    ['', ['', '']],
+  ])('它應該以字形為單位拆出最後一個字，結尾是空白或空字串就不拆：%j', (input, expected) => {
+    expect(splitLastChar(input)).toEqual(expected)
   })
 })

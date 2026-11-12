@@ -96,3 +96,22 @@ export function stackSidenotes(tops: number[], heights: number[], gap = 12): num
   })
   return result
 }
+
+// 只建一次：Intl.Segmenter 的建構成本不低，而每個註腳引用都會用到。不支援的環境退回逐碼位拆。
+const graphemeSegmenter =
+  typeof Intl.Segmenter === 'function'
+    ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    : null
+
+/**
+ * 取出文字的最後一個字（以字形為單位，不會把組合字拆開），回傳 [前面的字, 最後一個字]。
+ * 結尾是空白就不拆（回傳 [原文, '']）：空白本來就是斷行點，不用綁住編號。
+ */
+export function splitLastChar(value: string): [string, string] {
+  const chars = graphemeSegmenter
+    ? Array.from(graphemeSegmenter.segment(value), (s) => s.segment)
+    : Array.from(value)
+  const last = chars[chars.length - 1]
+  if (!last || /\s/u.test(last)) return [value, '']
+  return [chars.slice(0, -1).join(''), last]
+}

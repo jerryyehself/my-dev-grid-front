@@ -13,7 +13,6 @@ import {
   h,
   onBeforeUnmount,
   onMounted,
-  onUpdated,
   ref,
   shallowRef,
   useId,
@@ -26,7 +25,7 @@ import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { extractHeadings } from './headings'
 import { safeLink } from './safeLink'
-import { buildFootnoteIndex, stackSidenotes, type FootnoteInfo } from './footnotes'
+import { buildFootnoteIndex, splitLastChar, stackSidenotes, type FootnoteInfo } from './footnotes'
 
 const props = withDefaults(
   defineProps<{
@@ -110,14 +109,54 @@ let noteDepth = 0
 // 否則第二次渲染會從上次的位置接下去,id 全部對不上
 let headingCursor = 0
 
+// 連結與標題裡的註腳引用：註釋元素（邊注／展開框）不能長在 <a> 或 <h3> 裡面，
+// 不然整塊註釋變成連結的一部分（點邊注會跳走，還會有 <a> 套 <a>），或被讀進標題的無障礙名稱。
+// 所以 render 這兩種元素時開一個暫存區：註釋元素先收進去，等元素本身寫完再接在它後面。
+// 編號按鈕：標題裡留在原地；連結裡也不能放（<a> 裡的 <button> 是巢狀的互動元件），
+// 連同註釋一起接在連結後面。
+interface Deferral {
+  kind: 'link' | 'heading'
+  markers: VNode[]
+  notes: VNode[]
+}
+let deferral: Deferral | null = null
+
+/**
+ * 建出一個連結或標題元素，並把裡面註腳引用的註釋（連結的話還有編號）移到它後面。
+ * `build` 必須同步把子節點 render 完（RouterLink 的 slot 是晚一點才執行的，要先算好再傳進去）。
+ */
+function withDeferral(kind: Deferral['kind'], build: () => VNode): VNode[] {
+  const outer = deferral
+  const mine: Deferral = { kind, markers: [], notes: [] }
+  deferral = mine
+  let el: VNode
+  try {
+    el = build()
+  } finally {
+    deferral = outer
+  }
+  // 連結在標題裡：連結的編號留在標題內（接在連結後面），註釋交給標題，等標題寫完再接在標題後面
+  if (outer) {
+    outer.notes.push(...mine.notes)
+    return [el, ...mine.markers]
+  }
+  return [el, ...mine.markers, ...mine.notes]
+}
+
 function kids(node: MdNode): VNode[] {
   const children = node.children ?? []
   const out: VNode[] = []
   for (let i = 0; i < children.length; i++) {
     const child = children[i]!
     const next = children[i + 1]
-    // 緊接在文字後面的註腳編號：把文字的最後一個字交給它，兩者綁在一起換行（見 renderFootnoteRef）
-    if (child.type === 'text' && next?.type === 'footnoteReference' && liveFootnote(next)) {
+    // 緊接在文字後面的註腳編號：把文字的最後一個字交給它，兩者綁在一起換行（見 renderFootnoteRef）。
+    // 連結裡的編號會被移到連結外面，最後一個字不能跟著走，所以連結裡不拆
+    if (
+      child.type === 'text' &&
+      next?.type === 'footnoteReference' &&
+      deferral?.kind !== 'link' &&
+      liveFootnote(next)
+    ) {
       const [head, lead] = splitLastChar(child.value ?? '')
       if (head) out.push(h('span', head))
       out.push(...renderFootnoteRef(next, lead))
@@ -127,20 +166,6 @@ function kids(node: MdNode): VNode[] {
     out.push(...render(child))
   }
   return out
-}
-
-/** 取出文字的最後一個字（以字形為單位，不會把組合字拆開）。結尾是空白就不拆：空白本來就是斷行點。 */
-function splitLastChar(value: string): [string, string] {
-  const chars =
-    typeof Intl.Segmenter === 'function'
-      ? Array.from(
-          new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(value),
-          (s) => s.segment,
-        )
-      : Array.from(value)
-  const last = chars[chars.length - 1]
-  if (!last || /\s/u.test(last)) return [value, '']
-  return [chars.slice(0, -1).join(''), last]
 }
 
 /** 這個引用對得到定義、而且不在註釋內容裡（註釋裡的巢狀引用不編號）才算「有效」。 */
@@ -165,6 +190,9 @@ function render(node: MdNode): VNode[] {
       return [h('span', node.value ?? '')]
 
     case 'paragraph':
+      // 註釋元素是 <span>，長在內文的 <p> 裡面：註釋內容裡的區塊節點（段落、標題、清單）
+      // 也只能用 <span>（display:block）畫，<p> 裡面不能有 <p>／<ul>／<h*>
+      if (noteDepth > 0) return [h('span', { class: 'block' }, kids(node))]
       return [
         h(
           'p',
@@ -176,7 +204,9 @@ function render(node: MdNode): VNode[] {
     case 'heading': {
       // 註釋內容裡的標題不編入目錄（extractHeadings 也略過了），這裡就不能去拿 headingCursor，
       // 不然後面所有標題的 id 會錯開一格
-      if (noteDepth > 0) return [h('p', { class: 'font-bold text-(--text-ink-main)' }, kids(node))]
+      if (noteDepth > 0) {
+        return [h('span', { class: 'block font-bold text-(--text-ink-main)' }, kids(node))]
+      }
       // 粗體標題，深度越深字越小，但都維持同一個形狀，不另外發明第二套標題語彙。
       // 以前前面有 accent 色的 `//`：那是程式碼註解的造型，放在圖譜、本體論這類技術頁合理，
       // 放在長文閱讀裡是雜訊（2026-09-29 拿掉，文章列表與首頁文章列同步拿掉）。
@@ -184,7 +214,8 @@ function render(node: MdNode): VNode[] {
       // id 從 headings 依序取，不在這裡自己算 slug——目錄跟這裡必須是同一份，
       // 分開算會漂移，而且症狀是「點目錄沒反應」，不會有任何錯誤訊息
       const slug = headings.value[headingCursor++]?.slug
-      return [
+      // 標題裡的註腳引用：編號留在標題裡，註釋元素接在標題後面（見 withDeferral）
+      return withDeferral('heading', () =>
         h(
           'h3',
           {
@@ -197,7 +228,7 @@ function render(node: MdNode): VNode[] {
           },
           kids(node),
         ),
-      ]
+      )
     }
 
     case 'footnoteReference':
@@ -251,15 +282,19 @@ function render(node: MdNode): VNode[] {
         'text-(--text-accent) underline underline-offset-2 hover:opacity-80 transition-opacity duration-100 ease-out'
       // 站內連結用 RouterLink 而不是 <a>:這是走 AST 而不是 v-html 的主要理由之一。
       // v-html 塞出來的 <a href="/articles/x"> 會整頁重載，SPA 的狀態全部重來
-      return link.internal
-        ? [h(RouterLink, { to: link.href, class: cls }, () => kids(node))]
-        : [
-            h(
+      //
+      // 連結文字裡的註腳引用：編號跟註釋接在連結後面（見 withDeferral）。
+      // RouterLink 的 slot 是晚一點才執行的，而暫存區只在這個呼叫期間有效，所以子節點先 render 好再傳進去
+      return withDeferral('link', () => {
+        const inner = kids(node)
+        return link.internal
+          ? h(RouterLink, { to: link.href, class: cls }, () => inner)
+          : h(
               'a',
               { href: link.href, target: '_blank', rel: 'noopener noreferrer', class: cls },
-              kids(node),
-            ),
-          ]
+              inner,
+            )
+      })
     }
 
     case 'image': {
@@ -277,6 +312,24 @@ function render(node: MdNode): VNode[] {
     }
 
     case 'list':
+      // 註釋裡的清單用 <span>（display:block／list-item）加 role 畫，原因見 paragraph 的註解。
+      // <span> 沒有 start 屬性，改用 counter-reset 讓有序清單從指定的數字開始
+      if (noteDepth > 0) {
+        return [
+          h(
+            'span',
+            {
+              role: 'list',
+              style:
+                node.ordered && node.start != null && node.start !== 1
+                  ? { counterReset: `list-item ${node.start - 1}` }
+                  : undefined,
+              class: `block ${node.ordered ? 'list-decimal' : 'list-disc'} pl-5 my-1.5 marker:text-(--text-accent)`,
+            },
+            kids(node),
+          ),
+        ]
+      }
       return [
         h(
           node.ordered ? 'ol' : 'ul',
@@ -302,6 +355,9 @@ function render(node: MdNode): VNode[] {
                 class: 'mr-2 accent-(--text-accent)',
               }),
             ]
+      if (noteDepth > 0) {
+        return [h('span', { role: 'listitem', class: 'list-item' }, [...box, ...kids(node)])]
+      }
       return [
         h('li', { class: 'text-base leading-[1.6] text-(--text-ink-body)' }, [
           ...box,
@@ -351,7 +407,11 @@ function render(node: MdNode): VNode[] {
   }
 }
 
-/** 註釋內容。第一段接在編號後面同一行，之後的段落另起一行；清單、程式碼這類區塊照一般方式 render。 */
+/**
+ * 註釋內容。第一段接在編號後面同一行，之後的段落另起一行。
+ * 段落、標題、清單在註釋裡都是 <span>（見 render 的 noteDepth 分支）；
+ * 程式碼區塊、引用區塊、表格這類少見的區塊仍照一般方式 render（目前沒有改成 <span>）。
+ */
 function noteBody(definition: MdNode): VNode[] {
   noteDepth++
   try {
@@ -384,9 +444,13 @@ function closeNote(key: string) {
  * 一次引用產生兩個東西：上標的編號按鈕（連同前一個字包在 nowrap 的 span 裡，見下面 return），
  * 以及緊跟在 span 後面的註釋元素。
  * 寬螢幕：第一次引用的註釋是右邊的邊注（絕對定位，top 由 layoutSidenotes 對齊引用那一行）；
- *        同一則註釋的後續引用不再顯示（右邊只放一份），編號仍可 hover／聚焦時標亮那份邊注。
+ *        同一則註釋的後續引用不再顯示（右邊只放一份）。
+ *        標亮邊注：hover／聚焦只在「邊注緊鄰在編號後面」時有效（下面的 [:has(>sup:hover)+&]），
+ *        也就是第一次引用；後續引用的 hover／聚焦不會標亮邊注。標題裡的引用，邊注接在標題後面、
+ *        不緊鄰編號，也沒有 hover 標亮。點編號固定標亮（pinnedNumber，依註釋編號比對）對每一處引用都有效。
  * 窄螢幕：註釋預設隱藏，點編號（或 Enter／Space）在編號後面原地展開，Esc 收起並把焦點還給編號。
  * 註釋元素放在編號旁邊而不是文末，所以兩種模式都不需要另外算位置就能退化成「在那一行附近」。
+ * 連結、標題裡的引用例外：註釋元素移到該連結／標題後面，連結裡的編號也一起移出（見 withDeferral）。
  */
 function renderFootnoteRef(node: MdNode, lead = ''): VNode[] {
   const info = liveFootnote(node)
@@ -432,69 +496,78 @@ function renderFootnoteRef(node: MdNode, lead = ''): VNode[] {
       ].join(' ')
     : 'block my-2 px-4 py-3 border border-(--border-shelf) border-l-2 border-l-(--text-ink-main) rounded-r-[6px] bg-(--bg-folder) text-sm leading-[1.5] text-(--text-ink-body) text-left'
 
-  return [
-    // 前一個字（lead）跟編號包進同一個 nowrap 的 span：中文任兩字之間都能斷行，
-    // 編號是不能再拆的行內方塊，會被單獨推到下一行開頭、跟前一個字分開。試過在編號前放 U+2060
-    // （WORD JOINER），Chromium 對這種行內方塊不認，所以只能用 nowrap 把兩者綁在一起。
-    // 註釋元素（note）留在這個 span 外面：它是區塊或絕對定位，不能繼承 nowrap。
-    h('span', { class: 'whitespace-nowrap' }, [
-      lead,
-      h('sup', {}, [
-        h(
-          'button',
-          {
-            type: 'button',
-            id: refId,
-            class: markerClass,
-            'aria-label': `註 ${n}`,
-            'data-fn-number': n,
-            // 寬螢幕註釋一直看得到，用 describedby 對上；窄螢幕是展開／收起，用 expanded + controls
-            ...(side
-              ? { 'aria-describedby': firstNoteId }
-              : { 'aria-expanded': String(open), 'aria-controls': noteId }),
-            onClick: () => {
-              if (side) pinnedNumber.value = lit ? null : n
-              else toggleNote(key)
-            },
-            onKeydown: (e: KeyboardEvent) => {
-              if (e.key === 'Escape' && !side && open) {
-                e.preventDefault()
-                closeNote(key)
-              }
-            },
+  // 前一個字（lead）跟編號包進同一個 nowrap 的 span：中文任兩字之間都能斷行，
+  // 編號是不能再拆的行內方塊，會被單獨推到下一行開頭、跟前一個字分開。試過在編號前放 U+2060
+  // （WORD JOINER），Chromium 對這種行內方塊不認，所以只能用 nowrap 把兩者綁在一起。
+  // 註釋元素（note）留在這個 span 外面：它是區塊或絕對定位，不能繼承 nowrap。
+  const marker = h('span', { class: 'whitespace-nowrap' }, [
+    lead,
+    h('sup', {}, [
+      h(
+        'button',
+        {
+          type: 'button',
+          id: refId,
+          class: markerClass,
+          'aria-label': `註 ${n}`,
+          'data-fn-number': n,
+          // 寬螢幕註釋一直看得到，用 describedby 對上；窄螢幕是展開／收起，用 expanded + controls
+          ...(side
+            ? { 'aria-describedby': firstNoteId }
+            : { 'aria-expanded': String(open), 'aria-controls': noteId }),
+          onClick: () => {
+            if (side) pinnedNumber.value = lit ? null : n
+            else toggleNote(key)
           },
-          String(n),
-        ),
-      ]),
-    ]),
-    h(
-      'span',
-      {
-        id: noteId,
-        class: noteVisible ? noteClass : 'hidden',
-        hidden: noteVisible ? undefined : true,
-        'data-fn-side': showAsSidenote ? '' : undefined,
-        'data-fn-marker': showAsSidenote ? refId : undefined,
-        onKeydown: (e: KeyboardEvent) => {
-          // 展開框裡的連結也能按 Esc 收起，焦點回到編號，鍵盤使用者不會掉到頁首
-          if (e.key === 'Escape' && !side && open) {
-            e.preventDefault()
-            e.stopPropagation()
-            closeNote(key)
-            document.getElementById(refId)?.focus()
-          }
+          onKeydown: (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !side && open) {
+              e.preventDefault()
+              closeNote(key)
+            }
+          },
         },
+        String(n),
+      ),
+    ]),
+  ])
+  const note = h(
+    'span',
+    {
+      id: noteId,
+      class: noteVisible ? noteClass : 'hidden',
+      hidden: noteVisible ? undefined : true,
+      'data-fn-side': showAsSidenote ? '' : undefined,
+      'data-fn-marker': showAsSidenote ? refId : undefined,
+      onKeydown: (e: KeyboardEvent) => {
+        // 展開框裡的連結也能按 Esc 收起，焦點回到編號，鍵盤使用者不會掉到頁首
+        if (e.key === 'Escape' && !side && open) {
+          e.preventDefault()
+          e.stopPropagation()
+          closeNote(key)
+          document.getElementById(refId)?.focus()
+        }
       },
-      [
-        h(
-          'span',
-          { class: 'inline-block min-w-[18px] mr-2 font-bold text-(--text-ink-main)' },
-          String(n),
-        ),
-        ...noteBody(info.definition),
-      ],
-    ),
-  ]
+    },
+    [
+      h(
+        'span',
+        { class: 'inline-block min-w-[18px] mr-2 font-bold text-(--text-ink-main)' },
+        String(n),
+      ),
+      ...noteBody(info.definition),
+    ],
+  )
+
+  // 在連結或標題裡面：註釋元素（連結的話還有編號）先放進暫存區，由外層接在自己後面（見 withDeferral）
+  if (deferral) {
+    deferral.notes.push(note)
+    if (deferral.kind === 'link') {
+      deferral.markers.push(marker)
+      return []
+    }
+    return [marker]
+  }
+  return [marker, note]
 }
 
 /** 文末的「註釋」清單：每一則註釋的正規形式，不依賴邊注或展開框，任何螢幕寬度、版面計算失敗時都在。 */
@@ -553,7 +626,7 @@ function backLinks(info: FootnoteInfo): VNode[] {
 
 // --- 邊注排版 ---
 // 邊注是絕對定位的，top 要靠量出來的引用位置決定；註釋太密時後面的往下推，永遠不重疊。
-// 量的時機：掛載、重繪、視窗縮放、容器尺寸變動（圖片載入、換行改變）、字型載入完成。
+// 量的時機：掛載、寬窄模式／固定標亮／展開狀態改變、視窗縮放、容器尺寸變動（圖片載入、換行改變）、字型載入完成。
 // 任何一步沒跑到也不會壞：沒有 top 的邊注會停在它被寫出來的那一行附近（絕對定位的預設位置），
 // 文末清單不受影響。
 function layoutSidenotes() {
@@ -598,8 +671,21 @@ const onMediaChange = () => {
   sideMode.value = !!media?.matches
 }
 
+// 這個元件自己的狀態（寬窄模式、固定標亮、展開的註釋）改變後重排。
+// 這些狀態是在函式型子元件 Rendered 裡讀的，重繪的是 Rendered，不是這個元件，
+// 所以 onUpdated 不會觸發；要靠 watch。flush: 'post' 等 DOM 更新完才量。
+watch(
+  [sideMode, pinnedNumber, openNotes],
+  () => {
+    if (props.sidenotes) scheduleLayout()
+  },
+  { flush: 'post' },
+)
+
 onMounted(() => {
-  if (props.sidenotes && typeof window.matchMedia === 'function') {
+  // 沒開邊注（例如編輯頁預覽）就沒有東西要排，不掛任何監聽
+  if (!props.sidenotes) return
+  if (typeof window.matchMedia === 'function') {
     media = window.matchMedia(SIDE_QUERY)
     sideMode.value = media.matches
     media.addEventListener('change', onMediaChange)
@@ -613,7 +699,6 @@ onMounted(() => {
   void document.fonts?.ready.then(scheduleLayout)
   scheduleLayout()
 })
-onUpdated(scheduleLayout)
 onBeforeUnmount(() => {
   media?.removeEventListener('change', onMediaChange)
   window.removeEventListener('resize', scheduleLayout)
@@ -627,6 +712,7 @@ const Rendered = () => {
   headingCursor = 0
   refSeen = new Map()
   noteDepth = 0
+  deferral = null
   return render(tree.value)
 }
 

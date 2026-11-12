@@ -1,4 +1,4 @@
-import { afterEach, describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import MarkdownBody from './MarkdownBody.vue'
@@ -27,7 +27,7 @@ async function mountMd(source: string, extra: { sidenotes?: boolean; attach?: bo
 }
 
 describe('MarkdownBody', () => {
-  it('站內連結用 RouterLink，點下去不會整頁重載', async () => {
+  it('它應該用 RouterLink 渲染站內連結，點下去不會整頁重載', async () => {
     const w = await mountMd('看看 [專案](/projects/7)。')
     const a = w.find('a')
     // RouterLink 渲染出來的 <a> 沒有 target，而且 href 由 router 解析
@@ -35,14 +35,14 @@ describe('MarkdownBody', () => {
     expect(a.attributes('target')).toBeUndefined()
   })
 
-  it('站外連結開新分頁並補上 rel', async () => {
+  it('它應該讓站外連結開新分頁並補上 rel', async () => {
     const w = await mountMd('看看 [Laravel](https://laravel.com/docs)。')
     const a = w.find('a')
     expect(a.attributes('target')).toBe('_blank')
     expect(a.attributes('rel')).toBe('noopener noreferrer')
   })
 
-  it('行內格式都渲染成真的元素，不是被跳脫的文字', async () => {
+  it('它應該把行內格式渲染成真的元素，不是被跳脫的文字', async () => {
     const w = await mountMd('這是 **粗體**、*斜體*、`code` 跟 ~~刪除線~~。')
     expect(w.find('strong').text()).toBe('粗體')
     expect(w.find('em').text()).toBe('斜體')
@@ -51,13 +51,13 @@ describe('MarkdownBody', () => {
     expect(w.find('del').text()).toBe('刪除線')
   })
 
-  it('標題不加 // 前綴（程式碼註解的造型只留給技術頁）', async () => {
+  it('它應該不在標題加 // 前綴（程式碼註解的造型只留給技術頁）', async () => {
     const w = await mountMd('## 收斂到 View')
     const h = w.find('h3')
     expect(h.text()).toBe('收斂到 View')
   })
 
-  it('清單與任務清單', async () => {
+  it('它應該渲染清單與任務清單', async () => {
     const w = await mountMd('- 一\n- 二\n\n1. 甲\n\n- [x] 做完了\n- [ ] 還沒\n')
     expect(w.findAll('ul').length).toBeGreaterThanOrEqual(1)
     expect(w.find('ol').exists()).toBe(true)
@@ -67,7 +67,7 @@ describe('MarkdownBody', () => {
     expect(boxes[0]!.attributes('disabled')).toBeDefined()
   })
 
-  it('GFM 表格', async () => {
+  it('它應該渲染 GFM 表格', async () => {
     const w = await mountMd('| a | b |\n|---|--:|\n| 1 | 2 |\n')
     expect(w.find('table').exists()).toBe(true)
     expect(w.findAll('th').length).toBe(2)
@@ -76,13 +76,13 @@ describe('MarkdownBody', () => {
     expect(w.findAll('td')[1]!.classes().join(' ')).toContain('text-right')
   })
 
-  it('程式碼區塊保留原始空白與換行', async () => {
+  it('它應該在程式碼區塊保留原始空白與換行', async () => {
     const w = await mountMd('```js\nconst a = 1\n  const b = 2\n```')
     expect(w.find('pre code').text()).toBe('const a = 1\n  const b = 2')
     expect(w.find('pre code').attributes('data-lang')).toBe('js')
   })
 
-  it('原始 HTML 不會被當成 HTML 執行', async () => {
+  it('它應該不把原始 HTML 當成 HTML 執行', async () => {
     const w = await mountMd('正常文字 <img src=x onerror="alert(1)"> 後面')
     // 走 vnode 就沒有 innerHTML 這條路:html 節點在 walker 裡沒有對應處理，
     // 會落到 default 分支，不會變成真的 <img>
@@ -90,7 +90,7 @@ describe('MarkdownBody', () => {
     expect(w.html()).not.toContain('onerror')
   })
 
-  it('認不得的節點不會讓內容消失', async () => {
+  it('它應該讓認不得的節點不使內容消失', async () => {
     // 這個案例是在守 walker 的 default 分支——不認得的節點就往下走 children，不是丟掉
     // （註腳以前就是掉進這條分支才消失的，現在有自己的 case，見下面「註腳」）
     const w = await mountMd('段落一\n\n段落二')
@@ -109,7 +109,7 @@ describe('MarkdownBody', () => {
       '[點我](vbscript:msgbox(1))',
       '<javascript:alert(1)>',
       '[點我][ref]\n\n[ref]: javascript:alert(1)',
-    ])('危險協定只留文字、不產生任何 <a>：%s', async (source) => {
+    ])('它應該對危險協定只留文字、不產生任何 <a>：%s', async (source) => {
       const w = await mountMd(source)
       expect(w.find('a').exists()).toBe(false)
       // 文字本身可以出現（`<javascript:…>` 的連結文字就是網址），但不能有任何 href
@@ -117,7 +117,7 @@ describe('MarkdownBody', () => {
       expect(w.text()).toContain(source.startsWith('<') ? 'javascript:alert(1)' : '點我')
     })
 
-    it('https、mailto 照常是站外連結', async () => {
+    it('它應該照常把 https、mailto 當成站外連結', async () => {
       const w = await mountMd('[站外](https://example.com) 與 [信](mailto:a@example.com)')
       const links = w.findAll('a')
       expect(links.map((a) => a.attributes('href'))).toEqual([
@@ -155,7 +155,23 @@ describe('MarkdownBody', () => {
     const markers = (w: Wrapper) => w.findAll('button[data-fn-number]')
     const endItems = (w: Wrapper) => w.findAll('section ol > li')
 
-    it('內文裡的引用是上標編號按鈕，依第一次引用的順序編號、重複引用沿用同一個編號', async () => {
+    // jsdom 沒有排版，寬窄靠替換 matchMedia 控制（SIDE_QUERY 只有一條）
+    const original = window.matchMedia
+    afterEach(() => {
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: original,
+      })
+    })
+    const stubWide = (matches: boolean) =>
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: () => ({ matches, addEventListener: () => {}, removeEventListener: () => {} }),
+      })
+
+    it('它應該把內文裡的引用渲染成上標編號按鈕，依第一次引用的順序編號、重複引用沿用同一個編號', async () => {
       const w = await mountMd(SOURCE)
       const found = markers(w)
       expect(found.map((m) => m.text())).toEqual(['1', '2', '1'])
@@ -175,7 +191,7 @@ describe('MarkdownBody', () => {
       const wrapperOf = (w: Wrapper, i = 0) =>
         markers(w)[i]!.element.closest('sup')!.parentElement as HTMLElement
 
-      it('文字結尾的最後一個字搬進編號的 nowrap span，前面的字留在原來的 span', async () => {
+      it('它應該把文字結尾的最後一個字搬進編號的 nowrap span，前面的字留在原來的 span', async () => {
         const w = await mountMd('前面的句子結尾[^1]。後面。\n\n[^1]: 內容')
         const wrap = wrapperOf(w)
         expect(wrap.classList.contains('whitespace-nowrap')).toBe(true)
@@ -186,12 +202,12 @@ describe('MarkdownBody', () => {
         expect(w.find('p').text()).not.toMatch(/[\u2060\u200b]/)
       })
 
-      it('以字形為單位拆，不會把 emoji 組合字拆成兩半', async () => {
+      it('它應該以字形為單位拆，不把 emoji 組合字拆成兩半', async () => {
         const w = await mountMd('家人👨‍👩‍👧[^1]\n\n[^1]: 內容')
         expect(wrapperOf(w).textContent).toBe('👨‍👩‍👧1')
       })
 
-      it('結尾是空白就不拆（空白本來就是斷行點），段落開頭或前面是行內元素時只包編號', async () => {
+      it('它應該在結尾是空白時不拆（空白本來就是斷行點），段落開頭或前面是行內元素時只包編號', async () => {
         const spaced = await mountMd('word [^1]\n\n[^1]: 內容')
         expect(wrapperOf(spaced).textContent).toBe('1')
         expect(wrapperOf(spaced).previousElementSibling!.textContent).toBe('word ')
@@ -201,32 +217,32 @@ describe('MarkdownBody', () => {
         expect(wrapperOf(afterStrong).textContent).toBe('1')
       })
 
-      it('文字只有一個字時不留空的 span', async () => {
+      it('它應該在文字只有一個字時不留空的 span', async () => {
         const w = await mountMd('註[^1]\n\n[^1]: 內容')
         const p = w.find('p').element
         expect(Array.from(p.children).map((el) => el.textContent)).toEqual(['註1', '1內容'])
       })
 
-      it('註釋元素留在 nowrap span 外面（不繼承 nowrap），仍緊接在編號後面', async () => {
+      it('它應該讓註釋元素留在 nowrap span 外面（不繼承 nowrap），仍緊接在編號後面', async () => {
         const w = await mountMd('甲乙[^1]\n\n[^1]: 內容')
         const wrap = wrapperOf(w)
         expect(wrap.nextElementSibling!.id).toBe(markers(w)[0]!.attributes('aria-controls'))
         expect(wrap.contains(wrap.nextElementSibling)).toBe(false)
       })
 
-      it('找不到定義的引用、註釋裡的巢狀引用照舊留成文字，前面的文字不拆', async () => {
+      it('它應該把找不到定義的引用、註釋裡的巢狀引用照舊留成文字，前面的文字不拆', async () => {
         const w = await mountMd('句子[^1]\n\n[^1]: 內容又引用[^2]\n\n[^2]: 第二則')
         expect(w.find('section ol li').text()).toContain('內容又引用[^2]')
         expect(w.find('section ol li sup').exists()).toBe(false)
       })
 
-      it('標題裡的編號不影響標題的 id', async () => {
+      it('它應該讓標題裡的編號不影響標題的 id', async () => {
         const w = await mountMd('## 標題[^1]\n\n[^1]: 內容')
         expect(w.find('h3').attributes('id')).toBe('標題')
       })
     })
 
-    it('定義不會在原地當成普通段落印出來，內容只出現在註釋清單與各引用處的註釋元素', async () => {
+    it('它應該不把定義在原地當成普通段落印出來，內容只出現在註釋清單與各引用處的註釋元素', async () => {
       const w = await mountMd('段落[^1]\n\n[^1]: 只能在註釋裡看到我')
       // 以前定義會變成緊接在後面的第二個 <p>；現在頂層只剩內文段落與文末的註釋區塊
       expect(Array.from((w.element as HTMLElement).children).map((el) => el.tagName)).toEqual([
@@ -236,7 +252,7 @@ describe('MarkdownBody', () => {
       expect(w.find('section ol li').text()).toContain('只能在註釋裡看到我')
     })
 
-    it('文末有「註釋」清單：依編號排序、孤兒定義也列出、被引用的每處都有回連結', async () => {
+    it('它應該在文末列出「註釋」清單：依編號排序、孤兒定義也列出、被引用的每處都有回連結', async () => {
       const w = await mountMd(SOURCE)
       expect(w.find('section h3').text()).toBe('註釋')
       const items = endItems(w)
@@ -266,14 +282,14 @@ describe('MarkdownBody', () => {
       )
     })
 
-    it('沒有註腳的文章不產生「註釋」區塊', async () => {
+    it('它應該在沒有註腳的文章不產生「註釋」區塊', async () => {
       const w = await mountMd('一般的段落，[^nope] 沒有定義就只是文字。')
       expect(w.find('section').exists()).toBe(false)
       expect(markers(w)).toHaveLength(0)
       expect(w.text()).toContain('[^nope]')
     })
 
-    it('註腳定義裡的標題不會讓後面標題的 id 錯開', async () => {
+    it('它應該讓註腳定義裡的標題不使後面標題的 id 錯開', async () => {
       const w = await mountMd('## 甲\n\n文字[^1]\n\n[^1]: # 註內標題\n\n## 乙')
       // 註釋裡的標題不產生 id，也不佔用 slug；「註釋」區塊自己的標題另有 id，不在這份清單裡
       const slugs = w
@@ -285,7 +301,7 @@ describe('MarkdownBody', () => {
     })
 
     describe('窄螢幕：點編號在原地展開', () => {
-      it('預設收起；點編號展開並更新 aria-expanded，再點收起', async () => {
+      it('它應該預設收起；點編號展開並更新 aria-expanded，再點收起', async () => {
         const w = await mountMd('句子[^1]。\n\n[^1]: 展開的內容')
         const marker = markers(w)[0]!
         const note = w.find(`[id="${marker.attributes('aria-controls')}"]`)
@@ -302,7 +318,7 @@ describe('MarkdownBody', () => {
         expect(note.attributes('hidden')).toBeDefined()
       })
 
-      it('同一則註釋的每個引用各自展開在自己旁邊', async () => {
+      it('它應該讓同一則註釋的每個引用各自展開在自己旁邊', async () => {
         const w = await mountMd('甲[^1]，乙[^1]。\n\n[^1]: 內容')
         const [first, second] = markers(w)
         await second!.trigger('click')
@@ -314,7 +330,7 @@ describe('MarkdownBody', () => {
         )
       })
 
-      it('在編號上按 Esc 收起', async () => {
+      it('它應該在編號上按 Esc 時收起', async () => {
         const w = await mountMd('句子[^1]。\n\n[^1]: 內容', { attach: true })
         const marker = markers(w)[0]!
         await marker.trigger('click')
@@ -323,7 +339,7 @@ describe('MarkdownBody', () => {
         w.unmount()
       })
 
-      it('在展開的註釋裡（例如連結上）按 Esc 收起，焦點回到編號', async () => {
+      it('它應該在展開的註釋裡（例如連結上）按 Esc 時收起，焦點回到編號', async () => {
         const w = await mountMd('句子[^1]。\n\n[^1]: 內容 [連結](https://example.com)', {
           attach: true,
         })
@@ -338,7 +354,7 @@ describe('MarkdownBody', () => {
         w.unmount()
       })
 
-      it('收起的狀態下按 Esc 不做任何事', async () => {
+      it('它應該在收起的狀態下按 Esc 時不做任何事', async () => {
         const w = await mountMd('句子[^1]。\n\n[^1]: 內容')
         const marker = markers(w)[0]!
         await marker.trigger('keydown', { key: 'Escape' })
@@ -347,22 +363,7 @@ describe('MarkdownBody', () => {
     })
 
     describe('寬螢幕：邊注', () => {
-      const original = window.matchMedia
-      afterEach(() => {
-        Object.defineProperty(window, 'matchMedia', {
-          configurable: true,
-          writable: true,
-          value: original,
-        })
-      })
-      const stubWide = (matches: boolean) =>
-        Object.defineProperty(window, 'matchMedia', {
-          configurable: true,
-          writable: true,
-          value: () => ({ matches, addEventListener: () => {}, removeEventListener: () => {} }),
-        })
-
-      it('開了 sidenotes 且夠寬：第一次引用的註釋是邊注，之後的引用不另外顯示', async () => {
+      it('它應該在開了 sidenotes 且夠寬時把第一次引用的註釋當邊注，之後的引用不另外顯示', async () => {
         stubWide(true)
         const w = await mountMd('甲[^1]，乙[^1]，丙[^2]。\n\n[^1]: 一\n\n[^2]: 二', {
           sidenotes: true,
@@ -381,7 +382,7 @@ describe('MarkdownBody', () => {
         expect(markers(w)[0]!.attributes('aria-expanded')).toBeUndefined()
       })
 
-      it('版面計算跑過後邊注有 top，而且依引用順序遞增（不重疊）', async () => {
+      it('它應該在版面計算跑過後讓邊注有 top，而且依引用順序遞增（不重疊）', async () => {
         stubWide(true)
         const w = await mountMd('甲[^1]乙[^2]丙[^3]\n\n[^1]: 一\n\n[^2]: 二\n\n[^3]: 三', {
           sidenotes: true,
@@ -397,7 +398,7 @@ describe('MarkdownBody', () => {
         w.unmount()
       })
 
-      it('點編號固定標亮對應的邊注，再點取消（觸控裝置沒有 hover）', async () => {
+      it('它應該在點編號時固定標亮對應的邊注，再點取消（觸控裝置沒有 hover）', async () => {
         stubWide(true)
         const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true })
         const side = () => w.find('[data-fn-side]')
@@ -408,21 +409,21 @@ describe('MarkdownBody', () => {
         expect(side().classes()).not.toContain('text-(--text-ink-main)')
       })
 
-      it('沒開 sidenotes（例如編輯頁預覽）就算螢幕很寬也維持點開展開，不產生邊注', async () => {
+      it('它應該在沒開 sidenotes（例如編輯頁預覽）時，就算螢幕很寬也維持點開展開，不產生邊注', async () => {
         stubWide(true)
         const w = await mountMd('甲[^1]。\n\n[^1]: 一')
         expect(w.find('[data-fn-side]').exists()).toBe(false)
         expect(markers(w)[0]!.attributes('aria-expanded')).toBe('false')
       })
 
-      it('螢幕不夠寬時就算開了 sidenotes 也是點開展開', async () => {
+      it('它應該在螢幕不夠寬時，就算開了 sidenotes 也維持點開展開', async () => {
         stubWide(false)
         const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true })
         expect(w.find('[data-fn-side]').exists()).toBe(false)
         expect(markers(w)[0]!.attributes('aria-expanded')).toBe('false')
       })
 
-      it('不管哪種模式，文末清單都在', async () => {
+      it('它應該在任何模式下都保留文末清單', async () => {
         stubWide(true)
         const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true })
         expect(w.find('section h3').text()).toBe('註釋')
@@ -430,8 +431,262 @@ describe('MarkdownBody', () => {
       })
     })
 
+    describe('連結與標題裡的引用', () => {
+      // 註釋元素（邊注／展開框）長在 <a> 裡，點邊注等於點連結、還會有 <a> 套 <a>；長在 <h3> 裡，
+      // 註釋會被讀進標題的無障礙名稱。所以註釋要接在連結／標題後面；連結裡的編號按鈕也不能留在 <a> 裡。
+      const LINKS = [
+        { kind: '站外連結', source: '看[連結[^1]](https://example.com)吧。', text: '連結' },
+        { kind: '站內連結（RouterLink）', source: '看[專案[^1]](/projects/7)吧。', text: '專案' },
+        {
+          kind: '連結裡有粗體再接引用',
+          source: '看[**粗**連結[^1]](https://example.com)吧。',
+          text: '粗連結',
+        },
+      ]
+      const DEF = '\n\n[^1]: 註釋內容'
+      const inside = (w: Wrapper, outer: string) =>
+        w.findAll(`${outer} button, ${outer} [id*="fnnote"]`)
+
+      describe.each([
+        { name: '窄螢幕（點開展開）', wide: false },
+        { name: '寬螢幕（邊注）', wide: true },
+      ])('$name', ({ wide }) => {
+        const mountIt = async (source: string) => {
+          stubWide(wide)
+          return mountMd(source + DEF, { sidenotes: true, attach: true })
+        }
+
+        it.each(LINKS)('它應該讓連結（$kind）裡不含編號按鈕或註釋元素', async ({ source }) => {
+          const w = await mountIt(source)
+          expect(w.findAll('a').length).toBeGreaterThan(0)
+          expect(inside(w, 'a')).toHaveLength(0)
+          if (!wide) {
+            // 展開後註釋也不在連結裡
+            await markers(w)[0]!.trigger('click')
+            expect(inside(w, 'a')).toHaveLength(0)
+          }
+          w.unmount()
+        })
+
+        it.each(LINKS)(
+          '它應該把編號與註釋接在連結（$kind）後面，連結文字保持完整',
+          async ({ source, text }) => {
+            const w = await mountIt(source)
+            const a = w.find('a').element
+            const marker = markers(w)[0]!
+            const markerWrap = marker.element.closest('sup')!.parentElement!
+            expect(a.nextElementSibling).toBe(markerWrap)
+            expect(markerWrap.nextElementSibling!.id).toBe(
+              wide ? marker.attributes('aria-describedby') : marker.attributes('aria-controls'),
+            )
+            // 連結最後一個字不能被拆去跟編號（編號不在連結裡了）
+            expect(a.textContent).toBe(text)
+            expect(w.find('p').text()).toContain('吧。')
+            w.unmount()
+          },
+        )
+
+        it('它應該讓標題裡不含註釋元素，編號留在標題裡、註釋接在標題後面，標題 id 不變', async () => {
+          const w = await mountIt('## 標題[^1]\n\n內文')
+          const h3 = w.find('h3')
+          expect(h3.attributes('id')).toBe('標題')
+          expect(h3.findAll('[id*="fnnote"]')).toHaveLength(0)
+          expect(h3.findAll('button[data-fn-number]')).toHaveLength(1)
+          const marker = markers(w)[0]!
+          expect(h3.element.nextElementSibling!.id).toBe(
+            wide ? marker.attributes('aria-describedby') : marker.attributes('aria-controls'),
+          )
+          if (!wide) {
+            await marker.trigger('click')
+            expect(marker.attributes('aria-expanded')).toBe('true')
+            expect(h3.findAll('[id*="fnnote"]')).toHaveLength(0)
+          }
+          w.unmount()
+        })
+
+        it('它應該在標題裡有連結時兩邊都守住：連結裡沒有東西，標題裡只有編號，註釋都在標題後面', async () => {
+          const w = await mountIt(
+            '## [連結[^1]](https://example.com) 與文字[^2]\n\n內文\n\n[^2]: 第二則',
+          )
+          const h3 = w.find('h3')
+          expect(inside(w, 'a')).toHaveLength(0)
+          expect(h3.findAll('[id*="fnnote"]')).toHaveLength(0)
+          expect(h3.findAll('button[data-fn-number]').map((b) => b.text())).toEqual(['1', '2'])
+          const afterHeading = Array.from(h3.element.parentElement!.children).slice(
+            Array.from(h3.element.parentElement!.children).indexOf(h3.element) + 1,
+          )
+          expect(afterHeading.slice(0, 2).map((el) => el.id)).toEqual([
+            expect.stringMatching(/fnnote-1-1$/),
+            expect.stringMatching(/fnnote-2-1$/),
+          ])
+          w.unmount()
+        })
+      })
+
+      it('它應該讓文件裡任何 <a> 都不含 button 或註釋元素（連結、標題、一般文字混用）', async () => {
+        stubWide(true)
+        const w = await mountMd(
+          '前文[^1]，[連結[^2]](https://example.com)，[站內[^1]](/projects/7)。\n\n## 標題[^2]\n\n[^1]: 一\n\n[^2]: 二',
+          { sidenotes: true, attach: true },
+        )
+        expect(inside(w, 'a')).toHaveLength(0)
+        // 回連結（<a href="#…">）本身也不含 button
+        expect(w.findAll('section a button')).toHaveLength(0)
+        w.unmount()
+      })
+    })
+
+    describe('註釋內容裡的區塊節點', () => {
+      // 註釋元素是 <span>，長在內文的 <p> 裡面；<p> 裡面不能有 <p>、<ul>、<h*>，所以註釋裡的區塊也要用 <span>
+      const BLOCKS = 'ul, ol, li, p, h1, h2, h3, h4, h5, h6'
+      const SOURCE = [
+        '句子[^1]。',
+        '',
+        '[^1]: 第一段',
+        '',
+        '    - 清單甲',
+        '    - 清單乙',
+        '',
+        '    1. 有序一',
+        '    2. 有序二',
+        '',
+        '    ## 註內標題',
+        '',
+        '    第二段',
+      ].join('\n')
+
+      it('它應該不在註釋元素與文末清單項目裡產生 <p>、<ul>、<ol>、<li>、<h*>', async () => {
+        const w = await mountMd(SOURCE)
+        const notes = w.findAll('[id*="fnnote"]')
+        expect(notes).toHaveLength(1)
+        expect(notes[0]!.findAll(BLOCKS)).toHaveLength(0)
+        // 文末清單項目本身就是 <li>，裡面不該再有別的清單或段落
+        expect(w.findAll('section ol > li')[0]!.findAll(BLOCKS)).toHaveLength(0)
+      })
+
+      it('它應該讓內文的每個 <p> 裡都沒有區塊元素', async () => {
+        const w = await mountMd(SOURCE)
+        const paragraphs = w.findAll('p')
+        expect(paragraphs.length).toBeGreaterThan(0)
+        paragraphs.forEach((p) =>
+          expect(p.findAll(`${BLOCKS}, pre, blockquote, div`)).toHaveLength(0),
+        )
+      })
+
+      it('它應該保留註釋內容與語意：清單用 role、標題粗體另起一行，第二段另起一行', async () => {
+        const w = await mountMd(SOURCE)
+        const note = w.find('[id*="fnnote"]')
+        const lists = note.findAll('[role="list"]')
+        expect(lists).toHaveLength(2)
+        expect(lists.map((l) => l.findAll('[role="listitem"]').map((li) => li.text()))).toEqual([
+          ['清單甲', '清單乙'],
+          ['有序一', '有序二'],
+        ])
+        expect(lists[0]!.classes()).toContain('list-disc')
+        expect(lists[1]!.classes()).toContain('list-decimal')
+        const title = note.findAll('span').find((s) => s.text() === '註內標題')!
+        expect(title.classes()).toEqual(expect.arrayContaining(['block', 'font-bold']))
+        expect(note.text()).toContain('第二段')
+      })
+
+      it('它應該讓註釋裡的標題不編入目錄、不影響後面標題的 id', async () => {
+        const w = await mountMd(`${SOURCE}\n\n## 後面的標題`)
+        expect(w.findAll('h3[id]').map((h) => h.attributes('id'))).toContain('後面的標題')
+        expect(w.findAll('h3').some((h) => h.text() === '註內標題')).toBe(false)
+      })
+    })
+
+    describe('邊注排版的監聽與重排', () => {
+      afterEach(() => {
+        vi.restoreAllMocks()
+        vi.unstubAllGlobals()
+      })
+      const MD = '甲[^1]。\n\n[^1]: 一'
+      const rafWait = () => new Promise((resolve) => setTimeout(resolve, 50))
+      const observerSpy = () => {
+        const instances: {
+          observe: ReturnType<typeof vi.fn>
+          disconnect: ReturnType<typeof vi.fn>
+        }[] = []
+        vi.stubGlobal(
+          'ResizeObserver',
+          class {
+            observe = vi.fn()
+            disconnect = vi.fn()
+            constructor() {
+              instances.push(this)
+            }
+          },
+        )
+        return instances
+      }
+      const windowListeners = (spy: { mock: { calls: unknown[][] } }) =>
+        spy.mock.calls
+          .map((call) => call[0])
+          .filter((type) => type === 'resize' || type === 'load')
+
+      it('它應該在沒開 sidenotes 時不掛 resize、load、ResizeObserver 監聽', async () => {
+        const add = vi.spyOn(window, 'addEventListener')
+        const observers = observerSpy()
+        stubWide(true)
+        const w = await mountMd(MD, { attach: true })
+        expect(windowListeners(add)).toEqual([])
+        expect(observers).toHaveLength(0)
+        w.unmount()
+      })
+
+      it('它應該在開了 sidenotes 時掛上監聽，卸載時全部拆掉', async () => {
+        const add = vi.spyOn(window, 'addEventListener')
+        const remove = vi.spyOn(window, 'removeEventListener')
+        const observers = observerSpy()
+        stubWide(true)
+        const w = await mountMd(MD, { sidenotes: true, attach: true })
+        expect(windowListeners(add).sort()).toEqual(['load', 'resize'])
+        expect(observers).toHaveLength(1)
+        expect(observers[0]!.observe).toHaveBeenCalledTimes(1)
+        w.unmount()
+        expect(windowListeners(remove).sort()).toEqual(['load', 'resize'])
+        expect(observers[0]!.disconnect).toHaveBeenCalledTimes(1)
+      })
+
+      it('它應該在點編號固定標亮後重新排版（元件自己的狀態改變，不靠容器尺寸變動）', async () => {
+        stubWide(true)
+        const w = await mountMd(MD, { sidenotes: true, attach: true })
+        await rafWait()
+        const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+        await markers(w)[0]!.trigger('click')
+        await rafWait()
+        expect(rect).toHaveBeenCalled()
+        w.unmount()
+      })
+
+      it('它應該在寬窄模式切換後重新排版：變寬時邊注有 top', async () => {
+        let onChange: (() => void) | undefined
+        const media = {
+          matches: false,
+          addEventListener: (...args: [string, () => void]) => (onChange = args[1]),
+          removeEventListener: () => {},
+        }
+        Object.defineProperty(window, 'matchMedia', {
+          configurable: true,
+          writable: true,
+          value: () => media,
+        })
+        const w = await mountMd(MD, { sidenotes: true, attach: true })
+        await rafWait()
+        expect(w.find('[data-fn-side]').exists()).toBe(false)
+        media.matches = true
+        onChange!()
+        await rafWait()
+        expect(
+          parseFloat((w.find('[data-fn-side]').element as HTMLElement).style.top),
+        ).not.toBeNaN()
+        w.unmount()
+      })
+    })
+
     describe('註釋內容的消毒', () => {
-      it('註釋裡的 javascript: 與 data: 連結只留文字，不產生 href', async () => {
+      it('它應該讓註釋裡的 javascript: 與 data: 連結只留文字，不產生 href', async () => {
         const w = await mountMd(
           '句子[^1]\n\n[^1]: [點我](javascript:alert(1)) 與 [也點我](data:text/html,x)',
         )
@@ -442,7 +697,7 @@ describe('MarkdownBody', () => {
         expect(w.text()).toContain('點我')
       })
 
-      it('註釋裡的原始 HTML 不會被執行', async () => {
+      it('它應該不執行註釋裡的原始 HTML', async () => {
         const w = await mountMd(
           '句子[^1]\n\n[^1]: 內容 <img src=x onerror="alert(1)"> <script>alert(1)</script>',
         )
@@ -451,7 +706,7 @@ describe('MarkdownBody', () => {
         expect(w.html()).not.toContain('onerror')
       })
 
-      it('註釋裡的 https 連結是站外連結、站內連結是 RouterLink，行內程式碼照常', async () => {
+      it('它應該讓註釋裡的 https 連結是站外連結、站內連結是 RouterLink，行內程式碼照常', async () => {
         const w = await mountMd(
           '句子[^1]\n\n[^1]: 見 [外部](https://example.com) 與 [專案](/projects/7)，`fetchArticle(id)`',
         )
@@ -465,7 +720,7 @@ describe('MarkdownBody', () => {
         expect(note.find('code').text()).toBe('fetchArticle(id)')
       })
 
-      it('註釋裡的巢狀引用留成文字，不產生第二層編號', async () => {
+      it('它應該把註釋裡的巢狀引用留成文字，不產生第二層編號', async () => {
         const w = await mountMd('句子[^1]\n\n[^1]: 內容又引用[^2]\n\n[^2]: 第二則')
         expect(markers(w)).toHaveLength(1)
         expect(w.find('section ol li').text()).toContain('[^2]')
