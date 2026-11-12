@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { Project } from '@/api/projects'
 import ProjectsListPanel from './ProjectsListPanel.vue'
+import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 
 const project = (id: string, title: string): Project => ({
   id,
@@ -29,6 +30,10 @@ const render = (props: Partial<InstanceType<typeof ProjectsListPanel>['$props']>
 const filterButton = (w: ReturnType<typeof render>) => w.findAll('button').find((b) => b.text().startsWith('篩選'))!
 
 describe('ProjectsListPanel', () => {
+  it('它應該用共用的 STICKY_TOP_PX 當 sticky 的 top', () => {
+    expect(render().element.style.top).toBe(`${STICKY_TOP_PX}px`)
+  })
+
   describe('篩選鈕', () => {
     it('它應該在面板收合時不帶 aria-controls，避免指向不存在的 id', () => {
       const button = filterButton(render())

@@ -3,15 +3,16 @@ import { computed, ref, useId } from 'vue'
 import type { Project } from '@/api/projects'
 import ProjectsFilterPanel from './ProjectsFilterPanel.vue'
 import ProjectsYearList from './ProjectsYearList.vue'
+import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { groupProjectsByYear } from './groupProjectsByYear'
 import type { ProjectsFilterGroupData } from './useProjectsFilter'
 
 // 桌機版左欄：一個有框、不透明表面的面板，裡面由上到下是「筆數｜篩選鈕」、
-// 展開的篩選、依年份分組的列表。設計稿。
+// 展開的篩選、依年份分組的列表。
 //
 // 面板 sticky 在導覽列下方，高度上限讓整個面板在第一屏放得下，列表在面板內部捲，
-// 詳情跟著頁面捲。sticky 的 top：導覽列 64＋捲動追蹤列 45（MainLayout 捲過 50px 才出現，
-// 會蓋在導覽列正下方）＋16 的間距。高度上限的 228px＝面板在頁面頂端時上緣的位置（約 204px）
+// 詳情跟著頁面捲。sticky 的 top 用 STICKY_TOP_PX（算法見 layouts/stickyOffset.ts）。
+// 高度上限的 228px＝面板在頁面頂端時上緣的位置（約 204px）
 // 加下緣留白 24px，量過 1440×900；頁首（MainLayout 的通用表頭）高度改了要一起調。
 const props = defineProps<{
   projects: Project[]
@@ -33,7 +34,8 @@ defineExpose({ revealSelected: () => list.value?.revealSelected() })
 
 <template>
   <div
-    class="sticky top-[125px] flex max-h-[max(360px,calc(100vh-228px))] min-h-0 flex-col overflow-hidden rounded-xl border border-(--border-shelf) bg-(--list-surface)"
+    class="sticky flex max-h-[max(360px,calc(100vh-228px))] min-h-0 flex-col overflow-hidden rounded-xl border border-(--border-shelf) bg-(--list-surface)"
+    :style="{ top: `${STICKY_TOP_PX}px` }"
   >
     <div class="flex flex-none items-center justify-between px-4 py-3">
       <p class="m-0 text-left text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)" aria-live="polite">

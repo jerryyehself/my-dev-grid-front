@@ -99,6 +99,20 @@ export async function fetchArticle(id: number): Promise<ArticleDto> {
   return withTechniqueLabels(await apiGet<RawArticleDto>(`/documentations/${id}`))
 }
 
+/** 文章顯示用的日期（YYYY-MM-DD）：優先用 creation_date，沒有才退回 created_at。 */
+export function displayDate(a: ArticleDto): string {
+  const raw = a.creation_date ?? a.created_at
+  return raw ? raw.slice(0, 10) : '—'
+}
+
+/**
+ * 依顯示日期由新到舊排序（回傳新陣列）。後端 index() 依 title 排序、不是日期，
+ * 文章列表跟內頁的上一篇／下一篇必須用同一個排序，所以放在這裡共用。
+ */
+export function sortArticlesByDateDesc(list: ArticleDto[]): ArticleDto[] {
+  return [...list].sort((a, b) => displayDate(b).localeCompare(displayDate(a)))
+}
+
 export function createArticle(payload: ArticleWritePayload): Promise<ArticleWriteResponse> {
   return apiPost<ArticleWriteResponse>('/documentations', payload)
 }

@@ -24,7 +24,8 @@ function article(id: number, title: string): ArticleDto {
   }
 }
 
-vi.mock('@/api/articles', () => ({
+vi.mock('@/api/articles', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/articles')>()),
   fetchArticlesOrDemo: () =>
     Promise.resolve({ articles: [article(6, '建置工具問答'), article(7, '首頁設計決策')], loadError: null }),
 }))

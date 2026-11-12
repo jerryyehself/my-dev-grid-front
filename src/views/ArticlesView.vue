@@ -9,7 +9,7 @@
 // 只列 status===1（已發布）——草稿不該出現在訪客看得到的清單。
 import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
+import { displayDate, fetchArticlesOrDemo, sortArticlesByDateDesc, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
 import AuthOnly from '@/components/AuthOnly.vue'
 import ArticleEditLink from '@/components/ArticleEditLink.vue'
@@ -33,9 +33,7 @@ async function load() {
     fallbackError.value = error
     // 後端 index() 依 title 排序（DocumentationController），不是日期——
     // 時間軸要照日期分組，這裡一定要自己重排，不能假設 API 順序就是時間序。
-    articles.value = all
-      .filter((a) => a.status === 1)
-      .sort((a, b) => displayDate(b).localeCompare(displayDate(a)))
+    articles.value = sortArticlesByDateDesc(all.filter((a) => a.status === 1))
     ready.value = true
   } catch {
     loadError.value = true
@@ -49,11 +47,6 @@ function tagsOf(a: ArticleDto): string[] {
 
 function summaryOf(a: ArticleDto): string {
   return excerptOf(a.body ?? '')
-}
-
-function displayDate(a: ArticleDto): string {
-  const raw = a.creation_date ?? a.created_at
-  return raw ? raw.slice(0, 10) : '—'
 }
 
 // 每篇文章右上角的「編輯」。所在那一列是 mono 大寫小字，這顆是中文，照 D-68 的中文標籤下限用 13px、
@@ -235,7 +228,7 @@ const folderArticles = computed(() => {
               {{ article.title }}
             </RouterLink>
           </h3>
-          <p class="text-(--text-ink-body) text-[13.5px] leading-relaxed text-left sm:text-justify max-w-[700px]">
+          <p class="text-(--text-ink-body) text-sm leading-relaxed text-left sm:text-justify max-w-[700px]">
             {{ summaryOf(article) }}
           </p>
         </article>

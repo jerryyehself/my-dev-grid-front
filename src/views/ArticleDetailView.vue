@@ -1,8 +1,9 @@
 <template>
   <BaseLoadingBlock v-if="!ready && !loadError" height="320px">載入中…</BaseLoadingBlock>
-  <BaseLoadingBlock v-else-if="loadError || !article" height="320px" tone="error">
-    找不到這篇文章。
-  </BaseLoadingBlock>
+  <div v-else-if="loadError || !article" class="flex flex-col items-start gap-4">
+    <BaseLoadingBlock height="320px" tone="error">找不到這篇文章。</BaseLoadingBlock>
+    <BackToArticlesLink class="inline-flex" />
+  </div>
 
   <div v-else class="w-full">
     <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
@@ -27,7 +28,7 @@
     <div class="border-b border-(--border-shelf) pb-6 mb-8">
       <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-accent) font-bold mb-3">
         <span v-if="tags.length">{{ tags.join(' / ') }}</span>
-        <span class="text-(--text-ink-muted) font-normal opacity-60">{{ displayDate(article) }}</span>
+        <span class="text-(--text-ink-muted) font-normal">{{ displayDate(article) }}</span>
       </div>
 
       <!-- 跟 MainLayout 的頁面標題同一套：--font-serif（Noto Serif TC）900（D-60）。這頁藏了通用表頭、
@@ -76,7 +77,7 @@
       </div>
 
       <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
-      <div class="lg:sticky lg:top-24 flex flex-col gap-8">
+      <div class="lg:sticky flex flex-col gap-8" :style="{ top: `${STICKY_TOP_PX}px` }">
         <div v-if="headings.length">
           <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
             本文結構
@@ -129,7 +130,13 @@
 // 這裡直接不顯示，不假裝有資料可以讀。
 import { computed, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
-import { fetchArticleOrDemo, fetchArticlesOrDemo, type ArticleDto } from '@/api/articles'
+import {
+  displayDate,
+  fetchArticleOrDemo,
+  fetchArticlesOrDemo,
+  sortArticlesByDateDesc,
+  type ArticleDto,
+} from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
 import AuthOnly from '@/components/AuthOnly.vue'
 import BackToArticlesLink from '@/components/BackToArticlesLink.vue'
@@ -137,6 +144,7 @@ import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { extractHeadings } from '@/components/markdown/headings'
+import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { pageTitleOverride } from '@/siteMeta'
 
 const route = useRoute()
@@ -161,7 +169,8 @@ async function load() {
       fetchArticlesOrDemo(),
     ])
     article.value = a
-    publishedList.value = all.filter((item) => item.status === 1)
+    // 排序要跟文章列表一致（日期由新到舊），上一篇／下一篇才對得上列表看到的順序
+    publishedList.value = sortArticlesByDateDesc(all.filter((item) => item.status === 1))
     fallbackError.value = articleError ?? listError
     ready.value = true
   } catch {
@@ -169,11 +178,6 @@ async function load() {
   }
 }
 watch(articleId, load, { immediate: true })
-
-function displayDate(a: ArticleDto): string {
-  const raw = a.creation_date ?? a.created_at
-  return raw ? raw.slice(0, 10) : '—'
-}
 
 const tags = computed(() => {
   if (!article.value) return []
