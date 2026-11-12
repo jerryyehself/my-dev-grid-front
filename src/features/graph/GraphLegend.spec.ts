@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import GraphLegendDots from '@/components/GraphLegendDots.vue'
+import GraphLegendDots from './GraphLegendDots.vue'
 import GraphLegend from './GraphLegend.vue'
 
 describe('GraphLegend', () => {

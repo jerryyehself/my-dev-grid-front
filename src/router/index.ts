@@ -255,7 +255,7 @@ const router = createRouter({
     {
       path: '/graph',
       name: 'graph',
-      component: () => import('@/views/GraphPocView.vue'),
+      component: () => import('@/features/graph/GraphView.vue'),
       meta: {
         tag: 'Knowledge Graph',
         title: '知識圖譜',

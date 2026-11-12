@@ -3,11 +3,11 @@ import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import ForceGraph3D, { type ForceGraph3DInstance, type NodeObject, type LinkObject } from '3d-force-graph'
 import * as THREE from 'three'
-import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from '@/data/graphPocData'
+import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from './graphPocData'
 import { useTheme } from '@/composables/useTheme'
 
 // 註（D-87，2026-10-02）：下面多處寫「見 GraphPoc2D.vue 同樣的說明」——2D 版已經併進
-// components/graph/KnowledgeGraphCanvas.vue（跟首頁共用），GraphPoc2D.vue 已刪除，原本的說明
+// features/graph/KnowledgeGraphCanvas.vue（跟首頁共用），GraphPoc2D.vue 已刪除，原本的說明
 // 可以在 git 歷史裡查到。3D 不在這次範圍內，沒有跟著改寫。
 
 // 800×520 只是行動裝置量不到容器寬度前的保底值，見 GraphPoc2D.vue 同樣的說明。
@@ -197,7 +197,7 @@ onMounted(async () => {
     .width(width)
     .height(FALLBACK_HEIGHT)
     .backgroundColor(css('--canvas-bg'))
-    // 函式庫預設會在畫布角落放一行英文操作說明（Left-click: rotate…），關掉，改用 GraphPocView 圖例列的中文提示
+    // 函式庫預設會在畫布角落放一行英文操作說明（Left-click: rotate…），關掉，改用 GraphView 圖例列的中文提示
     .showNavInfo(false)
     .graphData({ nodes, links })
     .nodeId('id')

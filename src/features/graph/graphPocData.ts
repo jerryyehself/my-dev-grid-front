@@ -1,6 +1,6 @@
 // 知識圖譜技術驗證（POC）的資料層：實際打 GET /api/graph，把後端資料轉成
 // GraphPoc2D/GraphPoc3D 兩個元件原本預期的形狀。D-87 起 2D 改用共用畫布
-// components/graph/KnowledgeGraphCanvas.vue（直接吃 GraphDto），這裡只剩 3D 跟路徑查詢在用；
+// features/graph/KnowledgeGraphCanvas.vue（直接吃 GraphDto），這裡只剩 3D 跟路徑查詢在用；
 // GraphPocSelection 仍是 /graph 詳情卡的共同格式，共用畫布也發這個。
 //
 // 後端 nodes 只有 {id, type, label}，edges 只有 {source, target, predicate, label,
@@ -24,7 +24,7 @@
 //   technique 的 requires/isRequiredBy）永遠是同型別關聯——這純粹是「這條邊來自哪張關聯
 //   表」的邊樣式區分，用來讓連線視覺上有變化，這些邊全部都是「網路」關聯，不是階層。
 // - predicate/label：直接從後端 GraphEdgeDto 原封不動帶過來，relation_id 已經在後端解析
-//   成 Relation 的 name 當 predicate，點連線看關聯定義（見 GraphPocView.vue）用得到，
+//   成 Relation 的 name 當 predicate，點連線看關聯定義（見 GraphView.vue）用得到，
 //   不需要另外查。
 //
 // 2026-09-14 拿掉的東西：曾經另外查 Scope.parent_class 階層算出 clusterId，讓 GraphPoc2D.vue
@@ -59,8 +59,8 @@ export interface GraphPocLink {
 // 點節點/點連線後要顯示的內容——2D/3D 兩個元件各自的力模擬節點/邊物件內部欄位
 // (x/y/z/vx/vy/index...) 不一樣、且 force-graph 系列套件的 link.source/target 在模擬
 // 開始後會被解析成節點物件而不是原本的字串 id，兩邊都不適合直接原封不動 emit 出去給
-// GraphPocView.vue 用。這裡定義一個跟力模擬實作脫鉤的共同格式，兩個元件各自解析完成
-// 再 emit，GraphPocView.vue 只需要認得這一種形狀。
+// GraphView.vue 用。這裡定義一個跟力模擬實作脫鉤的共同格式，兩個元件各自解析完成
+// 再 emit，GraphView.vue 只需要認得這一種形狀。
 export interface GraphPocNodeSelection {
   kind: 'node'
   id: string

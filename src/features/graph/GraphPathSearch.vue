@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { nodeColorVar } from '@/api/ontology'
 import BaseInput from '@/components/BaseInput.vue'
 import { fetchGraphPath, type GraphNodeType, type GraphPathDto } from '@/api/graph'
-import { fetchGraphPocData, type GraphPocNode } from '@/data/graphPocData'
+import { fetchGraphPocData, type GraphPocNode } from './graphPocData'
 
 const emit = defineEmits<{
   // null：起訖點還沒都選好，或選好但查詢中/出錯，畫面上不該還顯示上一次查到的路徑。

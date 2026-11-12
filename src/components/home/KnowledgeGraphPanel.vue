@@ -2,14 +2,14 @@
 import { onMounted, onUnmounted, reactive, ref, shallowRef } from 'vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
-import KnowledgeGraphCanvas from '@/components/graph/KnowledgeGraphCanvas.vue'
+import KnowledgeGraphCanvas from '@/features/graph/KnowledgeGraphCanvas.vue'
 import { RouterLink } from 'vue-router'
 import { fetchGraphOrDemo, type GraphDto } from '@/api/graph'
 
 // 首頁「近期知識網路」：真實 GET /api/graph 資料。畫布本身是共用元件
 // KnowledgeGraphCanvas.vue（D-87，跟 /graph 頁共用；顯示設定、圖例、縮放控制都在畫布元件裡），
 // 這裡只管標題、統計與說明。
-// 三層疊圖排版的沿革見 components/graph/layeredLayout.ts。
+// 三層疊圖排版的沿革見 features/graph/layeredLayout.ts。
 
 const sectionRef = ref<HTMLElement>()
 // 進場動畫：整個 panel 捲入可視範圍才淡入＋輕微上移，而不是頁面一載入就播放——
