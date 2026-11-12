@@ -32,7 +32,7 @@ const router = createRouter({
       meta: {
         tag: 'Home',
         title: 'IN / ARCHIVE',
-        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結',
+        subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
       },
     },
     {
@@ -42,7 +42,7 @@ const router = createRouter({
       meta: {
         tag: 'About',
         title: '私人藏書，公開目錄',
-        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結',
+        subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
         // About 頁自己畫了一個滿版橫幅當作大標題，跟 MainLayout 的通用表頭是同一件事，
         // 兩個都顯示會重複兩次，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
         hideHeader: true,
@@ -56,7 +56,7 @@ const router = createRouter({
       name: 'projects',
       component: () => import('@/features/projects/ProjectsView.vue'),
       meta: {
-        tag: 'Dashboard & Tools',
+        tag: 'Projects',
         title: 'Production Artifacts',
         // mockup 設計是 1120px，比全站預設的 1024px 寬，主從式版面才有足夠的呼吸空間
         contentWidth: '1120px',
@@ -83,7 +83,7 @@ const router = createRouter({
       component: () => import('@/features/articles/ArticlesView.vue'),
       meta: {
         tag: 'Articles',
-        title: 'My Articles',
+        title: 'Articles',
       },
     },
     {
@@ -259,7 +259,7 @@ const router = createRouter({
       meta: {
         tag: 'Knowledge Graph',
         title: '知識圖譜',
-        subtitle: '文件、技術與實作之間的連結，2D 與 3D 兩種檢視',
+        subtitle: '文件、技術與實作之間的關係',
       },
     },
     // 兜底：上面都對不到的網址。一定要放最後（vue-router 依排序權重比對，這條權重最低）

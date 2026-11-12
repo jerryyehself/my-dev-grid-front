@@ -39,7 +39,7 @@ import {
   type LayerTargets,
 } from './layeredLayout'
 
-// 共用的知識圖譜畫布（D-87）：首頁「近期知識網路」與 /graph 頁 2D 圖譜共用同一個元件，
+// 共用的知識圖譜畫布（D-87）：首頁「知識網路」與 /graph 頁 2D 圖譜共用同一個元件，
 // 兩頁的差異用 props 表達，不複製程式碼。從首頁 KnowledgeGraphPanel.vue 抽出來。
 // 純邏輯（推導邊、顏色、三層排版的力、框景、鏡頭換算）放在同目錄的 .ts 模組，附 vitest 單元測試。
 //
@@ -450,7 +450,7 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
         .join('、')
       popover.kind = '間接關聯'
       popover.title = `${String(s)} ↔ ${String(t)}`
-      popover.rows = [`兩邊都連到「${viaLabels}」`, '這是推算出來的，不是直接關係']
+      popover.rows = [`兩邊都連到「${viaLabels}」`]
     } else if (typeof l.source === 'object' && typeof l.target === 'object') {
       // 不顯示英文述詞，也不講成口語句子：跟 /graph 詳情卡同一套簡短標示（D-88，
       // 2026-10-04 使用者選 H 版延伸到首頁），見 graphRelationPhrase.ts 的 edgeRelation
@@ -681,7 +681,7 @@ async function boot() {
         const viaLabels = (l.via ?? [])
           .map((id) => simNodes.find((n) => n.id === id)?.label ?? id)
           .join('、')
-        return `${s} ↔ ${t}：間接關聯，兩邊都連到「${viaLabels}」（推算出來的，不是直接關係）`
+        return `${s} ↔ ${t}：間接關聯，兩邊都連到「${viaLabels}」`
       }
       if (typeof l.source !== 'object' || typeof l.target !== 'object') return ''
       return edgeRelationText(edgeRelation(l.source, l.target, l.predicate))

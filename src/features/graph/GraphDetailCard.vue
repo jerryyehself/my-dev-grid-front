@@ -182,7 +182,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
             </div>
           </dl>
         </template>
-        <p v-else class="mt-1 text-(--text-ink-muted)">還沒有直接關係。</p>
+        <p v-else class="mt-1 text-(--text-ink-muted)">沒有直接關係。</p>
 
         <!-- 間接關聯：只在顯示設定打開「間接關聯」時列出，跟直接關係分開一張表 -->
         <template v-if="indirect">
@@ -190,7 +190,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
             <caption class="text-left pb-1">
               <span class="block text-[13px] tracking-[0.05em] text-(--text-accent)">間接關聯</span>
               <span class="block text-(--text-ink-muted)"
-                >兩邊都連到相同的對象，這是推算出來的，不是直接關係。</span
+                >跟這一項連到相同對象的同類項目。</span
               >
             </caption>
             <colgroup>
@@ -226,7 +226,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
               </tr>
             </tbody>
           </table>
-          <p v-else class="mt-4 text-(--text-ink-muted)">沒有推算出來的間接關聯。</p>
+          <p v-else class="mt-4 text-(--text-ink-muted)">沒有間接關聯。</p>
         </template>
       </template>
     </template>
@@ -270,7 +270,6 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
           </tr>
         </tbody>
       </table>
-      <p class="mt-2 text-(--text-ink-muted)">這是推算出來的，不是直接關係。</p>
     </template>
 
     <!-- ───── 選了直接關係的實線：一行「主詞 類別　動詞 →　受詞 類別」（D-88，畫稿 E2′）───── -->

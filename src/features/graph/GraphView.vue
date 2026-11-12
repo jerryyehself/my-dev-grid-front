@@ -13,6 +13,7 @@ import GraphPathSearch from './GraphPathSearch.vue'
 import GraphPathDiagram from './GraphPathDiagram.vue'
 import type { GraphPocSelection } from './graphPocData'
 import { fetchGraphOrDemo, type GraphDto, type GraphPathDto } from '@/api/graph'
+import { LOADING_GRAPH_TEXT } from '@/copy/common'
 
 const route = useRoute()
 const mode = ref<'2d' | '3d'>(route.query.mode === '3d' ? '3d' : '2d')
@@ -99,7 +100,7 @@ const pathResult = ref<GraphPathDto | null>(null)
     <!-- 2D：跟首頁同一個畫布元件（D-87），差別只在 props：高度、詳情改用下面的卡片、路徑高亮。
          排版：首頁的三層疊圖或自由排版，見 layout 的說明與 D-87 報告的比較截圖 -->
     <template v-if="mode === '2d'">
-      <BaseLoadingBlock v-if="!graphData" height="520px">圖譜載入中…</BaseLoadingBlock>
+      <BaseLoadingBlock v-if="!graphData" height="520px">{{ LOADING_GRAPH_TEXT }}</BaseLoadingBlock>
       <KnowledgeGraphCanvas
         v-else
         ref="canvas"
@@ -130,9 +131,7 @@ const pathResult = ref<GraphPathDto | null>(null)
       <span class="flex items-center gap-1.5"
         ><span class="w-4 h-0 border-t border-(--edge-real)"></span>直接關係</span
       >
-      <span class="ml-auto"
-        >點節點看內容・點連線看是什麼關係・左鍵拖曳旋轉・滾輪縮放・右鍵平移</span
-      >
+      <span class="ml-auto">左鍵拖曳旋轉・滾輪縮放・右鍵平移</span>
     </div>
 
     <!-- 點節點/點連線的詳情面板——GraphPocSelection 是共同格式（見 graphPocData.ts），

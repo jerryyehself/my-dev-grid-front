@@ -112,7 +112,6 @@ onMounted(async () => {
   <div class="flex flex-col gap-2">
     <div class="flex flex-col gap-1">
       <div class="eyebrow text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">路徑查詢</div>
-      <p class="text-sm text-(--text-ink-body)">輸入起點與終點，找出兩者之間經過哪些節點與關係。</p>
     </div>
 
     <div v-if="loadError" class="text-sm text-(--text-error)">{{ loadError }}</div>
@@ -152,7 +151,7 @@ onMounted(async () => {
           </svg>
           <BaseInput
             v-model="startQuery"
-            placeholder="輸入節點名稱..."
+            placeholder="輸入名稱…"
             class="w-full !rounded-[10px] py-[9px] pl-9 pr-3 text-[13px]"
             @focus="startOpen = true"
             @blur="startOpen = false"
@@ -192,7 +191,6 @@ onMounted(async () => {
                 <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
               </div>
             </div>
-            <div class="px-3 py-1.5 text-[12px] text-(--text-ink-muted) opacity-70">輸入文字可縮小範圍</div>
           </template>
         </div>
       </div>
@@ -245,7 +243,7 @@ onMounted(async () => {
           </svg>
           <BaseInput
             v-model="endQuery"
-            placeholder="輸入節點名稱..."
+            placeholder="輸入名稱…"
             class="w-full !rounded-[10px] py-[9px] pl-9 pr-3 text-[13px]"
             @focus="endOpen = true"
             @blur="endOpen = false"
@@ -285,7 +283,6 @@ onMounted(async () => {
                 <span class="text-[13px] text-(--text-ink-main)">{{ n.label }}</span>
               </div>
             </div>
-            <div class="px-3 py-1.5 text-[12px] text-(--text-ink-muted) opacity-70">輸入文字可縮小範圍</div>
           </template>
         </div>
       </div>

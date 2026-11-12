@@ -5,6 +5,7 @@ import BaseTag from '@/components/BaseTag.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import { fetchProjectsOrDemo, type Project } from '@/api/projects'
 import { fetchArticles, type ArticleDto } from '@/api/articles'
+import { ARTICLES_EMPTY_TEXT, LOADING_PROJECTS_TEXT, PROJECTS_EMPTY_TEXT } from '@/copy/common'
 
 // 首頁「近況板」：左欄「近期專案」用真實 fetchProjectsOrDemo() 資料（跟 KnowledgeGraphPanel
 // 同一套「正常打 API、載入失敗才退回存好的快照＋顯示錯誤訊息」誠實 fallback），右欄「近期文章」
@@ -62,22 +63,17 @@ onMounted(async () => {
 
 <template>
   <section class="w-full">
-    <div class="flex items-center justify-between gap-3 mb-2">
-      <h2 class="text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">近況板</h2>
-    </div>
-    <p class="text-sm text-(--text-ink-body) mb-4">GitHub 上的公開專案，以及最近發布的文章。</p>
-
     <div class="grid grid-cols-1 md:grid-cols-[1.3fr_1fr] gap-6 items-start">
       <!-- 左欄：近期專案（真實 maintain_status，tiered accent/muted tag） -->
       <div>
         <h3
           class="flex items-center gap-1.5 text-[13px] font-bold tracking-[0.05em] text-(--text-ink-muted) mb-2.5"
         >
-          <span>近期專案</span>
+          <span>專案</span>
         </h3>
 
         <div v-if="projectsLoading" class="h-[140px] flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
-          專案載入中…
+          {{ LOADING_PROJECTS_TEXT }}
         </div>
 
         <!-- 固定高度＋內部捲動：清單一長「近況板」本身就會被撐得很長，跟 /projects
@@ -99,7 +95,7 @@ onMounted(async () => {
             <BaseTag v-if="p.status" :tone="tagTone(p.statusType)" class="shrink-0">{{ p.status }}</BaseTag>
           </RouterLink>
           <p v-if="!projects.length" class="px-[18px] py-4 text-[14px] text-(--text-ink-muted)">
-            目前沒有可顯示的專案。
+            {{ PROJECTS_EMPTY_TEXT }}
           </p>
         </div>
 
@@ -132,7 +128,7 @@ onMounted(async () => {
             <div class="text-[14px] leading-snug text-(--text-ink-body)">{{ a.title }}</div>
           </RouterLink>
           <p v-if="!articlesLoading && !recentArticles.length" class="px-[18px] py-4 text-[14px] text-(--text-ink-muted)">
-            目前沒有已發布的文章。
+            {{ ARTICLES_EMPTY_TEXT }}
           </p>
         </div>
 
