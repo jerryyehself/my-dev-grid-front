@@ -30,6 +30,26 @@ describe('router：/admin', () => {
   })
 })
 
+// /articles/import 是匯入文章頁：跟 /articles/manage 一樣要登入，也不能被 /articles/:id 搶走
+describe('router：/articles/import', () => {
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    await router.push('/about')
+  })
+
+  it('它應該解析到 article-import 並標上 requiresAuth，不被 /articles/:id 搶走', () => {
+    const resolved = router.resolve('/articles/import')
+    expect(resolved.name).toBe('article-import')
+    expect(resolved.meta.requiresAuth).toBe(true)
+  })
+
+  it('它應該在沒登入時導去登入頁，redirect 帶回 /articles/import', async () => {
+    await router.push('/articles/import')
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe('/articles/import')
+  })
+})
+
 // 後端 OAuth 失敗導回 `/?auth_error=…`，前端要轉去登入頁說明原因（2026-10-03 使用者回報畫面沒反應）
 describe('router：auth_error', () => {
   beforeEach(async () => {

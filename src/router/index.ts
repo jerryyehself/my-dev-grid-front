@@ -104,6 +104,20 @@ const router = createRouter({
       },
     },
     {
+      // 從文章來源 repo 匯入。排在 /articles/:id 前面，理由同 /articles/manage。
+      // 跟文章管理頁一樣自己畫表頭，要登入（後端兩支 API 也都要登入）。
+      path: '/articles/import',
+      name: 'article-import',
+      component: () => import('@/features/article-import/ArticleImportView.vue'),
+      meta: {
+        tag: 'Import Articles',
+        title: '匯入文章',
+        subtitle: '從文章來源匯入',
+        hideHeader: true,
+        requiresAuth: true,
+      },
+    },
+    {
       // 排在 /articles/:id 前面，跟 /articles/manage 同一個理由：靜態片段
       // 本來就排在動態片段之前，但排在前面才讀得出「new 不是某篇文章的 id」。
       // 跟編輯頁共用同一個元件（ArticleEditorView 用 route.params.id 有沒有
