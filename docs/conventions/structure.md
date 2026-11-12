@@ -36,6 +36,7 @@ src/features/graph/
 
 - 不要 import 另一個功能資料夾裡的檔案。兩個功能都需要的東西，搬到上表的共用位置。
 - 共用位置的檔案不能 import `src/features/` 裡的東西（共用的不能依賴特定功能）。
+- 例外：還沒搬進功能資料夾的頁面或其專屬元件（例如首頁的 `src/components/home/KnowledgeGraphPanel.vue`），在它自己被搬進 `src/features/` 之前，可以先 import 已搬好的功能。
 
 ## 舊功能怎麼搬
 
