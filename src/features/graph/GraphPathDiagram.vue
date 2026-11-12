@@ -23,8 +23,17 @@ const layout = computed(() => {
   return { width, height: 90, stations }
 })
 
-// 段落標籤：跟詳情卡、首頁彈窗同一套中文動詞（edgeRelation）。動詞的主詞由兩端類別決定，
-// 不一定是這段路線上的前一站，所以箭頭跟著主詞指向：主詞在前一站畫 ▸，在後一站畫 ◂。
+// 段落標籤：跟詳情卡、首頁彈窗同一套中文動詞（edgeRelation）。箭頭一律指向路線走的方向（▸），
+// 跟畫布上邊的箭頭方向一致。動詞的主詞由兩端類別決定，不一定是這段路線上的前一站：
+// 主詞在後一站時改用被動說法，讓「前一站 ＋ 標籤 ＋ 後一站」讀起來仍是對的。
+// 相關沒有主被動之分；版本的主詞永遠是版本那一端，從主技術走向版本時說「有版本」。
+const PASSIVE_VERB: Record<string, string> = {
+  使用: '被使用',
+  說明: '被說明',
+  記錄: '被記錄',
+  需要: '被需要',
+  版本: '有版本',
+}
 function segmentLabel(i: number): string {
   const edge = props.path?.edges[i]
   const nodes = props.path?.nodes ?? []
@@ -35,7 +44,8 @@ function segmentLabel(i: number): string {
   const to = { domainType: target.type, label: target.label }
   const r = edgeRelation(from, to, edge.predicate)
   const subjectId = r.subject === from ? source.id : target.id
-  return subjectId === nodes[i]?.id ? `${r.verb} ▸` : `◂ ${r.verb}`
+  if (subjectId === nodes[i]?.id) return `${r.verb} ▸`
+  return `${PASSIVE_VERB[r.verb] ?? r.verb} ▸`
 }
 </script>
 

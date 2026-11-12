@@ -30,9 +30,51 @@ describe('GraphPathDiagram', () => {
     const text = wrapper.text()
 
     expect(text).toContain('說明 ▸')
-    // 技術→實作這段的主詞是實作（實作使用技術），箭頭要指回前一站
-    expect(text).toContain('◂ 使用')
+    // 技術→實作這段的主詞是實作（實作使用技術）：箭頭仍順著路線方向，動詞改被動
+    expect(text).toContain('被使用 ▸')
+    expect(text).not.toContain('◂')
     expect(text).not.toMatch(/SPECS|USEDBY|USES/)
+  })
+
+  it('它應該一律讓箭頭順著路線方向，主詞在後一站時改用被動動詞', () => {
+    const doc = node('documentation-1', 'documentation', 'Vue 官方文件')
+    const tech = node('technique-1', 'technique', 'Vue')
+    const impl = node('implementation-1', 'implementation', 'my-dev-grid')
+    const req = node('technique-2', 'technique', 'Vite')
+    const labels = (nodes: ReturnType<typeof node>[], edges: ReturnType<typeof edge>[]) => {
+      const text = render({ found: true, nodes, edges }).text()
+      expect(text).not.toContain('◂')
+      return text
+    }
+
+    // 主詞在前一站：主動
+    expect(labels([doc, tech], [edge('documentation-1', 'technique-1', 'specs')])).toContain('說明 ▸')
+    expect(labels([impl, tech], [edge('implementation-1', 'technique-1', 'uses')])).toContain('使用 ▸')
+    // 主詞在後一站：被動，即使邊本身的方向是反的
+    expect(labels([tech, doc], [edge('documentation-1', 'technique-1', 'specs')])).toContain('被說明 ▸')
+    expect(labels([tech, doc], [edge('technique-1', 'documentation-1', 'specifiedBy')])).toContain('被說明 ▸')
+    expect(labels([impl, doc], [edge('documentation-1', 'implementation-1', 'documents')])).toContain('被記錄 ▸')
+    expect(labels([doc, impl], [edge('documentation-1', 'implementation-1', 'documents')])).toContain('記錄 ▸')
+    // 同類：需要
+    expect(labels([req, tech], [edge('technique-1', 'technique-2', 'requires')])).toContain('被需要 ▸')
+    expect(labels([tech, req], [edge('technique-1', 'technique-2', 'requires')])).toContain('需要 ▸')
+    // 版本的主詞是版本那一端
+    const v3 = node('technique-3', 'technique', 'Vue 3')
+    expect(labels([v3, tech], [edge('technique-3', 'technique-1', 'isVersionOf')])).toContain('版本 ▸')
+    expect(labels([tech, v3], [edge('technique-3', 'technique-1', 'isVersionOf')])).toContain('有版本 ▸')
+    expect(labels([tech, v3], [edge('technique-1', 'technique-3', 'hasVersion')])).toContain('有版本 ▸')
+  })
+
+  it('它應該讓相關不分主被動，兩個方向都標「相關 ▸」', () => {
+    const a = node('technique-1', 'technique', 'Vue')
+    const b = node('technique-2', 'technique', 'Vite')
+    const e = [edge('technique-1', 'technique-2', null)]
+    const forward = render({ found: true, nodes: [a, b], edges: e }).text()
+    const backward = render({ found: true, nodes: [b, a], edges: e }).text()
+
+    expect(forward).toContain('相關 ▸')
+    expect(backward).toContain('相關 ▸')
+    expect(backward).not.toContain('被相關')
   })
 
   it('它應該讓沒有述詞的同類關係標「相關」，不顯示「未命名」', () => {
