@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import GraphLegendDots from '@/components/GraphLegendDots.vue'
+import GraphLegendDots from './GraphLegendDots.vue'
 import { VIRIDIS_STOPS } from './colorScale'
 
 // 圖譜畫布上方的一列圖例（D-87）：顏色對類別（或時間色階）、實線對直接關係，間接關聯打開時

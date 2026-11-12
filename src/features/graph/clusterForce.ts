@@ -8,7 +8,7 @@ import type { GraphNodeType } from '@/api/graph'
 // 每個類別內所有節點受到的拉力加總為零（各自朝重心、重心本身不動），所以這股力不會讓整張圖
 // 漂移，只改變類別內部的鬆緊。
 //
-// 2026-09-14 拿掉過一次「依 Scope 分區」的力（見 data/graphPocData.ts 檔頭）：那個是強力分區，
+// 2026-09-14 拿掉過一次「依 Scope 分區」的力（見 features/graph/graphPocData.ts 檔頭）：那個是強力分區，
 // 跟真實關係互相拉扯，結果更亂。這裡刻意很弱，只當「同類略微成團」的提示，數值調校見元件。
 
 interface ClusterNode {

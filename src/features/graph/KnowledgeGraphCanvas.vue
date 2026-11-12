@@ -5,9 +5,9 @@ import ForceGraph from 'force-graph'
 import { forceCollide, forceX, forceY } from 'd3-force'
 import { articleIdOfGraphNode, graphNodeLink, type GraphNodeLink } from '@/components/graphNodeLink'
 import ArticleEditLink from '@/components/ArticleEditLink.vue'
-import { edgeRelation, edgeRelationText, type EdgeRelation } from '@/components/graphRelationPhrase'
+import { edgeRelation, edgeRelationText, type EdgeRelation } from './graphRelationPhrase'
 import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
-import type { GraphPocSelection } from '@/data/graphPocData'
+import type { GraphPocSelection } from './graphPocData'
 import { useTheme } from '@/composables/useTheme'
 import { TYPE_LABEL, endpointId, type SimLink, type SimNode } from './graphTypes'
 import { recencyScore, viridis, withAlpha } from './colorScale'
@@ -1026,7 +1026,7 @@ function clearSelection() {
   forceRedraw()
 }
 
-// 轉成 /graph 詳情卡認得的共同格式（data/graphPocData.ts）
+// 轉成 /graph 詳情卡認得的共同格式（features/graph/graphPocData.ts）
 let maxDegree = 1
 function nodeSelection(n: SimNode): GraphPocSelection {
   return {

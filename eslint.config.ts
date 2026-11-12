@@ -107,7 +107,7 @@ export default defineConfigWithVueTs(
     files: ['**/*.spec.ts'],
     ignores: [
       // 舊檔還沒改成「它應該」句型；改到某個檔案時順手改標題，並把它移出清單。新檔一律要符合。
-      'src/components/graph/GraphShortcutsHelp.spec.ts',
+      'src/features/graph/GraphShortcutsHelp.spec.ts',
       'src/components/markdown/MarkdownBody.spec.ts',
       'src/components/markdown/safeLink.spec.ts',
     ],

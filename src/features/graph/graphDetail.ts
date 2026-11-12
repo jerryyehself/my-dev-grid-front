@@ -1,6 +1,6 @@
 import type { GraphDto, GraphNodeType } from '@/api/graph'
-import type { GraphPocNodeSelection } from '@/data/graphPocData'
-import { HAS_VERSION, VERSION_OF, relationFromNode } from '@/components/graphRelationPhrase'
+import type { GraphPocNodeSelection } from './graphPocData'
+import { HAS_VERSION, VERSION_OF, relationFromNode } from './graphRelationPhrase'
 import { computeDerivedEdges } from './derivedEdges'
 
 // /graph 詳情卡的表格資料（點節點／連線之後「連到誰、什麼關係」）。純邏輯，不碰畫布，

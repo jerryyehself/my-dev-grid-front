@@ -3,8 +3,8 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import ArticleEditLink from '@/components/ArticleEditLink.vue'
 import { articleIdOfGraphNode, graphNodeLink } from '@/components/graphNodeLink'
-import { edgeRelation } from '@/components/graphRelationPhrase'
-import type { GraphPocSelection } from '@/data/graphPocData'
+import { edgeRelation } from './graphRelationPhrase'
+import type { GraphPocSelection } from './graphPocData'
 import {
   detailNodeOf,
   indirectRelationsOf,
@@ -16,7 +16,7 @@ import { TYPE_LABEL } from './graphTypes'
 
 // /graph 點節點／點連線之後的詳情卡（2D、3D 共用同一張）。內容排成表格：選了節點就列出它的
 // 直接關係（依關係分組），選了連線就列起點／關係／終點。表格裡的節點名稱都是按鈕，按了改選那個
-// 節點（2D 畫布也跟著固定選取，見 GraphPocView）。
+// 節點（2D 畫布也跟著固定選取，見 GraphView）。
 // 關係的說法一律走 graphRelationPhrase.ts（看兩端類別，不顯示英文述詞，D-73）。
 const props = defineProps<{
   selected: GraphPocSelection
