@@ -105,7 +105,7 @@ function render(node: MdNode): VNode[] {
       return [
         h(
           'code',
-          { class: 'font-mono text-[13px] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5' },
+          { class: 'font-mono text-[13px] [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5' },
           node.value ?? '',
         ),
       ]

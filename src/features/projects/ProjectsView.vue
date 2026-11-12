@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseButton from '@/components/BaseButton.vue'
+import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { fetchProjects, type Project } from '@/api/projects'
 import ProjectsDetail from './ProjectsDetail.vue'
 import ProjectsListPanel from './ProjectsListPanel.vue'
@@ -42,9 +43,8 @@ const selectedId = ref(linkedId)
 const selected = computed(() => filteredProjects.value.find((p) => p.id === selectedId.value))
 
 const isDesktop = useIsDesktop()
-// 桌機版詳情頂端要停的位置：跟左欄面板 sticky 的 top 一樣（見 ProjectsListPanel），
-// 導覽列、捲動追蹤列底下再留 16px
-const DETAIL_SCROLL_TOP = 125
+// 桌機版詳情頂端要停的位置：跟左欄面板 sticky 的 top 一樣（見 ProjectsListPanel）
+const DETAIL_SCROLL_TOP = STICKY_TOP_PX
 const detail = ref<InstanceType<typeof ProjectsDetail>>()
 const pick = async (id: string) => {
   selectedId.value = id

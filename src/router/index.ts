@@ -130,7 +130,6 @@ const router = createRouter({
         // 標題跟捲動追蹤列閃一下；留空時分頁標題退回站名。tag 是固定值，直接寫在這
         tag: 'ARTICLES',
         title: '',
-        subtitle: '深入閱讀',
         hideHeader: true,
       },
     },
