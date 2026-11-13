@@ -31,6 +31,7 @@ const PASSIVE_VERB: Record<string, string> = {
   使用: '被使用',
   說明: '被說明',
   記錄: '被記錄',
+  談到: '被談到',
   需要: '被需要',
   版本: '有版本',
 }
