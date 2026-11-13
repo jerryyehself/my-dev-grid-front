@@ -46,6 +46,7 @@ import {
 } from '@/api/ontology'
 
 const NOTE_LIMIT = 255
+const REVERSE_CLEAR_CONFIRM = '這會移除目前的反向配對，兩邊的述詞都會變成沒有反向。確定要儲存嗎？'
 
 const route = useRoute()
 const router = useRouter()
@@ -219,8 +220,17 @@ const canSave = computed(
     !(hasReverse.value && selectedReverseId.value === null),
 )
 
+/**
+ * 編輯時原本有反向、這次送出卻是 null(取消勾選，或原本的反向已被刪除而表單放掉了它)。
+ * 只改註釋也算：看的是送出的值，不是使用者動了哪個欄位。
+ */
+const clearsReverse = computed(
+  () => isEditing.value && existing.value?.reverse_id != null && selectedReverseId.value === null,
+)
+
 async function save() {
   if (!canSave.value) return
+  if (clearsReverse.value && !window.confirm(REVERSE_CLEAR_CONFIRM)) return
   saving.value = true
   fieldErrors.value = {}
   saveError.value = ''
