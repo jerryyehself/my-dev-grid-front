@@ -91,7 +91,7 @@ const router = createRouter({
       // 順序不影響比對結果，但排在前面才讀得出「manage 不是某篇文章的 id」
       path: '/articles/manage',
       name: 'article-manage',
-      component: () => import('@/views/ArticleManageView.vue'),
+      component: () => import('@/features/articles/ArticleManageView.vue'),
       meta: {
         tag: 'Manage Articles',
         title: '文章管理',
@@ -124,7 +124,7 @@ const router = createRouter({
       // 值判斷新增／編輯），比照 /ontology/scopes/new 已經在用的模式。
       path: '/articles/new',
       name: 'article-new',
-      component: () => import('@/views/ArticleEditorView.vue'),
+      component: () => import('@/features/articles/ArticleEditorView.vue'),
       meta: {
         tag: 'Article Editor',
         title: '新增文章',
@@ -152,7 +152,7 @@ const router = createRouter({
     {
       path: '/articles/:id/edit',
       name: 'article-editor',
-      component: () => import('@/views/ArticleEditorView.vue'),
+      component: () => import('@/features/articles/ArticleEditorView.vue'),
       meta: {
         tag: 'Article Editor',
         title: '編輯文章',
