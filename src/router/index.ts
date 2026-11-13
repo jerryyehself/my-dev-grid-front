@@ -145,6 +145,8 @@ const router = createRouter({
         tag: 'ARTICLES',
         title: '',
         hideHeader: true,
+        // 註腳邊注要在正文右邊留一欄（≥1240px 時再加左欄目錄），1024px 放不下，欄寬的算法見 ArticleDetailView
+        contentWidth: '1216px',
       },
     },
     {

@@ -39,9 +39,70 @@
       </h1>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-10 items-start">
+    <!-- 版面（註腳邊注，見 MarkdownBody 的 sidenotes）：
+         ≥1240px 三欄——目錄在左（188px）、正文、正文右邊留給邊注；
+         1000–1239px 正文單欄，邊注仍貼在正文右邊，目錄收成正文上方的一塊（<details>）；
+         <1000px 邊注改成點編號展開，版面同上。目錄從右欄搬到左欄，是因為右邊要讓給邊注。
+         DOM 順序要等於畫面順序（鍵盤焦點順序、螢幕閱讀器的閱讀順序，WCAG 2.4.3／1.3.2）：
+         左欄（目錄、相關專案）在正文前面，所以不用 order 把它換到左邊；
+         較窄時左欄整個隱藏，相關專案改在正文後面另外畫一份（兩份用 CSS 二選一，隱藏的那份不進無障礙樹） -->
+    <div class="grid grid-cols-1 min-[1240px]:grid-cols-[188px_minmax(0,1fr)] gap-10 items-start">
+      <!-- 左欄：跟正文分開卻仍在視野內，不打斷閱讀主線。只在 ≥1240px 顯示；
+           更窄時目錄已經收進正文上方，相關專案在正文後面。 -->
+      <div
+        class="max-[1240px]:hidden min-[1240px]:sticky flex flex-col gap-8"
+        :style="{ top: `${STICKY_TOP_PX}px` }"
+      >
+        <div v-if="headings.length">
+          <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
+            本文結構
+          </div>
+          <!-- slug 從 extractHeadings 來，跟 MarkdownBody 渲染標題時用的是同一份，
+               所以目錄的 href 一定對得上內文的 id。兩邊各自算 slug 會漂移，
+               而漂移的症狀是「點了沒反應」，不會有任何錯誤訊息 -->
+          <ol class="flex flex-col gap-2 border-l border-(--border-shelf) pl-3.5">
+            <li v-for="heading in headings" :key="heading.slug">
+              <a
+                :href="`#${heading.slug}`"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
+              >
+                {{ heading.text }}
+              </a>
+            </li>
+          </ol>
+        </div>
+
+        <ArticleRelatedProjects v-if="article.implementations.length" :projects="article.implementations" />
+      </div>
+
       <div class="max-w-prose">
-        <MarkdownBody :source="article.body ?? ''" />
+        <details
+          v-if="headings.length"
+          class="group min-[1240px]:hidden mb-6 rounded-[6px] border border-(--border-shelf) bg-(--bg-folder)"
+        >
+          <summary
+            class="flex items-center justify-between gap-2 min-h-11 px-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-sm font-bold text-(--text-ink-main) rounded-[6px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+          >
+            本文結構（{{ headings.length }} 節）
+            <svg class="transition-transform duration-100 group-open:rotate-90" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 2l4 4-4 4" />
+            </svg>
+          </summary>
+          <ol class="flex flex-col gap-2 px-4 pb-3">
+            <li v-for="heading in headings" :key="heading.slug">
+              <a
+                :href="`#${heading.slug}`"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
+              >
+                {{ heading.text }}
+              </a>
+            </li>
+          </ol>
+        </details>
+
+        <MarkdownBody :source="article.body ?? ''" sidenotes />
 
         <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
           <router-link
@@ -72,43 +133,12 @@
         </div>
       </div>
 
-      <!-- 邊注欄：跟正文分開卻仍在視野內，不打斷閱讀主線 -->
-      <div class="lg:sticky flex flex-col gap-8" :style="{ top: `${STICKY_TOP_PX}px` }">
-        <div v-if="headings.length">
-          <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
-            本文結構
-          </div>
-          <!-- slug 從 extractHeadings 來，跟 MarkdownBody 渲染標題時用的是同一份，
-               所以目錄的 href 一定對得上內文的 id。兩邊各自算 slug 會漂移，
-               而漂移的症狀是「點了沒反應」，不會有任何錯誤訊息 -->
-          <ol class="flex flex-col gap-2 border-l border-(--border-shelf) pl-3.5">
-            <li v-for="heading in headings" :key="heading.slug">
-              <a
-                :href="`#${heading.slug}`"
-                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
-                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
-              >
-                {{ heading.text }}
-              </a>
-            </li>
-          </ol>
-        </div>
-
-        <div v-if="article.implementations.length">
-          <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
-            Related Projects
-          </div>
-          <div class="flex flex-col gap-2">
-            <span
-              v-for="project in article.implementations"
-              :key="project.id"
-              class="inline-block rounded-full border border-(--border-shelf) px-3 py-1.5 text-sm text-(--text-ink-body) w-fit"
-            >
-              {{ project.title }}
-            </span>
-          </div>
-        </div>
-      </div>
+      <!-- 較窄（<1240px）時的相關專案：在正文後面。≥1240px 的那份在左欄 -->
+      <ArticleRelatedProjects
+        v-if="article.implementations.length"
+        :projects="article.implementations"
+        class="min-[1240px]:hidden"
+      />
     </div>
   </div>
 </template>
@@ -134,6 +164,7 @@ import {
   type ArticleDto,
 } from '@/api/articles'
 import AuthOnly from '@/components/AuthOnly.vue'
+import ArticleRelatedProjects from './ArticleRelatedProjects.vue'
 import BackToArticlesLink from './BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
