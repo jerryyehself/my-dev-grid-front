@@ -806,10 +806,13 @@ describe('MarkdownBody', () => {
       it('它應該在環境不認得 :focus-visible（matches 拋錯）時，視為鍵盤聚焦照常標亮', async () => {
         const w = await mountWide('句子[^1]。')
         const marker = markers(w)[0]!
-        vi.spyOn(marker.element, 'matches').mockImplementation(() => {
+        const matches = vi.spyOn(marker.element, 'matches').mockImplementation(() => {
           throw new DOMException('not a valid selector', 'SyntaxError')
         })
-        await focusEl(w, marker.element)
+        // 不用 focusEl：它會重設 matches，拋錯的版本就被蓋掉了
+        ;(marker.element as HTMLElement).focus()
+        await w.vm.$nextTick()
+        expect(matches).toHaveBeenCalledWith(':focus-visible')
         expect(lit(w, 0)).toBe(true)
         w.unmount()
       })
