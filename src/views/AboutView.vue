@@ -29,7 +29,7 @@
         <p
           class="mt-5 lg:mt-7 mb-0 max-w-[620px] text-[17px] lg:text-[19px] leading-[1.7] text-(--text-on-band)"
         >
-          文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結
+          文章、技術與專案的目錄，條目之間以雙向關係連結
         </p>
       </div>
     </header>
@@ -39,15 +39,15 @@
       <div :class="[WRAP, 'grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-10 items-start']">
         <div class="lg:col-span-6 flex flex-col gap-4">
           <div :class="[KICKER, 'text-(--text-accent)']">SCOPE</div>
-          <h2 :class="H2">文章、技術、專案<br />一份可查詢的目錄</h2>
+          <h2 :class="H2">收錄範圍</h2>
           <p class="mt-5 mb-0 text-[18px] leading-[1.75] text-(--text-ink-main)">
-            只收我自己寫過的文章、用過的技術、做過的專案。
+            收錄自己寫的文章、用過的技術、做過的專案，以及這些技術的官方文件。
           </p>
           <p class="m-0 text-[16px] leading-[1.75] text-(--text-ink-body)">
-            每一筆都跟相關的其他筆連起來，整個目錄就是一張可以點著走的圖。
+            條目之間以關係相連，整份目錄可以當成一張圖瀏覽。
           </p>
           <p class="m-0 text-[16px] leading-[1.75] text-(--text-ink-body)">
-            這套分類和雙向關係，來自我的圖書資訊學背景，跟圖書館編目錄是同一套想法。
+            分類與雙向關係沿用圖書館編目的做法。
           </p>
         </div>
         <figure class="lg:col-start-8 lg:col-span-5 m-0 lg:mt-2">
@@ -72,7 +72,7 @@
           <p
             class="lg:col-start-7 lg:col-span-6 m-0 lg:mt-[34px] text-[17px] lg:text-[18px] leading-[1.75] text-(--text-ink-main)"
           >
-            每篇文章、每項技術、每個專案都收在目錄裡，彼此的關係也一筆一筆記下來，而且兩頭都算數：從一篇文章，能找到它說明的技術；從一項技術，也能反查說明它的文章，和用到它的專案。
+            關係兩頭都查得到：從一份文件，能找到它說明的技術；從一項技術，也能反查說明它的文件和使用它的專案。
           </p>
         </div>
 
@@ -98,7 +98,7 @@
           </div>
 
           <div class="min-h-[224px] flex flex-col justify-center">
-            <!-- 從文章看：文件 —說明→ 技術 -->
+            <!-- 從文件看：文件 —說明→ 技術 -->
             <div
               v-if="dir === 'forward'"
               class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-[3fr_5fr_3fr] sm:gap-x-7 sm:items-end"
@@ -107,7 +107,7 @@
                 :code="CLASSES.doc.code"
                 :label="CLASSES.doc.name"
                 :fill="CLASSES.doc.fill"
-                title="這篇文章"
+                title="Vue 官方文件"
                 focus
               />
               <RelationArrow label="說明" predicate="specs" />
@@ -115,7 +115,7 @@
                 :code="CLASSES.tech.code"
                 :label="CLASSES.tech.name"
                 :fill="CLASSES.tech.fill"
-                title="Vue 3"
+                title="Vue"
                 end
               />
             </div>
@@ -130,7 +130,7 @@
                   :code="CLASSES.tech.code"
                   :label="CLASSES.tech.name"
                   :fill="CLASSES.tech.fill"
-                  title="Vue 3"
+                  title="Vue"
                   focus
                 />
               </div>
@@ -139,17 +139,17 @@
                 :code="CLASSES.doc.code"
                 :label="CLASSES.doc.name"
                 :fill="CLASSES.doc.fill"
-                title="這篇文章"
+                title="Vue 官方文件"
                 end
               />
-              <!-- 手機直排時兩支箭頭上下疊，第二支看起來像從「這篇文章」出發（模擬讀者審查 2026-10-01），
-                   所以手機版在「被使用」前面再放一次 Vue 3；桌機版 Vue 3 跨兩列，兩支箭頭共用同一個起點 -->
+              <!-- 手機直排時兩支箭頭上下疊，第二支看起來像從「Vue 官方文件」出發（模擬讀者審查 2026-10-01），
+                   所以手機版在「被使用」前面再放一次 Vue；桌機版 Vue 跨兩列，兩支箭頭共用同一個起點 -->
               <div class="sm:hidden mt-3">
                 <EntryChip
                   :code="CLASSES.tech.code"
                   :label="CLASSES.tech.name"
                   :fill="CLASSES.tech.fill"
-                  title="Vue 3"
+                  title="Vue"
                   focus
                 />
               </div>
@@ -283,9 +283,6 @@
           class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pt-8 border-t"
           :style="{ borderColor: mix('--text-on-band', 18) }"
         >
-          <span class="text-[16px] text-(--text-on-band)">
-            每條關係都有反方向：文件「說明」技術，反過來就是技術「被說明」。實際的每一筆資料和連結，在知識圖譜裡看。
-          </span>
           <router-link
             to="/graph"
             :class="[
@@ -299,12 +296,12 @@
       </div>
     </section>
 
-    <!-- ⑤ COLOPHON：誰做了什麼。系統設計拆兩半：畫面是 Claude 的，架構與規則是我的 -->
+    <!-- ⑤ COLOPHON：誰做了什麼。系統設計拆兩半：畫面是 Claude 的，架構與規則由人決定 -->
     <section class="bg-(--bg-paper-light) pt-16 pb-16 lg:pt-[104px] lg:pb-[112px]">
       <div :class="[WRAP, 'flex flex-col gap-10 lg:gap-14']">
         <div class="flex flex-col gap-4">
           <div :class="[KICKER, 'text-(--text-accent)']">COLOPHON</div>
-          <h2 :class="H2">程式和畫面多半出自 AI<br />架構和規則由我決定</h2>
+          <h2 :class="H2">程式和畫面多半由 AI 產出<br />架構和規則由人決定</h2>
         </div>
 
         <!-- 分隔線設計稿是藏青 #162541；用 --text-ink-main（淺色 #202839）是為了深色主題下還看得到 -->
@@ -321,10 +318,6 @@
               :items="HUMAN_ROLES"
               class="text-[18px] leading-[1.8] text-(--text-ink-main)"
             />
-            <p class="m-0 text-[16px] leading-[1.75] text-(--text-ink-body)">
-              這些由我決定：資料怎麼建模、系統怎麼分層、AI
-              之間怎麼分工和交接、成果用什麼規則審核，最後由我驗收。
-            </p>
           </div>
 
           <div class="lg:col-start-6 lg:col-span-7 flex flex-col gap-[18px]">
@@ -338,7 +331,7 @@
                 AI
               </div>
               <div class="text-[16px] leading-[1.6] text-(--text-ink-body)">
-                程式和畫面主要由 Claude 做，另外有兩組 plugin 輔助：
+                程式和畫面主要由 Claude 產出：
               </div>
             </div>
 
@@ -346,42 +339,14 @@
               class="rounded-[4px] bg-(--bg-paper-light) px-[22px] pt-5 pb-[22px] flex flex-col gap-2"
               :style="{ boxShadow: shadow(10, 10, '0 6px 14px') }"
             >
-              <div class="flex items-baseline justify-between gap-3">
-                <span class="text-[20px] font-bold text-(--text-ink-main)">Claude</span>
-                <span :class="[MONO, 'font-bold text-[13px] text-(--text-ink-muted)']"
-                  >主 session · main</span
-                >
-              </div>
+              <span class="text-[20px] font-bold text-(--text-ink-main)">Claude</span>
               <span class="text-[15px] leading-[1.7] text-(--text-ink-body)"
-                >全專案協調兼 PM，實際動手的部分也最多：</span
+                >負責協調與排程，也寫大部分程式：</span
               >
               <SeparatedList
                 :items="CLAUDE_ROLES"
                 class="text-[16px] leading-[1.9] text-(--text-ink-main)"
               />
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div
-                v-for="p in PLUGINS"
-                :key="p.name"
-                class="rounded-[4px] bg-(--bg-paper-light) px-[18px] pt-4 pb-[18px] flex flex-col gap-2"
-                :style="{ boxShadow: shadow(10, 10, '0 6px 14px') }"
-              >
-                <div class="flex flex-col gap-0.5">
-                  <span class="text-[18px] font-bold text-(--text-ink-main)">{{ p.title }}</span>
-                  <span :class="[MONO, 'font-bold text-[13px] text-(--text-ink-muted)']"
-                    >plugin · {{ p.name }}</span
-                  >
-                </div>
-                <span class="text-[14px] leading-[1.65] text-(--text-ink-body)">{{ p.desc }}</span>
-                <span :class="[MONO, 'font-bold text-[13px] text-(--text-accent)']">
-                  附帶 agent：<template v-for="(a, i) in p.agents" :key="a"
-                    ><template v-if="i > 0"> · </template
-                    ><span class="whitespace-nowrap">{{ a }}</span></template
-                  >
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -467,14 +432,14 @@ function shadow(edge: number, blur: number, far = '0 14px 30px'): string {
 
 type Dir = 'forward' | 'backward'
 const DIRECTIONS: { value: Dir; label: string }[] = [
-  { value: 'forward', label: '從文章看' },
+  { value: 'forward', label: '從文件看' },
   { value: 'backward', label: '從技術看' },
 ]
 const dir = ref<Dir>('forward')
 const sentence = computed(() =>
   dir.value === 'forward'
-    ? '從這篇文章，找到它說明的技術：Vue\u00a03。'
-    : '從 Vue\u00a03 反查，列出說明它的文章、用到它的專案，這篇也在裡面。',
+    ? '從 Vue 官方文件，找到它說明的技術：Vue。'
+    : '從 Vue 反查，列出說明它的文件和使用它的專案。',
 )
 
 const CLASSES = {
@@ -542,20 +507,6 @@ const CLAUDE_ROLES = [
   '審核 PR',
   '派工給其他 AI',
   '決策紀錄與文件',
-]
-const PLUGINS = [
-  {
-    title: '設計稿還原',
-    name: 'mockup-fidelity',
-    desc: '判斷新功能要不要先畫設計稿；照稿實作時，逐項比對字級、顏色、間距。',
-    agents: ['fidelity-check', 'ux-review'],
-  },
-  {
-    title: '設計稿管理',
-    name: 'design-canvas-workflow',
-    desc: '設計稿怎麼找、怎麼讀、決定記在哪，不讓設計決定只留在某次對話裡。',
-    agents: ['extract-canvas-tokens'],
-  },
 ]
 const LINKS = [
   { label: 'GitHub', href: 'https://github.com/jerryyehself', icon: 'github', external: true },

@@ -1,5 +1,5 @@
 <template>
-  <BaseLoadingBlock v-if="!ready && !loadError" height="320px">載入中…</BaseLoadingBlock>
+  <BaseLoadingBlock v-if="!ready && !loadError" height="320px">{{ LOADING_TEXT }}</BaseLoadingBlock>
   <div v-else-if="loadError || !article" class="flex flex-col items-start gap-4">
     <BaseLoadingBlock height="320px" tone="error">找不到這篇文章。</BaseLoadingBlock>
     <BackToArticlesLink class="inline-flex" />
@@ -37,10 +37,6 @@
       <h1 class="font-serif font-black text-2xl sm:text-3xl text-(--text-ink-main) leading-tight">
         {{ article.title }}
       </h1>
-
-      <p v-if="intro" class="max-w-prose text-base leading-[1.6] text-(--text-ink-body) mt-4">
-        {{ intro }}
-      </p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-10 items-start">
@@ -137,7 +133,6 @@ import {
   sortArticlesByDateDesc,
   type ArticleDto,
 } from '@/api/articles'
-import { excerptOf } from '@/components/markdown/excerpt'
 import AuthOnly from '@/components/AuthOnly.vue'
 import BackToArticlesLink from './BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -146,6 +141,7 @@ import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { extractHeadings } from '@/components/markdown/headings'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { pageTitleOverride } from '@/siteMeta'
+import { LOADING_TEXT } from '@/copy/common'
 
 const route = useRoute()
 const articleId = computed(() => Number(route.params.id))
@@ -183,8 +179,6 @@ const tags = computed(() => {
   if (!article.value) return []
   return [...article.value.techniques, ...article.value.implementations].map((t) => t.title)
 })
-
-const intro = computed(() => (article.value ? excerptOf(article.value.body ?? '') : ''))
 
 /** 本文結構側欄。跟 MarkdownBody 內部用的是同一個 extractHeadings，slug 不會分岔。 */
 const headings = computed(() => (article.value ? extractHeadings(article.value.body ?? '') : []))

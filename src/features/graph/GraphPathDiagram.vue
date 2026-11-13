@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { nodeColorVar } from '@/api/ontology'
 import type { GraphPathDto } from '@/api/graph'
+import { edgeRelation } from './graphRelationPhrase'
 
 const props = defineProps<{ path: GraphPathDto | null }>()
 
@@ -21,6 +22,31 @@ const layout = computed(() => {
   }))
   return { width, height: 90, stations }
 })
+
+// 段落標籤：跟詳情卡、首頁彈窗同一套中文動詞（edgeRelation）。箭頭一律指向路線走的方向（▸），
+// 跟畫布上邊的箭頭方向一致。動詞的主詞由兩端類別決定，不一定是這段路線上的前一站：
+// 主詞在後一站時改用被動說法，讓「前一站 ＋ 標籤 ＋ 後一站」讀起來仍是對的。
+// 相關沒有主被動之分；版本的主詞永遠是版本那一端，從主技術走向版本時說「有版本」。
+const PASSIVE_VERB: Record<string, string> = {
+  使用: '被使用',
+  說明: '被說明',
+  記錄: '被記錄',
+  需要: '被需要',
+  版本: '有版本',
+}
+function segmentLabel(i: number): string {
+  const edge = props.path?.edges[i]
+  const nodes = props.path?.nodes ?? []
+  const source = nodes.find((n) => n.id === edge?.source)
+  const target = nodes.find((n) => n.id === edge?.target)
+  if (!edge || !source || !target) return '相關 ▸'
+  const from = { domainType: source.type, label: source.label }
+  const to = { domainType: target.type, label: target.label }
+  const r = edgeRelation(from, to, edge.predicate)
+  const subjectId = r.subject === from ? source.id : target.id
+  if (subjectId === nodes[i]?.id) return `${r.verb} ▸`
+  return `${PASSIVE_VERB[r.verb] ?? r.verb} ▸`
+}
 </script>
 
 <template>
@@ -28,8 +54,7 @@ const layout = computed(() => {
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-accent)" stroke-width="1.6" stroke-linecap="round" class="opacity-70">
       <circle cx="6" cy="6" r="3" /><circle cx="18" cy="18" r="3" /><path d="M8.5 8.5 L11 11 M13 13 L15.5 15.5" stroke-dasharray="2 3" />
     </svg>
-    <p class="text-[13px] font-semibold text-(--text-ink-main)">這兩個節點之間沒有路徑</p>
-    <p class="text-sm text-(--text-ink-body) opacity-75">圖上沒有任何一串關係能把它們連起來。</p>
+    <p class="text-[13px] font-semibold text-(--text-ink-main)">這兩項之間沒有路徑</p>
   </div>
 
   <div v-else-if="path && path.found" class="overflow-x-auto rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-6 py-5">
@@ -72,7 +97,7 @@ const layout = computed(() => {
             fill="var(--text-ink-body)"
             font-family="ui-monospace, monospace"
           >
-            {{ (path.edges[i]!.predicate ?? '（未命名的關係）').toUpperCase() }} ▸
+            {{ segmentLabel(i) }}
           </text>
           <text
             v-if="!path.edges[i]!.hasDefinedReverse"
