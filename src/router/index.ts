@@ -8,7 +8,7 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/features/auth/LoginView.vue'),
       meta: {
         tag: 'Login',
         title: '登入',
@@ -22,7 +22,7 @@ const router = createRouter({
       // 停留幾百毫秒，掛載完就被導走。
       path: '/auth/callback',
       name: 'auth-callback',
-      component: () => import('@/views/AuthCallbackView.vue'),
+      component: () => import('@/features/auth/AuthCallbackView.vue'),
       meta: { hideHeader: true },
     },
     {
