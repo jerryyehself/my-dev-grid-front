@@ -128,6 +128,93 @@ describe('ArticleEditorView', () => {
     wrapper.unmount()
   })
 
+  describe('插入腳註', () => {
+    const findButton = (wrapper: Awaited<ReturnType<typeof mountView>>) =>
+      wrapper.findAll('button').find((b) => b.text() === '插入腳註')!
+
+    it('它應該不再顯示本地暫存的邊註區塊', async () => {
+      const wrapper = await mountView()
+      expect(wrapper.text()).not.toContain('Margins')
+      expect(wrapper.text()).not.toContain('新增邊註')
+      wrapper.unmount()
+    })
+
+    it('它應該在游標處放引用、文末補定義，並把游標移到定義之後', async () => {
+      const wrapper = await mountView()
+      const textarea = wrapper.get('textarea').element
+      await wrapper.get('textarea').setValue('前面後面')
+      textarea.setSelectionRange(2, 2)
+
+      await findButton(wrapper).trigger('click')
+
+      expect(textarea.value).toBe('前面[^1]後面\n\n[^1]: ')
+      expect(textarea.selectionStart).toBe(textarea.value.length)
+      expect(textarea.selectionEnd).toBe(textarea.value.length)
+      // v-model 有跟著更新：再按一次會接著用 2，而不是從舊內容算
+      textarea.setSelectionRange(0, 0)
+      await findButton(wrapper).trigger('click')
+      expect(textarea.value).toBe('[^2]前面[^1]後面\n\n[^1]: \n[^2]: ')
+      wrapper.unmount()
+    })
+
+    it('它應該有選取文字時保留選取、把引用放在選取範圍後面', async () => {
+      const wrapper = await mountView()
+      const textarea = wrapper.get('textarea').element
+      await wrapper.get('textarea').setValue('這是重點文字，後面')
+      textarea.setSelectionRange(2, 6)
+
+      await findButton(wrapper).trigger('click')
+
+      expect(textarea.value).toBe('這是重點文字[^1]，後面\n\n[^1]: ')
+      wrapper.unmount()
+    })
+
+    it('它應該在剛載入的 CRLF 內文上，依 textarea 的游標位置插入，引用只放一次、定義只有一份', async () => {
+      // 後端存的（或匯入的 .md）內文是 \r\n；瀏覽器的 textarea.value 一律正規化成 \n，
+      // 游標位置是以 \n 版本算的。若拿 body.value（還是 \r\n）去算插入位置，
+      // 引用會落在錯的偏移、文字重複。
+      vi.mocked(fetchArticle).mockResolvedValue({ ...defaultArticle, body: '第一行\r\n第二行' })
+      const wrapper = await mountView()
+      const textarea = wrapper.get('textarea').element
+      expect(textarea.value).toBe('第一行\n第二行')
+      textarea.setSelectionRange(4, 4) // 換行之後、「第二行」之前
+
+      await findButton(wrapper).trigger('click')
+
+      expect(textarea.value).toBe('第一行\n[^1]第二行\n\n[^1]: ')
+      expect(textarea.value.match(/\[\^1\]/g)).toHaveLength(2) // 一個引用＋一個定義
+      expect(textarea.selectionStart).toBe(textarea.value.length)
+      wrapper.unmount()
+    })
+
+    it('它應該在剛載入的文章上只按插入腳註就標成尚未儲存', async () => {
+      const wrapper = await mountView()
+      // 頂欄狀態點旁的字；頁面別處（建立日期）也會出現「尚未儲存」，不能整頁比對
+      const saveMarker = () => wrapper.get('span.w-1\\.5.h-1\\.5').element.parentElement!.textContent!.trim()
+      expect(saveMarker()).toBe('未變更')
+      wrapper.get('textarea').element.setSelectionRange(0, 0)
+
+      await findButton(wrapper).trigger('click')
+
+      expect(saveMarker()).toBe('尚未儲存')
+      wrapper.unmount()
+    })
+
+    it('它應該讓按鈕是可用鍵盤操作的 button，在預覽模式停用', async () => {
+      const wrapper = await mountView()
+      const button = findButton(wrapper)
+      expect(button.element.tagName).toBe('BUTTON')
+      expect(button.attributes('type')).toBe('button')
+      expect(button.attributes('disabled')).toBeUndefined()
+
+      const preview = wrapper.findAll('button, [role="radio"], [role="tab"]').find((b) => b.text() === '預覽')!
+      await preview.trigger('click')
+
+      expect(findButton(wrapper).attributes('disabled')).toBeDefined()
+      wrapper.unmount()
+    })
+  })
+
   it('它應該在述詞不存在時阻止送出並提示刪除連結，刪除後可以儲存', async () => {
     vi.mocked(fetchArticle).mockResolvedValue({
       ...defaultArticle,
