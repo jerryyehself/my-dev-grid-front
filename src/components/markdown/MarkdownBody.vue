@@ -70,6 +70,15 @@ const scrollRegion = (label: string) => ({ tabindex: 0, role: 'region', 'aria-la
 const codeLabel = (lang?: string | null) => (lang ? `程式碼（${lang}）` : '程式碼')
 const TABLE_LABEL = '表格'
 
+// 文章內文的段距、二級標題與註腳的字級行高，集中命名，改數字只改這一處。
+// 內文本身 16／28 是 `text-base leading-7`，留在各個元素上。
+/** 段與段之間空 24px */
+const PARAGRAPH_GAP = 'mb-6'
+/** 二級標題 24／36；三級以下維持原樣 */
+const H2_TEXT = 'text-2xl leading-9'
+/** 註腳 14／24：文末註釋清單、邊注、窄螢幕展開的註釋框共用 */
+const FOOTNOTE_TEXT = 'text-sm leading-6'
+
 /**
  * 這次聚焦是不是鍵盤造成的（:focus-visible）。滑鼠點按鈕也會讓按鈕取得焦點，
  * 那種聚焦不該標亮邊注，不然點完、滑鼠移開之後邊注還亮著，要點別處才消失。
@@ -258,7 +267,7 @@ function render(node: MdNode): VNode[] {
       return [
         h(
           'p',
-          { class: 'text-base leading-7 text-(--text-ink-body) text-left sm:text-justify' },
+          { class: `text-base leading-7 ${PARAGRAPH_GAP} text-(--text-ink-body) text-left sm:text-justify` },
           kids(node),
         ),
       ]
@@ -272,7 +281,7 @@ function render(node: MdNode): VNode[] {
       // 粗體標題，深度越深字越小，但都維持同一個形狀，不另外發明第二套標題語彙。
       // 以前前面有 accent 色的 `//`：那是程式碼註解的造型，放在圖譜、本體論這類技術頁合理，
       // 放在長文閱讀裡是雜訊（2026-09-29 拿掉，文章列表與首頁文章列同步拿掉）。
-      const size = node.depth === 2 ? 'text-base' : node.depth === 3 ? 'text-[15px]' : 'text-sm'
+      const size = node.depth === 2 ? H2_TEXT : node.depth === 3 ? 'text-[15px]' : 'text-sm'
       // id 從 headings 依序取，不在這裡自己算 slug——目錄跟這裡必須是同一份，
       // 分開算會漂移，而且症狀是「點目錄沒反應」，不會有任何錯誤訊息
       const slug = headings.value[headingCursor++]?.slug
@@ -679,12 +688,12 @@ function renderFootnoteRef(
     ? [
         // 欄寬與間距的來由見 SIDE_QUERY 的註解；1240px 以上目錄移到左欄，邊注欄就多給一點
         'absolute block w-[232px] left-[calc(100%+28px)] min-[1240px]:w-[248px] min-[1240px]:left-[calc(100%+32px)]',
-        'pl-3 border-l-2 text-sm leading-[1.5] text-left',
+        `pl-3 border-l-2 ${FOOTNOTE_TEXT} text-left`,
         lit
           ? 'border-(--text-ink-main) text-(--text-ink-main)'
           : 'border-(--border-shelf) text-(--text-ink-muted)',
       ].join(' ')
-    : 'block my-2 px-4 py-3 border border-(--border-shelf) border-l-2 border-l-(--text-ink-main) rounded-r-[6px] bg-(--bg-folder) text-sm leading-[1.5] text-(--text-ink-body) text-left'
+    : `block my-2 px-4 py-3 border border-(--border-shelf) border-l-2 border-l-(--text-ink-main) rounded-r-[6px] bg-(--bg-folder) ${FOOTNOTE_TEXT} text-(--text-ink-body) text-left`
 
   // 前一個字（lead）跟編號包進同一個 nowrap 的 span：中文任兩字之間都能斷行，
   // 編號是不能再拆的行內方塊，會被單獨推到下一行開頭、跟前一個字分開。試過在編號前放 U+2060
@@ -793,7 +802,7 @@ function renderEndNotes(): VNode[] {
           'ol',
           {
             class:
-              'list-decimal pl-6 space-y-1.5 text-sm leading-[1.5] text-(--text-ink-body) marker:text-(--text-accent)',
+              `list-decimal pl-6 space-y-1.5 ${FOOTNOTE_TEXT} text-(--text-ink-body) marker:text-(--text-accent)`,
           },
           list.map((info) =>
             h('li', { id: `${uid}-fn-${info.number}`, class: 'pl-1 scroll-mt-32' }, [

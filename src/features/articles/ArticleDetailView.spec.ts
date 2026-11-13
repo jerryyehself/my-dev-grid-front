@@ -96,6 +96,35 @@ describe('ArticleDetailView', () => {
     }
   })
 
+  it('它應該把文章標題設成 36／48，二級標題 24／36，段距 24', async () => {
+    fetchArticleOrDemo.mockResolvedValue({
+      article: article(4, 'D 排版', '2026-08-01', '段落一\n\n## 小節\n\n段落二\n\n### 小小節'),
+      loadError: null,
+    })
+    const wrapper = await mountAt(4)
+
+    expect(wrapper.find('h1').classes()).toEqual(expect.arrayContaining(['text-4xl', 'leading-12']))
+    // 二級標題在頁面裡是 h3（h1 是文章標題），三級以下維持原樣
+    const [h2, h3] = wrapper.findAll('.max-w-\\[40em\\] h3[id]')
+    expect(h2!.classes()).toEqual(expect.arrayContaining(['text-2xl', 'leading-9']))
+    expect(h3!.classes()).not.toContain('text-2xl')
+    for (const p of wrapper.findAll('.max-w-\\[40em\\] p').filter((p) => p.text().startsWith('段落'))) {
+      expect(p.classes()).toContain('mb-6')
+    }
+  })
+
+  it('它應該把文末註釋清單設成 14／24', async () => {
+    fetchArticleOrDemo.mockResolvedValue({
+      article: article(4, 'D 有註腳', '2026-08-01', '內文[^1]\n\n[^1]: 註釋內容'),
+      loadError: null,
+    })
+    const wrapper = await mountAt(4)
+
+    const list = wrapper.find('section ol')
+    expect(list.classes()).toEqual(expect.arrayContaining(['text-sm', 'leading-6']))
+    expect(list.classes()).not.toContain('leading-[1.5]')
+  })
+
   it('它應該把註腳渲染成註釋清單，並收起的目錄（窄螢幕用）與左欄目錄指向同一組標題', async () => {
     fetchArticleOrDemo.mockResolvedValue({
       article: article(4, 'D 有註腳', '2026-08-01', '## 小節\n\n內文[^1]\n\n[^1]: 註釋內容'),
@@ -181,5 +210,42 @@ describe('ArticleDetailView', () => {
     const wrapper = await mountAt(3)
 
     expect(wrapper.text().split('這是第一段摘要。')).toHaveLength(2)
+  })
+
+  describe('署名', () => {
+    const BYLINE = '主筆\u3000Claude\u3000\uff0f\u3000發想\u30fb審定\u3000站主'
+
+    it('它應該在每篇文章的結尾顯示署名一次，在正文與註釋後面、上一篇／下一篇前面', async () => {
+      fetchArticleOrDemo.mockResolvedValue({
+        article: article(3, 'C 中間', '2026-10-01', '內文[^1]\n\n[^1]: 註釋內容'),
+        loadError: null,
+      })
+      const wrapper = await mountAt(3)
+
+      expect(wrapper.text().split(BYLINE)).toHaveLength(2)
+      const byline = wrapper.findAll('p').find((p) => p.text() === BYLINE)!
+      expect(byline.classes()).toContain('text-sm')
+      // DOM 順序：註釋清單 → 署名 → 上一篇／下一篇
+      const html = wrapper.html()
+      expect(html.indexOf('註釋內容')).toBeLessThan(html.indexOf(BYLINE))
+      expect(html.indexOf(BYLINE)).toBeLessThan(html.indexOf('PREV'))
+    })
+
+    it('它應該在沒有上一篇、下一篇、註腳的文章也顯示署名', async () => {
+      fetchArticleOrDemo.mockResolvedValue({
+        article: article(2, 'B 新文', '2026-11-01', '單純的內文'),
+        loadError: null,
+      })
+      const wrapper = await mountAt(2)
+
+      expect(wrapper.text()).toContain(BYLINE)
+    })
+
+    it('它應該在找不到文章時不顯示署名', async () => {
+      fetchArticleOrDemo.mockRejectedValue(new ApiHttpError(404, '/api/documentations/999'))
+      const wrapper = await mountAt(999)
+
+      expect(wrapper.text()).not.toContain(BYLINE)
+    })
   })
 })

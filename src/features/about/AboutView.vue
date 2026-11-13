@@ -41,7 +41,7 @@
           <div :class="[KICKER, 'text-(--text-accent)']">SCOPE</div>
           <h2 :class="H2">收錄範圍</h2>
           <p class="mt-5 mb-0 text-[18px] leading-[1.75] text-(--text-ink-main)">
-            收錄自己寫的文章、用過的技術、做過的專案，以及這些技術的官方文件。
+            收錄文章、用過的技術、做過的專案，以及這些技術的官方文件。
           </p>
           <p class="m-0 text-[16px] leading-[1.75] text-(--text-ink-body)">
             條目之間以關係相連，整份目錄可以當成一張圖瀏覽。

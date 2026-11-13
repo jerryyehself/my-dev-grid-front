@@ -494,6 +494,28 @@ describe('MarkdownBody', () => {
       })
     })
 
+    describe('註腳字級：邊注、展開的註釋框、文末清單都是 14／24', () => {
+      const FOOTNOTE = ['text-sm', 'leading-6']
+
+      it('它應該讓邊注是 14／24', async () => {
+        stubWide(true)
+        const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true })
+        await w.vm.$nextTick()
+        const note = w.find('[data-fn-side]')
+        expect(note.classes()).toEqual(expect.arrayContaining(FOOTNOTE))
+        expect(note.classes()).not.toContain('leading-[1.5]')
+      })
+
+      it('它應該讓窄螢幕點開的註釋框是 14／24', async () => {
+        stubWide(false)
+        const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true })
+        await markers(w)[0]!.trigger('click')
+        const note = w.find('[id$="fnnote-1-1"]')
+        expect(note.classes()).toEqual(expect.arrayContaining(FOOTNOTE))
+        expect(note.classes()).not.toContain('leading-[1.5]')
+      })
+    })
+
     describe('寬螢幕：邊注', () => {
       it('它應該在開了 sidenotes 且夠寬時把第一次引用的註釋當邊注，之後的引用不另外顯示', async () => {
         stubWide(true)
