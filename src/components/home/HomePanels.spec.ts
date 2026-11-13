@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import type { GraphDto } from '@/api/graph'
+import type { Project } from '@/api/projects'
 import KnowledgeGraphPanel from './KnowledgeGraphPanel.vue'
 import StatusBoardPanel from './StatusBoardPanel.vue'
 
@@ -17,8 +18,9 @@ const graph: GraphDto = {
 vi.mock('@/api/graph', () => ({
   fetchGraphOrDemo: () => Promise.resolve({ dto: graph, loadError: null }),
 }))
+const mockProjects = vi.hoisted(() => ({ list: [] as Project[] }))
 vi.mock('@/api/projects', () => ({
-  fetchProjectsOrDemo: () => Promise.resolve({ projects: [], loadError: null }),
+  fetchProjectsOrDemo: () => Promise.resolve({ projects: mockProjects.list, loadError: null }),
 }))
 vi.mock('@/api/articles', () => ({
   fetchArticles: () => Promise.resolve([]),
@@ -31,6 +33,7 @@ const router = () =>
   createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: { template: '<div />' } }] })
 
 beforeEach(() => {
+  mockProjects.list = []
   vi.stubGlobal(
     'IntersectionObserver',
     class {
@@ -61,5 +64,36 @@ describe('StatusBoardPanel', () => {
     expect(wrapper.findAll('h3').map((h) => h.text())).toEqual(['專案', '近期文章'])
     expect(wrapper.text()).not.toContain('近況板')
     expect(wrapper.text()).not.toContain('GitHub 上的公開專案')
+  })
+
+  const project = (id: string, title: string, statusType: Project['statusType']): Project => ({
+    id,
+    title,
+    status: statusType === 'archived' ? 'Archived' : statusType === 'active' ? 'Active' : undefined,
+    statusType,
+    desc: '',
+    tags: [],
+    started: '2026.01',
+    repo: title,
+  })
+
+  it('它應該只在已封存的專案標狀態，進行中與狀態未知的專案不標', async () => {
+    mockProjects.list = [
+      project('1', 'alpha', 'active'),
+      project('2', 'bravo', 'archived'),
+      project('3', 'charlie', undefined),
+    ]
+    const wrapper = mount(StatusBoardPanel, { global: { plugins: [router()] } })
+    await flushPromises()
+
+    const rows = wrapper.findAll('a[href*="project="]')
+    expect(rows).toHaveLength(3)
+    const tagOf = (i: number) => rows[i]!.find('span.font-mono').exists() ? rows[i]!.find('span.font-mono').text() : null
+    expect(tagOf(0)).toBeNull()
+    expect(tagOf(1)?.toUpperCase()).toBe('ARCHIVED')
+    expect(tagOf(2)).toBeNull()
+    // 進行中不能再用 accent 高亮
+    expect(wrapper.find('.text-\\(--text-accent\\)').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Active')
   })
 })

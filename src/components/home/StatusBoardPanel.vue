@@ -20,19 +20,12 @@ import { ARTICLES_EMPTY_TEXT, LOADING_PROJECTS_TEXT, PROJECTS_EMPTY_TEXT } from 
 // 「看起來像真資料、其實沒有語意」的假象，所以不採用。範圍收斂成「後端真的查得到的東西」：
 // 專案維護狀態（Implementation.maintain_status）。
 //
-// 「近況」tag 用 tiered accent/muted 處理（BaseTag 既有的 tone prop，不是另外發明新樣式）：
-// 進行中(Active) 用 accent 高亮，已封存(Archived) 用 muted 收斂——呼應 [visual] 2026-09-02
-// 對這份稿子的設計覆核意見（idea-stage tag 不要全部套同一種樣式）。目前資料庫兩個真實專案都是
-// Active，muted 那一層還沒有真實資料能展示到，但邏輯本身兩種狀態都處理了，不是只做了一半。
+// 專案狀態只在已封存時標出來（跟 /projects 一致）：進行中是預設狀態，不標；封存的才用 muted tag
+// 標「Archived」。狀態還不知道（maintain_status 沒有值）的專案也不標。
+
 const projects = ref<Project[]>([])
 const projectsLoading = ref(true)
 const loadError = ref<string | null>(null)
-
-const tagTone = (statusType: Project['statusType']): 'accent' | 'muted' | 'neutral' => {
-  if (statusType === 'active') return 'accent'
-  if (statusType === 'archived') return 'muted'
-  return 'neutral'
-}
 
 onMounted(async () => {
   const { projects: list, loadError: error } = await fetchProjectsOrDemo()
@@ -64,7 +57,7 @@ onMounted(async () => {
 <template>
   <section class="w-full">
     <div class="grid grid-cols-1 md:grid-cols-[1.3fr_1fr] gap-6 items-start">
-      <!-- 左欄：近期專案（真實 maintain_status，tiered accent/muted tag） -->
+      <!-- 左欄：近期專案（真實 maintain_status，只有已封存的標 tag） -->
       <div>
         <h3
           class="flex items-center gap-1.5 text-[13px] font-bold tracking-[0.05em] text-(--text-ink-muted) mb-2.5"
@@ -92,7 +85,7 @@ onMounted(async () => {
                 {{ p.tags.slice(0, 4).join(' · ') }}
               </div>
             </div>
-            <BaseTag v-if="p.status" :tone="tagTone(p.statusType)" class="shrink-0">{{ p.status }}</BaseTag>
+            <BaseTag v-if="p.statusType === 'archived'" tone="muted" class="shrink-0">{{ p.status }}</BaseTag>
           </RouterLink>
           <p v-if="!projects.length" class="px-[18px] py-4 text-[14px] text-(--text-ink-muted)">
             {{ PROJECTS_EMPTY_TEXT }}
