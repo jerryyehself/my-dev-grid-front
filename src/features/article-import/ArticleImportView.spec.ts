@@ -197,6 +197,26 @@ describe('ArticleImportView 送出', () => {
     expect(w.text()).toContain('已選 0 項')
   })
 
+  it('它應該在重新整理清單進行中停用送出，讀完之後選擇被清掉所以仍然停用', async () => {
+    const w = await mountView()
+    await pick(w, '新的筆記', '新增為草稿')
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+
+    let finish!: (value: ReturnType<typeof listingOf>) => void
+    vi.mocked(fetchArticleSources).mockReturnValue(new Promise((resolve) => (finish = resolve)))
+    await w.findAll('button').find((b) => b.text() === '重新整理清單')!.trigger('click')
+
+    // 讀取中：選擇還在、也沒有問題，但不能送出
+    expect(w.text()).toContain('已選 1 項')
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+    await submitButton(w).trigger('click')
+    expect(importArticleSources).not.toHaveBeenCalled()
+
+    finish(listingOf(ALL_ITEMS))
+    await flushPromises()
+    expect(w.text()).toContain('已選 0 項')
+  })
+
   it('它應該把整批選擇用一次請求送出，帶清單的 commit 與各檔案的 blob SHA', async () => {
     vi.mocked(importArticleSources).mockResolvedValue({
       commit_sha: COMMIT,
@@ -323,6 +343,18 @@ describe('ArticleImportView 連結既有文章', () => {
     })
   })
 
+  it('它應該把連結的選單放在帶有「標題＋要連結的文章」文字的 label 裡，讓選單有無障礙名稱', async () => {
+    const w = await mountView()
+    await pick(w, '有警告的筆記', '連結既有文章')
+    await pick(w, '新的筆記', '連結既有文章')
+
+    for (const title of ['有警告的筆記', '新的筆記']) {
+      const label = row(w, title).get('select').element.closest('label')
+      expect(label).not.toBeNull()
+      expect(label!.textContent).toContain(`「${title}」要連結的文章`)
+    }
+  })
+
   it('它應該在文章清單載入失敗時停用選單並說明', async () => {
     const w = await mountView([NEW_ITEM], { articlesFail: true })
     await pick(w, '新的筆記', '連結既有文章')
@@ -343,6 +375,29 @@ describe('ArticleImportView 連結既有文章', () => {
 })
 
 describe('ArticleImportView 匯入成功', () => {
+  it('它應該在匯入前就有 aria-live 區塊，成功後把「已匯入 N 篇」放進同一個區塊', async () => {
+    vi.mocked(importArticleSources).mockResolvedValue({
+      commit_sha: COMMIT,
+      message: 'ok',
+      data: [
+        { key: 'new-note', action: 'create', documentation_id: 40, title: '新的筆記', published: false, warnings: [] },
+        { key: 'changed-note', action: 'update', documentation_id: 12, title: '有更新的筆記', published: true, warnings: [] },
+      ],
+    })
+    const w = await mountView()
+    const live = w.get('[aria-live="polite"]')
+    expect(live.text()).toBe('')
+
+    await pick(w, '新的筆記', '新增為草稿')
+    await pick(w, '有更新的筆記', '更新')
+    await submitButton(w).trigger('click')
+    await flushPromises()
+
+    // 同一個元素，不是新插入的區塊
+    expect(w.get('[aria-live="polite"]').element).toBe(live.element)
+    expect(live.text()).toContain('已匯入 2 篇')
+  })
+
   it('它應該顯示新增、更新、連結各幾篇，標題連到編輯頁，並附上警告', async () => {
     vi.mocked(importArticleSources).mockResolvedValue({
       commit_sha: COMMIT,
@@ -363,7 +418,7 @@ describe('ArticleImportView 匯入成功', () => {
     expect(result.text()).toContain('新增 1、更新 1、連結 1')
     const hrefs = result.findAll('a').map((a) => a.attributes('href'))
     expect(hrefs).toEqual(['/articles/40/edit', '/articles/12/edit', '/articles/21/edit'])
-    expect(result.get('[data-test="result-warnings"]').text()).toContain('第 7 行，email 地址')
+    expect(result.get('[data-test="result-warnings"]').text()).toContain('第 7 行：email 地址')
     expect(result.text()).toContain('草稿')
   })
 
@@ -430,6 +485,24 @@ describe('ArticleImportView 匯入失敗', () => {
     },
   )
 
+  it('它應該在 409 的訊息裡帶上後端列出的各項原因（不重複），並維持提供「重新整理清單」', async () => {
+    const w = await failWith(
+      new ApiRequestError(409, '/article-sources/import', 'POST', {
+        reason: 'conflict',
+        errors: {
+          'items.0.documentation_id': ['這篇文章已經連結到其他來源檔案。'],
+          'items.1.documentation_id': ['這篇文章已經連結到其他來源檔案。'],
+          'items.2.expected_blob_sha': '檔案內容跟清單上的不同。',
+        },
+      }),
+    )
+    const box = w.get('[data-test="submit-error"]')
+    expect(box.get('p').text()).toBe(
+      '站上的文章在清單產生之後有變動。這篇文章已經連結到其他來源檔案。檔案內容跟清單上的不同。沒有任何文章被寫入。請重新整理清單，再選一次。',
+    )
+    expect(box.findAll('button').map((b) => b.text())).toEqual(['重新整理清單'])
+  })
+
   it.each([
     [503, 'not_configured', '尚未設定文章來源。'],
     [503, 'github_rate_limited', 'GitHub 的請求次數已達上限，請稍後再試。'],
@@ -449,7 +522,23 @@ describe('ArticleImportView 匯入失敗', () => {
     const w = await failWith(
       new ApiValidationError({ 'items.0.documentation_id': '要連結的文章不存在或已刪除。' }),
     )
-    expect(w.get('[data-test="submit-error"]').text()).toBe('要連結的文章不存在或已刪除。')
+    const box = w.get('[data-test="submit-error"]')
+    expect(box.text()).toContain('要連結的文章不存在或已刪除。')
+    expect(box.text()).toContain('沒有任何文章被寫入。')
+    // 選擇本身有問題，要重新讀清單再選
+    expect(box.findAll('button').map((b) => b.text())).toEqual(['重新整理清單'])
+  })
+
+  it('它應該在連不上後端時提供「重新整理清單」（重送是安全的）', async () => {
+    const w = await failWith(new TypeError('Failed to fetch'))
+    const box = w.get('[data-test="submit-error"]')
+    expect(box.text()).toContain('連不上後端 API')
+    expect(box.findAll('button').map((b) => b.text())).toEqual(['重新整理清單'])
+  })
+
+  it('它應該在 500 這類沒有分類的失敗時不提供「重新整理清單」', async () => {
+    const w = await failWith(new ApiRequestError(500, '/article-sources/import', 'POST'))
+    expect(w.get('[data-test="submit-error"]').findAll('button')).toHaveLength(0)
   })
 
   it('它應該在失敗後允許再送出一次（不卡在送出中）', async () => {

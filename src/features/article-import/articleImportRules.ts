@@ -206,8 +206,10 @@ export const REASON_TEXT: Record<string, string> = {
 export type ImportErrorKind =
   /** 409：整批都沒寫入，要重新整理清單再選。 */
   | 'stale'
-  /** 422：選擇本身有問題（例如要連結的文章已刪除）。 */
+  /** 422：選擇本身有問題（例如要連結的文章已刪除）。整批沒寫入，重新整理清單後再選。 */
   | 'validation'
+  /** 連不上後端（fetch 丟 TypeError）。後端整批都成功才寫入、並檢查 blob SHA，所以重新整理後再送一次是安全的。 */
+  | 'network'
   /** 502／503：來源或 GitHub 暫時不能用，或沒設定。 */
   | 'unavailable'
   | 'other'
@@ -222,14 +224,33 @@ function reasonText(reason: string | null, status: number): string {
   return `來源暫時無法使用（HTTP ${status}）。`
 }
 
+/** 後端 errors 的內容攤平成不重複的訊息；沒有 errors、或不是預期的形狀時回空陣列。 */
+function uniqueErrorMessages(errors: unknown): string[] {
+  if (typeof errors !== 'object' || errors === null) return []
+  const messages = new Set<string>()
+  for (const value of Object.values(errors)) {
+    for (const message of Array.isArray(value) ? value : [value]) {
+      if (typeof message === 'string' && message !== '') messages.add(message)
+    }
+  }
+  return [...messages]
+}
+
+/** 訊息接在一起時每句都要以句號結尾。 */
+function asSentence(message: string): string {
+  return /[。！？]$/.test(message) ? message : `${message}。`
+}
+
 /** 列清單與匯入共用：把例外變成要顯示的中文與分類。 */
 export function describeImportError(e: unknown): ImportError {
   if (e instanceof ApiRequestError || e instanceof ApiHttpError) {
     if (e.status === 409) {
       const detail = e.reason !== null && e.reason in REASON_TEXT ? REASON_TEXT[e.reason] : ''
+      // 後端 errors 列出每一項被退回的原因（以請求欄位為 key），key 對使用者沒有意義，只留訊息
+      const reasons = uniqueErrorMessages(e.body?.errors).map(asSentence).join('')
       return {
         kind: 'stale',
-        message: `${detail}沒有任何文章被寫入。請重新整理清單，再選一次。`,
+        message: `${detail}${reasons}沒有任何文章被寫入。請重新整理清單，再選一次。`,
       }
     }
     if (e.status === 502 || e.status === 503) {
@@ -242,13 +263,15 @@ export function describeImportError(e: unknown): ImportError {
     const messages = Object.values(e.fieldErrors)
     return {
       kind: 'validation',
-      message: messages.length ? messages.join(' ') : '選擇的內容未通過驗證，沒有任何文章被寫入。',
+      message: messages.length
+        ? `${messages.map(asSentence).join('')}沒有任何文章被寫入。`
+        : '選擇的內容未通過驗證，沒有任何文章被寫入。',
     }
   }
   if (e instanceof AuthSessionChangedError || e instanceof AuthRefreshUnavailableError) {
     return { kind: 'other', message: e.message }
   }
-  if (e instanceof TypeError) return { kind: 'other', message: '連不上後端 API，請稍後再試。' }
+  if (e instanceof TypeError) return { kind: 'network', message: '連不上後端 API，請稍後再試。' }
   return { kind: 'other', message: '發生未預期的錯誤，請稍後再試。' }
 }
 

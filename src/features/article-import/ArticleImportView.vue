@@ -115,7 +115,13 @@ const problemTexts = computed(() => {
   const byPath = new Map(items.value.map((i) => [i.path, i.title ?? i.key ?? i.path]))
   return problems.value.map((p) => describeProblem(p, (path) => byPath.get(path) ?? path))
 })
-const canSubmit = computed(() => count.value > 0 && problems.value.length === 0 && !submitting.value)
+// 重新整理清單進行中不能送出：此時畫面上的選擇與清單版本即將被換掉
+const canSubmit = computed(
+  () => count.value > 0 && problems.value.length === 0 && !submitting.value && !loading.value,
+)
+// 這幾種失敗都是「整批沒寫入或不確定有沒有寫入」，重新讀清單再選一次是對的出路；
+// 來源暫時不能用（unavailable）重讀也不會好，所以不給
+const REFRESHABLE_KINDS: ImportError['kind'][] = ['stale', 'validation', 'network']
 
 async function submit() {
   if (!listing.value || !canSubmit.value) return
@@ -165,39 +171,45 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       列出來源裡標了 <code class="font-mono">import: true</code> 的 Markdown 檔。新增的文章一律是草稿；整批一起寫入，任何一篇不行就全部不寫。
     </p>
 
-    <!-- 匯入結果 -->
-    <section
-      v-if="result"
-      class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-4 sm:px-5 py-4 flex flex-col gap-3"
-      aria-labelledby="import-result"
-      data-test="result"
-    >
-      <h2 id="import-result" class="m-0 text-[15px] font-bold text-(--text-ink-main)">
-        已匯入 {{ result.data.length }} 篇
-        <span class="text-[13px] font-normal text-(--text-ink-body)">
-          （新增 {{ resultCounts.create }}、更新 {{ resultCounts.update }}、連結 {{ resultCounts.link }}）
-        </span>
-      </h2>
-      <ul class="m-0 p-0 list-none flex flex-col gap-2">
-        <li v-for="row in result.data" :key="row.key" class="flex flex-col gap-0.5 text-[13px]">
-          <div class="flex flex-wrap items-baseline gap-x-2">
-            <span class="font-mono text-[11px] tracking-[0.08em] text-(--text-ink-muted)">{{ ACTION_LABEL[row.action] }}</span>
-            <router-link
-              :to="{ name: 'article-editor', params: { id: row.documentation_id } }"
-              class="font-bold text-(--text-accent) hover:underline"
-            >
-              {{ row.title }}
-            </router-link>
-            <span class="text-(--text-ink-muted)">{{ row.published ? '已發布' : '草稿' }}</span>
-          </div>
-          <ul v-if="row.warnings.length" class="m-0 p-0 list-none text-(--text-error)" data-test="result-warnings">
-            <li v-for="(warning, index) in row.warnings" :key="index">
-              發布前請確認：<template v-if="warning.line !== null">第 {{ warning.line }} 行，</template>{{ warning.message }}
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </section>
+    <!-- 匯入結果。aria-live 區塊要一直都在，結果插進裡面螢幕報讀器才會唸（跟區塊同時出現很多不會唸，見 AuthNotice）。
+         空的時候用負的上邊距抵掉 flex gap 多出來的一格，畫面跟沒有這個區塊時一樣。 -->
+    <div aria-live="polite" class="empty:-mt-[18px]" data-test="result-live">
+      <section
+        v-if="result"
+        class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-4 sm:px-5 py-4 flex flex-col gap-3"
+        aria-labelledby="import-result"
+        data-test="result"
+      >
+        <h2 id="import-result" class="m-0 text-[15px] font-bold text-(--text-ink-main)">
+          已匯入 {{ result.data.length }} 篇
+          <span class="text-[13px] font-normal text-(--text-ink-body)">
+            （新增 {{ resultCounts.create }}、更新 {{ resultCounts.update }}、連結 {{ resultCounts.link }}）
+          </span>
+        </h2>
+        <ul class="m-0 p-0 list-none flex flex-col gap-2">
+          <li v-for="row in result.data" :key="row.key" class="flex flex-col gap-0.5 text-[13px]">
+            <div class="flex flex-wrap items-baseline gap-x-2">
+              <span class="font-mono text-[11px] tracking-[0.08em] text-(--text-ink-muted)">{{ ACTION_LABEL[row.action] }}</span>
+              <router-link
+                :to="{ name: 'article-editor', params: { id: row.documentation_id } }"
+                class="font-bold text-(--text-accent) hover:underline"
+              >
+                {{ row.title }}
+              </router-link>
+              <span class="text-(--text-ink-muted)">{{ row.published ? '已發布' : '草稿' }}</span>
+            </div>
+            <div v-if="row.warnings.length" class="flex flex-col gap-0.5" data-test="result-warnings">
+              <BaseHint tone="error">發布前請確認</BaseHint>
+              <ul class="m-0 p-0 list-none text-(--text-error)">
+                <li v-for="(warning, index) in row.warnings" :key="index">
+                  <template v-if="warning.line !== null">第 {{ warning.line }} 行：</template>{{ warning.message }}
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </div>
 
     <BaseLoadingBlock v-if="loading && !listing" height="240px">{{ LOADING_TEXT }}</BaseLoadingBlock>
 
@@ -255,7 +267,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
 
         <div v-if="submitError" role="alert" class="flex flex-col items-start gap-2" data-test="submit-error">
           <p class="m-0 text-[14px] text-(--text-error)">{{ submitError.message }}</p>
-          <BaseButton v-if="submitError.kind === 'stale'" variant="primary" :disabled="loading" @click="refresh">
+          <BaseButton v-if="REFRESHABLE_KINDS.includes(submitError.kind)" variant="primary" :disabled="loading" @click="refresh">
             重新整理清單
           </BaseButton>
         </div>

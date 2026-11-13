@@ -236,6 +236,28 @@ describe('describeImportError', () => {
     expect(error.message).toContain('重新整理清單')
   })
 
+  it('它應該把 409 的 errors 攤平、去掉重複，接在 reason 說明後面', () => {
+    const error = describeImportError(
+      new ApiRequestError(409, '/x', 'POST', {
+        reason: 'stale',
+        errors: { a: ['甲。', '乙。'], b: ['甲。'], c: '丙' },
+      }),
+    )
+    expect(error.message).toBe(
+      `${REASON_TEXT.stale}甲。乙。丙。沒有任何文章被寫入。請重新整理清單，再選一次。`,
+    )
+  })
+
+  it.each([
+    { label: '沒有 errors', errors: undefined },
+    { label: 'errors 是空物件', errors: {} },
+    { label: 'errors 的值是空陣列', errors: { a: [] } },
+    { label: 'errors 的值不是字串', errors: { a: [1, null] } },
+  ])('它應該在 409 $label 時只顯示原本的說明', ({ errors }) => {
+    const error = describeImportError(new ApiRequestError(409, '/x', 'POST', { errors } as never))
+    expect(error.message).toBe('沒有任何文章被寫入。請重新整理清單，再選一次。')
+  })
+
   it('它應該把沒有 reason 的 409 也當成要重新整理', () => {
     expect(describeImportError(new ApiRequestError(409, '/x', 'POST')).kind).toBe('stale')
   })
@@ -244,15 +266,23 @@ describe('describeImportError', () => {
     const error = describeImportError(
       new ApiValidationError({ 'items.0.documentation_id': '要連結的文章不存在或已刪除。' }),
     )
-    expect(error).toEqual({ kind: 'validation', message: '要連結的文章不存在或已刪除。' })
-    expect(describeImportError(new ApiValidationError({})).kind).toBe('validation')
+    expect(error).toEqual({
+      kind: 'validation',
+      message: '要連結的文章不存在或已刪除。沒有任何文章被寫入。',
+    })
+    const empty = describeImportError(new ApiValidationError({}))
+    expect(empty.kind).toBe('validation')
+    expect(empty.message).toContain('沒有任何文章被寫入')
   })
 
   it('它應該處理 403、登入狀態改變、網路失敗與未知錯誤', () => {
     expect(describeImportError(new ApiHttpError(403, '/x')).message).toContain('權限')
     expect(describeImportError(new ApiRequestError(500, '/x', 'POST')).message).toContain('HTTP 500')
     expect(describeImportError(new AuthSessionChangedError()).message).toBe(new AuthSessionChangedError().message)
-    expect(describeImportError(new TypeError('Failed to fetch')).message).toBe('連不上後端 API，請稍後再試。')
+    expect(describeImportError(new TypeError('Failed to fetch'))).toEqual({
+      kind: 'network',
+      message: '連不上後端 API，請稍後再試。',
+    })
     expect(describeImportError('boom').kind).toBe('other')
   })
 })

@@ -116,18 +116,17 @@ const badgeClass = computed(
     <div v-if="actions.length" class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <BaseSegmented v-model="action" :options="actionOptions" :label="`「${displayTitle}」的處理方式`" />
 
-      <div
-        v-if="action === 'link'"
-        role="group"
-        :aria-label="`「${displayTitle}」要連結的文章`"
-        class="sm:min-w-[260px] sm:max-w-[420px] flex flex-col gap-1.5"
-      >
-        <BaseSelect
-          v-model="target"
-          :options="linkOptions"
-          :disabled="linkUnavailable"
-          placeholder="選擇要連結的文章"
-        />
+      <div v-if="action === 'link'" class="sm:min-w-[260px] sm:max-w-[420px] flex flex-col gap-1.5">
+        <!-- <label> 包住 select 才有無障礙名稱（多列時要分得出是哪一篇）；錯誤提示放在 label 外，不混進名稱 -->
+        <label class="flex flex-col">
+          <span class="sr-only">「{{ displayTitle }}」要連結的文章</span>
+          <BaseSelect
+            v-model="target"
+            :options="linkOptions"
+            :disabled="linkUnavailable"
+            placeholder="選擇要連結的文章"
+          />
+        </label>
         <BaseHint v-if="linkUnavailable" tone="error">站上文章清單載入失敗，無法選擇。</BaseHint>
       </div>
 
