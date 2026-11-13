@@ -250,8 +250,15 @@ needed to change, not just get named:
   1.5–2.0 (W3C clreq §7.1.1.5). **Article body (`MarkdownBody.vue`'s
   `<p>`/`<li>`) is now 16px with a 28px line height (`text-base leading-7`,
   1.75)**, inside that range. Other prose (About) keeps `leading-[1.6]` for
-  now. Heading line heights, paragraph spacing and footnote size are not
-  changed by this; they wait for a type specimen.
+  now. **Rest of the article page type scale (2026-11-13, after the type
+  specimen)**: article title 36px/48px, h2 in the body 24px/36px, paragraph
+  spacing 24px, footnotes 14px/24px (end notes, sidenotes and the expanded
+  note box). The values are named constants at the top of `MarkdownBody.vue`
+  (`PARAGRAPH_GAP`, `H2_TEXT`, `FOOTNOTE_TEXT`); the title is on the `h1` in
+  `ArticleDetailView.vue`. The evidence for the title line height, paragraph
+  spacing and footnote size is weak to medium (one practice source and one
+  small phone experiment); they are choices made for consistency and low
+  risk, so revisit them if the live page reads too loose.
 - **Width**: `max-w-prose` (65ch), replacing ad hoc pixel caps
   (`max-w-[760px]`, `max-w-[620px]`, `max-w-2xl`) that were never derived
   from the 50–75-character-per-line readability range, just picked to look

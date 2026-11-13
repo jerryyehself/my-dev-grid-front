@@ -1,6 +1,7 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { ARTICLE_BYLINE } from '@/copy/common'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -84,6 +85,8 @@ const router = createRouter({
       meta: {
         tag: 'Articles',
         title: 'Articles',
+        // 標題下面那一行是文章署名，不是頁面說明；放在副標的位置，才會貼在標題正下方
+        subtitle: ARTICLE_BYLINE,
       },
     },
     {

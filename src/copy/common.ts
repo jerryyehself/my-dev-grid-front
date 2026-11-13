@@ -34,3 +34,9 @@ export const ARTICLES_LOAD_FAILED_TEXT = '文章清單載入失敗，重新整�
 export const PROJECTS_EMPTY_TEXT = '目前沒有可顯示的專案。'
 export const PROJECTS_NO_MATCH_TEXT = '沒有符合篩選條件的專案。'
 export const ARTICLES_EMPTY_TEXT = '目前沒有已發布的文章。'
+
+/**
+ * 文章署名：文章清單的頁面標題下面，以及每篇文章的結尾，都用這一句。
+ * 空白是全形（U+3000）、斜線是全形（U+FF0F），照原樣，不要改成半形。
+ */
+export const ARTICLE_BYLINE = '主筆　Claude　／　發想・審定　站主'

@@ -33,8 +33,9 @@
 
       <!-- 跟 MainLayout 的頁面標題同一套：--font-serif（Noto Serif TC）900（D-60）。這頁藏了通用表頭、
            自己畫標題，所以 D-60 換字型時沒跟到，全站只剩這裡是無襯線；編輯頁的標題輸入框本來就是襯線，
-           不改的話編輯時看到的跟發布後不一樣。不加負字距：中文粗襯線字距收緊會糊在一起 -->
-      <h1 class="font-serif font-black text-2xl sm:text-3xl text-(--text-ink-main) leading-tight">
+           不改的話編輯時看到的跟發布後不一樣。不加負字距：中文粗襯線字距收緊會糊在一起。
+           36／48：標題常折成兩行，行高 1.33 倍讓兩行不黏在一起 -->
+      <h1 class="font-serif font-black text-4xl leading-12 text-(--text-ink-main)">
         {{ article.title }}
       </h1>
     </div>
@@ -106,6 +107,12 @@
 
         <MarkdownBody :source="article.body ?? ''" sidenotes />
 
+        <!-- 署名：文章結尾、上一篇／下一篇的上面。文章清單的標題下面是同一句（router 的 meta.subtitle）。
+             mb-0 text-left：蓋掉 .global-page-wrapper p 的下距與桌機的兩端對齊 -->
+        <p class="mt-10 mb-0 border-t border-(--border-shelf) pt-4 text-sm text-left text-(--text-ink-muted)">
+          {{ ARTICLE_BYLINE }}
+        </p>
+
         <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
           <router-link
             v-if="previousArticle"
@@ -174,7 +181,7 @@ import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { extractHeadings } from '@/components/markdown/headings'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { pageTitleOverride } from '@/siteMeta'
-import { LOADING_TEXT } from '@/copy/common'
+import { ARTICLE_BYLINE, LOADING_TEXT } from '@/copy/common'
 
 const route = useRoute()
 const articleId = computed(() => Number(route.params.id))

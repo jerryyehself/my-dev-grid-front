@@ -176,3 +176,18 @@ describe('router：not-found', () => {
     expect(router.resolve('/graph').name).toBe('graph')
   })
 })
+
+// 文章署名：文章清單的標題下面那一行，放在副標的位置，貼在標題正下方
+describe('router：/articles 的署名', () => {
+  it('它應該把署名放在副標，字句照原樣（全形空白、全形斜線、中間點）', () => {
+    expect(router.resolve('/articles').meta.subtitle).toBe(
+      '主筆\u3000Claude\u3000\uff0f\u3000發想\u30fb審定\u3000站主',
+    )
+  })
+
+  it('它應該只有文章清單帶署名，文章內頁與其他頁面的副標不受影響', () => {
+    expect(router.resolve('/articles/12').meta.subtitle).toBeUndefined()
+    expect(router.resolve('/projects').meta.subtitle).toBeUndefined()
+  })
+})
+

@@ -29,7 +29,7 @@ visitor copy is not a "local detail".)
 Grounded in what the site already says (About, home), not invented:
 
 - **Objective and plain; no subject where none is needed; first person only on /about and only for a
-  stated judgement.** About: 「收錄自己寫的文章、用過的技術、做過的專案，以及這些技術的官方文件。」
+  stated judgement.** About: 「收錄文章、用過的技術、做過的專案，以及這些技術的官方文件。」
   Say what is there, as a fact about the catalogue. No marketing register (打造, 賦能, 一站式,
   探索…的旅程).
 - **Catalogue vocabulary, because the site is a catalogue.** 目錄, 編, 類別, 關係 are literal
@@ -68,7 +68,7 @@ When a new term is settled with the user, add a row here **and** record the deci
 ## Formats
 
 **Page subtitle** (the line under a page title)
-- **Only where the page's purpose isn't evident from its content** (the user, 2026-10-01, D-83). List pages whose content shows what they are — `/articles`, `/projects` — get no subtitle; the home page and `/graph` keep theirs. A page with no subtitle must still show some Chinese text above the fold (a count line, an empty state).
+- **Only where the page's purpose isn't evident from its content** (the user, 2026-10-01, D-83). List pages whose content shows what they are — `/articles`, `/projects` — get no subtitle; the home page and `/graph` keep theirs. The one exception is the article byline (「主筆　Claude　／　發想・審定　站主」, in `src/copy/common.ts`): `/articles` shows it in the subtitle slot, directly under the page title, and every article repeats it at its end. It is an attribution, not a description of the page. A page with no subtitle must still show some Chinese text above the fold (a count line, an empty state).
 - Describes what the page holds. **No usage instructions** — the controls are visible already
   (the user rejected 「…，可以用技術篩選」, 2026-10-01).
 - Put the information-carrying words first: "if users see only the first 2 words, they should

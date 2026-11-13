@@ -46,6 +46,13 @@ describe('AboutView', () => {
     wrapper.unmount()
   })
 
+  it('它應該不再說文章是「自己寫的」', () => {
+    const wrapper = mountAbout()
+    expect(wrapper.text()).not.toContain('自己寫')
+    expect(wrapper.text()).toContain('收錄文章、用過的技術、做過的專案，以及這些技術的官方文件。')
+    wrapper.unmount()
+  })
+
   it('它應該在 COLOPHON 只寫分工，不列 plugin', () => {
     const wrapper = mountAbout()
     expect(wrapper.text()).not.toMatch(/plugin/i)
