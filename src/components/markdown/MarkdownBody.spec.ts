@@ -231,14 +231,19 @@ describe('MarkdownBody', () => {
       it('它應該讓緊貼的三個編號在相鄰的那一側不加大，最外側保留，上下都保留', async () => {
         const w = await mountMd('文字[^1][^2][^3]。\n\n[^1]: 一\n\n[^2]: 二\n\n[^3]: 三')
         const sides = [0, 1, 2].map((i) => [
-          hasClass(w, i, 'after:left-0'),
-          hasClass(w, i, 'after:right-0'),
+          hasClass(w, i, 'after:left-px'),
+          hasClass(w, i, 'after:right-px'),
         ])
         expect(sides).toEqual([
           [false, true],
           [true, true],
           [true, false],
         ])
+        // 相鄰那一側不能是切齊（left-0／right-0）：數字寬度是小數，對齊到整數像素後會各多出約 1px 蓋到鄰居
+        for (let i = 0; i < 3; i++) {
+          expect(hasClass(w, i, 'after:left-0')).toBe(false)
+          expect(hasClass(w, i, 'after:right-0')).toBe(false)
+        }
         expect(hasClass(w, 0, 'after:-left-3.5')).toBe(true)
         expect(hasClass(w, 2, 'after:-right-3.5')).toBe(true)
         for (let i = 0; i < 3; i++) expect(hasClass(w, i, 'after:-inset-y-4')).toBe(true)
@@ -621,7 +626,7 @@ describe('MarkdownBody', () => {
           expect.stringMatching(/fnnote-1-1$/),
           expect.stringMatching(/fnnote-2-1$/),
         ])
-        // 每則註釋緊鄰在自己的編號後面（hover 標亮的相鄰兄弟選擇器要靠這個）
+        // 每則註釋緊鄰在自己的編號後面（編號與註釋的對應順序）
         expect(after[0]!.querySelector('button')!.getAttribute('data-fn-number')).toBe('1')
         expect(after[2]!.querySelector('button')!.getAttribute('data-fn-number')).toBe('2')
         w.unmount()
@@ -636,6 +641,103 @@ describe('MarkdownBody', () => {
         expect(inside(w, 'a')).toHaveLength(0)
         // 回連結（<a href="#…">）本身也不含 button
         expect(w.findAll('section a button')).toHaveLength(0)
+        w.unmount()
+      })
+    })
+
+    describe('邊注標亮：hover／聚焦（內文、標題、連結裡的引用一致）', () => {
+      // jsdom 沒有 :hover，用狀態（mouseenter／focus）驅動標亮；標亮的樣子是邊注多了 text-(--text-ink-main)
+      const LIT = 'text-(--text-ink-main)'
+      const noteOf = (w: Wrapper, i: number) =>
+        w.find(`[id="${markers(w)[i]!.attributes('aria-describedby')}"]`)
+      const lit = (w: Wrapper, i: number) => noteOf(w, i).classes().includes(LIT)
+      const DEFS = '\n\n[^1]: 一\n\n[^2]: 二'
+      const mountWide = async (source: string) => {
+        stubWide(true)
+        return mountMd(source + DEFS, { sidenotes: true, attach: true })
+      }
+
+      it.each([
+        { kind: '內文', source: '句子[^1]，再一句[^2]。' },
+        { kind: '標題', source: '## 標題[^1]與[^2]\n\n內文' },
+        { kind: '連結', source: '[連結[^1]](https://example.com)與[^2]。' },
+        { kind: '標題裡的連結', source: '## [連結[^1]](https://example.com)與[^2]\n\n內文' },
+      ])(
+        '它應該在 hover 第一次引用（$kind）時標亮對應的邊注，移開就取消，只動自己那一則',
+        async ({ source }) => {
+          const w = await mountWide(source)
+          expect(markers(w)).toHaveLength(2)
+          expect([lit(w, 0), lit(w, 1)]).toEqual([false, false])
+          await markers(w)[1]!.trigger('mouseenter')
+          expect([lit(w, 0), lit(w, 1)]).toEqual([false, true])
+          await markers(w)[1]!.trigger('mouseleave')
+          await markers(w)[0]!.trigger('mouseenter')
+          expect([lit(w, 0), lit(w, 1)]).toEqual([true, false])
+          await markers(w)[0]!.trigger('mouseleave')
+          expect([lit(w, 0), lit(w, 1)]).toEqual([false, false])
+          w.unmount()
+        },
+      )
+
+      it.each([
+        { kind: '內文', source: '句子[^1]。' },
+        { kind: '標題', source: '## 標題[^1]\n\n內文' },
+      ])(
+        '它應該在鍵盤聚焦編號（$kind）時標亮邊注，失焦取消；滑鼠移開不蓋掉還在的焦點',
+        async ({ source }) => {
+          const w = await mountWide(source)
+          const marker = markers(w)[0]!
+          await marker.trigger('focus')
+          expect(lit(w, 0)).toBe(true)
+          // 同時 hover 又移開：焦點還在，邊注要繼續亮
+          await marker.trigger('mouseenter')
+          await marker.trigger('mouseleave')
+          expect(lit(w, 0)).toBe(true)
+          await marker.trigger('blur')
+          expect(lit(w, 0)).toBe(false)
+          w.unmount()
+        },
+      )
+
+      it('它應該讓後續引用的 hover 不標亮邊注（邊注只貼在第一次引用）', async () => {
+        const w = await mountWide('甲[^1]，乙[^1]。')
+        await markers(w)[1]!.trigger('mouseenter')
+        expect(lit(w, 0)).toBe(false)
+        await markers(w)[1]!.trigger('focus')
+        expect(lit(w, 0)).toBe(false)
+        w.unmount()
+      })
+
+      it('它應該讓編號本身只在固定標亮時變粗，hover 只標亮邊注', async () => {
+        const w = await mountWide('句子[^1]。')
+        const marker = markers(w)[0]!
+        await marker.trigger('mouseenter')
+        expect(marker.classes()).not.toContain('font-bold')
+        await marker.trigger('click')
+        expect(marker.classes()).toContain('font-bold')
+        // 固定標亮後滑鼠移開仍亮，再點才取消
+        await marker.trigger('mouseleave')
+        expect(lit(w, 0)).toBe(true)
+        await marker.trigger('click')
+        expect(lit(w, 0)).toBe(false)
+        w.unmount()
+      })
+
+      it('它應該在窄螢幕不產生邊注，hover 沒有作用', async () => {
+        stubWide(false)
+        const w = await mountMd('## 標題[^1]\n\n[^1]: 一', { sidenotes: true, attach: true })
+        await markers(w)[0]!.trigger('mouseenter')
+        expect(w.find('[data-fn-side]').exists()).toBe(false)
+        expect(markers(w)[0]!.attributes('aria-expanded')).toBe('false')
+        w.unmount()
+      })
+
+      it('它應該在換文章內容後清掉卡住的 hover 標亮', async () => {
+        const w = await mountWide('句子[^1]。')
+        await markers(w)[0]!.trigger('mouseenter')
+        expect(lit(w, 0)).toBe(true)
+        await w.setProps({ source: '另一句[^1]。\n\n[^1]: 新的' })
+        expect(lit(w, 0)).toBe(false)
         w.unmount()
       })
     })
@@ -694,6 +796,196 @@ describe('MarkdownBody', () => {
         const title = note.findAll('span').find((s) => s.text() === '註內標題')!
         expect(title.classes()).toEqual(expect.arrayContaining(['block', 'font-bold']))
         expect(note.text()).toContain('第二段')
+      })
+
+      describe('程式碼區塊、引用區塊、表格、分隔線（不產生區塊元素）', () => {
+        // <p> 的內容模型只允許行內內容：這些區塊元素長在 <p> 裡面就是無效巢狀
+        const NO_BLOCK =
+          'pre, blockquote, table, thead, tbody, tfoot, tr, th, td, div, hr, section, ul, ol, li, p, h1, h2, h3, h4, h5, h6'
+        const RICH = [
+          '句子[^1]。',
+          '',
+          '[^1]: 說明如下：',
+          '',
+          '    ```js',
+          '    const a = 1',
+          '    if (a) {',
+          '      go()',
+          '    }',
+          '    ```',
+          '',
+          '    > 引用第一段',
+          '    >',
+          '    > 引用第二段',
+          '',
+          '    | 欄 | 值 | 說明 |',
+          '    |:---|---:|:---:|',
+          '    | 甲 | 1 | 一 |',
+          '    | 乙 | 22 | 二 |',
+          '',
+          '    ---',
+          '',
+          '    結尾一句',
+        ].join('\n')
+        const note = (w: Wrapper) => w.find('[id*="fnnote"]')
+        const noBlockInParagraphs = (w: Wrapper) => {
+          const paragraphs = w.findAll('p')
+          expect(paragraphs.length).toBeGreaterThan(0)
+          paragraphs.forEach((p) => expect(p.findAll(NO_BLOCK)).toHaveLength(0))
+        }
+
+        it('它應該讓每個 <p> 裡都沒有區塊元素，註釋元素裡也沒有', async () => {
+          const w = await mountMd(RICH)
+          noBlockInParagraphs(w)
+          expect(note(w).findAll(NO_BLOCK)).toHaveLength(0)
+        })
+
+        it.each([
+          { name: '窄螢幕（展開後）', wide: false },
+          { name: '寬螢幕（邊注）', wide: true },
+        ])(
+          '它應該在$name也沒有區塊元素，標題裡的引用（註釋接在標題後面）同樣',
+          async ({ wide }) => {
+            stubWide(wide)
+            const w = await mountMd(RICH.replace('句子[^1]。', '## 標題[^1]\n\n句子[^1]。'), {
+              sidenotes: true,
+              attach: true,
+            })
+            if (!wide) await markers(w)[0]!.trigger('click')
+            noBlockInParagraphs(w)
+            const first = w.find('[id*="fnnote-1-1"]')
+            expect(first.attributes('hidden')).toBeUndefined()
+            expect(first.findAll(NO_BLOCK)).toHaveLength(0)
+            // 內容都還在
+            expect(first.text()).toContain('const a = 1')
+            expect(first.text()).toContain('引用第二段')
+            expect(first.text()).toContain('乙')
+            w.unmount()
+          },
+        )
+
+        it('它應該在文末清單項目（<li>）裡也不用區塊元素，內容與註釋元素一致', async () => {
+          const w = await mountMd(RICH)
+          const li = w.findAll('section ol > li')[0]!
+          expect(li.findAll(NO_BLOCK)).toHaveLength(0)
+          expect(li.text()).toContain('const a = 1')
+          expect(li.findAll('[role="table"]')).toHaveLength(1)
+          expect(li.findAll('[role="blockquote"]')).toHaveLength(1)
+        })
+
+        it('它應該把程式碼區塊畫成 display:block 的 <code>，保留換行與縮排、可橫向捲動、帶語言', async () => {
+          const w = await mountMd(RICH)
+          const code = note(w).find('code')
+          expect(code.classes()).toEqual(
+            expect.arrayContaining(['block', 'whitespace-pre', 'overflow-x-auto', 'font-mono']),
+          )
+          expect(code.element.textContent).toBe('const a = 1\nif (a) {\n  go()\n}')
+          expect(code.attributes('data-lang')).toBe('js')
+          // 沒有 pre，也沒有外層再包一個 code
+          expect(note(w).findAll('pre')).toHaveLength(0)
+          expect(code.findAll('code')).toHaveLength(0)
+        })
+
+        it('它應該把引用區塊畫成 role=blockquote，多個段落各自一塊並有間距', async () => {
+          const w = await mountMd(RICH)
+          const quotes = note(w).findAll('[role="blockquote"]')
+          expect(quotes).toHaveLength(1)
+          const quote = quotes[0]!
+          expect(quote.element.tagName).toBe('SPAN')
+          expect(quote.classes()).toEqual(expect.arrayContaining(['block', 'border-l-[3px]']))
+          const paras = Array.from(quote.element.children)
+          expect(paras.map((p) => p.textContent)).toEqual(['引用第一段', '引用第二段'])
+          expect(paras.every((p) => p.classList.contains('block'))).toBe(true)
+          expect(quote.classes()).toContain('[&>*+*]:mt-1.5')
+        })
+
+        it('它應該把表格畫成 role=table／rowgroup／row／columnheader／cell，欄位對齊照 GFM', async () => {
+          const w = await mountMd(RICH)
+          const table = note(w).find('[role="table"]')
+          expect(table.element.tagName).toBe('SPAN')
+          expect(table.classes()).toEqual(expect.arrayContaining(['table', 'border-collapse']))
+          // 外層是可橫向捲動的區塊
+          expect(table.element.parentElement!.classList.contains('overflow-x-auto')).toBe(true)
+          const groups = table.findAll('[role="rowgroup"]')
+          expect(groups.map((g) => g.classes().find((c) => c.startsWith('table-')))).toEqual([
+            'table-header-group',
+            'table-row-group',
+          ])
+          const rows = table.findAll('[role="row"]')
+          expect(rows).toHaveLength(3)
+          expect(rows.every((r) => r.classes().includes('table-row'))).toBe(true)
+          const header = table.findAll('[role="columnheader"]')
+          expect(header.map((c) => c.text())).toEqual(['欄', '值', '說明'])
+          expect(header.every((c) => c.element.parentElement === rows[0]!.element)).toBe(true)
+          const cells = table.findAll('[role="cell"]')
+          expect(cells.map((c) => c.text())).toEqual(['甲', '1', '一', '乙', '22', '二'])
+          expect(cells.every((c) => c.classes().includes('table-cell'))).toBe(true)
+          // 對齊：左、右、置中
+          const align = (c: (typeof cells)[number]) =>
+            c.classes().find((k) => ['text-left', 'text-right', 'text-center'].includes(k))
+          expect(cells.slice(0, 3).map(align)).toEqual(['text-left', 'text-right', 'text-center'])
+        })
+
+        it('它應該把只有表頭、沒有資料列的表格也畫好，不炸掉', async () => {
+          const w = await mountMd('句子[^1]。\n\n[^1]: 表：\n\n    | 欄 | 值 |\n    |---|---|')
+          const table = note(w).find('[role="table"]')
+          expect(table.findAll('[role="row"]')).toHaveLength(1)
+          expect(table.findAll('[role="columnheader"]')).toHaveLength(2)
+          expect(table.findAll('[role="cell"]')).toHaveLength(0)
+          noBlockInParagraphs(w)
+        })
+
+        it('它應該把分隔線畫成 role=separator 的 <span>', async () => {
+          const w = await mountMd(RICH)
+          const sep = note(w).findAll('[role="separator"]')
+          expect(sep).toHaveLength(1)
+          expect(sep[0]!.element.tagName).toBe('SPAN')
+          expect(note(w).findAll('hr')).toHaveLength(0)
+        })
+
+        it('它應該讓清單項目與引用裡的程式碼、巢狀引用也不產生區塊元素', async () => {
+          const w = await mountMd(
+            [
+              '句子[^1]。',
+              '',
+              '[^1]: 註',
+              '',
+              '    - 項目',
+              '',
+              '      ```',
+              '      code in item',
+              '      ```',
+              '',
+              '    > 外層',
+              '    >',
+              '    > > 內層引用',
+              '    >',
+              '    > ```',
+              '    > code in quote',
+              '    > ```',
+            ].join('\n'),
+          )
+          expect(note(w).findAll(NO_BLOCK)).toHaveLength(0)
+          expect(note(w).text()).toContain('code in item')
+          expect(note(w).text()).toContain('code in quote')
+          expect(note(w).findAll('[role="blockquote"]')).toHaveLength(2)
+          noBlockInParagraphs(w)
+        })
+
+        it('它應該讓註釋外的程式碼區塊、引用、表格、分隔線仍是真的區塊元素', async () => {
+          const w = await mountMd(
+            ['```', 'x', '```', '', '> 引', '', '| a |', '|---|', '| b |', '', '---'].join('\n'),
+          )
+          expect(w.findAll('pre')).toHaveLength(1)
+          expect(w.findAll('blockquote')).toHaveLength(1)
+          expect(w.findAll('table')).toHaveLength(1)
+          expect(w.findAll('hr')).toHaveLength(1)
+          expect(w.findAll('th')).toHaveLength(1)
+          expect(w.findAll('td')).toHaveLength(1)
+          expect(w.findAll('[role="table"], [role="blockquote"], [role="separator"]')).toHaveLength(
+            0,
+          )
+        })
       })
 
       describe('清單標記（不用 display:list-item，不動外層 <ol> 的計數器）', () => {
@@ -762,9 +1054,7 @@ describe('MarkdownBody', () => {
           const w = await mountMd(
             '句子[^1]。\n\n[^1]: 註\n\n    - [ ] 任務\n      - 子一\n    - 一般\n      - 子二',
           )
-          const items = noteOf(w)
-            .find('[role="list"]')
-            .findAll(':scope > [role="listitem"]')
+          const items = noteOf(w).find('[role="list"]').findAll(':scope > [role="listitem"]')
           const nestedOf = (item: (typeof items)[number]) => {
             const nested = item.element.querySelector('[role="list"]')!
             // 巢狀清單的祖先鏈：直接在第二欄（內容欄）底下，而不是跟標記欄並排或掛在項目底下

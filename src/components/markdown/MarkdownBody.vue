@@ -91,14 +91,30 @@ const sideMode = ref(false)
 const openNotes = shallowRef<Set<string>>(new Set())
 /** 寬螢幕下點過編號、固定標亮的註釋編號（觸控裝置沒有 hover，點一下要有回饋）。 */
 const pinnedNumber = ref<number | null>(null)
+/**
+ * 寬螢幕下滑鼠停在哪個編號上、鍵盤焦點在哪個編號上（也是註釋編號）。對應的邊注跟著標亮。
+ * 用狀態而不是 CSS 的相鄰兄弟選擇器：標題與連結裡的引用，邊注被移到標題／連結後面，
+ * 不再緊鄰編號，選擇器對不上；用編號比對就不管邊注長在哪。
+ * 滑鼠與焦點分開記：滑鼠移開時，焦點還在編號上就該繼續標亮。
+ */
+const hoverNumber = ref<number | null>(null)
+const focusNumber = ref<number | null>(null)
 
 watch(
   () => props.source,
   () => {
     openNotes.value = new Set()
     pinnedNumber.value = null
+    hoverNumber.value = null
+    focusNumber.value = null
   },
 )
+
+// 寬窄切換時編號可能被換掉或隱藏，mouseleave／blur 不一定會來，清掉才不會回到寬螢幕時卡著標亮
+watch(sideMode, () => {
+  hoverNumber.value = null
+  focusNumber.value = null
+})
 
 // 每次 render 歸零：同一則註釋被引用到第幾次，用來產生每個引用各自的 id
 let refSeen = new Map<number, number>()
@@ -141,7 +157,7 @@ function withDeferral(kind: Deferral['kind'], build: () => VNode): VNode[] {
     return [el, ...mine.markers]
   }
   // 一個連結裡有好幾個引用：每個編號後面緊跟它自己的註釋（a, m4, n4, m5, n5），
-  // 不能把編號排一排、註釋排一排——邊注的 hover 標亮靠「緊鄰在編號後面」的相鄰兄弟選擇器。
+  // 註釋在文件裡的位置維持「編號 → 它的註釋」的順序，閱讀順序與編號對得上。
   // 標題的編號留在標題裡（markers 是空的），註釋照順序接在標題後面
   const tail: VNode[] = []
   const pairs = Math.min(mine.markers.length, mine.notes.length)
@@ -284,6 +300,21 @@ function render(node: MdNode): VNode[] {
       ]
 
     case 'code':
+      // 註釋裡的程式碼區塊：<pre> 不能長在內文 <p> 裡的註釋元素中，改用 display:block 的 <code>
+      // （<code> 是行內內容，放在 <span>／<p> 裡合法），whitespace-pre 保留換行與縮排，超出寬度橫向捲動
+      if (noteDepth > 0) {
+        return [
+          h(
+            'code',
+            {
+              'data-lang': node.lang ?? undefined,
+              class:
+                'block my-1.5 p-2.5 overflow-x-auto whitespace-pre font-mono text-[12.5px] leading-6 text-left text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px]',
+            },
+            node.value ?? '',
+          ),
+        ]
+      }
       // 區塊程式碼先不做語法高亮:那要再載一個 highlighter，而且
       // 目前沒有任何一篇文章證明需要它。等真的有需求再加（見 lang 欄位已經帶進來了）
       return [
@@ -380,6 +411,21 @@ function render(node: MdNode): VNode[] {
     }
 
     case 'blockquote':
+      // 註釋裡的引用：<blockquote> 是區塊元素，不能長在 <p> 裡，改用 <span role="blockquote">；
+      // 裡面的段落已經是 display:block 的 <span>，用 [&>*+*] 補上段落間距
+      if (noteDepth > 0) {
+        return [
+          h(
+            'span',
+            {
+              role: 'blockquote',
+              class:
+                'block my-1.5 pl-3 border-l-[3px] border-(--text-accent) text-(--text-ink-body) opacity-90 [&>*+*]:mt-1.5',
+            },
+            kids(node),
+          ),
+        ]
+      }
       return [
         h(
           'blockquote',
@@ -392,6 +438,12 @@ function render(node: MdNode): VNode[] {
       ]
 
     case 'thematicBreak':
+      // 註釋裡的分隔線：<hr> 同樣不能長在 <p> 裡
+      if (noteDepth > 0) {
+        return [
+          h('span', { role: 'separator', class: 'block my-3 border-t border-(--border-shelf)' }),
+        ]
+      }
       return [h('hr', { class: 'border-0 border-t border-(--border-shelf) my-8' })]
 
     case 'break':
@@ -400,6 +452,29 @@ function render(node: MdNode): VNode[] {
     // --- GFM 表格 ---
     case 'table': {
       const [head, ...body] = node.children ?? []
+      // 註釋裡的表格：<table>／<div> 不能長在 <p> 裡。用 display:table 系列的 <span> 畫，
+      // 加 role=table／rowgroup／row／columnheader／cell 讓輔助科技照表格讀；
+      // 外層是可橫向捲動的區塊，邊注只有 232px，欄位多的表格不會把版面撐開
+      if (noteDepth > 0) {
+        return [
+          h('span', { class: 'block my-1.5 overflow-x-auto' }, [
+            h('span', { role: 'table', class: 'table w-full border-collapse text-[12.5px]' }, [
+              head
+                ? h(
+                    'span',
+                    { role: 'rowgroup', class: 'table-header-group' },
+                    renderRow(head, node.align, true),
+                  )
+                : null,
+              h(
+                'span',
+                { role: 'rowgroup', class: 'table-row-group' },
+                body.map((r) => renderRow(r, node.align, false)),
+              ),
+            ]),
+          ]),
+        ]
+      }
       return [
         h('div', { class: 'overflow-x-auto my-4' }, [
           h('table', { class: 'w-full border-collapse text-[13.5px]' }, [
@@ -487,8 +562,9 @@ function noteListItem(item: MdNode, markerText: string | null, markerMinWidth?: 
 
 /**
  * 註釋內容。第一段接在編號後面同一行，之後的段落另起一行。
- * 段落、標題、清單在註釋裡都是 <span>（見 render 的 noteDepth 分支）；
- * 程式碼區塊、引用區塊、表格這類少見的區塊仍照一般方式 render（目前沒有改成 <span>）。
+ * 段落、標題、清單、程式碼區塊、引用區塊、表格、分隔線在註釋裡都不產生區塊元素（見 render 的 noteDepth 分支）：
+ * 註釋元素長在內文的 <p> 裡，文末清單則是 <li>，兩處用同一份內容，所以都用 <span>（或行內的 <code>）加 display:block 畫，
+ * 該有的語意（表格、引用、清單）靠 role 補回。
  */
 function noteBody(definition: MdNode): VNode[] {
   noteDepth++
@@ -523,9 +599,9 @@ function closeNote(key: string) {
  * 以及緊跟在 span 後面的註釋元素。
  * 寬螢幕：第一次引用的註釋是右邊的邊注（絕對定位，top 由 layoutSidenotes 對齊引用那一行）；
  *        同一則註釋的後續引用不再顯示（右邊只放一份）。
- *        標亮邊注：hover／聚焦只在「邊注緊鄰在編號後面」時有效（下面的 [:has(>sup:hover)+&]），
- *        也就是第一次引用；後續引用的 hover／聚焦不會標亮邊注。標題裡的引用，邊注接在標題後面、
- *        不緊鄰編號，也沒有 hover 標亮。點編號固定標亮（pinnedNumber，依註釋編號比對）對每一處引用都有效。
+ *        標亮邊注：hover／聚焦第一次引用會標亮它的邊注（hoverNumber／focusNumber，依註釋編號比對，
+ *        所以標題與連結裡的引用——邊注被移到標題／連結後面——跟內文的引用行為一樣）；
+ *        後續引用的 hover／聚焦不會標亮邊注。點編號固定標亮（pinnedNumber）對每一處引用都有效。
  * 窄螢幕：註釋預設隱藏，點編號（或 Enter／Space）在編號後面原地展開，Esc 收起並把焦點還給編號。
  * 註釋元素放在編號旁邊而不是文末，所以兩種模式都不需要另外算位置就能退化成「在那一行附近」。
  * 連結、標題裡的引用例外：註釋元素移到該連結／標題後面，連結裡的編號也一起移出（見 withDeferral）。
@@ -550,20 +626,25 @@ function renderFootnoteRef(
   const side = sideMode.value
   const isFirst = k === 1
   const open = openNotes.value.has(key)
-  const lit = pinnedNumber.value === n
+  const pinned = pinnedNumber.value === n
+  // 邊注標亮：點過（固定）、滑鼠停在第一次引用上、鍵盤焦點在第一次引用上。
+  // 編號本身「開著」的粗體只看固定標亮（hover 只加底線，兩者看得出差別）
+  const lit = pinned || (isFirst && (hoverNumber.value === n || focusNumber.value === n))
 
   // 編號是行內的小上標數字，不是徽章：不加底、不加框，也不撐高行高；
   // 「開著」的狀態用粗體加底線表示（hover 只加底線，兩者看得出差別）
-  const active = side ? lit : open
+  const active = side ? pinned : open
   const markerClass = [
     'relative inline px-[1px] py-0 rounded-[2px] leading-none tabular-nums cursor-pointer scroll-mt-36 transition-colors duration-100 ease-out',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)',
     // 加大點擊範圍到約 44px，手指點得到；上標的數字本身只有十來 px 高。
     // 左右各往外 14px，但緊貼著另一個編號的那一側不加（相鄰編號中間沒有空隙，各加 14px 會蓋住鄰居，
-    // 點到後面那個）；上下一律加大
+    // 點到後面那個）；上下一律加大。
+    // 緊貼的那一側往內縮 1px 而不是切齊（left-0／right-0）：數字寬度是小數（tabular-nums 約 9.78px），
+    // 疊加的範圍被瀏覽器對齊到整數像素時，相鄰兩個編號各會多出約 1px 蓋到對方（實測 390px 每一對都有一欄）
     'after:content-[""] after:absolute after:-inset-y-4',
-    near.prev ? 'after:left-0' : 'after:-left-3.5',
-    near.next ? 'after:right-0' : 'after:-right-3.5',
+    near.prev ? 'after:left-px' : 'after:-left-3.5',
+    near.next ? 'after:right-px' : 'after:-right-3.5',
     active
       ? 'font-bold text-(--text-accent) underline decoration-2 underline-offset-2'
       : 'font-medium text-(--text-ink-main) underline-offset-2 hover:text-(--text-accent) hover:underline',
@@ -578,7 +659,7 @@ function renderFootnoteRef(
         'pl-3 border-l-2 text-sm leading-[1.5] text-left',
         lit
           ? 'border-(--text-ink-main) text-(--text-ink-main)'
-          : 'border-(--border-shelf) text-(--text-ink-muted) [:has(>sup:hover)+&]:border-(--text-ink-main) [:has(>sup:hover)+&]:text-(--text-ink-main) [:has(>sup:focus-within)+&]:border-(--text-ink-main) [:has(>sup:focus-within)+&]:text-(--text-ink-main)',
+          : 'border-(--border-shelf) text-(--text-ink-muted)',
       ].join(' ')
     : 'block my-2 px-4 py-3 border border-(--border-shelf) border-l-2 border-l-(--text-ink-main) rounded-r-[6px] bg-(--bg-folder) text-sm leading-[1.5] text-(--text-ink-body) text-left'
 
@@ -602,8 +683,21 @@ function renderFootnoteRef(
             ? { 'aria-describedby': firstNoteId }
             : { 'aria-expanded': String(open), 'aria-controls': noteId }),
           onClick: () => {
-            if (side) pinnedNumber.value = lit ? null : n
+            if (side) pinnedNumber.value = pinned ? null : n
             else toggleNote(key)
+          },
+          // 邊注標亮的 hover／聚焦：只有第一次引用（邊注長在它那裡）才有，之後的引用不動作
+          onMouseenter: () => {
+            if (showAsSidenote) hoverNumber.value = n
+          },
+          onMouseleave: () => {
+            if (hoverNumber.value === n) hoverNumber.value = null
+          },
+          onFocus: () => {
+            if (showAsSidenote) focusNumber.value = n
+          },
+          onBlur: () => {
+            if (focusNumber.value === n) focusNumber.value = null
           },
           onKeydown: (e: KeyboardEvent) => {
             if (e.key === 'Escape' && !side && open) {
@@ -806,13 +900,18 @@ const Rendered = () => {
 defineExpose({ headings })
 
 function renderRow(row: MdNode, align: MdNode['align'], isHead: boolean): VNode {
+  // 註釋裡的表格用 <span> 畫（見 table 的 case），列與儲存格的 role 補回表格語意
+  const inNote = noteDepth > 0
   const cells = (row.children ?? []).map((cell, i) => {
     const a = align?.[i]
     return h(
-      isHead ? 'th' : 'td',
+      inNote ? 'span' : isHead ? 'th' : 'td',
       {
+        role: inNote ? (isHead ? 'columnheader' : 'cell') : undefined,
         class: [
-          'border border-(--border-shelf) px-3 py-2',
+          inNote
+            ? 'table-cell align-top border border-(--border-shelf) px-2 py-1'
+            : 'border border-(--border-shelf) px-3 py-2',
           isHead ? 'bg-(--bg-folder) font-bold text-(--text-ink-main)' : 'text-(--text-ink-body)',
           a === 'right' ? 'text-right' : a === 'center' ? 'text-center' : 'text-left',
         ],
@@ -820,7 +919,7 @@ function renderRow(row: MdNode, align: MdNode['align'], isHead: boolean): VNode 
       render(cell),
     )
   })
-  return h('tr', {}, cells)
+  return inNote ? h('span', { role: 'row', class: 'table-row' }, cells) : h('tr', {}, cells)
 }
 </script>
 
