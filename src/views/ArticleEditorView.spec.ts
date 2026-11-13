@@ -157,6 +157,78 @@ describe('ArticleEditorView', () => {
       wrapper.unmount()
     })
 
+    describe('execCommand 的結果', () => {
+      // jsdom 沒有 document.execCommand，預設走退回路徑；這裡替換成指定行為的版本
+      // impl 收到要插入的文字（execCommand 的第三個參數），回傳 execCommand 的回報
+      const stubExecCommand = (impl: (text: string) => boolean) => {
+        const execCommand = vi.fn((command: string, showUi?: boolean, value?: string) => impl(value ?? ''))
+        Object.defineProperty(document, 'execCommand', { value: execCommand, configurable: true, writable: true })
+      }
+      afterEach(() => {
+        Reflect.deleteProperty(document, 'execCommand')
+      })
+
+      it('它應該在 execCommand 成功且內容正確時照用它的結果，不再重複插入', async () => {
+        const wrapper = await mountView()
+        const textarea = wrapper.get('textarea').element
+        await wrapper.get('textarea').setValue('前面後面')
+        textarea.setSelectionRange(2, 2)
+        stubExecCommand((text) => {
+          textarea.setRangeText(text, textarea.selectionStart, textarea.selectionEnd, 'end')
+          textarea.dispatchEvent(new Event('input', { bubbles: true }))
+          return true
+        })
+
+        await findButton(wrapper).trigger('click')
+
+        expect(document.execCommand).toHaveBeenCalledWith('insertText', false, expect.any(String))
+        expect(textarea.value).toBe('前面[^1]後面\n\n[^1]: ')
+        wrapper.unmount()
+      })
+
+      it.each([
+        { kind: '回報成功但 textarea 完全沒動', mutate: () => {} },
+        { kind: '回報成功但只插進一半', mutate: (t: HTMLTextAreaElement) => { t.value = '前面[^1]後面' } },
+        { kind: '回報成功但文字被改寫', mutate: (t: HTMLTextAreaElement) => { t.value = '前面???後面\n\n[^1]: ' } },
+      ])('它應該在 execCommand $kind 時，把 textarea 直接設成預期內容並送 input 事件，v-model 跟上', async ({ mutate }) => {
+        const wrapper = await mountView()
+        const textarea = wrapper.get('textarea').element
+        await wrapper.get('textarea').setValue('前面後面')
+        textarea.setSelectionRange(2, 2)
+        stubExecCommand(() => {
+          mutate(textarea)
+          return true
+        })
+        const onInput = vi.fn()
+        textarea.addEventListener('input', onInput)
+
+        await findButton(wrapper).trigger('click')
+
+        expect(textarea.value).toBe('前面[^1]後面\n\n[^1]: ')
+        expect(textarea.value.match(/\[\^1\]/g)).toHaveLength(2)
+        expect(onInput).toHaveBeenCalled()
+        // v-model 有更新：再按一次接著用 2，而不是從舊內容算
+        textarea.setSelectionRange(0, 0)
+        stubExecCommand(() => false)
+        await findButton(wrapper).trigger('click')
+        expect(textarea.value).toBe('[^2]前面[^1]後面\n\n[^1]: \n[^2]: ')
+        wrapper.unmount()
+      })
+
+      it('它應該在 execCommand 回傳 false 時退回 setRangeText 插入一次', async () => {
+        const wrapper = await mountView()
+        const textarea = wrapper.get('textarea').element
+        await wrapper.get('textarea').setValue('前面後面')
+        textarea.setSelectionRange(2, 2)
+        stubExecCommand(() => false)
+
+        await findButton(wrapper).trigger('click')
+
+        expect(textarea.value).toBe('前面[^1]後面\n\n[^1]: ')
+        wrapper.unmount()
+      })
+    })
+
     it('它應該有選取文字時保留選取、把引用放在選取範圍後面', async () => {
       const wrapper = await mountView()
       const textarea = wrapper.get('textarea').element

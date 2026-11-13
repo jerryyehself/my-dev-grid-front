@@ -113,6 +113,59 @@ describe('MarkdownBody', () => {
     expect(w.find('pre code').attributes('data-lang')).toBe('js')
   })
 
+  describe('可橫向捲動的區塊（鍵盤要捲得到）', () => {
+    // Safari 不讓鍵盤聚焦到捲動區域，要有 tabindex="0"；可聚焦就要有名字
+    const regionAttrs = (el: { attributes: (k: string) => string | undefined }) => ({
+      tabindex: el.attributes('tabindex'),
+      role: el.attributes('role'),
+      label: el.attributes('aria-label'),
+    })
+
+    it.each([
+      { kind: '有語言', fence: '```js\nconst a = 1\n```', label: '程式碼（js）' },
+      { kind: '沒有語言', fence: '```\nplain\n```', label: '程式碼' },
+    ])('它應該讓內文的程式碼區塊（$kind）可用鍵盤聚焦，並有名稱', async ({ fence, label }) => {
+      const w = await mountMd(fence)
+      expect(regionAttrs(w.get('pre'))).toEqual({ tabindex: '0', role: 'region', label })
+    })
+
+    it('它應該讓內文的表格捲動容器可用鍵盤聚焦，並有名稱', async () => {
+      const w = await mountMd('| a | b |\n|---|---|\n| 1 | 2 |\n')
+      const scroller = w.get('table').element.parentElement!
+      expect(scroller.classList.contains('overflow-x-auto')).toBe(true)
+      expect({
+        tabindex: scroller.getAttribute('tabindex'),
+        role: scroller.getAttribute('role'),
+        label: scroller.getAttribute('aria-label'),
+      }).toEqual({ tabindex: '0', role: 'region', label: '表格' })
+    })
+
+    it('它應該只在鍵盤聚焦時畫外框（用 :focus-visible，不是 :focus）', async () => {
+      const w = await mountMd('```js\nx\n```')
+      const classes = w.get('pre').classes()
+      expect(classes).toContain('focus-visible:outline-2')
+      expect(classes.some((c) => c.startsWith('focus:'))).toBe(false)
+    })
+
+    it('它應該讓註釋裡的程式碼區塊與表格捲動容器也可用鍵盤聚焦，並有名稱', async () => {
+      const w = await mountMd(
+        '句子[^1]。\n\n[^1]: 說明：\n\n    ```ts\n    const a = 1\n    ```\n\n    | 欄 | 值 |\n    |---|---|\n    | 甲 | 1 |',
+      )
+      const note = w.get('[id*="fnnote"]')
+      const code = note.get('code')
+      const tableScroller = note.get('[role="table"]').element.parentElement!
+      expect(regionAttrs(code)).toEqual({ tabindex: '0', role: 'region', label: '程式碼（ts）' })
+      expect(tableScroller.getAttribute('tabindex')).toBe('0')
+      expect(tableScroller.getAttribute('role')).toBe('region')
+      expect(tableScroller.getAttribute('aria-label')).toBe('表格')
+    })
+
+    it('它應該不替不會捲動的行內程式碼加 tabindex', async () => {
+      const w = await mountMd('這是 `inline` 程式碼')
+      expect(w.find('[tabindex]').exists()).toBe(false)
+    })
+  })
+
   it('它應該不把原始 HTML 當成 HTML 執行', async () => {
     const w = await mountMd('正常文字 <img src=x onerror="alert(1)"> 後面')
     // 走 vnode 就沒有 innerHTML 這條路:html 節點在 walker 裡沒有對應處理，
@@ -652,6 +705,17 @@ describe('MarkdownBody', () => {
         w.find(`[id="${markers(w)[i]!.attributes('aria-describedby')}"]`)
       const lit = (w: Wrapper, i: number) => noteOf(w, i).classes().includes(LIT)
       const DEFS = '\n\n[^1]: 一\n\n[^2]: 二'
+      // jsdom 對 :focus-visible 的判斷不穩定（同一支測試檔裡，前面的測試留下的狀態會讓它回 false），
+      // 所以測試自己指定：focusEl 當作鍵盤聚焦（:focus-visible 成立），滑鼠點下去的聚焦另外測
+      const focusEl = async (w: Wrapper, el: Element) => {
+        vi.spyOn(el, 'matches').mockImplementation((q) => q === ':focus-visible')
+        ;(el as HTMLElement).focus()
+        await w.vm.$nextTick()
+      }
+      const blurEl = async (w: Wrapper, el: Element) => {
+        ;(el as HTMLElement).blur()
+        await w.vm.$nextTick()
+      }
       const mountWide = async (source: string) => {
         stubWide(true)
         return mountMd(source + DEFS, { sidenotes: true, attach: true })
@@ -687,24 +751,69 @@ describe('MarkdownBody', () => {
         async ({ source }) => {
           const w = await mountWide(source)
           const marker = markers(w)[0]!
-          await marker.trigger('focus')
+          await focusEl(w, marker.element)
           expect(lit(w, 0)).toBe(true)
           // 同時 hover 又移開：焦點還在，邊注要繼續亮
           await marker.trigger('mouseenter')
           await marker.trigger('mouseleave')
           expect(lit(w, 0)).toBe(true)
-          await marker.trigger('blur')
+          await blurEl(w, marker.element)
           expect(lit(w, 0)).toBe(false)
           w.unmount()
         },
       )
 
-      it('它應該讓後續引用的 hover 不標亮邊注（邊注只貼在第一次引用）', async () => {
-        const w = await mountWide('甲[^1]，乙[^1]。')
+      it('它應該讓後續引用的 hover／鍵盤聚焦也標亮同一則註釋的邊注（邊注只貼在第一次引用）', async () => {
+        const w = await mountWide('甲[^1]，乙[^1]，丙[^2]。')
+        expect(markers(w)).toHaveLength(3)
+        // 第二個編號是 [^1] 的第二次引用，沒有自己的邊注，標亮的是第一次引用旁邊那一則
         await markers(w)[1]!.trigger('mouseenter')
+        expect([lit(w, 0), lit(w, 2)]).toEqual([true, false])
+        await markers(w)[1]!.trigger('mouseleave')
         expect(lit(w, 0)).toBe(false)
-        await markers(w)[1]!.trigger('focus')
+        await focusEl(w, markers(w)[1]!.element)
+        expect([lit(w, 0), lit(w, 2)]).toEqual([true, false])
+        await blurEl(w, markers(w)[1]!.element)
         expect(lit(w, 0)).toBe(false)
+        w.unmount()
+      })
+
+      it('它應該在同一則註釋的兩處引用之間移動時，邊注一直亮到移出最後一處', async () => {
+        const w = await mountWide('甲[^1]，乙[^1]。')
+        await markers(w)[0]!.trigger('mouseenter')
+        await markers(w)[0]!.trigger('mouseleave')
+        await markers(w)[1]!.trigger('mouseenter')
+        expect(lit(w, 0)).toBe(true)
+        await markers(w)[1]!.trigger('mouseleave')
+        expect(lit(w, 0)).toBe(false)
+        w.unmount()
+      })
+
+      it('它應該讓滑鼠點下去取得的焦點（非 :focus-visible）不標亮邊注，也不在移開後留著', async () => {
+        const w = await mountWide('句子[^1]。')
+        const marker = markers(w)[0]!
+        // 讓 :focus-visible 回報不成立，等於滑鼠點下去讓按鈕取得焦點的樣子
+        const matches = vi.spyOn(marker.element, 'matches').mockReturnValue(false)
+        await marker.trigger('mouseenter')
+        ;(marker.element as HTMLElement).focus()
+        await w.vm.$nextTick()
+        expect(matches).toHaveBeenCalledWith(':focus-visible')
+        await marker.trigger('mouseleave')
+        expect(lit(w, 0)).toBe(false)
+        w.unmount()
+      })
+
+      it('它應該在環境不認得 :focus-visible（matches 拋錯）時，視為鍵盤聚焦照常標亮', async () => {
+        const w = await mountWide('句子[^1]。')
+        const marker = markers(w)[0]!
+        const matches = vi.spyOn(marker.element, 'matches').mockImplementation(() => {
+          throw new DOMException('not a valid selector', 'SyntaxError')
+        })
+        // 不用 focusEl：它會重設 matches，拋錯的版本就被蓋掉了
+        ;(marker.element as HTMLElement).focus()
+        await w.vm.$nextTick()
+        expect(matches).toHaveBeenCalledWith(':focus-visible')
+        expect(lit(w, 0)).toBe(true)
         w.unmount()
       })
 

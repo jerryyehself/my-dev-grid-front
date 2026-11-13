@@ -254,14 +254,21 @@ function insertFootnoteAtCaret() {
   // 兩處改動（游標處的引用、文末的定義）合成「從游標到文末」的一次編輯，
   // 用 execCommand('insertText') 讓它進瀏覽器的復原堆疊，一次 Ctrl+Z 就整個退回；
   // 它已被標為棄用、但目前各主流瀏覽器仍支援，也是 textarea 唯一能保留復原的方式。
-  // 不支援或被拒絕時退回 setRangeText＋手動送 input 事件（復原堆疊會被瀏覽器清掉，
-  // 但 v-model 一樣會更新）。
+  // 不支援或被拒絕（回傳 false、textarea 沒動）時退回 setRangeText＋手動送 input 事件
+  // （復原堆疊會被瀏覽器清掉，但 v-model 一樣會更新）。
   textarea.setSelectionRange(result.from, result.to)
   const inserted =
     typeof document.execCommand === 'function' &&
     document.execCommand('insertText', false, result.text)
-  if (!inserted || textarea.value !== result.value) {
+  if (!inserted) {
     textarea.setRangeText(result.text, result.from, result.to, 'end')
+    textarea.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+  // 回報成功、但 textarea 的內容不是預期的（某些瀏覽器或輸入法擴充會改寫插入的文字）：
+  // 這時 textarea 已經被改過，不能再 setRangeText（會在錯的內容上再插一次、文字重複），
+  // 直接把值設成預期結果；v-model 聽 input 事件，要補送一次。
+  if (textarea.value !== result.value) {
+    textarea.value = result.value
     textarea.dispatchEvent(new Event('input', { bubbles: true }))
   }
   textarea.setSelectionRange(result.caret, result.caret)

@@ -61,6 +61,28 @@ interface MdNode {
 
 const processor = unified().use(remarkParse).use(remarkGfm)
 
+// 會橫向捲動的程式碼區塊與表格：Safari 不讓鍵盤聚焦到捲動區域（Chrome、Firefox 會），
+// 要加 tabindex="0" 才能用方向鍵捲；可聚焦的元素要有名字，所以配 role="region"＋aria-label。
+// 只有鍵盤操作時（:focus-visible）才畫外框，滑鼠點到不會出現。
+const SCROLL_REGION_FOCUS =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)'
+const scrollRegion = (label: string) => ({ tabindex: 0, role: 'region', 'aria-label': label })
+const codeLabel = (lang?: string | null) => (lang ? `程式碼（${lang}）` : '程式碼')
+const TABLE_LABEL = '表格'
+
+/**
+ * 這次聚焦是不是鍵盤造成的（:focus-visible）。滑鼠點按鈕也會讓按鈕取得焦點，
+ * 那種聚焦不該標亮邊注，不然點完、滑鼠移開之後邊注還亮著，要點別處才消失。
+ * 不認得 :focus-visible 的環境（拋錯）視為鍵盤聚焦，寧可多亮一下，鍵盤使用者才不會失去提示。
+ */
+function isFocusVisible(target: EventTarget | null): boolean {
+  try {
+    return (target as Element).matches(':focus-visible')
+  } catch {
+    return true
+  }
+}
+
 const tree = computed(() => processor.parse(props.source) as unknown as MdNode)
 
 /** 這篇的所有標題，依文件順序。父層要拿去做目錄,所以 expose 出去。 */
@@ -308,8 +330,8 @@ function render(node: MdNode): VNode[] {
             'code',
             {
               'data-lang': node.lang ?? undefined,
-              class:
-                'block my-1.5 p-2.5 overflow-x-auto whitespace-pre font-mono text-[12.5px] leading-6 text-left text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px]',
+              ...scrollRegion(codeLabel(node.lang)),
+              class: `block my-1.5 p-2.5 overflow-x-auto whitespace-pre font-mono text-[12.5px] leading-6 text-left text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] ${SCROLL_REGION_FOCUS}`,
             },
             node.value ?? '',
           ),
@@ -321,8 +343,8 @@ function render(node: MdNode): VNode[] {
         h(
           'pre',
           {
-            class:
-              'font-mono text-[12.5px] leading-6 bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] p-3.5 overflow-x-auto my-4',
+            ...scrollRegion(codeLabel(node.lang)),
+            class: `font-mono text-[12.5px] leading-6 bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] p-3.5 overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}`,
           },
           [h('code', { 'data-lang': node.lang ?? undefined }, node.value ?? '')],
         ),
@@ -457,7 +479,7 @@ function render(node: MdNode): VNode[] {
       // 外層是可橫向捲動的區塊，邊注只有 232px，欄位多的表格不會把版面撐開
       if (noteDepth > 0) {
         return [
-          h('span', { class: 'block my-1.5 overflow-x-auto' }, [
+          h('span', { ...scrollRegion(TABLE_LABEL), class: `block my-1.5 overflow-x-auto ${SCROLL_REGION_FOCUS}` }, [
             h('span', { role: 'table', class: 'table w-full border-collapse text-[12.5px]' }, [
               head
                 ? h(
@@ -476,7 +498,7 @@ function render(node: MdNode): VNode[] {
         ]
       }
       return [
-        h('div', { class: 'overflow-x-auto my-4' }, [
+        h('div', { ...scrollRegion(TABLE_LABEL), class: `overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}` }, [
           h('table', { class: 'w-full border-collapse text-[13.5px]' }, [
             head ? h('thead', {}, renderRow(head, node.align, true)) : null,
             h(
@@ -599,9 +621,10 @@ function closeNote(key: string) {
  * 以及緊跟在 span 後面的註釋元素。
  * 寬螢幕：第一次引用的註釋是右邊的邊注（絕對定位，top 由 layoutSidenotes 對齊引用那一行）；
  *        同一則註釋的後續引用不再顯示（右邊只放一份）。
- *        標亮邊注：hover／聚焦第一次引用會標亮它的邊注（hoverNumber／focusNumber，依註釋編號比對，
- *        所以標題與連結裡的引用——邊注被移到標題／連結後面——跟內文的引用行為一樣）；
- *        後續引用的 hover／聚焦不會標亮邊注。點編號固定標亮（pinnedNumber）對每一處引用都有效。
+ *        標亮邊注：hover 任何一處引用、或鍵盤聚焦（:focus-visible）任何一處引用，都會標亮這則註釋的邊注
+ *        （hoverNumber／focusNumber，依註釋編號比對，所以標題與連結裡的引用——邊注被移到標題／連結後面——
+ *        跟內文的引用行為一樣，後面才出現的重複引用也一樣）。滑鼠點下去讓按鈕取得焦點不算，
+ *        不然點完移開邊注還亮著。點編號固定標亮（pinnedNumber）對每一處引用都有效。
  * 窄螢幕：註釋預設隱藏，點編號（或 Enter／Space）在編號後面原地展開，Esc 收起並把焦點還給編號。
  * 註釋元素放在編號旁邊而不是文末，所以兩種模式都不需要另外算位置就能退化成「在那一行附近」。
  * 連結、標題裡的引用例外：註釋元素移到該連結／標題後面，連結裡的編號也一起移出（見 withDeferral）。
@@ -627,9 +650,9 @@ function renderFootnoteRef(
   const isFirst = k === 1
   const open = openNotes.value.has(key)
   const pinned = pinnedNumber.value === n
-  // 邊注標亮：點過（固定）、滑鼠停在第一次引用上、鍵盤焦點在第一次引用上。
+  // 邊注標亮：點過（固定）、滑鼠停在這則註釋的任一處引用上、鍵盤焦點在任一處引用上。
   // 編號本身「開著」的粗體只看固定標亮（hover 只加底線，兩者看得出差別）
-  const lit = pinned || (isFirst && (hoverNumber.value === n || focusNumber.value === n))
+  const lit = pinned || hoverNumber.value === n || focusNumber.value === n
 
   // 編號是行內的小上標數字，不是徽章：不加底、不加框，也不撐高行高；
   // 「開著」的狀態用粗體加底線表示（hover 只加底線，兩者看得出差別）
@@ -686,15 +709,16 @@ function renderFootnoteRef(
             if (side) pinnedNumber.value = pinned ? null : n
             else toggleNote(key)
           },
-          // 邊注標亮的 hover／聚焦：只有第一次引用（邊注長在它那裡）才有，之後的引用不動作
+          // 邊注標亮的 hover／聚焦：寬螢幕才有邊注；每一處引用都標亮同一則註釋的邊注
+          // （邊注只貼在第一次引用，但從後面的引用也要看得出是哪一則）
           onMouseenter: () => {
-            if (showAsSidenote) hoverNumber.value = n
+            if (side) hoverNumber.value = n
           },
           onMouseleave: () => {
             if (hoverNumber.value === n) hoverNumber.value = null
           },
-          onFocus: () => {
-            if (showAsSidenote) focusNumber.value = n
+          onFocus: (e: FocusEvent) => {
+            if (side && isFocusVisible(e.target)) focusNumber.value = n
           },
           onBlur: () => {
             if (focusNumber.value === n) focusNumber.value = null
