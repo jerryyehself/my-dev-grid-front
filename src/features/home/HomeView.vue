@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import KnowledgeGraphPanel from '@/components/home/KnowledgeGraphPanel.vue'
-import StatusBoardPanel from '@/components/home/StatusBoardPanel.vue'
+import KnowledgeGraphPanel from './KnowledgeGraphPanel.vue'
+import StatusBoardPanel from './StatusBoardPanel.vue'
 </script>
 
 <template>

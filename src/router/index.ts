@@ -28,7 +28,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue'),
+      component: () => import('@/features/home/HomeView.vue'),
       meta: {
         tag: 'Home',
         title: 'IN / ARCHIVE',
