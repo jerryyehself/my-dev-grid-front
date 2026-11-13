@@ -104,6 +104,20 @@ const router = createRouter({
       },
     },
     {
+      // 從文章來源 repo 匯入。排在 /articles/:id 前面，理由同 /articles/manage。
+      // 跟文章管理頁一樣自己畫表頭，要登入（後端兩支 API 也都要登入）。
+      path: '/articles/import',
+      name: 'article-import',
+      component: () => import('@/features/article-import/ArticleImportView.vue'),
+      meta: {
+        tag: 'Import Articles',
+        title: '匯入文章',
+        subtitle: '從文章來源匯入',
+        hideHeader: true,
+        requiresAuth: true,
+      },
+    },
+    {
       // 排在 /articles/:id 前面，跟 /articles/manage 同一個理由：靜態片段
       // 本來就排在動態片段之前，但排在前面才讀得出「new 不是某篇文章的 id」。
       // 跟編輯頁共用同一個元件（ArticleEditorView 用 route.params.id 有沒有
@@ -159,7 +173,7 @@ const router = createRouter({
       // 一覽是規格第 6 步補上的。在它之前，詳情頁只能用網址直接開，站上沒有任何
       // 連結指進來——那是規格的順序（先詳情後清單），現在入口補上了。
       //
-      // 本體論的讀取頁（一覽、詳情）也掛 requiresAuth（2026-11-13 使用者決定）：這些是
+      // 本體論的讀取頁（一覽、詳情）也掛 requiresAuth（2026-11-13 決定）：這些是
       // 管理用的頁面，唯一入口是 /admin，不是給訪客看的。後端讀取 API 仍是公開的
       // （圖譜頁要用），這裡只擋前端頁面。
       path: '/ontology/scopes',

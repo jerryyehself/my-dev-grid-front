@@ -8,6 +8,7 @@
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { deleteArticle, fetchArticles, type ArticleDto } from '@/api/articles'
+import BaseButton from '@/components/BaseButton.vue'
 import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import BaseHint from '@/components/BaseHint.vue'
 import BaseInput from '@/components/BaseInput.vue'
@@ -108,16 +109,20 @@ async function handleDelete(a: ArticleDto) {
           文章管理
         </h1>
       </div>
-      <router-link
-        v-if="canWrite"
-        :to="{ name: 'article-new' }"
-        class="self-start sm:self-auto inline-flex items-center gap-2.5 rounded-full bg-(--text-ink-main) px-[18px] py-[9px] font-mono text-[10px] tracking-[0.28em] uppercase font-bold text-(--bg-paper-light)"
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        新增文章
-      </router-link>
+      <div v-if="canWrite" class="self-start sm:self-auto flex items-center gap-3">
+        <router-link :to="{ name: 'article-import' }">
+          <BaseButton variant="ghost">匯入文章</BaseButton>
+        </router-link>
+        <router-link
+          :to="{ name: 'article-new' }"
+          class="inline-flex items-center gap-2.5 rounded-full bg-(--text-ink-main) px-[18px] py-[9px] font-mono text-[10px] tracking-[0.28em] uppercase font-bold text-(--bg-paper-light)"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          新增文章
+        </router-link>
+      </div>
     </div>
 
 
