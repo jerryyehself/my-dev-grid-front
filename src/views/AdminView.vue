@@ -100,6 +100,8 @@ interface EditableRow {
   busy: boolean
   stats: { label: string; value: string }[]
   list: { to: RouteLocationRaw; label: string }
+  /** 只有文章有：從來源 repo 匯入。 */
+  extra?: { to: RouteLocationRaw; label: string }
   create: { to: RouteLocationRaw; label: string }
 }
 
@@ -113,6 +115,7 @@ const editableRows = computed<EditableRow[]>(() => [
       { label: '草稿', value: show(counts.articles, (v) => v.draft) },
     ],
     list: { to: { name: 'article-manage' }, label: '文章管理' },
+    extra: { to: { name: 'article-import' }, label: '匯入文章' },
     create: { to: { name: 'article-new' }, label: '新增文章' },
   },
   {
@@ -179,6 +182,9 @@ function show<T>(state: CountState<T>, pick: (v: T) => number): string {
         <div class="flex items-center gap-2 shrink-0">
           <router-link :to="row.list.to">
             <BaseButton variant="ghost">{{ row.list.label }}</BaseButton>
+          </router-link>
+          <router-link v-if="row.extra" :to="row.extra.to">
+            <BaseButton variant="ghost">{{ row.extra.label }}</BaseButton>
           </router-link>
           <router-link :to="row.create.to">
             <BaseButton variant="primary">{{ row.create.label }}</BaseButton>
