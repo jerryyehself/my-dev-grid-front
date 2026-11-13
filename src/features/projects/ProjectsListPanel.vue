@@ -6,6 +6,7 @@ import ProjectsYearList from './ProjectsYearList.vue'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { groupProjectsByYear } from './groupProjectsByYear'
 import type { ProjectsFilterGroupData } from './useProjectsFilter'
+import { PROJECTS_EMPTY_TEXT, PROJECTS_NO_MATCH_TEXT } from '@/copy/common'
 
 // 桌機版左欄：一個有框、不透明表面的面板，裡面由上到下是「筆數｜篩選鈕」、
 // 展開的篩選、依年份分組的列表。
@@ -67,7 +68,7 @@ defineExpose({ revealSelected: () => list.value?.revealSelected() })
 
     <ProjectsYearList v-if="projects.length" ref="list" :groups="groups" :selected-id="selectedId" @select="emit('select', $event)" />
     <p v-else class="m-0 px-4 py-10 text-center text-sm text-(--text-ink-muted)">
-      {{ totalCount === 0 ? '目前沒有可顯示的專案。' : '沒有符合篩選條件的專案。' }}
+      {{ totalCount === 0 ? PROJECTS_EMPTY_TEXT : PROJECTS_NO_MATCH_TEXT }}
     </p>
   </div>
 </template>

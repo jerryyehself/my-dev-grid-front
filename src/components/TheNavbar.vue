@@ -42,7 +42,7 @@
       <button
         type="button"
         class="md:hidden flex items-center justify-center w-9 h-9 text-(--text-nav-footer)"
-        aria-label="開啟導覽選單"
+        :aria-label="NAV_MENU_ARIA_LABEL"
         :aria-expanded="isMenuOpen"
         @click="isMenuOpen = !isMenuOpen"
       >
@@ -90,6 +90,7 @@ import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import AuthStatus from '@/components/AuthStatus.vue'
+import { NAV_LABELS, NAV_MENU_ARIA_LABEL } from '@/copy/common'
 
 // ⚡ 引入當前路由，用於精準驅動 Active 色條的動態樣式
 const route = useRoute()
@@ -100,16 +101,16 @@ interface NavItem {
 }
 
 const navItems = ref<NavItem[]>([
-  { name: 'HOME', path: '/' },
-  { name: 'ARTICLES', path: '/articles' },
-  { name: 'PROJECTS', path: '/projects' },
-  { name: 'GRAPH', path: '/graph' },
+  { name: NAV_LABELS.home, path: '/' },
+  { name: NAV_LABELS.articles, path: '/articles' },
+  { name: NAV_LABELS.projects, path: '/projects' },
+  { name: NAV_LABELS.graph, path: '/graph' },
   // NOTES 先註解掉:router/index.ts 裡沒有 /notes 這條路由,點下去只會得到空白頁,
   // 每次載入任何頁面 console 都還會噴兩次 Vue Router 的 No match 警告。
   // 導覽列上的連結對使用者的承諾是「這裡有東西」,沒有東西就不該掛在上面。
   // 之後真的做了 Notes 頁再把這行打開,路由補在 router/index.ts。
   // { name: 'NOTES', path: '/notes' },
-  { name: 'ABOUT', path: '/about' },
+  { name: NAV_LABELS.about, path: '/about' },
 ])
 
 const isMenuOpen = ref(false)

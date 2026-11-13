@@ -31,6 +31,16 @@ src/features/graph/
 | `src/stores/`                                | 全站狀態（例如登入狀態 `useAuthStore`）               |
 | `src/api/client.ts`                          | API 用戶端本身；各功能的端點呼叫放進功能資料夾        |
 | `src/layouts/`、`src/router/`、`src/assets/` | 維持原樣                                              |
+| `src/copy/common.ts`                         | 全站共用的訪客文字（見下一節）                        |
+
+## 訪客看得到的文字放哪裡
+
+- 全站共用的文字（導覽列、頁尾，以及兩個以上元件都會出現的載入中／載入失敗／空狀態句子）：`src/copy/common.ts`，用 `export const ... as const` 匯出，元件 import 使用，不要在元件裡再寫一份。
+- 頁面標題、標籤與副標：`src/router/index.ts` 的 `meta`。
+- 站名：`src/siteMeta.ts`。
+- 只有一個功能或元件用到的文字：留在那個元件裡，不搬進 `src/copy/`。
+- `src/copy/` 底下的檔案除了型別以外不 import 任何東西，避免循環依賴。
+- 用詞與語氣照 `.claude/skills/copy-language/`。
 
 ## 功能之間的界線
 

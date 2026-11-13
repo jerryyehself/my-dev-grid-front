@@ -17,6 +17,7 @@ import BaseButton from '@/components/BaseButton.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
+import { ARTICLES_EMPTY_TEXT, ARTICLES_LOAD_FAILED_TEXT, LOADING_TEXT } from '@/copy/common'
 
 const ready = ref(false)
 const loadError = ref(false)
@@ -118,9 +119,9 @@ const folderArticles = computed(() => {
       <BaseSegmented v-if="articles.length > 0" v-model="viewMode" :options="VIEW_MODES" label="文章排列方式" class="ml-auto" />
     </div>
 
-    <BaseLoadingBlock v-if="!ready && !loadError" height="240px">載入中…</BaseLoadingBlock>
+    <BaseLoadingBlock v-if="!ready && !loadError" height="240px">{{ LOADING_TEXT }}</BaseLoadingBlock>
     <BaseLoadingBlock v-else-if="loadError" height="240px" tone="error">
-      文章清單載入失敗，重新整理再試一次。
+      {{ ARTICLES_LOAD_FAILED_TEXT }}
     </BaseLoadingBlock>
 
     <template v-else>
@@ -128,7 +129,7 @@ const folderArticles = computed(() => {
     <!-- 一篇已發布的文章都沒有時，兩種排列都只剩空白；頁面拿掉副標後連一句中文都沒有（D-83），
          補一句空狀態 -->
     <p v-if="timelineGroups.length === 0" class="py-12 text-center text-[15px] text-(--text-ink-body)">
-      還沒有發布的文章，寫好的文章會依日期排在這裡。
+      {{ ARTICLES_EMPTY_TEXT }}
     </p>
     <!-- 時間軸：依日期線性掃視 -->
     <div v-else-if="viewMode === 'timeline'" class="relative pl-7">

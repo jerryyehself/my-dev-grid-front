@@ -5,8 +5,9 @@ import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import KnowledgeGraphCanvas from '@/features/graph/KnowledgeGraphCanvas.vue'
 import { RouterLink } from 'vue-router'
 import { fetchGraphOrDemo, type GraphDto } from '@/api/graph'
+import { LOADING_GRAPH_TEXT } from '@/copy/common'
 
-// 首頁「近期知識網路」：真實 GET /api/graph 資料。畫布本身是共用元件
+// 首頁「知識網路」：真實 GET /api/graph 資料。畫布本身是共用元件
 // KnowledgeGraphCanvas.vue（D-87，跟 /graph 頁共用；顯示設定、圖例、縮放控制都在畫布元件裡），
 // 這裡只管標題、統計與說明。
 // 三層疊圖排版的沿革見 features/graph/layeredLayout.ts。
@@ -67,7 +68,7 @@ onUnmounted(() => {
     :class="entered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
   >
     <div class="flex items-center justify-between gap-3 mb-2">
-      <h2 class="text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">近期知識網路</h2>
+      <h2 class="text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">知識網路</h2>
     </div>
 
     <p v-if="!loading" class="text-sm text-(--text-ink-body) mb-3">
@@ -75,21 +76,21 @@ onUnmounted(() => {
         class="text-(--text-ink-main) tabular-nums"
         >{{ stats.tech }}</b
       >
-      項技術、<b class="text-(--text-ink-main) tabular-nums">{{ stats.impl }}</b> 個實作，由
+      項技術、<b class="text-(--text-ink-main) tabular-nums">{{ stats.impl }}</b> 個實作，共
       <b class="text-(--text-ink-main) tabular-nums">{{ stats.edges }}</b>
-      條直接關係串成的知識網路。
+      條直接關係。
     </p>
 
     <LoadFailedNotice v-if="!loading && loadError" :message="loadError" class="mb-2" />
 
-    <BaseLoadingBlock v-if="loading" height="460px">圖譜載入中…</BaseLoadingBlock>
+    <BaseLoadingBlock v-if="loading" height="460px">{{ LOADING_GRAPH_TEXT }}</BaseLoadingBlock>
 
     <!-- 節點顏色、顯示層、間接關聯原本在這裡疊了三列，D-87 收進畫布左上角的「顯示設定」 -->
     <KnowledgeGraphCanvas
       v-if="!loading && dto"
       :data="dto"
       :layout="GRAPH_LAYOUT"
-      label="近期知識網路圖"
+      label="知識網路圖"
     />
 
     <!-- 給訪客的讀法說明。原本這裡是開發筆記（色階出處、欄位缺口、佈局演算法），2026-09-30 使用者
@@ -119,11 +120,11 @@ onUnmounted(() => {
       <!-- 用 div 不用 p：全站 .global-page-wrapper p 有 1.25rem 下邊距（書本段落樣式），兩句之間會空一大段 -->
       <div class="flex flex-col gap-1 pb-1 text-[14px] leading-relaxed text-(--text-ink-muted)">
         <div>
-          節點越大，關係越多。點一個節點，它和相連的節點會一直亮著；想查兩個節點之間怎麼連起來，到<RouterLink
+          節點越大，關係越多。兩個項目之間怎麼連起來，可在<RouterLink
             to="/graph"
             class="text-(--text-accent) hover:underline"
             >圖譜頁</RouterLink
-          >。
+          >查詢。
         </div>
         <!-- 只有三層疊圖才有圓框（2026-10-02 使用者核可的候選 C）。節點落在圓框重疊處是因為三個圓
              錯開疊放，不是因為彼此相關，所以要明講 -->
