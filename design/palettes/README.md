@@ -60,5 +60,5 @@ VALIDATE_PALETTE=<dataviz skill 的 scripts/validate_palette.js> node search.mjs
 
 ## 程式碼裡寫死、換色時要一起處理的顏色
 
-- `src/components/home/KnowledgeGraphPanel.vue`：卡片與浮層陰影 `rgba(41,18,5,0.14)`，是現行導覽列色寫死的。
+- `src/features/home/KnowledgeGraphPanel.vue`：卡片與浮層陰影 `rgba(41,18,5,0.14)`，是現行導覽列色寫死的。
 - `src/components/TheNavbar.vue`、`src/assets/css/base.css`：斜紋底紋用的 `rgba(255,255,255,0.025)`、`rgba(255,184,77,0.025)`。
