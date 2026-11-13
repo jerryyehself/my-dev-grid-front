@@ -28,8 +28,8 @@ const gradient = `linear-gradient(to right, ${VIRIDIS_STOPS.join(', ')})`
       ><span class="w-4 h-0 border-t border-(--edge-real)"></span>直接關係</span
     >
     <span class="flex items-center gap-1.5"
-      ><span class="w-4 h-0 border-t border-(--edge-real) opacity-40"></span
-      >淡色線：超過兩週沒再確認的關係</span
+      ><span class="w-4 h-0 border-t border-(--edge-real) opacity-60"></span
+      >淡色線：兩週以上沒再確認，關係仍在</span
     >
     <span v-if="showIndirect" class="flex items-center gap-1.5"
       ><span class="w-5 h-0 border-t-2 border-dashed border-(--accent-secondary)"></span

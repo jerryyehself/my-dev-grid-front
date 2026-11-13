@@ -31,9 +31,9 @@ describe('isStaleLink', () => {
 })
 
 describe('常數', () => {
-  it('它應該讓過期係數是 0.4、選取時的 accent 基準是 0.55、線寬是 1', () => {
+  it('它應該讓過期係數是 0.4、選取時的 accent 基準是 0.8、線寬是 1', () => {
     expect(STALE_ALPHA_FACTOR).toBe(0.4)
-    expect(STALE_FOCUS_BASE_ALPHA).toBe(0.55)
+    expect(STALE_FOCUS_BASE_ALPHA).toBe(0.8)
     expect(STALE_LINK_WIDTH).toBe(1)
   })
 })
@@ -65,9 +65,9 @@ describe('directLinkStyle', () => {
     })
   })
 
-  it('它應該讓碰到選取點的過期連線是 accent 透明度 0.55 乘 0.4、線寬 1', () => {
+  it('它應該讓碰到選取點的過期連線是 accent 透明度 0.8 乘 0.4、線寬 1', () => {
     expect(directLinkStyle({ ...base, hasFocus: true, touchesFocus: true, stale: true })).toEqual({
-      color: red(0.22),
+      color: red(0.32),
       width: 1,
     })
   })

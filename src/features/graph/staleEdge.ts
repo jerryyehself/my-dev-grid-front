@@ -11,12 +11,12 @@ import { withAlpha } from './colorScale'
 // | 過期                          | --edge-real   | 0.4        | 1    |
 // | 路徑／選取中，其餘連線        | --edge-real   | 0.18       | 1.5  |
 // | 路徑／選取中，其餘的過期連線  | --edge-real   | 0.18 × 0.4 | 1    |
-// | 碰到選取點的過期連線          | --text-accent | 0.55 × 0.4 | 1    |
+// | 碰到選取點的過期連線          | --text-accent | 0.8 × 0.4  | 1    |
 // | 碰到選取點／路徑上的連線      | --text-accent | 1          | 2.2  |
 // （路徑上的連線後端不會標過期；線寬維持現有的 2.2。3D 的一般線寬是 1，其餘比照同一套相乘規則）
 export const STALE_ALPHA_FACTOR = 0.4
 // 過期邊被 hover／選取到時 accent 的基準透明度（再乘 STALE_ALPHA_FACTOR）；一般連線碰到選取點是 1
-export const STALE_FOCUS_BASE_ALPHA = 0.55
+export const STALE_FOCUS_BASE_ALPHA = 0.8
 // 過期邊的線寬（2D、3D 都一樣）
 export const STALE_LINK_WIDTH = 1
 
