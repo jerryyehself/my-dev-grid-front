@@ -46,7 +46,7 @@ src/features/graph/
 
 - 不要 import 另一個功能資料夾裡的檔案。兩個功能都需要的東西，搬到上表的共用位置。
 - 共用位置的檔案不能 import `src/features/` 裡的東西（共用的不能依賴特定功能）。
-- 例外：還沒搬進功能資料夾的頁面或其專屬元件（例如首頁的 `src/components/home/KnowledgeGraphPanel.vue`），在它自己被搬進 `src/features/` 之前，可以先 import 已搬好的功能。
+- 例外：首頁（`src/features/home/`）是把各功能摘要放在一起的組合頁，可以 import 其他功能的元件（例如 `KnowledgeGraphPanel.vue` 用圖譜的 `KnowledgeGraphCanvas.vue`）。其他功能之間仍然不行，其他功能也不能反過來 import 首頁。
 
 ## 舊功能怎麼搬
 
@@ -57,4 +57,4 @@ src/features/graph/
 - 搬的 commit 只動路徑與 import，不順手改程式。
 - 小修（改字、修一個 bug）不用為了它搬整個功能。
 
-另外，維護者有空檔時會主動分批搬，一次一個功能、一張只做搬移的 PR。順序：圖譜 → 文章 → 本體論 → 專案 → 其他。某個功能還有開著的 PR 改到它時，先跳過，避免衝突。
+舊功能已經全部搬進 `src/features/`。之後新增的功能直接放進功能資料夾。
