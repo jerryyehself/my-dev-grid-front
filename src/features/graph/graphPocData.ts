@@ -54,6 +54,7 @@ export interface GraphPocLink {
   kind: 'related' | 'inspiration' // 邊樣式區分（見檔頭說明），不代表階層/網路
   predicate: string | null // 後端已解析成 Relation 的 name，點連線看關聯定義用得到
   label: string | null
+  stale?: boolean // 後端標記的過期邊，3D 淡化用；舊版 API 沒有這個欄位
 }
 
 // 點節點/點連線後要顯示的內容——2D/3D 兩個元件各自的力模擬節點/邊物件內部欄位
@@ -115,6 +116,7 @@ function toGraphPocLinks(edges: GraphEdgeDto[]): GraphPocLink[] {
     kind: nodeTypeOf(e.source) === nodeTypeOf(e.target) ? 'inspiration' : 'related',
     predicate: e.predicate,
     label: e.label,
+    stale: e.stale === true,
   }))
 }
 

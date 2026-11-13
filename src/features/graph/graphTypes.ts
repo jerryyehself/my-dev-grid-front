@@ -17,6 +17,8 @@ export interface SimNode extends NodeObject {
 export interface SimLink extends LinkObject<SimNode> {
   predicate: string | null
   label?: string | null
+  // 後端標記的過期邊（同步很久沒看到）：沒有這個欄位（舊版 API）就當 false，畫面上淡化
+  stale?: boolean
   // 推導邊（bipartite projection，見 derivedEdges.ts）專用欄位：
   // derived 標記這條邊不是資料庫真實關聯；via 記錄促成這條推導關係的共同
   // 鄰居 id，用在 tooltip/popover 上讓使用者看得懂「為什麼這兩個算相關」。

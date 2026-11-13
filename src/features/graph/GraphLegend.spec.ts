@@ -29,6 +29,12 @@ describe('GraphLegend', () => {
     expect(wrapper.text()).toContain('直接關係')
   })
 
+  it.each(['type', 'overlay'] as const)('它應該在 %s 模式一律說明淡色線代表過期的關係', (colorMode) => {
+    const wrapper = mount(GraphLegend, { props: { colorMode, showIndirect: false } })
+
+    expect(wrapper.text()).toContain('淡色線：兩週以上沒再確認，仍保留顯示')
+  })
+
   it('它應該只在 showIndirect 為 true 時顯示間接關聯', async () => {
     const wrapper = mount(GraphLegend, { props: { colorMode: 'type', showIndirect: false } })
 
