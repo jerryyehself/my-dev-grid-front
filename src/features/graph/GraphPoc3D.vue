@@ -4,6 +4,7 @@ import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import ForceGraph3D, { type ForceGraph3DInstance, type NodeObject, type LinkObject } from '3d-force-graph'
 import * as THREE from 'three'
 import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from './graphPocData'
+import { STALE_EDGE_ALPHA, STALE_EDGE_FOCUS_ALPHA, isStaleLink } from './staleEdge'
 import { useTheme } from '@/composables/useTheme'
 import { LOADING_GRAPH_TEXT } from '@/copy/common'
 
@@ -212,8 +213,15 @@ onMounted(async () => {
     .linkColor((l) => {
       // 同類別、跨類別都是直接關係，一種顏色、一種粗細（見 GraphPoc2D 的同一段說明）
       const base = css('--edge-real')
-      if (hoveredNodeId) return linkTouchesHovered(l) ? css('--text-accent') : blendTowardBg(base, 0.12)
-      return base
+      if (hoveredNodeId) {
+        if (!linkTouchesHovered(l)) return blendTowardBg(base, 0.12)
+        // 過期邊被 hover 到時仍提亮成 accent，但跟背景混合，看得出它是過期的
+        return isStaleLink(l)
+          ? blendTowardBg(css('--text-accent'), STALE_EDGE_FOCUS_ALPHA)
+          : css('--text-accent')
+      }
+      // 過期邊跟背景混合淡化（3D 線條顏色不吃 alpha，見 blendTowardBg 說明）
+      return isStaleLink(l) ? blendTowardBg(base, STALE_EDGE_ALPHA) : base
     })
     .linkWidth((l) => {
       if (hoveredNodeId && linkTouchesHovered(l)) return 2.2
