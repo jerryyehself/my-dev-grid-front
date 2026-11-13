@@ -38,7 +38,7 @@ const router = createRouter({
     {
       path: '/about',
       name: 'about',
-      component: () => import('@/views/AboutView.vue'),
+      component: () => import('@/features/about/AboutView.vue'),
       meta: {
         tag: 'About',
         title: '私人藏書，公開目錄',
@@ -67,7 +67,7 @@ const router = createRouter({
       // 沒有一個地方能一次看到全部。這頁只放連結與計數，不自己做任何寫入。
       path: '/admin',
       name: 'admin',
-      component: () => import('@/views/AdminView.vue'),
+      component: () => import('@/features/admin/AdminView.vue'),
       meta: {
         tag: 'Admin',
         title: '管理',
