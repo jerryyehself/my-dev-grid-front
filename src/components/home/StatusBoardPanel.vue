@@ -7,7 +7,7 @@ import { fetchProjectsOrDemo, type Project } from '@/api/projects'
 import { fetchArticles, type ArticleDto } from '@/api/articles'
 import { ARTICLES_EMPTY_TEXT, LOADING_PROJECTS_TEXT, PROJECTS_EMPTY_TEXT } from '@/copy/common'
 
-// 首頁「近況板」：左欄「近期專案」用真實 fetchProjectsOrDemo() 資料（跟 KnowledgeGraphPanel
+// 首頁的專案與近期文章區塊：左欄「專案」用真實 fetchProjectsOrDemo() 資料（跟 KnowledgeGraphPanel
 // 同一套「正常打 API、載入失敗才退回存好的快照＋顯示錯誤訊息」誠實 fallback），右欄「近期文章」
 // 打真的 /api/documentations——**這裡原本讀 src/data/articles.ts，註解宣稱那是「網站本來就有
 // 的真實文章清單」，但那份檔案其實是純假資料，後台編輯器新增的文章從來不會出現在這裡。**

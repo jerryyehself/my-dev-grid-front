@@ -28,7 +28,9 @@ describe('GraphPathDiagram', () => {
       edges: [edge('documentation-1', 'technique-1', 'specs'), edge('technique-1', 'implementation-1', 'usedBy')],
     })
     const text = wrapper.text()
+    const segments = wrapper.findAll('text[font-size="11"]').map((t) => t.text().trim())
 
+    expect(segments).toEqual(['說明 ▸', '被使用 ▸'])
     expect(text).toContain('說明 ▸')
     // 技術→實作這段的主詞是實作（實作使用技術）：箭頭仍順著路線方向，動詞改被動
     expect(text).toContain('被使用 ▸')
@@ -42,9 +44,11 @@ describe('GraphPathDiagram', () => {
     const impl = node('implementation-1', 'implementation', 'my-dev-grid')
     const req = node('technique-2', 'technique', 'Vite')
     const labels = (nodes: ReturnType<typeof node>[], edges: ReturnType<typeof edge>[]) => {
-      const text = render({ found: true, nodes, edges }).text()
-      expect(text).not.toContain('◂')
-      return text
+      const wrapper = render({ found: true, nodes, edges })
+      expect(wrapper.text()).not.toContain('◂')
+      // 只取段落標籤（font-size 11 的 <text>），回傳陣列讓 toContain 做完整比對，
+      // 「說明 ▸」才不會被「被說明 ▸」當成子字串蒙混過去
+      return wrapper.findAll('text[font-size="11"]').map((t) => t.text().trim())
     }
 
     // 主詞在前一站：主動
