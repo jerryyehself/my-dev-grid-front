@@ -340,6 +340,52 @@ values that `BaseHint`, `BaseEyebrow size="field"` and `BaseTextarea` took
 from the 文章編輯頁 mockup. That is a deliberate exception. It is not an
 oversight.
 
+## Motion
+
+Rules, not final numbers. The site's motion policy (duration range, which
+pages may animate, `transform`/`opacity` only, `prefers-reduced-motion`,
+banned techniques) lives in `.claude/rules/ui.md` rule 2; this section does
+not repeat it, it adds the rules below on top. Each rule names where it was
+borrowed from: taste-skill v2.1.4 or v2.5.1 (MIT). Where the site's own
+policy and an upstream rule disagree, the site's policy wins.
+
+- **Every animation states its purpose in one line**, written in the issue or
+  PR that adds it. No purpose, no animation. (v2.5.1, "Why it moves".)
+- **Content stays complete without JS and under reduced motion.** Motion only
+  adds to a page that is already whole at rest; it must never hide text a
+  visitor could already be reading. (v2.5.1, "Why it moves" and Never list.)
+- **Don't give every section the same fade-in.** The same fade-up on every
+  block is the tell. If sections do enter, vary the motion with the content,
+  or let most of them not move and keep one deliberate moment. (v2.1.4 §9
+  "The same fade-up on every block"; v2.5.1 Never "a fade-in on every
+  section". The choice between "vary" and "mostly still" is pending the
+  motion demo decision.)
+- **Hover movement only for fine pointers**:
+  `@media (hover: hover) and (pointer: fine)`. Touch devices get no hover
+  displacement; keyboard focus shows the same state everywhere. (v2.5.1
+  `motion.md`.)
+- **Don't animate `width`, `height` or `margin`.** They reflow the page;
+  use `transform`/`opacity`. (v2.5.1 `motion.md` Never list.)
+- **The focus ring does not animate.** It appears at once. (v2.5.1
+  `motion.md` Never list.)
+- **No overshoot.** No bounce, no curve that passes its mark. (v2.5.1
+  `motion.md`, Curves.)
+
+### Motion tokens
+
+Pending the motion demo decision. Durations, curves and the exit-curve
+question (an accelerating exit, as the site's policy says, versus the same
+ease-out only shorter, as v2.5.1 does) are decided after the side-by-side
+demo; fill this table then, and cite which version each value comes from.
+
+| Token | Use | Value |
+|---|---|---|
+| press | button press | pending |
+| hover in / out | hover state | pending |
+| panel open / close | menus, dropdowns | pending |
+| entrance | section or heading entering | pending |
+| UI curve / entrance curve / exit curve | easing | pending |
+
 ## Extending the token set
 
 New tokens are sometimes genuinely needed (e.g. a color for the knowledge
