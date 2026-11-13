@@ -169,6 +169,37 @@ describe('ArticleEditorView', () => {
       wrapper.unmount()
     })
 
+    it('它應該在剛載入的 CRLF 內文上，依 textarea 的游標位置插入，引用只放一次、定義只有一份', async () => {
+      // 後端存的（或匯入的 .md）內文是 \r\n；瀏覽器的 textarea.value 一律正規化成 \n，
+      // 游標位置是以 \n 版本算的。若拿 body.value（還是 \r\n）去算插入位置，
+      // 引用會落在錯的偏移、文字重複。
+      vi.mocked(fetchArticle).mockResolvedValue({ ...defaultArticle, body: '第一行\r\n第二行' })
+      const wrapper = await mountView()
+      const textarea = wrapper.get('textarea').element
+      expect(textarea.value).toBe('第一行\n第二行')
+      textarea.setSelectionRange(4, 4) // 換行之後、「第二行」之前
+
+      await findButton(wrapper).trigger('click')
+
+      expect(textarea.value).toBe('第一行\n[^1]第二行\n\n[^1]: ')
+      expect(textarea.value.match(/\[\^1\]/g)).toHaveLength(2) // 一個引用＋一個定義
+      expect(textarea.selectionStart).toBe(textarea.value.length)
+      wrapper.unmount()
+    })
+
+    it('它應該在剛載入的文章上只按插入腳註就標成尚未儲存', async () => {
+      const wrapper = await mountView()
+      // 頂欄狀態點旁的字；頁面別處（建立日期）也會出現「尚未儲存」，不能整頁比對
+      const saveMarker = () => wrapper.get('span.w-1\\.5.h-1\\.5').element.parentElement!.textContent!.trim()
+      expect(saveMarker()).toBe('未變更')
+      wrapper.get('textarea').element.setSelectionRange(0, 0)
+
+      await findButton(wrapper).trigger('click')
+
+      expect(saveMarker()).toBe('尚未儲存')
+      wrapper.unmount()
+    })
+
     it('它應該讓按鈕是可用鍵盤操作的 button，在預覽模式停用', async () => {
       const wrapper = await mountView()
       const button = findButton(wrapper)

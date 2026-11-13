@@ -246,7 +246,10 @@ function removeTag(i: number) {
 function insertFootnoteAtCaret() {
   const textarea = bodyFieldRef.value?.querySelector('textarea')
   if (!textarea) return
-  const result = insertFootnote(body.value, textarea.selectionStart, textarea.selectionEnd)
+  // 從 textarea.value 算，不用 body.value：瀏覽器把 textarea.value 的換行正規化成 \n，
+  // 而 body.value 在第一次 input 事件前可能還是 \r\n（後端載入或匯入的檔案），
+  // 游標偏移與 execCommand 作用的都是 textarea.value，兩邊不同會插錯位置、重複文字。
+  const result = insertFootnote(textarea.value, textarea.selectionStart, textarea.selectionEnd)
   textarea.focus()
   // 兩處改動（游標處的引用、文末的定義）合成「從游標到文末」的一次編輯，
   // 用 execCommand('insertText') 讓它進瀏覽器的復原堆疊，一次 Ctrl+Z 就整個退回；
