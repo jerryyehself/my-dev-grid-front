@@ -12,6 +12,7 @@ import BaseEyebrow from '@/components/BaseEyebrow.vue'
 import BaseHint from '@/components/BaseHint.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
+import { LOADING_TEXT } from '@/copy/common'
 import type { SelectOption } from '@/components/BaseSelect.vue'
 import {
   fetchArticleSources,
@@ -198,7 +199,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       </ul>
     </section>
 
-    <BaseLoadingBlock v-if="loading && !listing" height="240px">載入中…</BaseLoadingBlock>
+    <BaseLoadingBlock v-if="loading && !listing" height="240px">{{ LOADING_TEXT }}</BaseLoadingBlock>
 
     <div
       v-else-if="loadError"
