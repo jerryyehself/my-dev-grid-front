@@ -30,6 +30,37 @@ describe('router：/admin', () => {
   })
 })
 
+// 本體論的一覽與詳情頁是管理用的頁面（唯一入口是 /admin），跟新增/編輯頁一樣要登入
+describe.each([
+  ['/ontology/scopes', 'ontology-scopes'],
+  ['/ontology/scopes/1', 'ontology-scope'],
+  ['/ontology/relations', 'ontology-relations'],
+  ['/ontology/relations/1', 'ontology-relation'],
+])('router：%s', (path, name) => {
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    await router.push('/about')
+  })
+
+  it('它應該在路由設定標上 requiresAuth', () => {
+    const resolved = router.resolve(path)
+    expect(resolved.name).toBe(name)
+    expect(resolved.meta.requiresAuth).toBe(true)
+  })
+
+  it('它應該在沒登入時導去登入頁，redirect 帶回原本的路徑', async () => {
+    await router.push(path)
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe(path)
+  })
+
+  it('它應該在登入後進入該頁', async () => {
+    useAuthStore().token = 'test-token'
+    await router.push(path)
+    expect(router.currentRoute.value.name).toBe(name)
+  })
+})
+
 // /articles/import 是匯入文章頁：跟 /articles/manage 一樣要登入，也不能被 /articles/:id 搶走
 describe('router：/articles/import', () => {
   beforeEach(async () => {
