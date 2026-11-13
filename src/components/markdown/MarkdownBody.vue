@@ -104,7 +104,7 @@ const uid = useId()
 const rootEl = ref<HTMLElement | null>(null)
 
 // 寬度夠（正文右邊有留白）才把註釋貼在正文旁；不夠就改成點編號在原地展開。
-// 1000px 的依據：邊注欄 232px ＋ 與正文的間距 28px ＋ 正文最寬 65ch，在 1000px 的內容區（952px）放得下，
+// 1000px 的依據：邊注欄 232px ＋ 與正文的間距 28px ＋ 正文最寬 40em（640px，見 ArticleDetailView），在 1000px 的內容區（952px）放得下（232＋28＋640＝900），
 // 再窄就擠到正文了。文章內頁在 1240px 以上另外把目錄移到左欄，見 ArticleDetailView
 const SIDE_QUERY = '(min-width: 1000px)'
 const sideMode = ref(false)
@@ -258,7 +258,7 @@ function render(node: MdNode): VNode[] {
       return [
         h(
           'p',
-          { class: 'text-base leading-[1.6] text-(--text-ink-body) text-left sm:text-justify' },
+          { class: 'text-base leading-7 text-(--text-ink-body) text-left sm:text-justify' },
           kids(node),
         ),
       ]
@@ -428,7 +428,7 @@ function render(node: MdNode): VNode[] {
       // 萬一直接遇到（孤立的 listItem），也用同一個形狀，標記退成圓點（任務項目由核取方塊當標記）
       if (noteDepth > 0) return [noteListItem(node, isTask(node) ? null : '•')]
       return [
-        h('li', { class: 'text-base leading-[1.6] text-(--text-ink-body)' }, itemContent(node)),
+        h('li', { class: 'text-base leading-7 text-(--text-ink-body)' }, itemContent(node)),
       ]
     }
 

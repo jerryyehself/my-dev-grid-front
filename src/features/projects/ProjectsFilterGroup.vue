@@ -95,7 +95,7 @@ function onKeydown(e: KeyboardEvent) {
 
 <template>
   <div>
-    <div class="mb-2 text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)">{{ group.label }}</div>
+    <div class="mb-2 text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)">{{ group.label }}</div>
 
     <template v-if="searchable">
       <input
@@ -139,13 +139,13 @@ function onKeydown(e: KeyboardEvent) {
             }}<mark class="bg-transparent font-semibold text-(--text-ink-main)">{{ highlight(tag.label).hit }}</mark
             >{{ highlight(tag.label).after }}<span v-if="tag.selected" class="sr-only">，已選</span>
           </span>
-          <span class="shrink-0 text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)">{{ tag.count }}</span>
+          <span class="shrink-0 text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)">{{ tag.count }}</span>
         </li>
       </ul>
       <p
         v-if="needle && !matches.length"
         role="status"
-        class="m-0 mb-2 text-left text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)"
+        class="m-0 mb-2 text-left text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)"
       >
         找不到符合「{{ query.trim() }}」的{{ group.label }}
       </p>
@@ -181,7 +181,7 @@ function onKeydown(e: KeyboardEvent) {
         >
       </button>
     </div>
-    <p v-if="hiddenCount > 0" class="m-0 mt-2 text-left text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)">
+    <p v-if="hiddenCount > 0" class="m-0 mt-2 text-left text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)">
       另 {{ hiddenCount }} 個，輸入搜尋
     </p>
   </div>

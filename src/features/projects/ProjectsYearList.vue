@@ -81,7 +81,7 @@ defineExpose({ revealSelected })
       <!-- h3：頁面標題是 h1、右邊詳情的專案名是 h2，年份標頭是列表這個區塊裡的小標 -->
       <h3
         data-year-header
-        class="sticky top-0 z-[1] m-0 border-b bg-(--list-surface) px-4 pt-3 pb-[3px] text-[13px] leading-5 font-normal tracking-[0.06em] text-(--text-ink-muted)"
+        class="sticky top-0 z-[1] m-0 border-b bg-(--list-surface) px-4 pt-3 pb-[3px] text-[13px] leading-5 font-normal tracking-[0.05em] text-(--text-ink-muted)"
         :class="stuck.has(group.year) ? 'border-(--border-shelf)' : 'border-transparent'"
       >
         {{ group.year || UNKNOWN_YEAR_LABEL }}

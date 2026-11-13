@@ -20,7 +20,7 @@ const techniques = computed(() =>
 const withLogo = computed(() => techniques.value.filter((t) => t.icon))
 const textOnly = computed(() => techniques.value.filter((t) => !t.icon))
 
-const labelClass = 'text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)'
+const labelClass = 'text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)'
 const isArchived = computed(() => props.project.statusType === 'archived')
 
 // 品牌色的相對亮度很低（接近黑色）時，在深色主題會看不見
