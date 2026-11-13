@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import OntologyRelationEditView from './OntologyRelationEditView.vue'
@@ -96,9 +96,18 @@ async function save(w: Wrapper) {
   await flushPromises()
 }
 
+// 原生確認視窗：預設按「確定」，個別測試要驗證按「取消」時再覆蓋。
+let confirmSpy: ReturnType<typeof vi.fn>
+
 beforeEach(() => {
+  confirmSpy = vi.fn().mockReturnValue(true)
+  vi.stubGlobal('confirm', confirmSpy)
   vi.mocked(updateRelation).mockReset().mockResolvedValue({ data: { id: 1 }, message: '' } as never)
   vi.mocked(createRelation).mockReset().mockResolvedValue({ data: { id: 99 }, message: '' } as never)
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('OntologyRelationEditView 反向關係', () => {
@@ -317,5 +326,105 @@ describe('OntologyRelationEditView 反向述詞已被刪除', () => {
 
     expect(wrapper.text()).not.toContain(DELETED_HINT)
     expect((reverseCheckbox(wrapper).element as HTMLInputElement).checked).toBe(true)
+  })
+})
+
+describe('OntologyRelationEditView 清掉反向前的確認', () => {
+  const CONFIRM_TEXT = '這會移除目前的反向配對，兩邊的述詞都會變成沒有反向。確定要儲存嗎？'
+
+  it('它應該在取消勾選反向時先跳出確認，按取消就不送出且保留表單', async () => {
+    const a = rel(1, 'documents', DOC, TECH, 2)
+    const b = rel(2, 'documentedBy', TECH, DOC, 1)
+    const { wrapper, router } = await mountView([a, b], a)
+    confirmSpy.mockReturnValue(false)
+
+    await wrapper.get('textarea').setValue('我寫的註釋')
+    await reverseCheckbox(wrapper).setValue(false)
+    await save(wrapper)
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(confirmSpy).toHaveBeenCalledWith(CONFIRM_TEXT)
+    expect(updateRelation).not.toHaveBeenCalled()
+    expect((reverseCheckbox(wrapper).element as HTMLInputElement).checked).toBe(false)
+    expect((wrapper.get('textarea').element as HTMLTextAreaElement).value).toBe('我寫的註釋')
+    expect(router.currentRoute.value.name).toBe('ontology-relation-edit')
+    // 取消之後儲存鈕還能再按。
+    expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
+  })
+
+  it('它應該在按確定後送出 reverse_id 為 null', async () => {
+    const a = rel(1, 'documents', DOC, TECH, 2)
+    const b = rel(2, 'documentedBy', TECH, DOC, 1)
+    const { wrapper } = await mountView([a, b], a)
+
+    await reverseCheckbox(wrapper).setValue(false)
+    await save(wrapper)
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(updateRelation).mock.calls[0]![1]).toMatchObject({ reverse_id: null })
+  })
+
+  it('它應該在原本的反向已被刪除、只改註釋時也先確認，按取消就不送出', async () => {
+    const a = rel(1, 'documents', DOC, TECH, 10)
+    const { wrapper } = await mountView([a], a)
+    confirmSpy.mockReturnValue(false)
+
+    await wrapper.get('textarea').setValue('只改註釋')
+    await save(wrapper)
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(updateRelation).not.toHaveBeenCalled()
+  })
+
+  it('它應該在對稱述詞（反向是自己）取消勾選時也要確認', async () => {
+    const a = rel(10, '伴隨', TECH, TECH, 10)
+    const { wrapper } = await mountView([a], a)
+    confirmSpy.mockReturnValue(false)
+
+    await reverseCheckbox(wrapper).setValue(false)
+    await save(wrapper)
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1)
+    expect(updateRelation).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['只改註釋、反向配對不變', rel(1, 'documents', DOC, TECH, 2), [rel(2, 'documentedBy', TECH, DOC, 1)]],
+    ['對稱述詞只改註釋', rel(10, '伴隨', TECH, TECH, 10), []],
+    ['原本就沒有反向、也沒勾', rel(1, 'documents', DOC, TECH, null), []],
+  ])('它應該在%s時不跳確認', async (label, editing, others) => {
+    const { wrapper } = await mountView([editing, ...others], editing)
+
+    await wrapper.get('textarea').setValue('只改註釋')
+    await save(wrapper)
+
+    expect(confirmSpy).not.toHaveBeenCalled()
+    expect(updateRelation).toHaveBeenCalledTimes(1)
+  })
+
+  it('它應該在原本沒有反向、新勾選一條時不跳確認', async () => {
+    const a = rel(1, 'documents', DOC, TECH, null)
+    const b = rel(2, 'documentedBy', TECH, DOC, null)
+    const { wrapper } = await mountView([a, b], a)
+
+    await reverseCheckbox(wrapper).setValue(true)
+    await save(wrapper)
+
+    expect(confirmSpy).not.toHaveBeenCalled()
+    expect(vi.mocked(updateRelation).mock.calls[0]![1]).toMatchObject({ reverse_id: 2 })
+  })
+
+  it('它應該在新增述詞時不跳確認', async () => {
+    const other = rel(11, '後於', TECH, TECH, null)
+    const { wrapper } = await mountView([other], null)
+
+    const [subject, object] = wrapper.findAll('select')
+    await subject!.setValue(TECH)
+    await object!.setValue(TECH)
+    await wrapper.findAll('input')[0]!.setValue('先於')
+    await save(wrapper)
+
+    expect(confirmSpy).not.toHaveBeenCalled()
+    expect(createRelation).toHaveBeenCalledTimes(1)
   })
 })
