@@ -58,3 +58,5 @@ src/features/graph/
 - 小修（改字、修一個 bug）不用為了它搬整個功能。
 
 舊功能已經全部搬進 `src/features/`。之後新增的功能直接放進功能資料夾。
+
+`docs/demos/` 放單檔 HTML 的 demo 頁（例如 `motion-demo.html`），用來在實作前先看效果；不進 `src/`、不被網站 import、不參與 build。
