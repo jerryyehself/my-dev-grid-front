@@ -30,6 +30,37 @@ describe('router：/admin', () => {
   })
 })
 
+// 本體論的一覽與詳情頁是管理用的頁面（唯一入口是 /admin），跟新增/編輯頁一樣要登入
+describe.each([
+  ['/ontology/scopes', 'ontology-scopes'],
+  ['/ontology/scopes/1', 'ontology-scope'],
+  ['/ontology/relations', 'ontology-relations'],
+  ['/ontology/relations/1', 'ontology-relation'],
+])('router：%s', (path, name) => {
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    await router.push('/about')
+  })
+
+  it('它應該在路由設定標上 requiresAuth', () => {
+    const resolved = router.resolve(path)
+    expect(resolved.name).toBe(name)
+    expect(resolved.meta.requiresAuth).toBe(true)
+  })
+
+  it('它應該在沒登入時導去登入頁，redirect 帶回原本的路徑', async () => {
+    await router.push(path)
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe(path)
+  })
+
+  it('它應該在登入後進入該頁', async () => {
+    useAuthStore().token = 'test-token'
+    await router.push(path)
+    expect(router.currentRoute.value.name).toBe(name)
+  })
+})
+
 // 後端 OAuth 失敗導回 `/?auth_error=…`，前端要轉去登入頁說明原因（2026-10-03 使用者回報畫面沒反應）
 describe('router：auth_error', () => {
   beforeEach(async () => {

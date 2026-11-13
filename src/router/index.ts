@@ -158,6 +158,10 @@ const router = createRouter({
       //
       // 一覽是規格第 6 步補上的。在它之前，詳情頁只能用網址直接開，站上沒有任何
       // 連結指進來——那是規格的順序（先詳情後清單），現在入口補上了。
+      //
+      // 本體論的讀取頁（一覽、詳情）也掛 requiresAuth（2026-11-13 使用者決定）：這些是
+      // 管理用的頁面，唯一入口是 /admin，不是給訪客看的。後端讀取 API 仍是公開的
+      // （圖譜頁要用），這裡只擋前端頁面。
       path: '/ontology/scopes',
       name: 'ontology-scopes',
       component: () => import('@/features/ontology/OntologyScopesView.vue'),
@@ -166,6 +170,7 @@ const router = createRouter({
         title: '分類一覽',
         subtitle: '頂層分類與其子分類',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
@@ -192,6 +197,7 @@ const router = createRouter({
         title: '分類詳情',
         subtitle: '子類、兄弟、述詞定義與實體計數',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
@@ -215,6 +221,7 @@ const router = createRouter({
         title: '述詞一覽',
         subtitle: '主詞、述詞與受詞，成對可逆',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
@@ -240,6 +247,7 @@ const router = createRouter({
         title: '述詞詳情',
         subtitle: '使用這個述詞的邊，以及它為什麼被鎖定',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
