@@ -9,6 +9,7 @@ import ProjectsListPanel from './ProjectsListPanel.vue'
 import ProjectsMobileLayout from './ProjectsMobileLayout.vue'
 import { useIsDesktop } from './useIsDesktop'
 import { useProjectsFilter } from './useProjectsFilter'
+import { LOADING_PROJECTS_TEXT } from '@/copy/common'
 
 const projects = ref<Project[]>([])
 const loading = ref(true)
@@ -86,7 +87,7 @@ watch([selectedId, filteredProjects], async () => {
 <template>
   <div class="w-full">
     <div v-if="loading" class="py-16 text-center text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
-      專案載入中…
+      {{ LOADING_PROJECTS_TEXT }}
     </div>
 
     <div v-else-if="error" class="py-16 flex flex-col items-center gap-4 text-center">

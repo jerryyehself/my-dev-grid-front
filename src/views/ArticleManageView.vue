@@ -13,6 +13,7 @@ import BaseHint from '@/components/BaseHint.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import BaseSegmented from '@/components/BaseSegmented.vue'
+import { ARTICLES_LOAD_FAILED_TEXT, LOADING_TEXT } from '@/copy/common'
 
 const auth = useAuthStore()
 const canWrite = computed(() => auth.isAuthenticated)
@@ -120,9 +121,9 @@ async function handleDelete(a: ArticleDto) {
     </div>
 
 
-    <BaseLoadingBlock v-if="!ready && !loadError" height="240px">載入中…</BaseLoadingBlock>
+    <BaseLoadingBlock v-if="!ready && !loadError" height="240px">{{ LOADING_TEXT }}</BaseLoadingBlock>
     <BaseLoadingBlock v-else-if="loadError" height="240px" tone="error">
-      文章清單載入失敗，重新整理再試一次。
+      {{ ARTICLES_LOAD_FAILED_TEXT }}
     </BaseLoadingBlock>
 
     <template v-else>

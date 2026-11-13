@@ -5,6 +5,7 @@ import ForceGraph3D, { type ForceGraph3DInstance, type NodeObject, type LinkObje
 import * as THREE from 'three'
 import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from './graphPocData'
 import { useTheme } from '@/composables/useTheme'
+import { LOADING_GRAPH_TEXT } from '@/copy/common'
 
 // 註（D-87，2026-10-02）：下面多處寫「見 GraphPoc2D.vue 同樣的說明」——2D 版已經併進
 // features/graph/KnowledgeGraphCanvas.vue（跟首頁共用），GraphPoc2D.vue 已刪除，原本的說明
@@ -298,7 +299,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <BaseLoadingBlock v-if="loading" height="520px">圖譜載入中…</BaseLoadingBlock>
+  <BaseLoadingBlock v-if="loading" height="520px">{{ LOADING_GRAPH_TEXT }}</BaseLoadingBlock>
   <BaseLoadingBlock v-else-if="error" height="520px" tone="error">{{ error }}</BaseLoadingBlock>
   <!-- container 用 v-show 而不是 v-if：ref 要在 onMounted 執行前就綁定好，
        loading/error 之間切換時才不會拿到還沒掛載的 DOM 節點 -->

@@ -4,6 +4,7 @@ import BaseTag from '@/components/BaseTag.vue'
 import type { Project } from '@/api/projects'
 import { techniqueLabel } from '@/api/techniqueLabel'
 import { orderedTechniques, type ProjectsFilterGroupData } from './useProjectsFilter'
+import { PROJECTS_EMPTY_TEXT, PROJECTS_NO_MATCH_TEXT } from '@/copy/common'
 
 // 手機版版面：2026-11 桌機版重做之後，手機版維持原本的樣子（篩選面板收合、清單與詳情上下堆疊），
 // 之後會另外檢視重做，到時整個檔案換掉。跟舊版的差別只有一個：PROJ-YYYY-NN 顯示編號沒有了
@@ -93,7 +94,7 @@ defineExpose({
         </div>
       </template>
       <div class="col-span-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-(--border-shelf) pt-3">
-        <p class="m-0 text-left text-[13px] text-(--text-ink-muted)">小圓框裡是專案數。選一個技術會包含它的所有版本，例如選 Vue 也會找到用 Vue 3 的專案。</p>
+        <p class="m-0 text-left text-[13px] text-(--text-ink-muted)">選一個技術會包含它的所有版本，例如 Vue 也包含 Vue 3。</p>
         <button
           v-if="selectedTags.size > 0"
           type="button"
@@ -110,7 +111,7 @@ defineExpose({
       <template v-else>{{ totalCount }} 個專案，</template>由新到舊排列
     </p>
     <div v-if="projects.length === 0" class="py-16 text-center text-sm text-(--text-ink-muted)">
-      {{ totalCount === 0 ? '目前沒有可顯示的專案。' : '沒有符合篩選條件的專案。' }}
+      {{ totalCount === 0 ? PROJECTS_EMPTY_TEXT : PROJECTS_NO_MATCH_TEXT }}
     </div>
 
     <div v-else class="grid grid-cols-1 overflow-hidden rounded-xl border border-(--border-shelf) bg-(--bg-paper-light)">
@@ -168,14 +169,10 @@ defineExpose({
           >
         </div>
 
-        <div class="grid grid-cols-3 gap-4 border-t border-(--border-shelf) pt-5">
+        <div class="grid grid-cols-2 gap-4 border-t border-(--border-shelf) pt-5">
           <div>
             <div class="mb-1 font-mono text-[11px] tracking-[0.15em] text-(--text-ink-muted) uppercase">Started</div>
             <div class="text-[13px] text-(--text-ink-main)">{{ selected.started }}</div>
-          </div>
-          <div>
-            <div class="mb-1 font-mono text-[11px] tracking-[0.15em] text-(--text-ink-muted) uppercase">Role</div>
-            <div class="text-[13px] text-(--text-ink-main)">{{ selected.role || '—' }}</div>
           </div>
           <div>
             <div class="mb-1 font-mono text-[11px] tracking-[0.15em] text-(--text-ink-muted) uppercase">Repo</div>

@@ -158,4 +158,12 @@ describe('ArticleDetailView', () => {
     expect(wrapper.text()).toContain('找不到這篇文章')
     expect(wrapper.find('a[href="/articles"]').exists()).toBe(true)
   })
+
+  it('它應該只在內文顯示第一段一次，標題下面不再重複', async () => {
+    const body = '這是第一段摘要。\n\n## 小節\n\n後面的內容'
+    fetchArticleOrDemo.mockResolvedValue({ article: { ...LIST[2], body }, loadError: null })
+    const wrapper = await mountAt(3)
+
+    expect(wrapper.text().split('這是第一段摘要。')).toHaveLength(2)
+  })
 })
