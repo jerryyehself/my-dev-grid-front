@@ -426,36 +426,49 @@ function isTask(item: MdNode): boolean {
 }
 
 /**
- * 清單項目的內容。任務項目前面放一個核取方塊，第一個段落跟它排在同一行（段落畫成行內的 <span>，
- * 不然段落是區塊，核取方塊會自己佔一行、文字掉到下面）；後面的段落、巢狀清單照一般方式另起一行。
+ * 任務項目拆成「核取方塊」跟「內容」兩塊。第一個段落畫成行內的 <span>（不然段落是區塊，
+ * 核取方塊會自己佔一行、文字掉到下面）；後面的段落、巢狀清單照一般方式另起一行。
  * 用 disabled 的 checkbox 而不是文字符號，螢幕閱讀器才讀得出勾選狀態。
- * 一般項目原樣 render；內文和註釋的清單項目共用這一份。
+ * boxClass 讓內文（核取方塊後面直接接文字，要留右邊距）和註釋（核取方塊自己佔標記欄，不留邊距）各自指定。
  */
-function itemContent(item: MdNode): VNode[] {
-  if (!isTask(item)) return kids(item)
+function taskParts(item: MdNode, boxClass: string): { box: VNode; content: VNode[] } {
   const box = h('input', {
     type: 'checkbox',
     checked: item.checked,
     disabled: true,
-    class: 'mr-2 accent-(--text-accent)',
+    class: `${boxClass} accent-(--text-accent)`,
   })
   const [first, ...rest] = item.children ?? []
-  if (first?.type !== 'paragraph') return [box, ...kids(item)]
-  return [box, h('span', kids(first)), ...rest.flatMap(render)]
+  if (first?.type !== 'paragraph') return { box, content: kids(item) }
+  return { box, content: [h('span', kids(first)), ...rest.flatMap(render)] }
 }
 
 /**
- * 註釋裡的一個清單項目：左欄是 aria-hidden 的標記（有序清單的 `N.`、無序的 `•`），右欄是內容。
+ * 內文清單項目的內容：任務項目前面放核取方塊，第一個段落跟它排在同一行；一般項目原樣 render。
+ */
+function itemContent(item: MdNode): VNode[] {
+  if (!isTask(item)) return kids(item)
+  const { box, content } = taskParts(item, 'mr-2')
+  return [box, ...content]
+}
+
+/**
+ * 註釋裡的一個清單項目：左欄是標記（有序清單的 `N.`、無序的 `•`，都是 aria-hidden），右欄是內容。
  * 內容包在自己的 <span> 裡，所以巢狀清單會自然縮進到右欄、折行也縮在標記右邊（懸掛縮排）。
  * 螢幕閱讀器靠 role=list／listitem 讀出項目，標記不重複讀。
- * 無序的任務項目（markerText 為 null）沒有圓點：核取方塊本身就是標記，直接排在內容最前面。
+ * 無序的任務項目（markerText 為 null）沒有圓點：核取方塊本身就是左欄的標記（它是真的 <input>，
+ * 不加 aria-hidden，勾選狀態要讀得出來），欄寬跟圓點欄相同，所以文字、折行、巢狀清單的縮進都跟一般項目一致。
  * markerMinWidth 讓有序清單的所有列用同一個標記欄寬（不給就用預設的 1.25em）。
  */
 function noteListItem(item: MdNode, markerText: string | null, markerMinWidth?: string): VNode {
-  const content = h('span', { class: 'min-w-0' }, itemContent(item))
-  if (markerText === null) return h('span', { role: 'listitem', class: 'block' }, [content])
-  return h('span', { role: 'listitem', class: 'grid grid-cols-[auto_1fr] gap-x-1.5' }, [
-    h(
+  let marker: VNode
+  let body: VNode[]
+  if (markerText === null) {
+    const { box, content } = taskParts(item, 'm-0')
+    marker = h('span', { class: 'min-w-[1.25em] text-right' }, [box])
+    body = content
+  } else {
+    marker = h(
       'span',
       {
         'aria-hidden': 'true',
@@ -463,8 +476,12 @@ function noteListItem(item: MdNode, markerText: string | null, markerMinWidth?: 
         style: markerMinWidth ? { minWidth: markerMinWidth } : undefined,
       },
       markerText,
-    ),
-    content,
+    )
+    body = itemContent(item)
+  }
+  return h('span', { role: 'listitem', class: 'grid grid-cols-[auto_1fr] gap-x-1.5' }, [
+    marker,
+    h('span', { class: 'min-w-0' }, body),
   ])
 }
 

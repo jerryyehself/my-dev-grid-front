@@ -88,6 +88,8 @@ describe('MarkdownBody', () => {
     const w = await mountMd('- [ ] 文字\n  - 子項目\n')
     const li = w.find('li')
     const box = li.element.querySelector('input[type="checkbox"]')!
+    // 核取方塊後面接的是行內 <span>；舊版是區塊的 <p>
+    expect(box.nextElementSibling!.tagName).toBe('SPAN')
     expect(box.nextElementSibling!.textContent).toBe('文字')
     const nested = li.find('ul')
     expect(nested.exists()).toBe(true)
@@ -733,21 +735,55 @@ describe('MarkdownBody', () => {
           expect(item.attributes('role')).toBe('listitem')
         })
 
-        it('它應該讓註釋裡的任務項目不畫圓點，核取方塊跟第一段文字在同一個行內容器裡', async () => {
+        it('它應該讓註釋裡的任務項目不畫圓點，核取方塊在標記欄、第一段文字在內容欄的行內容器裡', async () => {
           const w = await mountMd(
             '句子[^1]。\n\n[^1]: 註\n\n    - [x] 做完了\n\n      補充\n    - [ ] 還沒\n    - 一般',
           )
           const list = noteOf(w).find('[role="list"]')
           const items = list.findAll(':scope > [role="listitem"]')
-          // 只有一般項目有圓點；任務項目沒有任何 aria-hidden 標記
+          // 只有一般項目有圓點；任務項目沒有任何 aria-hidden 標記（核取方塊要讓螢幕閱讀器讀到）
           expect(markerTexts(list)).toEqual(['•'])
           expect(items[0]!.find('[aria-hidden="true"]').exists()).toBe(false)
-          const box = items[0]!.element.querySelector('input[type="checkbox"]')!
-          expect(box.nextElementSibling!.textContent).toBe('做完了')
-          expect(box.nextElementSibling!.classList.contains('block')).toBe(false)
-          // 後面的段落仍是區塊
-          expect(items[0]!.text()).toContain('補充')
+          // 任務項目跟一般項目同一個兩欄結構：標記欄放核取方塊，內容欄放文字
+          const [markerCol, contentCol] = Array.from(items[0]!.element.children)
+          expect(items[0]!.classes()).toContain('grid')
+          expect(markerCol!.querySelector('input[type="checkbox"]')).not.toBeNull()
+          expect(contentCol!.querySelector('input')).toBeNull()
+          const firstLine = contentCol!.firstElementChild!
+          expect(firstLine.tagName).toBe('SPAN')
+          expect(firstLine.textContent).toBe('做完了')
+          expect(firstLine.classList.contains('block')).toBe(false)
+          // 後面的段落仍是區塊，在內容欄裡
+          expect(contentCol!.textContent).toContain('補充')
           expect(items[2]!.find('input').exists()).toBe(false)
+        })
+
+        it('它應該讓任務項目底下的巢狀清單跟一般項目一樣，在內容欄裡縮進', async () => {
+          const w = await mountMd(
+            '句子[^1]。\n\n[^1]: 註\n\n    - [ ] 任務\n      - 子一\n    - 一般\n      - 子二',
+          )
+          const items = noteOf(w)
+            .find('[role="list"]')
+            .findAll(':scope > [role="listitem"]')
+          const nestedOf = (item: (typeof items)[number]) => {
+            const nested = item.element.querySelector('[role="list"]')!
+            // 巢狀清單的祖先鏈：直接在第二欄（內容欄）底下，而不是跟標記欄並排或掛在項目底下
+            const col = nested.closest('[role="listitem"] > *')!
+            return {
+              colIndex: Array.from(item.element.children).indexOf(col),
+              colClass: col.className,
+              firstChildText: col.firstElementChild!.textContent,
+            }
+          }
+          const task = nestedOf(items[0]!)
+          const bullet = nestedOf(items[1]!)
+          expect(task.colIndex).toBe(1)
+          expect(task.colIndex).toBe(bullet.colIndex)
+          expect(task.colClass).toBe(bullet.colClass)
+          // 內容欄先是自己的文字，才是巢狀清單
+          expect(task.firstChildText).toBe('任務')
+          expect(bullet.firstChildText).toBe('一般')
+          expect(items[0]!.classes()).toEqual(items[1]!.classes())
         })
 
         it('它應該讓有序清單的標記欄寬依最大編號的位數統一，所有列對齊', async () => {
