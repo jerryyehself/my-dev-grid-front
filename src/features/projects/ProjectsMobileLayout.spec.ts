@@ -43,4 +43,37 @@ describe('ProjectsMobileLayout', () => {
     expect(text).toContain('選一個技術會包含它的所有版本')
     expect(text).not.toContain('小圓框')
   })
+
+  describe('空狀態', () => {
+    it('它應該在整體沒有專案時說「目前沒有可顯示的專案」', () => {
+      const text = render({ projects: [], totalCount: 0, selected: undefined }).text()
+
+      expect(text).toContain('目前沒有可顯示的專案。')
+      expect(text).not.toContain('沒有符合篩選條件')
+    })
+
+    it('它應該在篩選後沒有專案、但整體有專案時說「沒有符合篩選條件的專案」', () => {
+      const text = render({ projects: [], totalCount: 3, selected: undefined }).text()
+
+      expect(text).toContain('沒有符合篩選條件的專案。')
+      expect(text).not.toContain('目前沒有可顯示')
+    })
+  })
+
+  describe('篩選鈕', () => {
+    it('它應該在面板收合時，aria-controls 仍指向存在的元素（面板只是被隱藏）', async () => {
+      const wrapper = render()
+      const button = wrapper.findAll('button').find((b) => b.text().startsWith('依技術篩選'))!
+      const panel = wrapper.find(`[id="${button.attributes('aria-controls')}"]`)
+
+      expect(button.attributes('aria-expanded')).toBe('false')
+      expect(panel.exists()).toBe(true)
+      expect(panel.classes()).toContain('hidden')
+
+      await button.trigger('click')
+
+      expect(button.attributes('aria-expanded')).toBe('true')
+      expect(panel.classes()).not.toContain('hidden')
+    })
+  })
 })
