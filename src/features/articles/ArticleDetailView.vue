@@ -76,7 +76,9 @@
         <ArticleRelatedProjects v-if="article.implementations.length" :projects="article.implementations" />
       </div>
 
-      <div class="max-w-prose">
+      <!-- 正文欄寬上限 40em（16px 下 640px，中文約 40 字一行）。內文是 16px／行高 28px（leading-7），
+           見 MarkdownBody -->
+      <div class="max-w-[40em]">
         <details
           v-if="headings.length"
           class="group min-[1240px]:hidden mb-6 rounded-[6px] border border-(--border-shelf) bg-(--bg-folder)"

@@ -68,7 +68,7 @@ onUnmounted(() => {
     :class="entered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
   >
     <div class="flex items-center justify-between gap-3 mb-2">
-      <h2 class="text-[15px] tracking-[0.08em] font-bold text-(--text-accent)">知識網路</h2>
+      <h2 class="text-[15px] tracking-[0.05em] font-bold text-(--text-accent)">知識網路</h2>
     </div>
 
     <p v-if="!loading" class="text-sm text-(--text-ink-body) mb-3">

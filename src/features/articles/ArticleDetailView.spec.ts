@@ -80,6 +80,22 @@ describe('ArticleDetailView', () => {
     expect((sidebar.element as HTMLElement).style.top).toBe(`${STICKY_TOP_PX}px`)
   })
 
+  it('它應該把正文欄寬限制在 40em，段落是 16px／行高 28px', async () => {
+    fetchArticleOrDemo.mockResolvedValue({
+      article: article(4, 'D 排版', '2026-08-01', '段落一\n\n- 清單項目'),
+      loadError: null,
+    })
+    const wrapper = await mountAt(4)
+
+    expect(wrapper.find('.max-w-\\[40em\\]').exists()).toBe(true)
+    expect(wrapper.find('.max-w-prose').exists()).toBe(false)
+    for (const el of [wrapper.find('.max-w-\\[40em\\] p'), wrapper.find('.max-w-\\[40em\\] li')]) {
+      expect(el.classes()).toContain('text-base')
+      expect(el.classes()).toContain('leading-7')
+      expect(el.classes()).not.toContain('leading-[1.6]')
+    }
+  })
+
   it('它應該把註腳渲染成註釋清單，並收起的目錄（窄螢幕用）與左欄目錄指向同一組標題', async () => {
     fetchArticleOrDemo.mockResolvedValue({
       article: article(4, 'D 有註腳', '2026-08-01', '## 小節\n\n內文[^1]\n\n[^1]: 註釋內容'),

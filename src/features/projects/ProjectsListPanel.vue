@@ -42,12 +42,12 @@ defineExpose({ revealSelected: () => list.value?.revealSelected() })
     :style="{ top: `${STICKY_TOP_PX}px`, '--projects-list-max-h': 'max(360px, calc(100vh - 228px))' }"
   >
     <div class="flex flex-none items-center justify-between px-4 py-3">
-      <p class="m-0 text-left text-[13px] leading-5 tracking-[0.06em] text-(--text-ink-muted)" aria-live="polite">
+      <p class="m-0 text-left text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)" aria-live="polite">
         {{ projects.length }} 筆｜依開始日期
       </p>
       <button
         type="button"
-        class="inline-flex h-7 cursor-pointer items-center gap-2 rounded-[14px] border border-[color-mix(in_srgb,var(--text-ink-main)_35%,transparent)] px-3 text-[13px] leading-5 font-semibold tracking-[0.06em] text-(--text-ink-main) transition-colors hover:border-[color-mix(in_srgb,var(--text-ink-main)_65%,transparent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+        class="inline-flex h-7 cursor-pointer items-center gap-2 rounded-[14px] border border-[color-mix(in_srgb,var(--text-ink-main)_35%,transparent)] px-3 text-[13px] leading-5 font-semibold tracking-[0.05em] text-(--text-ink-main) transition-colors hover:border-[color-mix(in_srgb,var(--text-ink-main)_65%,transparent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
         :class="filterOpen && 'bg-[color-mix(in_srgb,var(--text-ink-main)_8%,transparent)]'"
         :aria-expanded="filterOpen"
         :aria-controls="filterOpen ? filterPanelId : undefined"

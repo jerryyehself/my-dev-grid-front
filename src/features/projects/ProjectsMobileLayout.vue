@@ -131,11 +131,9 @@ defineExpose({
           "
           @click="pick(proj.id)"
         >
-          <div v-if="proj.statusType" class="mb-1.5 font-mono text-[11px]">
-            <span
-              class="font-mono text-[11px] font-bold tracking-[0.05em] uppercase"
-              :class="proj.statusType === 'active' ? 'text-(--text-accent)' : 'text-(--text-ink-muted)'"
-            >
+          <!-- 只標已封存的；進行中是預設狀態，不標（跟桌機版的 STATUS 欄一致） -->
+          <div v-if="proj.statusType === 'archived'" class="mb-1.5 font-mono text-[11px]">
+            <span class="font-mono text-[11px] font-bold tracking-[0.05em] uppercase text-(--text-ink-muted)">
               {{ proj.status }}
             </span>
           </div>
@@ -146,8 +144,8 @@ defineExpose({
       </div>
 
       <div v-if="selected" ref="detailBox" class="scroll-mt-20 p-6 sm:p-8">
-        <div v-if="selected.statusType" class="mb-5 flex justify-end">
-          <BaseTag :tone="selected.statusType === 'active' ? 'accent' : 'muted'">
+        <div v-if="selected.statusType === 'archived'" class="mb-5 flex justify-end">
+          <BaseTag tone="muted">
             {{ selected.status }}
           </BaseTag>
         </div>

@@ -287,7 +287,7 @@
             to="/graph"
             :class="[
               MONO,
-              'self-start sm:self-auto shrink-0 inline-flex items-center min-h-11 px-[22px] rounded-[6px] border-[1.5px] border-(--accent-brass) text-(--accent-brass) font-bold text-[15px] tracking-[0.06em] no-underline hover:bg-(--accent-brass) hover:text-(--bg-band-strong) transition-colors',
+              'self-start sm:self-auto shrink-0 inline-flex items-center min-h-11 px-[22px] rounded-[6px] border-[1.5px] border-(--accent-brass) text-(--accent-brass) font-bold text-[15px] tracking-[0.05em] no-underline hover:bg-(--accent-brass) hover:text-(--bg-band-strong) transition-colors',
             ]"
           >
             看知識圖譜

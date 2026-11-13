@@ -32,7 +32,7 @@ const { atTop, atBottom } = useScrollFade(scroller)
       <div v-if="hasSelection" class="mt-6 flex justify-end">
         <button
           type="button"
-          class="cursor-pointer border-b border-(--text-accent) pb-0.5 text-[13px] leading-5 font-semibold tracking-[0.06em] text-(--text-accent) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+          class="cursor-pointer border-b border-(--text-accent) pb-0.5 text-[13px] leading-5 font-semibold tracking-[0.05em] text-(--text-accent) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
           @click="emit('clear')"
         >
           清除篩選 ×

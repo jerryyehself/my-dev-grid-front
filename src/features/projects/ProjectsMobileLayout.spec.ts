@@ -37,6 +37,19 @@ describe('ProjectsMobileLayout', () => {
     expect(text).not.toContain('Role')
   })
 
+  it('它應該只在已封存的專案標狀態，進行中的專案列表與詳情都不標', () => {
+    const active = project('1', 'alpha')
+    const archived = { ...project('2', 'bravo'), status: 'Archived', statusType: 'archived' as const }
+
+    const activeText = render({ projects: [active], selected: active }).text()
+    expect(activeText).not.toContain('Active')
+
+    const wrapper = render({ projects: [active, archived], totalCount: 2, selected: archived })
+    // 列表一筆、詳情一筆，都是 Archived；Active 的那一列沒有狀態文字
+    expect(wrapper.text().match(/Archived/g)).toHaveLength(2)
+    expect(wrapper.text()).not.toContain('Active')
+  })
+
   it('它應該在篩選面板只保留技術版本包含規則的說明', () => {
     const text = render().text()
 

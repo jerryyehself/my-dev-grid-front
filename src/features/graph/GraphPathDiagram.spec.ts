@@ -59,6 +59,13 @@ describe('GraphPathDiagram', () => {
     expect(labels([tech, doc], [edge('technique-1', 'documentation-1', 'specifiedBy')])).toContain('被說明 ▸')
     expect(labels([impl, doc], [edge('documentation-1', 'implementation-1', 'documents')])).toContain('被記錄 ▸')
     expect(labels([doc, impl], [edge('documentation-1', 'implementation-1', 'documents')])).toContain('記錄 ▸')
+    // about／subjectOf：文章討論技術或實作；主詞在後一站時被動
+    const article = node('documentation-2', 'documentation', 'Vue 入門筆記')
+    expect(labels([article, tech], [edge('documentation-2', 'technique-1', 'about')])).toContain('討論 ▸')
+    expect(labels([tech, article], [edge('documentation-2', 'technique-1', 'about')])).toContain('被討論 ▸')
+    expect(labels([tech, article], [edge('technique-1', 'documentation-2', 'subjectOf')])).toContain('被討論 ▸')
+    expect(labels([article, impl], [edge('documentation-2', 'implementation-1', 'about')])).toContain('討論 ▸')
+    expect(labels([impl, article], [edge('documentation-2', 'implementation-1', 'about')])).toContain('被討論 ▸')
     // 同類：需要
     expect(labels([req, tech], [edge('technique-1', 'technique-2', 'requires')])).toContain('被需要 ▸')
     expect(labels([tech, req], [edge('technique-1', 'technique-2', 'requires')])).toContain('需要 ▸')

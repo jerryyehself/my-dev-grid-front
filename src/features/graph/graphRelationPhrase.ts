@@ -4,11 +4,13 @@ import type { GraphNodeType } from '@/api/graph'
 // 的簡短標示，圖形化的內容不該寫成口語句子），2026-10-04 首頁彈窗與滑過提示也改用
 // 同一套（使用者選 mockup H 版）。原本首頁用的口語句子（「「Vue」用在「vue-exercise」」）已經拿掉。
 //
-// 不逐一翻譯述詞：跨類看兩端是哪兩類，同類才看述詞。完整的述詞中文對照表還沒做：同一個述詞
+// 跨類看兩端是哪兩類、再對照述詞；同類只看述詞。完整的述詞中文對照表還沒做：同一個述詞
 // 在不同情境下譯法可能不同，要先逐一查來源詞彙的定義（D-73）。
 //
 // specs 譯「說明」不譯「寫到」：資料裡 specs 的主詞都是官方文件網站（例如 Vue 官方文件 → Vue），
-// 意思是「這份文件是這個技術的說明」；「寫到」是文章提到某個技術，那是另一種關係。
+// 意思是「這份文件是這個技術的說明」；文章提到某個技術是 about／subjectOf（schema.org），
+// 那是另一種關係，譯「討論」：about 指「整篇在講這個」，「提及」在辭典裡是順帶提到，意思太輕；
+// 「論及」太書面，所以都不選。文章連到專案的 aboutProject／projectSubjectOf 是同一種關係，同樣譯「討論」。
 
 const TYPE_LABEL: Record<GraphNodeType, string> = {
   documentation: '文件',
@@ -40,13 +42,41 @@ export interface EdgeRelation {
   verb: string
 }
 
-// 跨類只看兩端類別（不看邊的方向）：實作使用技術（ER model，#75）、
-// 文件說明技術、文件記錄實作。
-const CROSS_VERB: { from: GraphNodeType; to: GraphNodeType; verb: string }[] = [
-  { from: 'implementation', to: 'technique', verb: '使用' },
-  { from: 'documentation', to: 'technique', verb: '說明' },
-  { from: 'documentation', to: 'implementation', verb: '記錄' },
-]
+// 跨類別的述詞：每個述詞自己帶一組「主詞類別／受詞類別」，兩端類別對得上才用它的動詞，
+// 兩個方向（正向、反向）的述詞共用同一個動詞，主詞都是同一端：實作使用技術（ER model，#75）、
+// 文件說明技術、文件記錄實作、文件討論技術或實作。
+// 原本只看兩端類別，文件→技術一律標「說明」，about 的文章也會被標成「說明」。
+interface CrossVerb {
+  from: GraphNodeType
+  to: GraphNodeType
+  verb: string
+}
+const SPECS: CrossVerb = { from: 'documentation', to: 'technique', verb: '說明' }
+const DOCUMENTS: CrossVerb = { from: 'documentation', to: 'implementation', verb: '記錄' }
+const USES: CrossVerb = { from: 'implementation', to: 'technique', verb: '使用' }
+const ABOUT_TECHNIQUE: CrossVerb = { from: 'documentation', to: 'technique', verb: '討論' }
+const ABOUT_IMPLEMENTATION: CrossVerb = { from: 'documentation', to: 'implementation', verb: '討論' }
+
+/** 跨類述詞 → 這個述詞允許的（主詞類別、受詞類別）與動詞；about 可以連到技術也可以連到實作 */
+const CROSS_PREDICATE: Record<string, CrossVerb[]> = {
+  specs: [SPECS],
+  specifiedBy: [SPECS],
+  documents: [DOCUMENTS],
+  documentedBy: [DOCUMENTS],
+  uses: [USES],
+  usedBy: [USES],
+  // assisted-by／assists 與 uses／usedBy 平輩（AI 只提供建議、不直接產出成品），沿用「使用」
+  'assisted-by': [USES],
+  assists: [USES],
+  about: [ABOUT_TECHNIQUE, ABOUT_IMPLEMENTATION],
+  subjectOf: [ABOUT_TECHNIQUE, ABOUT_IMPLEMENTATION],
+  // 後端把文件→專案的 about 另外拆成這一對述詞
+  aboutProject: [ABOUT_IMPLEMENTATION],
+  projectSubjectOf: [ABOUT_IMPLEMENTATION],
+}
+
+// 述詞是空的（舊資料沒有填關係）時，退回只看兩端類別的預設動詞
+const CROSS_DEFAULT: CrossVerb[] = [USES, SPECS, DOCUMENTS]
 
 // 同類看述詞；反向述詞把兩端對調，讓起點永遠是主動的那一端
 const SAME_CLASS_VERB: Record<string, { verb: string; swap: boolean }> = {
@@ -62,13 +92,25 @@ export function edgeRelation(
   target: PhraseNode,
   predicate: string | null,
 ): EdgeRelation {
-  for (const { from, to, verb } of CROSS_VERB) {
-    if (source.domainType === from && target.domainType === to)
-      return { subject: source, object: target, verb }
-    if (target.domainType === from && source.domainType === to)
-      return { subject: target, object: source, verb }
+  const crossClass = source.domainType !== target.domainType
+  if (crossClass) {
+    // 述詞有填就只認它自己的動詞：不認得的述詞、或兩端類別跟述詞對不上，一律標「相關」，
+    // 不退回類別預設（否則新述詞會被標成別的述詞的意思）
+    const candidates = predicate === null
+        ? CROSS_DEFAULT
+        : Object.hasOwn(CROSS_PREDICATE, predicate)
+          ? CROSS_PREDICATE[predicate]!
+          : []
+    for (const { from, to, verb } of candidates) {
+      if (source.domainType === from && target.domainType === to)
+        return { subject: source, object: target, verb }
+      if (target.domainType === from && source.domainType === to)
+        return { subject: target, object: source, verb }
+    }
+    return { subject: source, object: target, verb: '相關' }
   }
-  const same = predicate ? SAME_CLASS_VERB[predicate] : undefined
+  // hasOwn：述詞是 constructor 這類物件內建的名字時，不能被當成查得到
+  const same = predicate && Object.hasOwn(SAME_CLASS_VERB, predicate) ? SAME_CLASS_VERB[predicate] : undefined
   if (same)
     return same.swap
       ? { subject: target, object: source, verb: same.verb }
