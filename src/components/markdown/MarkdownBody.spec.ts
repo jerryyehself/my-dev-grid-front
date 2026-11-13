@@ -523,6 +523,33 @@ describe('MarkdownBody', () => {
         })
       })
 
+      it('它應該讓同一個連結裡的多個引用各自的註釋緊跟在自己的編號後面', async () => {
+        stubWide(true)
+        const w = await mountMd('看[連結[^1][^2]](https://example.com)吧。\n\n[^1]: 一\n\n[^2]: 二', {
+          sidenotes: true,
+          attach: true,
+        })
+        const a = w.find('a').element
+        const seq = Array.from(a.parentElement!.children)
+        // 後面還有「吧。」的文字 span，只看緊接在連結後面的四個
+        const after = seq.slice(seq.indexOf(a) + 1, seq.indexOf(a) + 5)
+        // a, m1, n1, m2, n2
+        expect(after.map((el) => (el.id ? 'note' : 'marker'))).toEqual([
+          'marker',
+          'note',
+          'marker',
+          'note',
+        ])
+        expect(after.filter((el) => el.id).map((el) => el.id)).toEqual([
+          expect.stringMatching(/fnnote-1-1$/),
+          expect.stringMatching(/fnnote-2-1$/),
+        ])
+        // 每則註釋緊鄰在自己的編號後面（hover 標亮的相鄰兄弟選擇器要靠這個）
+        expect(after[0]!.querySelector('button')!.getAttribute('data-fn-number')).toBe('1')
+        expect(after[2]!.querySelector('button')!.getAttribute('data-fn-number')).toBe('2')
+        w.unmount()
+      })
+
       it('它應該讓文件裡任何 <a> 都不含 button 或註釋元素（連結、標題、一般文字混用）', async () => {
         stubWide(true)
         const w = await mountMd(
@@ -578,15 +605,74 @@ describe('MarkdownBody', () => {
         const note = w.find('[id*="fnnote"]')
         const lists = note.findAll('[role="list"]')
         expect(lists).toHaveLength(2)
-        expect(lists.map((l) => l.findAll('[role="listitem"]').map((li) => li.text()))).toEqual([
+        // 標記是 aria-hidden 的獨立 <span>，項目文字不含它
+        expect(
+          lists.map((l) =>
+            l.findAll('[role="listitem"]').map((li) => li.find('span:not([aria-hidden])').text()),
+          ),
+        ).toEqual([
           ['清單甲', '清單乙'],
           ['有序一', '有序二'],
         ])
-        expect(lists[0]!.classes()).toContain('list-disc')
-        expect(lists[1]!.classes()).toContain('list-decimal')
         const title = note.findAll('span').find((s) => s.text() === '註內標題')!
         expect(title.classes()).toEqual(expect.arrayContaining(['block', 'font-bold']))
         expect(note.text()).toContain('第二段')
+      })
+
+      describe('清單標記（不用 display:list-item，不動外層 <ol> 的計數器）', () => {
+        type Dom = ReturnType<Wrapper['find']>
+        const noteOf = (w: Wrapper): Dom => w.find('[id*="fnnote"]')
+        const markerTexts = (list: Dom) =>
+          list.findAll(':scope > [role="listitem"] > [aria-hidden="true"]').map((m) => m.text())
+
+        it('它應該為有序清單畫 N. 標記，start 不為 1 時從 start 起算', async () => {
+          const w = await mountMd('句子[^1]。\n\n[^1]: 註\n\n    1. 甲\n    2. 乙\n    3. 丙')
+          expect(markerTexts(noteOf(w).find('[role="list"]'))).toEqual(['1.', '2.', '3.'])
+          const w4 = await mountMd('句子[^1]。\n\n[^1]: 註\n\n    4. 甲\n    5. 乙')
+          expect(markerTexts(noteOf(w4).find('[role="list"]'))).toEqual(['4.', '5.'])
+        })
+
+        it('它應該為無序清單畫圓點標記', async () => {
+          const w = await mountMd('句子[^1]。\n\n[^1]: 註\n\n    - 甲\n    - 乙')
+          expect(markerTexts(noteOf(w).find('[role="list"]'))).toEqual(['•', '•'])
+        })
+
+        it('它應該讓巢狀清單縮進在項目內容裡，各自編號', async () => {
+          const w = await mountMd(
+            '句子[^1]。\n\n[^1]: 註\n\n    1. 甲\n       - 子一\n       - 子二\n    2. 乙',
+          )
+          const lists = noteOf(w).findAll('[role="list"]')
+          expect(lists).toHaveLength(2)
+          const outer = lists[0]!
+          expect(markerTexts(outer)).toEqual(['1.', '2.'])
+          // 巢狀清單在外層項目的內容欄（第二欄）裡，才會縮進
+          const nested = outer.find('[role="listitem"] > span:not([aria-hidden]) [role="list"]')
+          expect(nested.exists()).toBe(true)
+          expect(markerTexts(nested)).toEqual(['•', '•'])
+        })
+
+        it('它應該讓標記不被讀出，項目仍是 role=listitem', async () => {
+          const w = await mountMd('句子[^1]。\n\n[^1]: 註\n\n    1. 甲')
+          const item = noteOf(w).find('[role="listitem"]')
+          expect(item.find('[aria-hidden="true"]').text()).toBe('1.')
+          expect(item.attributes('role')).toBe('listitem')
+        })
+
+        it('它應該不在註釋裡產生任何 list-item 元素（會讓外層 <ol> 的計數器跳號）', async () => {
+          const w = await mountMd(
+            '句子[^1]。\n\n[^1]: 註\n\n    1. 甲\n       - 子\n    2. 乙\n\n    - 丙',
+          )
+          for (const scope of [noteOf(w), w.find('section ol > li')]) {
+            expect(scope.findAll('.list-item, .list-decimal, .list-disc')).toHaveLength(0)
+            const display = scope
+              .findAll('*')
+              .map((el) => (el.element as HTMLElement).style.display)
+              .filter(Boolean)
+            expect(display).not.toContain('list-item')
+          }
+          // 真正的清單只有文末那一個 <ol>
+          expect(w.findAll('ol')).toHaveLength(1)
+        })
       })
 
       it('它應該讓註釋裡的標題不編入目錄、不影響後面標題的 id', async () => {
@@ -681,6 +767,23 @@ describe('MarkdownBody', () => {
         expect(
           parseFloat((w.find('[data-fn-side]').element as HTMLElement).style.top),
         ).not.toBeNaN()
+        w.unmount()
+      })
+    })
+
+    describe('內容改變後重排', () => {
+      afterEach(() => {
+        vi.restoreAllMocks()
+        vi.unstubAllGlobals()
+      })
+      it('它應該在內容改變但容器尺寸沒變時重新排版', async () => {
+        stubWide(true)
+        const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true, attach: true })
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+        await w.setProps({ source: '甲[^1]乙。\n\n[^1]: 新的一' })
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        expect(rect).toHaveBeenCalled()
         w.unmount()
       })
     })

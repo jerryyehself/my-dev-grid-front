@@ -140,7 +140,14 @@ function withDeferral(kind: Deferral['kind'], build: () => VNode): VNode[] {
     outer.notes.push(...mine.notes)
     return [el, ...mine.markers]
   }
-  return [el, ...mine.markers, ...mine.notes]
+  // 一個連結裡有好幾個引用：每個編號後面緊跟它自己的註釋（a, m4, n4, m5, n5），
+  // 不能把編號排一排、註釋排一排——邊注的 hover 標亮靠「緊鄰在編號後面」的相鄰兄弟選擇器。
+  // 標題的編號留在標題裡（markers 是空的），註釋照順序接在標題後面
+  const tail: VNode[] = []
+  const pairs = Math.min(mine.markers.length, mine.notes.length)
+  for (let i = 0; i < pairs; i++) tail.push(mine.markers[i]!, mine.notes[i]!)
+  tail.push(...mine.markers.slice(pairs), ...mine.notes.slice(pairs))
+  return [el, ...tail]
 }
 
 function kids(node: MdNode): VNode[] {
@@ -312,21 +319,19 @@ function render(node: MdNode): VNode[] {
     }
 
     case 'list':
-      // 註釋裡的清單用 <span>（display:block／list-item）加 role 畫，原因見 paragraph 的註解。
-      // <span> 沒有 start 屬性，改用 counter-reset 讓有序清單從指定的數字開始
+      // 註釋裡的清單用 <span> 加 role 畫（原因見 paragraph 的註解）。
+      // 不能用 display:list-item：那會把外層真正的 <ol> 的計數器也加一（文末註釋清單變成 9, 10, 11, 12，
+      // 內文 <ol> 裡含註釋的項目跳號），而 <span> 清單上的 counter-reset 在 Chromium 也不生效。
+      // 所以編號／圓點是每個項目自己畫的一個 aria-hidden 標記（見 noteListItem）
       if (noteDepth > 0) {
+        const start = node.start ?? 1
         return [
           h(
             'span',
-            {
-              role: 'list',
-              style:
-                node.ordered && node.start != null && node.start !== 1
-                  ? { counterReset: `list-item ${node.start - 1}` }
-                  : undefined,
-              class: `block ${node.ordered ? 'list-decimal' : 'list-disc'} pl-5 my-1.5 marker:text-(--text-accent)`,
-            },
-            kids(node),
+            { role: 'list', class: 'block my-1.5' },
+            (node.children ?? []).map((item, i) =>
+              noteListItem(item, node.ordered ? `${start + i}.` : '•'),
+            ),
           ),
         ]
       }
@@ -355,9 +360,9 @@ function render(node: MdNode): VNode[] {
                 class: 'mr-2 accent-(--text-accent)',
               }),
             ]
-      if (noteDepth > 0) {
-        return [h('span', { role: 'listitem', class: 'list-item' }, [...box, ...kids(node)])]
-      }
+      // 註釋裡的清單項目由 list 的 case 呼叫 noteListItem 畫，不會走到這裡；
+      // 萬一直接遇到（孤立的 listItem），也用同一個形狀，標記退成圓點
+      if (noteDepth > 0) return [noteListItem(node, '•')]
       return [
         h('li', { class: 'text-base leading-[1.6] text-(--text-ink-body)' }, [
           ...box,
@@ -405,6 +410,36 @@ function render(node: MdNode): VNode[] {
       // 認不得就把 children 攤出來，內容不會消失
       return kids(node)
   }
+}
+
+/**
+ * 註釋裡的一個清單項目：左欄是 aria-hidden 的標記（有序清單的 `N.`、無序的 `•`），右欄是內容。
+ * 內容包在自己的 <span> 裡，所以巢狀清單會自然縮進到右欄、折行也縮在標記右邊（懸掛縮排）。
+ * 螢幕閱讀器靠 role=list／listitem 讀出項目，標記不重複讀。
+ */
+function noteListItem(item: MdNode, markerText: string): VNode {
+  const box =
+    item.checked === null || item.checked === undefined
+      ? []
+      : [
+          h('input', {
+            type: 'checkbox',
+            checked: item.checked,
+            disabled: true,
+            class: 'mr-2 accent-(--text-accent)',
+          }),
+        ]
+  return h('span', { role: 'listitem', class: 'grid grid-cols-[auto_1fr] gap-x-1.5' }, [
+    h(
+      'span',
+      {
+        'aria-hidden': 'true',
+        class: 'min-w-[1.25em] text-right tabular-nums text-(--text-accent)',
+      },
+      markerText,
+    ),
+    h('span', { class: 'min-w-0' }, [...box, ...kids(item)]),
+  ])
 }
 
 /**
@@ -675,7 +710,8 @@ const onMediaChange = () => {
 // 這些狀態是在函式型子元件 Rendered 裡讀的，重繪的是 Rendered，不是這個元件，
 // 所以 onUpdated 不會觸發；要靠 watch。flush: 'post' 等 DOM 更新完才量。
 watch(
-  [sideMode, pinnedNumber, openNotes],
+  // tree：內容改了但容器尺寸沒變（ResizeObserver 不會觸發）時，邊注也要重排
+  [sideMode, pinnedNumber, openNotes, tree],
   () => {
     if (props.sidenotes) scheduleLayout()
   },
