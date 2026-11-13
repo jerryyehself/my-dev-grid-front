@@ -166,13 +166,30 @@ function kids(node: MdNode): VNode[] {
     ) {
       const [head, lead] = splitLastChar(child.value ?? '')
       if (head) out.push(h('span', head))
-      out.push(...renderFootnoteRef(next, lead))
+      // 前面是剛拆出來的文字，只需要看後面是不是又緊接著一個編號
+      out.push(...renderFootnoteRef(next, lead, { prev: false, next: isLiveRef(children[i + 2]) }))
       i++
+      continue
+    }
+    // 緊貼著別的編號（`[^4][^5]`）：兩個編號中間沒有任何字，加大的點擊範圍會互相蓋住，
+    // 把鄰接的一側告訴 renderFootnoteRef，那一側不再往外加大
+    if (child.type === 'footnoteReference') {
+      out.push(
+        ...renderFootnoteRef(child, '', {
+          prev: isLiveRef(children[i - 1]),
+          next: isLiveRef(next),
+        }),
+      )
       continue
     }
     out.push(...render(child))
   }
   return out
+}
+
+/** 這個節點是不是一個有效的註腳引用（用來判斷兩個編號是否緊貼在一起）。 */
+function isLiveRef(node: MdNode | undefined): boolean {
+  return node?.type === 'footnoteReference' && !!liveFootnote(node)
 }
 
 /** 這個引用對得到定義、而且不在註釋內容裡（註釋裡的巢狀引用不編號）才算「有效」。 */
@@ -325,12 +342,19 @@ function render(node: MdNode): VNode[] {
       // 所以編號／圓點是每個項目自己畫的一個 aria-hidden 標記（見 noteListItem）
       if (noteDepth > 0) {
         const start = node.start ?? 1
+        const items = node.children ?? []
+        // 有序清單的標記欄寬：最大那個編號的位數 + 句點。tabular-nums 下每個數字等寬，用 ch 剛好
+        const markerWidth = `${String(start + items.length - 1).length + 1}ch`
         return [
           h(
             'span',
             { role: 'list', class: 'block my-1.5' },
-            (node.children ?? []).map((item, i) =>
-              noteListItem(item, node.ordered ? `${start + i}.` : '•'),
+            items.map((item, i) =>
+              noteListItem(
+                item,
+                node.ordered ? `${start + i}.` : isTask(item) ? null : '•',
+                node.ordered ? markerWidth : undefined,
+              ),
             ),
           ),
         ]
@@ -347,27 +371,11 @@ function render(node: MdNode): VNode[] {
       ]
 
     case 'listItem': {
-      // GFM 的任務清單:checked 不是 null 就代表這是 [ ] / [x]。
-      // 用 disabled 的 checkbox 而不是文字符號，螢幕閱讀器才讀得出勾選狀態
-      const box =
-        node.checked === null || node.checked === undefined
-          ? []
-          : [
-              h('input', {
-                type: 'checkbox',
-                checked: node.checked,
-                disabled: true,
-                class: 'mr-2 accent-(--text-accent)',
-              }),
-            ]
       // 註釋裡的清單項目由 list 的 case 呼叫 noteListItem 畫，不會走到這裡；
-      // 萬一直接遇到（孤立的 listItem），也用同一個形狀，標記退成圓點
-      if (noteDepth > 0) return [noteListItem(node, '•')]
+      // 萬一直接遇到（孤立的 listItem），也用同一個形狀，標記退成圓點（任務項目由核取方塊當標記）
+      if (noteDepth > 0) return [noteListItem(node, isTask(node) ? null : '•')]
       return [
-        h('li', { class: 'text-base leading-[1.6] text-(--text-ink-body)' }, [
-          ...box,
-          ...kids(node),
-        ]),
+        h('li', { class: 'text-base leading-[1.6] text-(--text-ink-body)' }, itemContent(node)),
       ]
     }
 
@@ -412,33 +420,68 @@ function render(node: MdNode): VNode[] {
   }
 }
 
+/** GFM 的任務清單項目：checked 不是 null／undefined 就代表這是 [ ] / [x]。 */
+function isTask(item: MdNode): boolean {
+  return item.checked !== null && item.checked !== undefined
+}
+
 /**
- * 註釋裡的一個清單項目：左欄是 aria-hidden 的標記（有序清單的 `N.`、無序的 `•`），右欄是內容。
+ * 任務項目拆成「核取方塊」跟「內容」兩塊。第一個段落畫成行內的 <span>（不然段落是區塊，
+ * 核取方塊會自己佔一行、文字掉到下面）；後面的段落、巢狀清單照一般方式另起一行。
+ * 用 disabled 的 checkbox 而不是文字符號，螢幕閱讀器才讀得出勾選狀態。
+ * boxClass 讓內文（核取方塊後面直接接文字，要留右邊距）和註釋（核取方塊自己佔標記欄，不留邊距）各自指定。
+ */
+function taskParts(item: MdNode, boxClass: string): { box: VNode; content: VNode[] } {
+  const box = h('input', {
+    type: 'checkbox',
+    checked: item.checked,
+    disabled: true,
+    class: `${boxClass} accent-(--text-accent)`,
+  })
+  const [first, ...rest] = item.children ?? []
+  if (first?.type !== 'paragraph') return { box, content: kids(item) }
+  return { box, content: [h('span', kids(first)), ...rest.flatMap(render)] }
+}
+
+/**
+ * 內文清單項目的內容：任務項目前面放核取方塊，第一個段落跟它排在同一行；一般項目原樣 render。
+ */
+function itemContent(item: MdNode): VNode[] {
+  if (!isTask(item)) return kids(item)
+  const { box, content } = taskParts(item, 'mr-2')
+  return [box, ...content]
+}
+
+/**
+ * 註釋裡的一個清單項目：左欄是標記（有序清單的 `N.`、無序的 `•`，都是 aria-hidden），右欄是內容。
  * 內容包在自己的 <span> 裡，所以巢狀清單會自然縮進到右欄、折行也縮在標記右邊（懸掛縮排）。
  * 螢幕閱讀器靠 role=list／listitem 讀出項目，標記不重複讀。
+ * 無序的任務項目（markerText 為 null）沒有圓點：核取方塊本身就是左欄的標記（它是真的 <input>，
+ * 不加 aria-hidden，勾選狀態要讀得出來），欄寬跟圓點欄相同，所以文字、折行、巢狀清單的縮進都跟一般項目一致。
+ * markerMinWidth 讓有序清單的所有列用同一個標記欄寬（不給就用預設的 1.25em）。
  */
-function noteListItem(item: MdNode, markerText: string): VNode {
-  const box =
-    item.checked === null || item.checked === undefined
-      ? []
-      : [
-          h('input', {
-            type: 'checkbox',
-            checked: item.checked,
-            disabled: true,
-            class: 'mr-2 accent-(--text-accent)',
-          }),
-        ]
-  return h('span', { role: 'listitem', class: 'grid grid-cols-[auto_1fr] gap-x-1.5' }, [
-    h(
+function noteListItem(item: MdNode, markerText: string | null, markerMinWidth?: string): VNode {
+  let marker: VNode
+  let body: VNode[]
+  if (markerText === null) {
+    const { box, content } = taskParts(item, 'm-0')
+    marker = h('span', { class: 'min-w-[1.25em] text-right' }, [box])
+    body = content
+  } else {
+    marker = h(
       'span',
       {
         'aria-hidden': 'true',
-        class: 'min-w-[1.25em] text-right tabular-nums text-(--text-accent)',
+        class: `${markerMinWidth ? '' : 'min-w-[1.25em] '}text-right tabular-nums text-(--text-accent)`,
+        style: markerMinWidth ? { minWidth: markerMinWidth } : undefined,
       },
       markerText,
-    ),
-    h('span', { class: 'min-w-0' }, [...box, ...kids(item)]),
+    )
+    body = itemContent(item)
+  }
+  return h('span', { role: 'listitem', class: 'grid grid-cols-[auto_1fr] gap-x-1.5' }, [
+    marker,
+    h('span', { class: 'min-w-0' }, body),
   ])
 }
 
@@ -487,7 +530,11 @@ function closeNote(key: string) {
  * 註釋元素放在編號旁邊而不是文末，所以兩種模式都不需要另外算位置就能退化成「在那一行附近」。
  * 連結、標題裡的引用例外：註釋元素移到該連結／標題後面，連結裡的編號也一起移出（見 withDeferral）。
  */
-function renderFootnoteRef(node: MdNode, lead = ''): VNode[] {
+function renderFootnoteRef(
+  node: MdNode,
+  lead = '',
+  near: { prev: boolean; next: boolean } = { prev: false, next: false },
+): VNode[] {
   const info = liveFootnote(node)
   // 註釋內容裡的巢狀引用、或找不到定義的引用（remark-gfm 正常不會產生）：留成原本的文字，不吞掉
   if (!info) return [h('span', `[^${node.label ?? node.identifier ?? ''}]`)]
@@ -511,8 +558,12 @@ function renderFootnoteRef(node: MdNode, lead = ''): VNode[] {
   const markerClass = [
     'relative inline px-[1px] py-0 rounded-[2px] leading-none tabular-nums cursor-pointer scroll-mt-36 transition-colors duration-100 ease-out',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)',
-    // 加大點擊範圍到約 44px，手指點得到；上標的數字本身只有十來 px 高
-    'after:content-[""] after:absolute after:-inset-x-3.5 after:-inset-y-4',
+    // 加大點擊範圍到約 44px，手指點得到；上標的數字本身只有十來 px 高。
+    // 左右各往外 14px，但緊貼著另一個編號的那一側不加（相鄰編號中間沒有空隙，各加 14px 會蓋住鄰居，
+    // 點到後面那個）；上下一律加大
+    'after:content-[""] after:absolute after:-inset-y-4',
+    near.prev ? 'after:left-0' : 'after:-left-3.5',
+    near.next ? 'after:right-0' : 'after:-right-3.5',
     active
       ? 'font-bold text-(--text-accent) underline decoration-2 underline-offset-2'
       : 'font-medium text-(--text-ink-main) underline-offset-2 hover:text-(--text-accent) hover:underline',

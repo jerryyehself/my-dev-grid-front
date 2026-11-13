@@ -67,6 +67,37 @@ describe('MarkdownBody', () => {
     expect(boxes[0]!.attributes('disabled')).toBeDefined()
   })
 
+  it('它應該讓任務項目的核取方塊跟第一段文字排在同一行，後面的段落另起一行', async () => {
+    const w = await mountMd('- [x] 第一段\n\n  第二段\n- [ ] 單段\n- 一般項目\n')
+    const items = w.findAll('li')
+    const first = items[0]!.element
+    // 核取方塊後面緊接著行內的 <span> 放第一段，不是區塊的 <p>
+    const box = first.querySelector('input[type="checkbox"]')!
+    expect(box.nextElementSibling!.tagName).toBe('SPAN')
+    expect(box.nextElementSibling!.textContent).toBe('第一段')
+    // 第一段不是 <p>；第二段仍是區塊的 <p>
+    expect(Array.from(first.querySelectorAll('p')).map((p) => p.textContent)).toEqual(['第二段'])
+    // 單段的任務項目整個沒有 <p>
+    expect(items[1]!.find('p').exists()).toBe(false)
+    expect(items[1]!.text()).toBe('單段')
+    // 一般項目維持原樣，沒有核取方塊
+    expect(items[2]!.find('input').exists()).toBe(false)
+  })
+
+  it('它應該讓任務項目裡的巢狀清單與程式碼區塊仍是區塊，排在第一段後面', async () => {
+    const w = await mountMd('- [ ] 文字\n  - 子項目\n')
+    const li = w.find('li')
+    const box = li.element.querySelector('input[type="checkbox"]')!
+    // 核取方塊後面接的是行內 <span>；舊版是區塊的 <p>
+    expect(box.nextElementSibling!.tagName).toBe('SPAN')
+    expect(box.nextElementSibling!.textContent).toBe('文字')
+    const nested = li.find('ul')
+    expect(nested.exists()).toBe(true)
+    expect(nested.text()).toBe('子項目')
+    // 巢狀清單的項目不是任務，沒有核取方塊
+    expect(nested.find('input').exists()).toBe(false)
+  })
+
   it('它應該渲染 GFM 表格', async () => {
     const w = await mountMd('| a | b |\n|---|--:|\n| 1 | 2 |\n')
     expect(w.find('table').exists()).toBe(true)
@@ -183,6 +214,49 @@ describe('MarkdownBody', () => {
       expect(found[0]!.attributes('aria-label')).toBe('註 1')
       // 每個引用有自己的 id，才能各自有回連結
       expect(new Set(found.map((m) => m.attributes('id'))).size).toBe(3)
+    })
+
+    describe('緊貼的編號不互相蓋住點擊範圍', () => {
+      // jsdom 沒有排版，量不到實際位置；這裡驗「哪一側有加大」，實際點擊位置由瀏覽器實測
+      const hasClass = (w: Wrapper, i: number, cls: string) =>
+        markers(w)[i]!.classes().includes(cls)
+
+      it('它應該讓單獨的編號左右各加大，上下也加大', async () => {
+        const w = await mountMd('文字[^1]。\n\n[^1]: 一')
+        expect(hasClass(w, 0, 'after:-left-3.5')).toBe(true)
+        expect(hasClass(w, 0, 'after:-right-3.5')).toBe(true)
+        expect(hasClass(w, 0, 'after:-inset-y-4')).toBe(true)
+      })
+
+      it('它應該讓緊貼的三個編號在相鄰的那一側不加大，最外側保留，上下都保留', async () => {
+        const w = await mountMd('文字[^1][^2][^3]。\n\n[^1]: 一\n\n[^2]: 二\n\n[^3]: 三')
+        const sides = [0, 1, 2].map((i) => [
+          hasClass(w, i, 'after:left-0'),
+          hasClass(w, i, 'after:right-0'),
+        ])
+        expect(sides).toEqual([
+          [false, true],
+          [true, true],
+          [true, false],
+        ])
+        expect(hasClass(w, 0, 'after:-left-3.5')).toBe(true)
+        expect(hasClass(w, 2, 'after:-right-3.5')).toBe(true)
+        for (let i = 0; i < 3; i++) expect(hasClass(w, i, 'after:-inset-y-4')).toBe(true)
+      })
+
+      it('它應該在兩個編號中間隔著文字時各自照常加大', async () => {
+        const w = await mountMd('甲[^1]，乙[^2]。\n\n[^1]: 一\n\n[^2]: 二')
+        for (const i of [0, 1]) {
+          expect(hasClass(w, i, 'after:-left-3.5')).toBe(true)
+          expect(hasClass(w, i, 'after:-right-3.5')).toBe(true)
+        }
+      })
+
+      it('它應該把沒有定義的引用當成普通文字，不算鄰居', async () => {
+        // 單獨的 [^9] 沒有定義：remark 不產生 footnoteReference，編號 1 仍是單獨的
+        const w = await mountMd('文字[^1][^9]。\n\n[^1]: 一')
+        expect(hasClass(w, 0, 'after:-right-3.5')).toBe(true)
+      })
     })
 
     describe('編號不會單獨落在行首', () => {
@@ -525,10 +599,13 @@ describe('MarkdownBody', () => {
 
       it('它應該讓同一個連結裡的多個引用各自的註釋緊跟在自己的編號後面', async () => {
         stubWide(true)
-        const w = await mountMd('看[連結[^1][^2]](https://example.com)吧。\n\n[^1]: 一\n\n[^2]: 二', {
-          sidenotes: true,
-          attach: true,
-        })
+        const w = await mountMd(
+          '看[連結[^1][^2]](https://example.com)吧。\n\n[^1]: 一\n\n[^2]: 二',
+          {
+            sidenotes: true,
+            attach: true,
+          },
+        )
         const a = w.find('a').element
         const seq = Array.from(a.parentElement!.children)
         // 後面還有「吧。」的文字 span，只看緊接在連結後面的四個
@@ -658,6 +735,83 @@ describe('MarkdownBody', () => {
           expect(item.attributes('role')).toBe('listitem')
         })
 
+        it('它應該讓註釋裡的任務項目不畫圓點，核取方塊在標記欄、第一段文字在內容欄的行內容器裡', async () => {
+          const w = await mountMd(
+            '句子[^1]。\n\n[^1]: 註\n\n    - [x] 做完了\n\n      補充\n    - [ ] 還沒\n    - 一般',
+          )
+          const list = noteOf(w).find('[role="list"]')
+          const items = list.findAll(':scope > [role="listitem"]')
+          // 只有一般項目有圓點；任務項目沒有任何 aria-hidden 標記（核取方塊要讓螢幕閱讀器讀到）
+          expect(markerTexts(list)).toEqual(['•'])
+          expect(items[0]!.find('[aria-hidden="true"]').exists()).toBe(false)
+          // 任務項目跟一般項目同一個兩欄結構：標記欄放核取方塊，內容欄放文字
+          const [markerCol, contentCol] = Array.from(items[0]!.element.children)
+          expect(items[0]!.classes()).toContain('grid')
+          expect(markerCol!.querySelector('input[type="checkbox"]')).not.toBeNull()
+          expect(contentCol!.querySelector('input')).toBeNull()
+          const firstLine = contentCol!.firstElementChild!
+          expect(firstLine.tagName).toBe('SPAN')
+          expect(firstLine.textContent).toBe('做完了')
+          expect(firstLine.classList.contains('block')).toBe(false)
+          // 後面的段落仍是區塊，在內容欄裡
+          expect(contentCol!.textContent).toContain('補充')
+          expect(items[2]!.find('input').exists()).toBe(false)
+        })
+
+        it('它應該讓任務項目底下的巢狀清單跟一般項目一樣，在內容欄裡縮進', async () => {
+          const w = await mountMd(
+            '句子[^1]。\n\n[^1]: 註\n\n    - [ ] 任務\n      - 子一\n    - 一般\n      - 子二',
+          )
+          const items = noteOf(w)
+            .find('[role="list"]')
+            .findAll(':scope > [role="listitem"]')
+          const nestedOf = (item: (typeof items)[number]) => {
+            const nested = item.element.querySelector('[role="list"]')!
+            // 巢狀清單的祖先鏈：直接在第二欄（內容欄）底下，而不是跟標記欄並排或掛在項目底下
+            const col = nested.closest('[role="listitem"] > *')!
+            return {
+              colIndex: Array.from(item.element.children).indexOf(col),
+              colClass: col.className,
+              firstChildText: col.firstElementChild!.textContent,
+            }
+          }
+          const task = nestedOf(items[0]!)
+          const bullet = nestedOf(items[1]!)
+          expect(task.colIndex).toBe(1)
+          expect(task.colIndex).toBe(bullet.colIndex)
+          expect(task.colClass).toBe(bullet.colClass)
+          // 內容欄先是自己的文字，才是巢狀清單
+          expect(task.firstChildText).toBe('任務')
+          expect(bullet.firstChildText).toBe('一般')
+          expect(items[0]!.classes()).toEqual(items[1]!.classes())
+        })
+
+        it('它應該讓有序清單的標記欄寬依最大編號的位數統一，所有列對齊', async () => {
+          const rows = (n: number, start: number) =>
+            [...Array(n).keys()].map((i) => `    ${start + i}. 項${i}`).join('\n')
+          const widthsOf = async (md: string) => {
+            const w = await mountMd(md)
+            return noteOf(w)
+              .find('[role="list"]')
+              .findAll(':scope > [role="listitem"] > [aria-hidden="true"]')
+              .map((m) => (m.element as HTMLElement).style.minWidth)
+          }
+          // 98、99、100：最大編號 3 位，三列都用 4ch（3 位數 + 句點），不是各列依自己的位數
+          expect(await widthsOf(`句子[^1]。\n\n[^1]: 註\n\n${rows(3, 98)}`)).toEqual([
+            '4ch',
+            '4ch',
+            '4ch',
+          ])
+          // 8、9、10：最大編號 2 位
+          expect(await widthsOf(`句子[^1]。\n\n[^1]: 註\n\n${rows(3, 8)}`)).toEqual([
+            '3ch',
+            '3ch',
+            '3ch',
+          ])
+          // 1、2：1 位
+          expect(await widthsOf(`句子[^1]。\n\n[^1]: 註\n\n${rows(2, 1)}`)).toEqual(['2ch', '2ch'])
+        })
+
         it('它應該不在註釋裡產生任何 list-item 元素（會讓外層 <ol> 的計數器跳號）', async () => {
           const w = await mountMd(
             '句子[^1]。\n\n[^1]: 註\n\n    1. 甲\n       - 子\n    2. 乙\n\n    - 丙',
@@ -707,9 +861,7 @@ describe('MarkdownBody', () => {
         return instances
       }
       const windowListeners = (spy: { mock: { calls: unknown[][] } }) =>
-        spy.mock.calls
-          .map((call) => call[0])
-          .filter((type) => type === 'resize' || type === 'load')
+        spy.mock.calls.map((call) => call[0]).filter((type) => type === 'resize' || type === 'load')
 
       it('它應該在沒開 sidenotes 時不掛 resize、load、ResizeObserver 監聽', async () => {
         const add = vi.spyOn(window, 'addEventListener')
