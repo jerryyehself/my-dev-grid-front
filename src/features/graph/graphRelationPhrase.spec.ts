@@ -29,16 +29,19 @@ describe('edgeRelation', () => {
     expect(brief(edgeRelation(doc, impl, null))).toEqual(['Vue 官方文件', '記錄', 'my-dev-grid'])
   })
 
-  it('它應該讓跨類的動詞跟著述詞走：同樣是文件到技術，specs 說明、about 談到', () => {
+  it('它應該讓跨類的動詞跟著述詞走：同樣是文件到技術，specs 說明、about 討論', () => {
     const article = { domainType: 'documentation' as const, label: 'Vue 入門筆記' }
     expect(brief(edgeRelation(doc, tech, 'specs'))).toEqual(['Vue 官方文件', '說明', 'Vue'])
-    expect(brief(edgeRelation(article, tech, 'about'))).toEqual(['Vue 入門筆記', '談到', 'Vue'])
+    expect(brief(edgeRelation(article, tech, 'about'))).toEqual(['Vue 入門筆記', '討論', 'Vue'])
     // 反向述詞：邊存成技術→文章，主詞仍是文章
-    expect(brief(edgeRelation(tech, article, 'subjectOf'))).toEqual(['Vue 入門筆記', '談到', 'Vue'])
+    expect(brief(edgeRelation(tech, article, 'subjectOf'))).toEqual(['Vue 入門筆記', '討論', 'Vue'])
     expect(brief(edgeRelation(tech, doc, 'specifiedBy'))).toEqual(['Vue 官方文件', '說明', 'Vue'])
-    // 文章談到專案（about 也可以連實作）；documents 才是記錄
-    expect(brief(edgeRelation(article, impl, 'about'))).toEqual(['Vue 入門筆記', '談到', 'my-dev-grid'])
-    expect(brief(edgeRelation(impl, article, 'subjectOf'))).toEqual(['Vue 入門筆記', '談到', 'my-dev-grid'])
+    // 文章討論專案（about 也可以連實作）；documents 才是記錄
+    expect(brief(edgeRelation(article, impl, 'about'))).toEqual(['Vue 入門筆記', '討論', 'my-dev-grid'])
+    expect(brief(edgeRelation(impl, article, 'subjectOf'))).toEqual(['Vue 入門筆記', '討論', 'my-dev-grid'])
+    // 後端拆出來的文件→專案述詞
+    expect(brief(edgeRelation(article, impl, 'aboutProject'))).toEqual(['Vue 入門筆記', '討論', 'my-dev-grid'])
+    expect(brief(edgeRelation(impl, article, 'projectSubjectOf'))).toEqual(['Vue 入門筆記', '討論', 'my-dev-grid'])
     expect(brief(edgeRelation(article, impl, 'documents'))).toEqual(['Vue 入門筆記', '記錄', 'my-dev-grid'])
     expect(brief(edgeRelation(impl, article, 'documentedBy'))).toEqual(['Vue 入門筆記', '記錄', 'my-dev-grid'])
     // 實作→技術的兩組述詞都標「使用」
@@ -87,10 +90,10 @@ describe('edgeRelation', () => {
 })
 
 describe('edgeRelationText', () => {
-  it('它應該把 about 的文章寫成「談到」，不寫成「說明」', () => {
+  it('它應該把 about 的文章寫成「討論」，不寫成「說明」', () => {
     const article = { domainType: 'documentation' as const, label: 'Vue 入門筆記' }
     expect(edgeRelationText(edgeRelation(tech, article, 'subjectOf'))).toBe(
-      'Vue 入門筆記（文件） 談到 → Vue（技術）',
+      'Vue 入門筆記（文件） 討論 → Vue（技術）',
     )
   })
 
