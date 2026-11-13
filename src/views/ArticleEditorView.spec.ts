@@ -128,6 +128,62 @@ describe('ArticleEditorView', () => {
     wrapper.unmount()
   })
 
+  describe('插入腳註', () => {
+    const findButton = (wrapper: Awaited<ReturnType<typeof mountView>>) =>
+      wrapper.findAll('button').find((b) => b.text() === '插入腳註')!
+
+    it('它應該不再顯示本地暫存的邊註區塊', async () => {
+      const wrapper = await mountView()
+      expect(wrapper.text()).not.toContain('Margins')
+      expect(wrapper.text()).not.toContain('新增邊註')
+      wrapper.unmount()
+    })
+
+    it('它應該在游標處放引用、文末補定義，並把游標移到定義之後', async () => {
+      const wrapper = await mountView()
+      const textarea = wrapper.get('textarea').element
+      await wrapper.get('textarea').setValue('前面後面')
+      textarea.setSelectionRange(2, 2)
+
+      await findButton(wrapper).trigger('click')
+
+      expect(textarea.value).toBe('前面[^1]後面\n\n[^1]: ')
+      expect(textarea.selectionStart).toBe(textarea.value.length)
+      expect(textarea.selectionEnd).toBe(textarea.value.length)
+      // v-model 有跟著更新：再按一次會接著用 2，而不是從舊內容算
+      textarea.setSelectionRange(0, 0)
+      await findButton(wrapper).trigger('click')
+      expect(textarea.value).toBe('[^2]前面[^1]後面\n\n[^1]: \n[^2]: ')
+      wrapper.unmount()
+    })
+
+    it('它應該有選取文字時保留選取、把引用放在選取範圍後面', async () => {
+      const wrapper = await mountView()
+      const textarea = wrapper.get('textarea').element
+      await wrapper.get('textarea').setValue('這是重點文字，後面')
+      textarea.setSelectionRange(2, 6)
+
+      await findButton(wrapper).trigger('click')
+
+      expect(textarea.value).toBe('這是重點文字[^1]，後面\n\n[^1]: ')
+      wrapper.unmount()
+    })
+
+    it('它應該讓按鈕是可用鍵盤操作的 button，在預覽模式停用', async () => {
+      const wrapper = await mountView()
+      const button = findButton(wrapper)
+      expect(button.element.tagName).toBe('BUTTON')
+      expect(button.attributes('type')).toBe('button')
+      expect(button.attributes('disabled')).toBeUndefined()
+
+      const preview = wrapper.findAll('button, [role="radio"], [role="tab"]').find((b) => b.text() === '預覽')!
+      await preview.trigger('click')
+
+      expect(findButton(wrapper).attributes('disabled')).toBeDefined()
+      wrapper.unmount()
+    })
+  })
+
   it('它應該在述詞不存在時阻止送出並提示刪除連結，刪除後可以儲存', async () => {
     vi.mocked(fetchArticle).mockResolvedValue({
       ...defaultArticle,

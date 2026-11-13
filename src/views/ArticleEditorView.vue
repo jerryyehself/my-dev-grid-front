@@ -5,10 +5,14 @@
 // summary/intro（D-57）：不開獨立欄位，也不開獨立輸入框——內容本來就該寫在
 // Body 的 Markdown 裡，用格式帶（例如第一段當作 intro），不是另外存一份。
 //
-// margins（邊註）/純標籤/文章對文章關聯這三項，後端 documentations 資料表
+// 純標籤/文章對文章關聯這兩項，後端 documentations 資料表
 // 完全沒有對應欄位（entity_relations 表存在，但 DocumentationController
 // 沒有 sync 邏輯，文章對文章連結目前寫不進去）——刻意留在本地狀態、不送進
 // payload，不假裝存得住，理由跟做法見下面「存檔」那段與畫面上的說明文字。
+//
+// 邊註（旁注）不開獨立欄位，改成 Markdown 標準腳註（`[^n]` 引用＋`[^n]: 內容` 定義），
+// 由內文的「插入腳註」按鈕幫忙產生，文章頁（MarkdownBody）在寬螢幕顯示成旁注。
+// 腳註本來就寫在 body 裡，所以跟著 body 一起存，不像以前的本地邊註會消失。
 //
 // 本體論上的定位（D-40）：一篇文章就是一筆 Documentation，預設分類號掛
 // post（0030），而不是現有那 5 筆的 sourcesite（0010，外部官方文件）——但
@@ -28,9 +32,9 @@ import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseTextarea from '@/components/BaseTextarea.vue'
 import GraphLinkPicker from '@/components/article-editor/GraphLinkPicker.vue'
 import { describeFieldError, isFieldErrorShownInPlace } from '@/components/article-editor/fieldErrorMessage'
+import { insertFootnote } from '@/components/article-editor/insertFootnote'
 import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { ApiValidationError } from '@/api/client'
-import { type ArticleMarginNote } from '@/data/articles'
 import { createArticle, fetchArticle, updateArticle, type ArticleRelationDto } from '@/api/articles'
 import {
   FAMILY_COLOR,
@@ -78,7 +82,7 @@ const BODY_MODES = [
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const FILE_OVERWRITE_CONFIRM = '目前已經有內容，確定要用檔案內容覆蓋嗎？這個動作可以再手動復原。'
 let fileImportSequence = 0
-const margins = ref<ArticleMarginNote[]>([])
+const bodyFieldRef = ref<HTMLElement | null>(null)
 const tags = ref<string[]>([])
 const links = ref<DraftLink[]>([])
 /** 選中的分類號;null = 還沒選(編輯時文章原本的分類已被刪除,見 `scopeDeleted`)。 */
@@ -142,9 +146,8 @@ async function load() {
       scopeCall.value = '0030'
       links.value = []
     }
-    // margins/純標籤：後端沒有對應欄位可讀，編輯既有文章時這幾項永遠是空的
+    // 純標籤：後端沒有對應欄位可讀，編輯既有文章時這項永遠是空的
     // ——不是漏讀，是真的沒有東西可以讀回來。
-    margins.value = []
     tags.value = []
     dirty.value = false
     ready.value = true
@@ -237,15 +240,30 @@ function removeTag(i: number) {
   touch()
 }
 
-// --- 段落與邊註 ------------------------------------------------------------
-function addMargin() {
-  margins.value.push({ kind: '延伸想法', text: '', color: 'accent' })
-  touch()
-}
-
-function removeMargin(i: number) {
-  margins.value.splice(i, 1)
-  touch()
+// --- 插入腳註 --------------------------------------------------------------
+// 在游標處放 `[^N]`，文末補一行 `[^N]: ` 並把游標移過去讓作者直接打註解。
+// 編號與插入位置的計算在 insertFootnote（純函式）；這裡只負責套用到 textarea。
+function insertFootnoteAtCaret() {
+  const textarea = bodyFieldRef.value?.querySelector('textarea')
+  if (!textarea) return
+  const result = insertFootnote(body.value, textarea.selectionStart, textarea.selectionEnd)
+  textarea.focus()
+  // 兩處改動（游標處的引用、文末的定義）合成「從游標到文末」的一次編輯，
+  // 用 execCommand('insertText') 讓它進瀏覽器的復原堆疊，一次 Ctrl+Z 就整個退回；
+  // 它已被標為棄用、但目前各主流瀏覽器仍支援，也是 textarea 唯一能保留復原的方式。
+  // 不支援或被拒絕時退回 setRangeText＋手動送 input 事件（復原堆疊會被瀏覽器清掉，
+  // 但 v-model 一樣會更新）。
+  textarea.setSelectionRange(result.from, result.to)
+  const inserted =
+    typeof document.execCommand === 'function' &&
+    document.execCommand('insertText', false, result.text)
+  if (!inserted || textarea.value !== result.value) {
+    textarea.setRangeText(result.text, result.from, result.to, 'end')
+    textarea.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+  textarea.setSelectionRange(result.caret, result.caret)
+  // 定義在文末，游標過去之後把它捲進視窗，不然長文章按完看起來什麼都沒發生
+  textarea.scrollTop = textarea.scrollHeight
 }
 
 // --- 圖譜關聯 --------------------------------------------------------------
@@ -333,7 +351,7 @@ function exportMarkdown() {
 
 // --- 存檔 ------------------------------------------------------------------
 // 只有 title/body/分類號/technique·implementation 關聯/發布狀態送進 payload——
-// margins/純標籤/文章對文章關聯後端沒有對應欄位或還沒接線（entity_relations
+// 純標籤/文章對文章關聯後端沒有對應欄位或還沒接線（entity_relations
 // 表存在，但 controller 沒有 sync 邏輯），不假裝存得住；summary/intro 不算在
 // 這裡面，因為 D-57 之後它們本來就不是獨立欄位，內容已經在 body 裡了。
 const canSave = computed(
@@ -447,7 +465,7 @@ const publish = () => saveWithStatus(true)
       <h1 class="font-serif text-[26px] sm:text-[34px] font-extrabold tracking-tight text-(--text-ink-main)">
         {{ isEditing ? '編輯文章' : '新增文章' }}
       </h1>
-      <p class="text-[13.5px] sm:text-sm text-(--text-ink-muted)">內文用 Markdown，邊註可以增減</p>
+      <p class="text-[13.5px] sm:text-sm text-(--text-ink-muted)">內文用 Markdown，腳註用 [^n] 標記</p>
     </div>
 
     <!-- 動作列 -->
@@ -514,8 +532,8 @@ const publish = () => saveWithStatus(true)
         部分欄位還沒接後端
       </span>
       ——標題／內文／分類號／技術・實作圖譜關聯／發布狀態已經真的會存進資料庫；
-      邊註／純標籤／跟其他文章的關聯（entity_relations 表存在，但寫入邏輯還沒接）
-      這三項後端目前沒有對應欄位，先留在這頁本地讓你打字用，重新整理或離開這頁就會消失。
+      純標籤／跟其他文章的關聯（entity_relations 表存在，但寫入邏輯還沒接）
+      這兩項後端目前沒有對應欄位，先留在這頁本地讓你打字用，重新整理或離開這頁就會消失。
     </p>
 
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-7 lg:gap-9 items-start mt-7">
@@ -531,7 +549,7 @@ const publish = () => saveWithStatus(true)
              讓內文只能是純文字（渲染端是 {{ }} 插值），粗體、程式碼、清單、連結
              一個都放不了。排序按鈕也一併拿掉:Markdown 裡搬動段落就是搬動文字，
              而且改成顯式錨點之後搬動不會像原本那樣默默改掉錨點的指向。 -->
-        <div class="flex flex-col gap-3">
+        <div ref="bodyFieldRef" class="flex flex-col gap-3">
           <BaseField label="Body 內文" :hint="`Markdown · ${body.length} 字`">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <!-- 全站統一的「幾選一」切換（D-66） -->
@@ -545,6 +563,15 @@ const publish = () => saveWithStatus(true)
                   class="hidden"
                   @change="onFileSelected"
                 />
+                <BaseButton
+                  variant="ghost"
+                  type="button"
+                  :disabled="bodyMode !== 'edit'"
+                  :title="bodyMode !== 'edit' ? '切到「編輯」才能插入腳註' : undefined"
+                  @click="insertFootnoteAtCaret"
+                >
+                  插入腳註
+                </BaseButton>
                 <BaseButton variant="ghost" type="button" @click="triggerFileImport">
                   從檔案匯入
                 </BaseButton>
@@ -593,76 +620,13 @@ const publish = () => saveWithStatus(true)
             直接寫在這裡。
           </BaseHint>
           <BaseHint class="block leading-5">
+            「插入腳註」會在游標處放 <code class="font-mono">[^N]</code>，並在文末加一行
+            <code class="font-mono">[^N]: </code>，游標跳過去直接打註解；有選取文字時，引用放在選取範圍後面。
+          </BaseHint>
+          <BaseHint class="block leading-5">
             站內連結用相對路徑（例如 <code class="font-mono">[圖譜](/graph)</code>）會渲染成
             RouterLink，點下去不會整頁重載；站外連結自動開新分頁。
           </BaseHint>
-        </div>
-
-        <!-- 邊註 -->
-        <div class="flex flex-col gap-3">
-          <BaseField label="Margins 邊註（本地暫存）" hint="顯示在文章右側欄，可留空" />
-
-          <div
-            v-for="(note, i) in margins"
-            :key="i"
-            class="group border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) p-3.5 flex flex-col gap-2.5"
-          >
-            <div class="flex items-center gap-2.5">
-              <div
-                class="w-[3px] self-stretch rounded-sm"
-                :style="{ backgroundColor: note.color === 'accent' ? 'var(--text-accent)' : 'var(--text-ink-muted)' }"
-              ></div>
-              <BaseInput
-                v-model="note.kind"
-                placeholder="標記"
-                class="font-mono text-[10px] tracking-[0.18em] uppercase !text-(--text-accent) !rounded-full !bg-transparent w-[120px] !px-3 !py-1.5"
-                @input="touch"
-              />
-              <div class="ml-auto flex items-center gap-1.5">
-                <button
-                  v-for="c in (['accent', 'muted'] as const)"
-                  :key="c"
-                  type="button"
-                  :aria-label="c === 'accent' ? '用強調色' : '用次要色'"
-                  class="w-[18px] h-[18px] rounded-full transition-shadow duration-100 ease-out"
-                  :style="{
-                    backgroundColor: c === 'accent' ? 'var(--text-accent)' : 'var(--text-ink-muted)',
-                    opacity: note.color === c ? 1 : 0.35,
-                    boxShadow:
-                      note.color === c
-                        ? '0 0 0 2px var(--bg-paper-light), 0 0 0 3.5px var(--text-accent)'
-                        : 'none',
-                  }"
-                  @click="((note.color = c), touch())"
-                ></button>
-              </div>
-              <button
-                type="button"
-                aria-label="刪除這則邊註"
-                class="w-11 h-11 sm:w-6 sm:h-6 flex items-center justify-center text-(--text-accent) transition-opacity duration-100 ease-out opacity-60 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-60 sm:group-focus-within:opacity-60"
-                @click="removeMargin(i)"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-              </button>
-            </div>
-            <BaseTextarea
-              v-model="note.text"
-              :rows="2"
-              placeholder="邊註內容"
-              class="text-[13px] leading-7"
-              @input="touch"
-            />
-          </div>
-
-          <BaseButton variant="add" type="button" @click="addMargin">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            新增邊註
-          </BaseButton>
         </div>
       </div>
 
