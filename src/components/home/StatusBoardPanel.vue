@@ -65,7 +65,7 @@ onMounted(async () => {
           <span>專案</span>
         </h3>
 
-        <div v-if="projectsLoading" class="h-[140px] flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
+        <div v-if="projectsLoading" class="h-[140px] flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-[11px] font-mono text-(--text-ink-body)/40 tracking-[0.05em]">
           {{ LOADING_PROJECTS_TEXT }}
         </div>
 
