@@ -1,0 +1,248 @@
+<template>
+  <BaseLoadingBlock v-if="!ready && !loadError" height="320px">{{ LOADING_TEXT }}</BaseLoadingBlock>
+  <div v-else-if="loadError || !article" class="flex flex-col items-start gap-4">
+    <BaseLoadingBlock height="320px" tone="error">找不到這篇文章。</BaseLoadingBlock>
+    <BackToArticlesLink class="inline-flex" />
+  </div>
+
+  <div v-else class="w-full">
+    <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
+
+    <div class="flex items-center justify-between gap-4 mb-7">
+      <BackToArticlesLink class="inline-flex" />
+      <!-- 編輯頁的入口，只有登入後才顯示（AuthOnly.vue 說明為什麼）。 -->
+      <AuthOnly>
+        <router-link
+          :to="{ name: 'article-editor', params: { id: article.id } }"
+          class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+          編輯
+        </router-link>
+      </AuthOnly>
+    </div>
+
+    <div class="border-b border-(--border-shelf) pb-6 mb-8">
+      <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-accent) font-bold mb-3">
+        <span v-if="tags.length">{{ tags.join(' / ') }}</span>
+        <span class="text-(--text-ink-muted) font-normal">{{ displayDate(article) }}</span>
+      </div>
+
+      <!-- 跟 MainLayout 的頁面標題同一套：--font-serif（Noto Serif TC）900（D-60）。這頁藏了通用表頭、
+           自己畫標題，所以 D-60 換字型時沒跟到，全站只剩這裡是無襯線；編輯頁的標題輸入框本來就是襯線，
+           不改的話編輯時看到的跟發布後不一樣。不加負字距：中文粗襯線字距收緊會糊在一起。
+           36／48：標題常折成兩行，行高 1.33 倍讓兩行不黏在一起 -->
+      <h1 class="font-serif font-black text-4xl leading-12 text-(--text-ink-main)">
+        {{ article.title }}
+      </h1>
+    </div>
+
+    <!-- 版面（註腳邊注，見 MarkdownBody 的 sidenotes）：
+         ≥1240px 三欄——目錄在左（188px）、正文、正文右邊留給邊注；
+         1000–1239px 正文單欄，邊注仍貼在正文右邊，目錄收成正文上方的一塊（<details>）；
+         <1000px 邊注改成點編號展開，版面同上。目錄從右欄搬到左欄，是因為右邊要讓給邊注。
+         DOM 順序要等於畫面順序（鍵盤焦點順序、螢幕閱讀器的閱讀順序，WCAG 2.4.3／1.3.2）：
+         左欄（目錄、相關專案）在正文前面，所以不用 order 把它換到左邊；
+         較窄時左欄整個隱藏，相關專案改在正文後面另外畫一份（兩份用 CSS 二選一，隱藏的那份不進無障礙樹） -->
+    <div class="grid grid-cols-1 min-[1240px]:grid-cols-[188px_minmax(0,1fr)] gap-10 items-start">
+      <!-- 左欄：跟正文分開卻仍在視野內，不打斷閱讀主線。只在 ≥1240px 顯示；
+           更窄時目錄已經收進正文上方，相關專案在正文後面。 -->
+      <div
+        class="max-[1240px]:hidden min-[1240px]:sticky flex flex-col gap-8"
+        :style="{ top: `${STICKY_TOP_PX}px` }"
+      >
+        <div v-if="headings.length">
+          <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
+            本文結構
+          </div>
+          <!-- slug 從 extractHeadings 來，跟 MarkdownBody 渲染標題時用的是同一份，
+               所以目錄的 href 一定對得上內文的 id。兩邊各自算 slug 會漂移，
+               而漂移的症狀是「點了沒反應」，不會有任何錯誤訊息 -->
+          <ol class="flex flex-col gap-2 border-l border-(--border-shelf) pl-3.5">
+            <li v-for="heading in headings" :key="heading.slug">
+              <a
+                :href="`#${heading.slug}`"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
+              >
+                {{ heading.text }}
+              </a>
+            </li>
+          </ol>
+        </div>
+
+        <ArticleRelatedProjects v-if="article.implementations.length" :projects="article.implementations" />
+      </div>
+
+      <!-- 正文欄寬上限 40em（16px 下 640px，中文約 40 字一行）。內文是 16px／行高 28px（leading-7），
+           見 MarkdownBody -->
+      <div class="max-w-[40em]">
+        <details
+          v-if="headings.length"
+          class="group min-[1240px]:hidden mb-6 rounded-[6px] border border-(--border-shelf) bg-(--bg-folder)"
+        >
+          <summary
+            class="flex items-center justify-between gap-2 min-h-11 px-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-sm font-bold text-(--text-ink-main) rounded-[6px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+          >
+            本文結構（{{ headings.length }} 節）
+            <svg class="transition-transform duration-100 group-open:rotate-90" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 2l4 4-4 4" />
+            </svg>
+          </summary>
+          <ol class="flex flex-col gap-2 px-4 pb-3">
+            <li v-for="heading in headings" :key="heading.slug">
+              <a
+                :href="`#${heading.slug}`"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
+              >
+                {{ heading.text }}
+              </a>
+            </li>
+          </ol>
+        </details>
+
+        <MarkdownBody :source="article.body ?? ''" sidenotes />
+
+        <!-- 署名：文章結尾、上一篇／下一篇的上面。文章清單的標題下面是同一句（router 的 meta.subtitle）。
+             mb-0 text-left：蓋掉 .global-page-wrapper p 的下距與桌機的兩端對齊 -->
+        <p class="mt-10 mb-0 border-t border-(--border-shelf) pt-4 text-sm text-left text-(--text-ink-muted)">
+          {{ ARTICLE_BYLINE }}
+        </p>
+
+        <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
+          <router-link
+            v-if="previousArticle"
+            :to="{ name: 'article-detail', params: { id: previousArticle.id } }"
+            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors hover:border-(--text-accent)/40"
+          >
+            <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+              &lt;&lt; PREV
+            </div>
+            <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
+              {{ previousArticle.title }}
+            </div>
+          </router-link>
+
+          <router-link
+            v-if="nextArticle"
+            :to="{ name: 'article-detail', params: { id: nextArticle.id } }"
+            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors hover:border-(--text-accent)/40"
+          >
+            <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+              NEXT &gt;&gt;
+            </div>
+            <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
+              {{ nextArticle.title }}
+            </div>
+          </router-link>
+        </div>
+      </div>
+
+      <!-- 較窄（<1240px）時的相關專案：在正文後面。≥1240px 的那份在左欄 -->
+      <ArticleRelatedProjects
+        v-if="article.implementations.length"
+        :projects="article.implementations"
+        class="min-[1240px]:hidden"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+// 文章詳情頁。D-56 落地後第一次真的接上 /api/documentations——之前這裡讀的是
+// src/data/articles.ts 的假資料，訪客看到的內容跟後台編輯器完全斷開。
+//
+// 上一篇/下一篇：改用真的文章清單算相鄰位置，只在「已發布」的子集合裡找——
+// 草稿不該出現在瀏覽動線裡，即使草稿本身（透過編輯頁的「預覽」連結）還是
+// 可以直接用 id 開啟：這裡不擋草稿本身的讀取，只是不讓它出現在 prev/next。
+// tags／Related Projects：後端沒有自由標籤欄位（D-40），改用真的圖譜關聯
+// （techniques→標籤、implementations→Related Projects）。
+// margins（邊註）：後端沒有對應欄位（已知的技術債），
+// 這裡直接不顯示，不假裝有資料可以讀。
+import { computed, ref, watch, watchEffect } from 'vue'
+import { useRoute } from 'vue-router'
+import {
+  displayDate,
+  fetchArticleOrDemo,
+  fetchArticlesOrDemo,
+  sortArticlesByDateDesc,
+  type ArticleDto,
+} from '@/api/articles'
+import AuthOnly from '@/components/AuthOnly.vue'
+import ArticleRelatedProjects from './ArticleRelatedProjects.vue'
+import BackToArticlesLink from './BackToArticlesLink.vue'
+import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
+import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
+import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
+import { extractHeadings } from '@/components/markdown/headings'
+import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
+import { pageTitleOverride } from '@/siteMeta'
+import { ARTICLE_BYLINE, LOADING_TEXT } from '@/copy/common'
+
+const route = useRoute()
+const articleId = computed(() => Number(route.params.id))
+
+const article = ref<ArticleDto | null>(null)
+const publishedList = ref<ArticleDto[]>([])
+const ready = ref(false)
+const loadError = ref(false)
+const fallbackError = ref<string | null>(null)
+
+async function load() {
+  ready.value = false
+  loadError.value = false
+  article.value = null
+  try {
+    // fetchArticleOrDemo()/fetchArticlesOrDemo()：正常打真的 API，載入失敗才退回填充
+    // 內容——見 api/articles.ts 的說明。404（文章真的不存在）跟填充內容裡不存在的 id 一樣
+    // 會被 fetchArticleOrDemo 丟出來，走進下面的 catch 顯示找不到，不會生一篇假的。
+    const [{ article: a, loadError: articleError }, { articles: all, loadError: listError }] = await Promise.all([
+      fetchArticleOrDemo(articleId.value),
+      fetchArticlesOrDemo(),
+    ])
+    article.value = a
+    // 排序要跟文章列表一致（日期由新到舊），上一篇／下一篇才對得上列表看到的順序
+    publishedList.value = sortArticlesByDateDesc(all.filter((item) => item.status === 1))
+    fallbackError.value = articleError ?? listError
+    ready.value = true
+  } catch {
+    loadError.value = true
+  }
+}
+watch(articleId, load, { immediate: true })
+
+const tags = computed(() => {
+  if (!article.value) return []
+  return [...article.value.techniques, ...article.value.implementations].map((t) => t.title)
+})
+
+/** 本文結構側欄。跟 MarkdownBody 內部用的是同一個 extractHeadings，slug 不會分岔。 */
+const headings = computed(() => (article.value ? extractHeadings(article.value.body ?? '') : []))
+
+// 載入後把捲動追蹤列（MainLayout）跟瀏覽器分頁的標題換成真正的文章標題，不是路由設定裡的
+// 佔位「Article Detail」。以前是直接改 route.meta，畫面不會跟著更新，原因見 siteMeta.ts
+watchEffect(() => {
+  if (article.value) pageTitleOverride.value = article.value.title
+})
+
+const currentIndex = computed(() => {
+  if (!article.value) return -1
+  return publishedList.value.findIndex((item) => item.id === article.value?.id)
+})
+
+const previousArticle = computed(() => {
+  const index = currentIndex.value
+  if (index <= 0) return null
+  return publishedList.value[index - 1]
+})
+
+const nextArticle = computed(() => {
+  const index = currentIndex.value
+  if (index === -1 || index >= publishedList.value.length - 1) return null
+  return publishedList.value[index + 1]
+})
+</script>

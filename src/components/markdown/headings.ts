@@ -70,6 +70,9 @@ export function extractHeadings(source: string): Heading[] {
   const tree = processor.parse(source) as unknown as MdNode
   const found: { depth: number; text: string }[] = []
   const walk = (n: MdNode) => {
+    // 註腳定義裡的標題不算：MarkdownBody 在註釋內容裡不產生有 id 的標題，
+    // 這裡若照算，目錄會多一項點不到的，後面所有標題的 slug 也會跟內文錯開一格
+    if (n.type === 'footnoteDefinition') return
     if (n.type === 'heading') found.push({ depth: n.depth ?? 1, text: textOf(n) })
     ;(n.children ?? []).forEach(walk)
   }

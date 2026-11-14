@@ -18,7 +18,6 @@ body {
             transparent 1px,
             transparent 3px
         );
-    font-family: var(--font-mono);
 }
 
 /* 發光呼吸動畫:保留給「真的代表狀態」的地方用,例如知識圖譜的高權重節點。

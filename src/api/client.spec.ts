@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import {
+  ApiHttpError,
+  ApiRequestError,
   AuthRefreshUnavailableError,
   AuthSessionChangedError,
   apiDelete,
@@ -576,5 +578,48 @@ describe('錯誤回應的 console.error', () => {
     await apiGet('/scopes')
 
     expect(errorSpy).not.toHaveBeenCalled()
+  })
+})
+
+// 錯誤回應的 JSON 要讀得到：呼叫端靠 `reason` 分辨 409／502／503 是哪一種
+describe('錯誤回應的 reason', () => {
+  it('它應該讓 GET 失敗的 ApiHttpError 帶出後端的 reason', async () => {
+    mockFetch.mockResolvedValue(jsonResponse({ message: 'x', reason: 'not_configured' }, 503))
+
+    const error = await apiGet('/article-sources').catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiHttpError)
+    expect((error as ApiHttpError).status).toBe(503)
+    expect((error as ApiHttpError).reason).toBe('not_configured')
+  })
+
+  it('它應該讓 POST 失敗的 ApiRequestError 帶出 reason 與 errors，訊息格式不變', async () => {
+    mockFetch.mockResolvedValue(
+      jsonResponse({ reason: 'stale', errors: { 'items.0.expected_blob_sha': ['不同'] } }, 409),
+    )
+
+    const error = await apiPost('/article-sources/import', {}).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiRequestError)
+    expect((error as ApiRequestError).status).toBe(409)
+    expect((error as ApiRequestError).reason).toBe('stale')
+    expect((error as ApiRequestError).body?.errors).toEqual({ 'items.0.expected_blob_sha': ['不同'] })
+    expect((error as Error).message).toBe('API 請求失敗（409）：POST /article-sources/import')
+  })
+
+  it('它應該在錯誤回應不是 JSON 時 reason 為 null，仍丟出原本的狀態碼錯誤', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => {
+        throw new SyntaxError('Unexpected token <')
+      },
+    })
+
+    const error = await apiGet('/scopes').catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(ApiHttpError)
+    expect((error as ApiHttpError).status).toBe(500)
+    expect((error as ApiHttpError).reason).toBeNull()
   })
 })

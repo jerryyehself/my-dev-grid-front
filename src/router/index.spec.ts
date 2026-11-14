@@ -30,6 +30,57 @@ describe('router：/admin', () => {
   })
 })
 
+// 本體論的一覽與詳情頁是管理用的頁面（唯一入口是 /admin），跟新增/編輯頁一樣要登入
+describe.each([
+  ['/ontology/scopes', 'ontology-scopes'],
+  ['/ontology/scopes/1', 'ontology-scope'],
+  ['/ontology/relations', 'ontology-relations'],
+  ['/ontology/relations/1', 'ontology-relation'],
+])('router：%s', (path, name) => {
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    await router.push('/about')
+  })
+
+  it('它應該在路由設定標上 requiresAuth', () => {
+    const resolved = router.resolve(path)
+    expect(resolved.name).toBe(name)
+    expect(resolved.meta.requiresAuth).toBe(true)
+  })
+
+  it('它應該在沒登入時導去登入頁，redirect 帶回原本的路徑', async () => {
+    await router.push(path)
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe(path)
+  })
+
+  it('它應該在登入後進入該頁', async () => {
+    useAuthStore().token = 'test-token'
+    await router.push(path)
+    expect(router.currentRoute.value.name).toBe(name)
+  })
+})
+
+// /articles/import 是匯入文章頁：跟 /articles/manage 一樣要登入，也不能被 /articles/:id 搶走
+describe('router：/articles/import', () => {
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    await router.push('/about')
+  })
+
+  it('它應該解析到 article-import 並標上 requiresAuth，不被 /articles/:id 搶走', () => {
+    const resolved = router.resolve('/articles/import')
+    expect(resolved.name).toBe('article-import')
+    expect(resolved.meta.requiresAuth).toBe(true)
+  })
+
+  it('它應該在沒登入時導去登入頁，redirect 帶回 /articles/import', async () => {
+    await router.push('/articles/import')
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe('/articles/import')
+  })
+})
+
 // 後端 OAuth 失敗導回 `/?auth_error=…`，前端要轉去登入頁說明原因（2026-10-03 使用者回報畫面沒反應）
 describe('router：auth_error', () => {
   beforeEach(async () => {
@@ -125,3 +176,18 @@ describe('router：not-found', () => {
     expect(router.resolve('/graph').name).toBe('graph')
   })
 })
+
+// 文章署名：文章清單的標題下面那一行，放在副標的位置，貼在標題正下方
+describe('router：/articles 的署名', () => {
+  it('它應該把署名放在副標，字句照原樣（全形空白、全形斜線、中間點）', () => {
+    expect(router.resolve('/articles').meta.subtitle).toBe(
+      '主筆\u3000Claude\u3000\uff0f\u3000發想\u30fb審定\u3000站主',
+    )
+  })
+
+  it('它應該只有文章清單帶署名，文章內頁與其他頁面的副標不受影響', () => {
+    expect(router.resolve('/articles/12').meta.subtitle).toBeUndefined()
+    expect(router.resolve('/projects').meta.subtitle).toBeUndefined()
+  })
+})
+

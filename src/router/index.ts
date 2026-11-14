@@ -1,6 +1,7 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { ARTICLE_BYLINE } from '@/copy/common'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,7 +9,7 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/features/auth/LoginView.vue'),
       meta: {
         tag: 'Login',
         title: '登入',
@@ -22,27 +23,27 @@ const router = createRouter({
       // 停留幾百毫秒，掛載完就被導走。
       path: '/auth/callback',
       name: 'auth-callback',
-      component: () => import('@/views/AuthCallbackView.vue'),
+      component: () => import('@/features/auth/AuthCallbackView.vue'),
       meta: { hideHeader: true },
     },
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue'),
+      component: () => import('@/features/home/HomeView.vue'),
       meta: {
         tag: 'Home',
         title: 'IN / ARCHIVE',
-        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結',
+        subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
       },
     },
     {
       path: '/about',
       name: 'about',
-      component: () => import('@/views/AboutView.vue'),
+      component: () => import('@/features/about/AboutView.vue'),
       meta: {
         tag: 'About',
         title: '私人藏書，公開目錄',
-        subtitle: '文章、技術與專案，編成可以查詢的目錄，彼此以雙向關係連結',
+        subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
         // About 頁自己畫了一個滿版橫幅當作大標題，跟 MainLayout 的通用表頭是同一件事，
         // 兩個都顯示會重複兩次，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
         hideHeader: true,
@@ -54,9 +55,9 @@ const router = createRouter({
     {
       path: '/projects',
       name: 'projects',
-      component: () => import('@/views/ProjectsView.vue'),
+      component: () => import('@/features/projects/ProjectsView.vue'),
       meta: {
-        tag: 'Dashboard & Tools',
+        tag: 'Projects',
         title: 'Production Artifacts',
         // mockup 設計是 1120px，比全站預設的 1024px 寬，主從式版面才有足夠的呼吸空間
         contentWidth: '1120px',
@@ -67,7 +68,7 @@ const router = createRouter({
       // 沒有一個地方能一次看到全部。這頁只放連結與計數，不自己做任何寫入。
       path: '/admin',
       name: 'admin',
-      component: () => import('@/views/AdminView.vue'),
+      component: () => import('@/features/admin/AdminView.vue'),
       meta: {
         tag: 'Admin',
         title: '管理',
@@ -80,10 +81,12 @@ const router = createRouter({
     {
       path: '/articles',
       name: 'articles',
-      component: () => import('@/views/ArticlesView.vue'),
+      component: () => import('@/features/articles/ArticlesView.vue'),
       meta: {
         tag: 'Articles',
-        title: 'My Articles',
+        title: 'Articles',
+        // 標題下面那一行是文章署名，不是頁面說明；放在副標的位置，才會貼在標題正下方
+        subtitle: ARTICLE_BYLINE,
       },
     },
     {
@@ -91,7 +94,7 @@ const router = createRouter({
       // 順序不影響比對結果，但排在前面才讀得出「manage 不是某篇文章的 id」
       path: '/articles/manage',
       name: 'article-manage',
-      component: () => import('@/views/ArticleManageView.vue'),
+      component: () => import('@/features/articles/ArticleManageView.vue'),
       meta: {
         tag: 'Manage Articles',
         title: '文章管理',
@@ -104,13 +107,27 @@ const router = createRouter({
       },
     },
     {
+      // 從文章來源 repo 匯入。排在 /articles/:id 前面，理由同 /articles/manage。
+      // 跟文章管理頁一樣自己畫表頭，要登入（後端兩支 API 也都要登入）。
+      path: '/articles/import',
+      name: 'article-import',
+      component: () => import('@/features/article-import/ArticleImportView.vue'),
+      meta: {
+        tag: 'Import Articles',
+        title: '匯入文章',
+        subtitle: '從文章來源匯入',
+        hideHeader: true,
+        requiresAuth: true,
+      },
+    },
+    {
       // 排在 /articles/:id 前面，跟 /articles/manage 同一個理由：靜態片段
       // 本來就排在動態片段之前，但排在前面才讀得出「new 不是某篇文章的 id」。
       // 跟編輯頁共用同一個元件（ArticleEditorView 用 route.params.id 有沒有
       // 值判斷新增／編輯），比照 /ontology/scopes/new 已經在用的模式。
       path: '/articles/new',
       name: 'article-new',
-      component: () => import('@/views/ArticleEditorView.vue'),
+      component: () => import('@/features/articles/ArticleEditorView.vue'),
       meta: {
         tag: 'Article Editor',
         title: '新增文章',
@@ -123,25 +140,26 @@ const router = createRouter({
     {
       path: '/articles/:id',
       name: 'article-detail',
-      component: () => import('@/views/ArticleDetailView.vue'),
+      component: () => import('@/features/articles/ArticleDetailView.vue'),
       meta: {
         // title 留空：載入後 ArticleDetailView 用 siteMeta.ts 的 pageTitleOverride 換成真正的文章標題
         // （不直接改這裡的 meta，原因見 siteMeta.ts）。以前寫「Article Detail」當佔位，載入前會在分頁
         // 標題跟捲動追蹤列閃一下；留空時分頁標題退回站名。tag 是固定值，直接寫在這
         tag: 'ARTICLES',
         title: '',
-        subtitle: '深入閱讀',
         hideHeader: true,
+        // 註腳邊注要在正文右邊留一欄（≥1240px 時再加左欄目錄），1024px 放不下，欄寬的算法見 ArticleDetailView
+        contentWidth: '1216px',
       },
     },
     {
       path: '/articles/:id/edit',
       name: 'article-editor',
-      component: () => import('@/views/ArticleEditorView.vue'),
+      component: () => import('@/features/articles/ArticleEditorView.vue'),
       meta: {
         tag: 'Article Editor',
         title: '編輯文章',
-        subtitle: '內文用 Markdown，邊註可以增減',
+        subtitle: '內文用 Markdown，腳註用 [^n] 標記',
         // 編輯頁自己畫了表頭與動作列，通用表頭會把同一組標題再顯示一次
         hideHeader: true,
         // 主從式版面：主欄加 340px 側欄，1024px 會擠到側欄沒有呼吸空間
@@ -157,14 +175,19 @@ const router = createRouter({
       //
       // 一覽是規格第 6 步補上的。在它之前，詳情頁只能用網址直接開，站上沒有任何
       // 連結指進來——那是規格的順序（先詳情後清單），現在入口補上了。
+      //
+      // 本體論的讀取頁（一覽、詳情）也掛 requiresAuth（2026-11-13 決定）：這些是
+      // 管理用的頁面，唯一入口是 /admin，不是給訪客看的。後端讀取 API 仍是公開的
+      // （圖譜頁要用），這裡只擋前端頁面。
       path: '/ontology/scopes',
       name: 'ontology-scopes',
-      component: () => import('@/views/OntologyScopesView.vue'),
+      component: () => import('@/features/ontology/OntologyScopesView.vue'),
       meta: {
         tag: 'Ontology',
         title: '分類一覽',
         subtitle: '頂層分類與其子分類',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
@@ -173,7 +196,7 @@ const router = createRouter({
       // 讀得出「new 不是某個分類的 id」。
       path: '/ontology/scopes/new',
       name: 'ontology-scope-new',
-      component: () => import('@/views/OntologyScopeEditView.vue'),
+      component: () => import('@/features/ontology/OntologyScopeEditView.vue'),
       meta: {
         tag: 'Ontology',
         title: '新增分類',
@@ -185,18 +208,19 @@ const router = createRouter({
     {
       path: '/ontology/scopes/:id',
       name: 'ontology-scope',
-      component: () => import('@/views/OntologyScopeDetailView.vue'),
+      component: () => import('@/features/ontology/OntologyScopeDetailView.vue'),
       meta: {
         tag: 'Ontology',
         title: '分類詳情',
         subtitle: '子類、兄弟、述詞定義與實體計數',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
       path: '/ontology/scopes/:id/edit',
       name: 'ontology-scope-edit',
-      component: () => import('@/views/OntologyScopeEditView.vue'),
+      component: () => import('@/features/ontology/OntologyScopeEditView.vue'),
       meta: {
         tag: 'Ontology',
         title: '編輯分類',
@@ -208,12 +232,13 @@ const router = createRouter({
     {
       path: '/ontology/relations',
       name: 'ontology-relations',
-      component: () => import('@/views/OntologyRelationsView.vue'),
+      component: () => import('@/features/ontology/OntologyRelationsView.vue'),
       meta: {
         tag: 'Ontology',
         title: '述詞一覽',
         subtitle: '主詞、述詞與受詞，成對可逆',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
@@ -221,7 +246,7 @@ const router = createRouter({
       // 靜態片段本來就排在動態片段之前，排在前面才讀得出「new 不是某個述詞的 id」。
       path: '/ontology/relations/new',
       name: 'ontology-relation-new',
-      component: () => import('@/views/OntologyRelationEditView.vue'),
+      component: () => import('@/features/ontology/OntologyRelationEditView.vue'),
       meta: {
         tag: 'Ontology',
         title: '新增述詞',
@@ -233,18 +258,19 @@ const router = createRouter({
     {
       path: '/ontology/relations/:id',
       name: 'ontology-relation',
-      component: () => import('@/views/OntologyRelationDetailView.vue'),
+      component: () => import('@/features/ontology/OntologyRelationDetailView.vue'),
       meta: {
         tag: 'Ontology',
         title: '述詞詳情',
         subtitle: '使用這個述詞的邊，以及它為什麼被鎖定',
         hideHeader: true,
+        requiresAuth: true,
       },
     },
     {
       path: '/ontology/relations/:id/edit',
       name: 'ontology-relation-edit',
-      component: () => import('@/views/OntologyRelationEditView.vue'),
+      component: () => import('@/features/ontology/OntologyRelationEditView.vue'),
       meta: {
         tag: 'Ontology',
         title: '編輯述詞',
@@ -256,11 +282,11 @@ const router = createRouter({
     {
       path: '/graph',
       name: 'graph',
-      component: () => import('@/views/GraphPocView.vue'),
+      component: () => import('@/features/graph/GraphView.vue'),
       meta: {
         tag: 'Knowledge Graph',
         title: '知識圖譜',
-        subtitle: '文件、技術與實作之間的連結，2D 與 3D 兩種檢視',
+        subtitle: '文件、技術與實作之間的關係',
       },
     },
     // 兜底：上面都對不到的網址。一定要放最後（vue-router 依排序權重比對，這條權重最低）

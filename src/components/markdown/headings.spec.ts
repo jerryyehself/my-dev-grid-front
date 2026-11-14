@@ -20,6 +20,10 @@ describe('slugify', () => {
 })
 
 describe('extractHeadings', () => {
+  it('它應該略過註腳定義裡的標題，免得後面的 slug 錯開', () => {
+    expect(extractHeadings('## 甲\n\n文字[^1]\n\n[^1]: # 註內標題\n\n## 乙').map((h) => h.slug)).toEqual(['甲', '乙'])
+  })
+
   it('它應該依文件順序列出標題並保留正確 depth', () => {
     expect(extractHeadings('# 開始\n\n正文。\n\n### 細節\n\n## 下一段')).toEqual([
       { depth: 1, text: '開始', slug: '開始' },

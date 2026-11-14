@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="zh-Hant" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>動態 demo</title>
+<meta name="description" content="動態曲線、段落進場、開合與強度的對照頁。單檔 HTML，不屬於網站程式。">
+<!-- 先決定 js / 動態可用，避免畫面閃一下；沒有 JS 時維持 no-js，內容全部可見 -->
+<script>
+(function () {
+  var r = document.documentElement;
+  r.className = 'js';
+  try {
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) r.classList.add('motion-ok');
+    var t = localStorage.getItem('demo-theme');
+    if (t === 'light' || t === 'dark') r.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@700&family=Noto+Serif+TC:wght@500;700;900&display=swap">
+<style>
+/* ==========================================================================
+   動態 demo：單檔、不 import 任何 src/ 檔案。
+   配色 token 值複製自 src/assets/css/variables.css（藏青第二版）；要改請改那邊再同步。
+   曲線與時長來源：網站暫定（front #129）、taste-skill v2.1.4 與 v2.5.1（MIT）。
+   所有動作只動 transform / opacity；「減少動態」時全部靜止、內容完整。
+   ========================================================================== */
+:root {
+  --bg-paper-light: #f6f5f2;
+  --bg-paper-dark: #e4ebf5;
+  --bg-folder: #eaeff8;
+  --text-ink-main: #202839;
+  --text-ink-body: #3e4758;
+  --text-ink-muted: #596273;
+  --text-accent: #922e39;
+  --border-shelf: rgba(22, 37, 65, 0.14);
+  --bg-band-strong: #162541;
+  --text-on-band: #e8e3dd;
+  --accent-brass: #c99a4d;
+  --accent-secondary: #8d651e;
+  --bg-selected: #162541;
+  --text-on-selected: #e8e3dd;
+  --text-error: #c70d12;
+  --focus-ring: rgba(146, 46, 57, 0.16);
+  --font-serif: 'Noto Serif TC', Georgia, 'Times New Roman', serif;
+  --font-wordmark: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-paper-light: #1d232d;
+    --bg-paper-dark: #0d1529;
+    --bg-folder: #1e2c44;
+    --text-ink-main: #e8edf6;
+    --text-ink-body: #c8ced9;
+    --text-ink-muted: #99a0ad;
+    --text-accent: #d7ac66;
+    --border-shelf: rgba(179, 134, 55, 0.2);
+    --bg-band-strong: #0d1529;
+    --text-on-band: #d6d2cb;
+    --accent-brass: #b38637;
+    --accent-secondary: #cd7e83;
+    --bg-selected: #d7ac66;
+    --text-on-selected: #0d1529;
+    --text-error: #e57d71;
+    --focus-ring: rgba(215, 172, 102, 0.22);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg-paper-light: #1d232d;
+  --bg-paper-dark: #0d1529;
+  --bg-folder: #1e2c44;
+  --text-ink-main: #e8edf6;
+  --text-ink-body: #c8ced9;
+  --text-ink-muted: #99a0ad;
+  --text-accent: #d7ac66;
+  --border-shelf: rgba(179, 134, 55, 0.2);
+  --bg-band-strong: #0d1529;
+  --text-on-band: #d6d2cb;
+  --accent-brass: #b38637;
+  --accent-secondary: #cd7e83;
+  --bg-selected: #d7ac66;
+  --text-on-selected: #0d1529;
+  --text-error: #e57d71;
+  --focus-ring: rgba(215, 172, 102, 0.22);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg-paper-light);
+  color: var(--text-ink-body);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+}
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+h1, h2, h3, h4 { font-family: var(--font-serif); color: var(--text-ink-main); line-height: 1.3; margin: 0; }
+p { margin: 0; }
+code { font-family: var(--font-mono); font-size: 12px; color: var(--text-ink-main); overflow-wrap: anywhere; }
+a { color: var(--text-accent); }
+:focus-visible { outline: 2px solid var(--text-accent); outline-offset: 2px; }
+
+/* 頁首色帶 */
+.band { background: var(--bg-band-strong); color: var(--text-on-band); padding: 28px 0 24px; }
+.band h1 { color: var(--text-on-band); font-size: 28px; font-weight: 900; }
+.band p { max-width: 62ch; margin-top: 8px; opacity: 0.92; }
+.band .brass { color: var(--accent-brass); }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.nav-links { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; font-size: 14px; }
+.nav-links a { color: var(--text-on-band); }
+
+.btn {
+  font: inherit; font-size: 13px; cursor: pointer; padding: 6px 12px; min-height: 36px;
+  color: var(--text-ink-main); background: var(--bg-paper-light);
+  border: 1px solid var(--border-shelf); border-radius: 6px;
+}
+.band .btn { background: transparent; color: var(--text-on-band); border-color: rgba(232, 227, 221, 0.4); }
+.btn[aria-pressed="true"], .btn.on { background: var(--bg-selected); color: var(--text-on-selected); border-color: transparent; }
+.js-only { display: none; }
+.js .js-only { display: inline-flex; align-items: center; }
+
+section.blk { padding: 40px 0 8px; }
+section.blk > .wrap > h2 { font-size: 22px; font-weight: 700; }
+.lede { margin-top: 8px; max-width: 70ch; }
+.small { font-size: 13px; color: var(--text-ink-muted); }
+.rm-note {
+  display: none; margin-top: 12px; padding: 8px 12px; font-size: 13px; max-width: none;
+  color: var(--text-ink-main); opacity: 1;
+  border: 1px solid var(--border-shelf); border-left: 3px solid var(--accent-brass); background: var(--bg-folder);
+}
+@media (prefers-reduced-motion: reduce) { .rm-note { display: block; } }
+
+/* 卡片外框：1px 邊框、靜止無陰影 */
+.card-box { background: var(--bg-folder); border: 1px solid var(--border-shelf); border-radius: 8px; padding: 14px; }
+
+/* ---------- (a) 曲線區 ---------- */
+.sets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; margin-top: 20px; }
+.set { background: var(--bg-folder); border: 1px solid var(--border-shelf); border-radius: 8px; padding: 14px; }
+.set h3 { font-size: 17px; }
+.set .src { font-size: 13px; color: var(--text-ink-muted); margin: 2px 0 12px; }
+.rowlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.row {
+  display: grid; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto auto;
+  column-gap: 12px; row-gap: 4px; padding-top: 14px; border-top: 1px solid var(--border-shelf);
+}
+.row:first-child { border-top: 0; padding-top: 0; }
+.g { grid-row: 1 / span 2; width: 88px; height: 88px; position: relative; container-type: size; align-self: start; }
+.g svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.g .frame { fill: var(--bg-paper-light); stroke: var(--border-shelf); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.g .diag { stroke: var(--text-ink-muted); stroke-dasharray: 3 3; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: 0.55; }
+.g .hand { stroke: var(--text-ink-muted); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: 0.6; }
+.g .curve { fill: none; stroke: var(--text-accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.g .cp { fill: var(--bg-paper-light); stroke: var(--text-ink-muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.dx { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; transform: translateX(100cqw); }
+.dy { position: absolute; left: -4px; bottom: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--text-accent); transform: translateY(-100cqh); }
+.info { min-width: 0; }
+.info .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.nm { font-weight: 700; color: var(--text-ink-main); }
+.ms { font-family: var(--font-mono); font-size: 13px; color: var(--text-ink-main); }
+.tag { font-size: 12px; padding: 0 6px; border: 1px solid var(--border-shelf); border-radius: 4px; color: var(--text-ink-muted); white-space: nowrap; }
+.tag.warn { color: var(--text-error); border-color: currentColor; font-weight: 600; white-space: normal; }
+.note { font-size: 12px; color: var(--text-ink-muted); margin-top: 2px; }
+.track { container-type: inline-size; position: relative; height: 32px; align-self: end; }
+.track::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--border-shelf); }
+.sq { position: absolute; left: 0; top: 2px; width: 28px; height: 28px; border-radius: 4px; background: var(--bg-selected); border: 1px solid var(--accent-brass); transform: translateX(calc(100cqw - 28px)); }
+.row.out .sq { transform: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .sq { animation: var(--sq) 2400ms infinite; }
+  .dx { animation: var(--dx) 2400ms infinite; }
+  .dy { animation: var(--dy) 2400ms infinite; }
+  html.paused .sq, html.paused .dx, html.paused .dy { animation-play-state: paused; }
+  html.restart .sq, html.restart .dx, html.restart .dy { animation: none; }
+}
+@keyframes k0 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+  17.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k1 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  17.500% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k2 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+  17.500% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k3 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+  20.833% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k4 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  20.833% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k5 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+  20.833% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k6 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+  25.833% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k7 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  25.833% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k8 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0,0,0.2,1); }
+  25.833% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k9 {
+  0% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  12.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: cubic-bezier(0.4,0,1,1); }
+  16.667% { transform: translateX(0px); animation-timing-function: linear; }
+  100% { transform: translateX(0px); }
+}
+@keyframes k10 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  16.667% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k11 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.4,0,1,1); }
+  16.667% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k12 {
+  0% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  12.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: cubic-bezier(0.4,0,1,1); }
+  17.917% { transform: translateX(0px); animation-timing-function: linear; }
+  100% { transform: translateX(0px); }
+}
+@keyframes k13 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  17.917% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k14 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.4,0,1,1); }
+  17.917% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k15 {
+  0% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  12.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: cubic-bezier(0.4,0,1,1); }
+  20.833% { transform: translateX(0px); animation-timing-function: linear; }
+  100% { transform: translateX(0px); }
+}
+@keyframes k16 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  20.833% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k17 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.4,0,1,1); }
+  20.833% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k18 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  18.333% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k19 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  18.333% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k20 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  18.333% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k21 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  20.000% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k22 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  20.000% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k23 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  20.000% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k24 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  22.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k25 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  22.500% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k26 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  22.500% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k27 {
+  0% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  12.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: cubic-bezier(0.55,0.055,0.675,0.19); }
+  19.167% { transform: translateX(0px); animation-timing-function: linear; }
+  100% { transform: translateX(0px); }
+}
+@keyframes k28 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  19.167% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k29 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.55,0.055,0.675,0.19); }
+  19.167% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k30 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  45.833% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k31 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  45.833% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k32 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  45.833% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k33 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  16.250% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k34 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  16.250% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k35 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  16.250% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k36 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  18.750% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k37 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  18.750% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k38 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  18.750% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k39 {
+  0% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  12.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  17.500% { transform: translateX(0px); animation-timing-function: linear; }
+  100% { transform: translateX(0px); }
+}
+@keyframes k40 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  17.500% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k41 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  17.500% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k42 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  20.833% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k43 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  20.833% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k44 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  20.833% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k45 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  22.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k46 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  22.500% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k47 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  22.500% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+@keyframes k48 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  37.500% { transform: translateX(calc(100cqw - 28px)); animation-timing-function: linear; }
+  100% { transform: translateX(calc(100cqw - 28px)); }
+}
+@keyframes k49 {
+  0% { transform: translateX(0px); animation-timing-function: linear; }
+  12.500% { transform: translateX(0px); animation-timing-function: linear; }
+  37.500% { transform: translateX(100cqw); animation-timing-function: linear; }
+  100% { transform: translateX(100cqw); }
+}
+@keyframes k50 {
+  0% { transform: translateY(0px); animation-timing-function: linear; }
+  12.500% { transform: translateY(0px); animation-timing-function: cubic-bezier(0.2,0.8,0.2,1); }
+  37.500% { transform: translateY(-100cqh); animation-timing-function: linear; }
+  100% { transform: translateY(-100cqh); }
+}
+
+/* ---------- (b) 段落進場 ---------- */
+.stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 16px; margin-top: 20px; }
+.panel h3 { font-size: 16px; }
+.panel .pd { font-size: 13px; color: var(--text-ink-muted); margin: 4px 0 10px; }
+@media (min-width: 1000px) { .panel .pd { min-height: 7em; } }
+.stage { padding: 16px; background: var(--bg-folder); border: 1px solid var(--border-shelf); border-radius: 8px; overflow: hidden; }
+.stage .hd { font-size: 17px; }
+.stage .st { margin-top: 8px; font-size: 14px; }
+.stage .fig { margin-top: 10px; font-family: var(--font-serif); font-weight: 700; font-size: 26px; color: var(--text-accent); line-height: 1.2; }
+.stage .fig small { font-size: 13px; font-weight: 500; color: var(--text-ink-muted); }
+.stage ul.rows { list-style: none; margin: 10px 0 0; padding: 0; font-size: 14px; }
+.stage ul.rows li { padding: 4px 0; border-top: 1px solid var(--border-shelf); display: flex; justify-content: space-between; }
+.stage .pic { margin-top: 10px; height: 64px; border-radius: 6px; background: var(--bg-band-strong); border-bottom: 3px solid var(--accent-brass); }
+.mask { display: block; overflow: hidden; }
+.mask > span { display: block; }
+
+html.motion-ok [data-state="pre"] [data-a="fade"],
+html.motion-ok [data-state="pre"] [data-a="slide"],
+html.motion-ok [data-state="pre"] [data-a="settle"] { opacity: 0; }
+html.motion-ok [data-state="pre"] [data-a="mask"] { transform: translateY(105%); }
+html.motion-ok [data-state="play"] [data-a] { animation-duration: 320ms; animation-timing-function: cubic-bezier(0, 0, 0.2, 1); animation-fill-mode: both; animation-delay: calc(var(--i, 0) * 60ms); }
+html.motion-ok [data-state="play"] [data-a="fade"] { animation-name: up; }
+html.motion-ok [data-state="play"] [data-a="mask"] { animation-name: rise; }
+html.motion-ok [data-state="play"] [data-a="slide"] { animation-name: slide; animation-delay: calc(var(--i, 0) * 70ms); }
+html.motion-ok [data-state="play"] [data-a="settle"] { animation-name: settle; }
+@keyframes up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { transform: translateY(105%); } to { transform: none; } }
+@keyframes slide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+@keyframes settle { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+
+/* ---------- (c) 開合 ---------- */
+.setsw { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.openclose { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; align-items: start; }
+.oc-set { --ease-in: cubic-bezier(0, 0, 0.2, 1); --ease-out: cubic-bezier(0.4, 0, 1, 1); --t-open: 200ms; --t-close: 130ms; }
+.oc-set[data-set="v214"] { --ease-in: cubic-bezier(0.22, 1, 0.36, 1); --ease-out: cubic-bezier(0.55, 0.055, 0.675, 0.19); --t-open: 240ms; --t-close: 160ms; }
+.oc-set[data-set="v251"] { --ease-in: cubic-bezier(0.2, 0.8, 0.2, 1); --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); --t-open: 200ms; --t-close: 120ms; }
+.anchor { position: relative; display: inline-block; }
+.menu, .pop {
+  position: absolute; left: 0; top: calc(100% + 6px); z-index: 2; min-width: 190px;
+  background: var(--bg-paper-light); border: 1px solid var(--border-shelf); border-radius: 8px; padding: 6px; margin: 0; list-style: none;
+}
+.pop { width: min(260px, calc(100vw - 80px)); padding: 12px; font-size: 13px; }
+.menu button { width: 100%; text-align: left; font: inherit; font-size: 14px; color: var(--text-ink-main); background: transparent; border: 0; border-radius: 4px; padding: 7px 10px; min-height: 36px; cursor: pointer; }
+.menu button:hover { background: var(--bg-folder); }
+[data-state="closed"] { display: none; }
+html.motion-ok .menu[data-state="open"], html.motion-ok .pop[data-state="open"] { animation: menu-in var(--t-open) var(--ease-in) both; }
+html.motion-ok .menu[data-state="closing"], html.motion-ok .pop[data-state="closing"] { animation: menu-out var(--t-close) var(--ease-out) both; }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes menu-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-2px); } }
+.oc-space { min-height: 224px; }
+table.spec { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 16px; }
+table.spec th, table.spec td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--border-shelf); vertical-align: top; }
+table.spec th { color: var(--text-ink-main); font-weight: 600; }
+table.spec tr.cur td, table.spec tr.cur th { background: var(--bg-folder); }
+.tablewrap { overflow-x: auto; }
+
+/* ---------- (d) 細緻 / 明顯 ---------- */
+.int { --enter-y: 8px; --enter-t: 200ms; --lift: 2px; --hover-t: 150ms; --scale: 1; --step: 40ms; --ease: cubic-bezier(0.2, 0.8, 0.2, 1); margin-top: 16px; }
+.int[data-int="strong"] { --enter-y: 24px; --enter-t: 320ms; --lift: 6px; --hover-t: 200ms; --scale: 1.03; --step: 80ms; }
+.int .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 12px; }
+.int .c { padding: 14px; min-height: 96px; background: var(--bg-paper-light); border: 1px solid var(--border-shelf); border-radius: 8px; color: var(--text-ink-main); }
+.int .c small { display: block; color: var(--text-ink-muted); }
+html.motion-ok .int .c { transition: transform var(--hover-t) var(--ease), border-color var(--hover-t) var(--ease); }
+html.motion-ok .int .c:focus-visible { transform: translateY(calc(var(--lift) * -1)) scale(var(--scale)); border-color: var(--accent-brass); }
+@media (hover: hover) and (pointer: fine) {
+  html.motion-ok .int .c:hover { transform: translateY(calc(var(--lift) * -1)) scale(var(--scale)); border-color: var(--accent-brass); }
+}
+html.motion-ok .int[data-state="pre"] .c { opacity: 0; }
+html.motion-ok .int[data-state="play"] .c { animation: int-in var(--enter-t) cubic-bezier(0, 0, 0.2, 1) both; animation-delay: calc(var(--i) * var(--step)); }
+@keyframes int-in { from { opacity: 0; transform: translateY(var(--enter-y)); } to { opacity: 1; transform: none; } }
+
+footer { margin-top: 48px; padding: 20px 0 32px; border-top: 1px solid var(--border-shelf); font-size: 13px; color: var(--text-ink-muted); }
+
+@media (max-width: 480px) {
+  .band h1 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<header class="band">
+  <div class="wrap">
+    <h1>動態 demo<span class="brass"> /</span> 曲線、進場、開合、強度</h1>
+    <p>把「動態」變成可以直接看的東西：每條曲線同時給曲線圖和實際動作，再比段落進場、開合與強度。這頁是 docs 底下的單檔 HTML，不是網站程式。</p>
+    <nav class="nav-links" aria-label="頁內導覽">
+      <a href="#curves">(a) 曲線</a><a href="#entrance">(b) 段落進場</a><a href="#openclose">(c) 開合</a><a href="#intensity">(d) 細緻／明顯</a>
+    </nav>
+    <div class="tools">
+      <button class="btn js-only" type="button" id="theme-btn">切換深淺色</button>
+      <button class="btn js-only" type="button" id="pause-btn" aria-pressed="false">暫停曲線動作</button>
+      <button class="btn js-only" type="button" id="restart-btn">曲線重新開始</button>
+    </div>
+    <p class="rm-note">偵測到系統設定「減少動態」：本頁所有動作已停用，只顯示終點狀態，內容完整。</p>
+  </div>
+</header>
+
+<main>
+<!-- ======================= (a) ======================= -->
+<section class="blk" id="curves" aria-labelledby="h-curves">
+  <div class="wrap">
+    <h2 id="h-curves">(a) 曲線與時長</h2>
+    <p class="lede">三組對照（寬螢幕並排）。每一列：左邊是曲線圖（橫軸時間、縱軸進度，紅點沿曲線走），右邊的方塊用<strong>同一條曲線、同一個時長</strong>實際移動；兩者一起開始、一起停。虛線是等速。每 2.4 秒循環一次，列與列同時出發，時長差異看得出來。</p>
+    <p class="lede small">範圍規則：UI 動態在 100–400 ms 之間；超出的列標紅字，只當上限參考。「退場」列的方塊由右往左，曲線圖畫的仍是進度對時間。</p>
+    <div class="sets">
+      <article class="set">
+        <h3>網站暫定（front #129）</h3>
+        <p class="src">快 120／中 200／慢 320 ms；進場減速、退場加速且較短（約 60–70%，不低於 100 ms）。數值為暫定，等 demo 結論。</p>
+        <ul class="rowlist">
+        <li class="row" style="--sq:k0;--dx:k1;--dy:k2">
+          <div class="g" role="img" aria-label="快 120 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="0" y2="100"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 0 100, 20 0, 100 0"/>
+        <circle class="cp" cx="0" cy="100" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">快</span><span class="ms">120 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(0, 0, .2, 1)</code>
+            <p class="note">hover、回饋</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k3;--dx:k4;--dy:k5">
+          <div class="g" role="img" aria-label="中 200 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="0" y2="100"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 0 100, 20 0, 100 0"/>
+        <circle class="cp" cx="0" cy="100" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">中</span><span class="ms">200 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(0, 0, .2, 1)</code>
+            <p class="note">彈出、切換</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k6;--dx:k7;--dy:k8">
+          <div class="g" role="img" aria-label="慢 320 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="0" y2="100"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 0 100, 20 0, 100 0"/>
+        <circle class="cp" cx="0" cy="100" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">慢</span><span class="ms">320 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(0, 0, .2, 1)</code>
+            <p class="note">換頁、大面積</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row out" style="--sq:k9;--dx:k10;--dy:k11">
+          <div class="g" role="img" aria-label="快 100 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="40" y2="100"/>
+        <line class="hand" x1="100" y1="0" x2="100" y2="0"/>
+        <path class="curve" d="M0 100 C 40 100, 100 0, 100 0"/>
+        <circle class="cp" cx="40" cy="100" r="2.5"/>
+        <circle class="cp" cx="100" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">快</span><span class="ms">100 ms</span><span class="tag">退場</span></div>
+            <code>cubic-bezier(.4, 0, 1, 1)</code>
+            <p class="note">120 ms 進場的退場（下限 100）</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row out" style="--sq:k12;--dx:k13;--dy:k14">
+          <div class="g" role="img" aria-label="中 130 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="40" y2="100"/>
+        <line class="hand" x1="100" y1="0" x2="100" y2="0"/>
+        <path class="curve" d="M0 100 C 40 100, 100 0, 100 0"/>
+        <circle class="cp" cx="40" cy="100" r="2.5"/>
+        <circle class="cp" cx="100" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">中</span><span class="ms">130 ms</span><span class="tag">退場</span></div>
+            <code>cubic-bezier(.4, 0, 1, 1)</code>
+            <p class="note">200 ms 進場的退場（65%）</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row out" style="--sq:k15;--dx:k16;--dy:k17">
+          <div class="g" role="img" aria-label="慢 200 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="40" y2="100"/>
+        <line class="hand" x1="100" y1="0" x2="100" y2="0"/>
+        <path class="curve" d="M0 100 C 40 100, 100 0, 100 0"/>
+        <circle class="cp" cx="40" cy="100" r="2.5"/>
+        <circle class="cp" cx="100" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">慢</span><span class="ms">200 ms</span><span class="tag">退場</span></div>
+            <code>cubic-bezier(.4, 0, 1, 1)</code>
+            <p class="note">320 ms 進場的退場（63%）</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        </ul>
+      </article>
+      <article class="set">
+        <h3>taste-skill v2.1.4</h3>
+        <p class="src">一條 ease-out 管進場與 hover；退場用另一條 ease-in，長度為進場的 60–70%。</p>
+        <ul class="rowlist">
+        <li class="row" style="--sq:k18;--dx:k19;--dy:k20">
+          <div class="g" role="img" aria-label="press 140 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="22" y2="0"/>
+        <line class="hand" x1="100" y1="0" x2="36" y2="0"/>
+        <path class="curve" d="M0 100 C 22 0, 36 0, 100 0"/>
+        <circle class="cp" cx="22" cy="0" r="2.5"/>
+        <circle class="cp" cx="36" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">press</span><span class="ms">140 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(.22, 1, .36, 1)</code>
+            <p class="note">按下</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k21;--dx:k22;--dy:k23">
+          <div class="g" role="img" aria-label="hover 180 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="22" y2="0"/>
+        <line class="hand" x1="100" y1="0" x2="36" y2="0"/>
+        <path class="curve" d="M0 100 C 22 0, 36 0, 100 0"/>
+        <circle class="cp" cx="22" cy="0" r="2.5"/>
+        <circle class="cp" cx="36" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">hover</span><span class="ms">180 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(.22, 1, .36, 1)</code>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k24;--dx:k25;--dy:k26">
+          <div class="g" role="img" aria-label="ui 240 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="22" y2="0"/>
+        <line class="hand" x1="100" y1="0" x2="36" y2="0"/>
+        <path class="curve" d="M0 100 C 22 0, 36 0, 100 0"/>
+        <circle class="cp" cx="22" cy="0" r="2.5"/>
+        <circle class="cp" cx="36" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">ui</span><span class="ms">240 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(.22, 1, .36, 1)</code>
+            <p class="note">選單、面板</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row out" style="--sq:k27;--dx:k28;--dy:k29">
+          <div class="g" role="img" aria-label="ui 退場 160 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="55" y2="94.5"/>
+        <line class="hand" x1="100" y1="0" x2="67.5" y2="81"/>
+        <path class="curve" d="M0 100 C 55 94.5, 67.5 81, 100 0"/>
+        <circle class="cp" cx="55" cy="94.5" r="2.5"/>
+        <circle class="cp" cx="67.5" cy="81" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">ui 退場</span><span class="ms">160 ms</span><span class="tag">退場</span></div>
+            <code>cubic-bezier(.55, .055, .675, .19)</code>
+            <p class="note">240 ms 進場的 67%，曲線換成 ease-in</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k30;--dx:k31;--dy:k32">
+          <div class="g" role="img" aria-label="reveal 800 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="22" y2="0"/>
+        <line class="hand" x1="100" y1="0" x2="36" y2="0"/>
+        <path class="curve" d="M0 100 C 22 0, 36 0, 100 0"/>
+        <circle class="cp" cx="22" cy="0" r="2.5"/>
+        <circle class="cp" cx="36" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">reveal</span><span class="ms">800 ms</span><span class="tag">進場</span><span class="tag warn">exceeds the 100–400ms rule</span></div>
+            <code>cubic-bezier(.22, 1, .36, 1)</code>
+            <p class="note">捲動進場；只當上限參考</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        </ul>
+      </article>
+      <article class="set">
+        <h3>taste-skill v2.5.1</h3>
+        <p class="src">一條較溫和的 ease-out 管全部 UI 步驟；退場不換曲線，只是更短。</p>
+        <ul class="rowlist">
+        <li class="row" style="--sq:k33;--dx:k34;--dy:k35">
+          <div class="g" role="img" aria-label="press 90 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="20" y2="20"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 20 20, 20 0, 100 0"/>
+        <circle class="cp" cx="20" cy="20" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">press</span><span class="ms">90 ms</span><span class="tag">進場</span><span class="tag warn">exceeds the 100–400ms rule</span></div>
+            <code>cubic-bezier(.2, .8, .2, 1)</code>
+            <p class="note">按下</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k36;--dx:k37;--dy:k38">
+          <div class="g" role="img" aria-label="hover 進 150 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="20" y2="20"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 20 20, 20 0, 100 0"/>
+        <circle class="cp" cx="20" cy="20" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">hover 進</span><span class="ms">150 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(.2, .8, .2, 1)</code>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row out" style="--sq:k39;--dx:k40;--dy:k41">
+          <div class="g" role="img" aria-label="hover 出 120 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="20" y2="20"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 20 20, 20 0, 100 0"/>
+        <circle class="cp" cx="20" cy="20" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">hover 出</span><span class="ms">120 ms</span><span class="tag">退場</span></div>
+            <code>cubic-bezier(.2, .8, .2, 1)</code>
+            <p class="note">同一條曲線，只是更短</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k42;--dx:k43;--dy:k44">
+          <div class="g" role="img" aria-label="panel 200 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="20" y2="20"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 20 20, 20 0, 100 0"/>
+        <circle class="cp" cx="20" cy="20" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">panel</span><span class="ms">200 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(.2, .8, .2, 1)</code>
+            <p class="note">選單開啟</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k45;--dx:k46;--dy:k47">
+          <div class="g" role="img" aria-label="slide 240 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="20" y2="20"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 20 20, 20 0, 100 0"/>
+        <circle class="cp" cx="20" cy="20" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">slide</span><span class="ms">240 ms</span><span class="tag">進場</span></div>
+            <code>cubic-bezier(.2, .8, .2, 1)</code>
+            <p class="note">指示器移動</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        <li class="row" style="--sq:k48;--dx:k49;--dy:k50">
+          <div class="g" role="img" aria-label="圖片縮放 600 ms 曲線圖">
+            <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <rect class="frame" x="0" y="0" width="100" height="100"/>
+        <line class="diag" x1="0" y1="100" x2="100" y2="0"/>
+        <line class="hand" x1="0" y1="100" x2="20" y2="20"/>
+        <line class="hand" x1="100" y1="0" x2="20" y2="0"/>
+        <path class="curve" d="M0 100 C 20 20, 20 0, 100 0"/>
+        <circle class="cp" cx="20" cy="20" r="2.5"/>
+        <circle class="cp" cx="20" cy="0" r="2.5"/>
+      </svg>
+            <span class="dx"><span class="dy"></span></span>
+          </div>
+          <div class="info">
+            <div class="top"><span class="nm">圖片縮放</span><span class="ms">600 ms</span><span class="tag">進場</span><span class="tag warn">exceeds the 100–400ms rule</span></div>
+            <code>cubic-bezier(.2, .8, .2, 1)</code>
+            <p class="note">圖片 hover 縮放；只當上限參考</p>
+          </div>
+          <div class="track"><span class="sq"></span></div>
+        </li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= (b) ======================= -->
+<section class="blk" id="entrance" aria-labelledby="h-ent">
+  <div class="wrap">
+    <h2 id="h-ent">(b) 段落進場：About 式的做法比較</h2>
+    <p class="lede">同一份內容（標題、一句聲明、數字、清單、圖）套四種進場。進入畫面時播放一次；時長都是 320 ms 加上錯開，每一塊進入視窗後 1 秒內都看得到。沒有 JS 或開了「減少動態」時，內容一開始就完整顯示。</p>
+    <div class="tools" style="margin-top:12px">
+      <button class="btn js-only" type="button" id="replay-ent">重播四組進場</button>
+    </div>
+    <div class="stages">
+      <article class="panel">
+        <h3>A　統一淡入上移 <span class="tag warn">常見套路</span></h3>
+        <p class="pd">每一塊都用同一種「淡入＋上移 16 px」，依序錯開 60 ms。看起來整齊，但每個網站都長這樣。</p>
+        <div class="stage" data-stage>
+        <h4 class="hd" data-a="fade" style="--i:0">私人藏書，公開目錄</h4>
+        <p class="st" data-a="fade" style="--i:1">一句聲明，說明這裡收的是什麼。<br>第二行補上為什麼公開。</p>
+        <p class="fig" data-a="fade" style="--i:2"><span>1,284</span> <small>筆</small></p>
+        <ul class="rows"><li data-a="fade" style="--i:3"><span>文章</span><span>142</span></li><li data-a="fade" style="--i:4"><span>專案</span><span>18</span></li><li data-a="fade" style="--i:5"><span>本體論</span><span>9</span></li></ul>
+        <div class="pic" data-a="fade" style="--i:6"></div>
+        </div>
+      </article>
+      <article class="panel">
+        <h3>B　依內容變化</h3>
+        <p class="pd">標題與聲明從遮罩往上升、數字數上去、清單一列一列滑進來、圖輕輕落定。形式跟著內容走（taste v2.1.4 的做法）。</p>
+        <div class="stage" data-stage>
+        <h4 class="hd mask"><span data-a="mask" style="--i:0">私人藏書，公開目錄</span></h4>
+        <p class="st"><span class="mask"><span data-a="mask" style="--i:1">一句聲明，說明這裡收的是什麼。</span></span><span class="mask"><span data-a="mask" style="--i:2">第二行補上為什麼公開。</span></span></p>
+        <p class="fig"><span data-count="1284">1,284</span> <small>筆</small></p>
+        <ul class="rows"><li data-a="slide" style="--i:3"><span>文章</span><span>142</span></li><li data-a="slide" style="--i:4"><span>專案</span><span>18</span></li><li data-a="slide" style="--i:5"><span>本體論</span><span>9</span></li></ul>
+        <div class="pic" data-a="settle" style="--i:6"></div>
+        </div>
+      </article>
+      <article class="panel">
+        <h3>C-1　靜止，只留一個 moment</h3>
+        <p class="pd">捲動時什麼都不動，整頁只有數字數上去一次（taste v2.5.1 的做法）。</p>
+        <div class="stage" data-stage>
+        <h4 class="hd">私人藏書，公開目錄</h4>
+        <p class="st">一句聲明，說明這裡收的是什麼。<br>第二行補上為什麼公開。</p>
+        <p class="fig"><span data-count="1284">1,284</span> <small>筆</small></p>
+        <ul class="rows"><li><span>文章</span><span>142</span></li><li><span>專案</span><span>18</span></li><li><span>本體論</span><span>9</span></li></ul>
+        <div class="pic"></div>
+        </div>
+      </article>
+      <article class="panel">
+        <h3>C-2　只有標題進場</h3>
+        <p class="pd">其餘靜止，只有段落標題從遮罩升起（只動標題，其餘不動）。</p>
+        <div class="stage" data-stage>
+        <h4 class="hd mask"><span data-a="mask" style="--i:0">私人藏書，公開目錄</span></h4>
+        <p class="st">一句聲明，說明這裡收的是什麼。<br>第二行補上為什麼公開。</p>
+        <p class="fig"><span>1,284</span> <small>筆</small></p>
+        <ul class="rows"><li><span>文章</span><span>142</span></li><li><span>專案</span><span>18</span></li><li><span>本體論</span><span>9</span></li></ul>
+        <div class="pic"></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= (c) ======================= -->
+<section class="blk" id="openclose" aria-labelledby="h-oc">
+  <div class="wrap">
+    <h2 id="h-oc">(c) 開合：下拉選單與彈出框</h2>
+    <p class="lede">開啟：從上方 6 px 落到定位並淡入；關閉：往上抬 2 px 並淡出，比開啟短。可以切換曲線組比較。沒有 JS 時兩者直接顯示為開啟狀態。</p>
+    <div class="setsw js-only" role="group" aria-label="曲線組">
+      <button class="btn on" type="button" data-setbtn="site" aria-pressed="true">網站暫定</button>
+      <button class="btn" type="button" data-setbtn="v214" aria-pressed="false">taste v2.1.4</button>
+      <button class="btn" type="button" data-setbtn="v251" aria-pressed="false">taste v2.5.1</button>
+    </div>
+    <div class="openclose oc-set" id="oc" data-set="site">
+      <div class="card-box oc-space">
+        <p class="small" style="margin-bottom:8px">下拉選單</p>
+        <div class="anchor">
+          <button class="btn" type="button" id="dd-btn" aria-expanded="false" aria-controls="dd-menu">文章分類 ▾</button>
+          <ul class="menu" id="dd-menu">
+            <li><button type="button">全部文章</button></li>
+            <li><button type="button">技術筆記</button></li>
+            <li><button type="button">專案紀錄</button></li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-box oc-space">
+        <p class="small" style="margin-bottom:8px">彈出框</p>
+        <div class="anchor">
+          <button class="btn" type="button" id="pop-btn" aria-expanded="false" aria-controls="pop-box">圖例說明</button>
+          <div class="pop" id="pop-box" role="region" aria-label="圖例說明">
+            紅點是目前的進度，虛線是等速。曲線越早爬高，動作越「快速到位」。
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tablewrap">
+    <table class="spec" id="oc-table">
+      <thead><tr><th scope="col">曲線組</th><th scope="col">開啟</th><th scope="col">關閉</th><th scope="col">位移</th></tr></thead>
+      <tbody>
+        <tr data-row="site" class="cur"><th scope="row">網站暫定</th><td>200 ms，<code>cubic-bezier(0, 0, .2, 1)</code></td><td>130 ms，<code>cubic-bezier(.4, 0, 1, 1)</code></td><td>落 6 px／抬 2 px</td></tr>
+        <tr data-row="v214"><th scope="row">taste v2.1.4</th><td>240 ms，<code>cubic-bezier(.22, 1, .36, 1)</code></td><td>160 ms，<code>cubic-bezier(.55, .055, .675, .19)</code></td><td>落 6 px／抬 2 px（位移沿用 v2.5.1）</td></tr>
+        <tr data-row="v251"><th scope="row">taste v2.5.1</th><td>200 ms，<code>cubic-bezier(.2, .8, .2, 1)</code></td><td>120 ms，同一條曲線</td><td>落 6 px／抬 2 px</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= (d) ======================= -->
+<section class="blk" id="intensity" aria-labelledby="h-int">
+  <div class="wrap">
+    <h2 id="h-int">(d) 細緻／明顯</h2>
+    <p class="lede">同一組卡片，切換強度後重播進場，並用滑鼠移上去（或用鍵盤 Tab 聚焦）感受上抬。觸控裝置沒有 hover 位移。</p>
+    <div class="setsw js-only" role="group" aria-label="強度">
+      <button class="btn on" type="button" data-intbtn="subtle" aria-pressed="true">細緻</button>
+      <button class="btn" type="button" data-intbtn="strong" aria-pressed="false">明顯</button>
+      <button class="btn" type="button" id="replay-int">重播進場</button>
+    </div>
+    <div class="card-box int" id="int" data-int="subtle" data-stage>
+      <div class="cards">
+        <div class="c" tabindex="0" style="--i:0">卡片一<small>進場、hover 與聚焦都用同一組數值</small></div>
+        <div class="c" tabindex="0" style="--i:1">卡片二<small>錯開一個步距</small></div>
+        <div class="c" tabindex="0" style="--i:2">卡片三<small>只動 transform 與 opacity</small></div>
+      </div>
+    </div>
+    <div class="tablewrap">
+    <table class="spec" id="int-table">
+      <thead><tr><th scope="col">強度</th><th scope="col">進場</th><th scope="col">hover／聚焦</th><th scope="col">錯開</th></tr></thead>
+      <tbody>
+        <tr data-row="subtle" class="cur"><th scope="row">細緻</th><td>上移 8 px，200 ms</td><td>上抬 2 px，150 ms，不放大</td><td>40 ms</td></tr>
+        <tr data-row="strong"><th scope="row">明顯</th><td>上移 24 px，320 ms</td><td>上抬 6 px、放大 1.03，200 ms</td><td>80 ms</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    曲線與時長參考 taste-skill v2.1.4 / v2.5.1（MIT）與網站暫定值；配色 token 複製自 <code>src/assets/css/variables.css</code>。這頁只用來看感覺，不是定案。
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function sync() { root.classList.toggle('motion-ok', !mql.matches); }
+  if (mql.addEventListener) mql.addEventListener('change', sync);
+  var $ = function (s, c) { return (c || document).querySelector(s); };
+  var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+  function motion() { return root.classList.contains('motion-ok'); }
+
+  // 深淺色
+  $('#theme-btn').addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('demo-theme', next); } catch (e) {}
+  });
+
+  // 曲線暫停／重新開始
+  var pauseBtn = $('#pause-btn');
+  pauseBtn.addEventListener('click', function () {
+    var p = root.classList.toggle('paused');
+    pauseBtn.setAttribute('aria-pressed', String(p));
+    pauseBtn.textContent = p ? '繼續曲線動作' : '暫停曲線動作';
+  });
+  $('#restart-btn').addEventListener('click', function () {
+    root.classList.add('restart');
+    void root.offsetWidth;
+    root.classList.remove('restart');
+  });
+
+  // 進場：pre -> play；進入視窗播一次
+  function count(el, to, ms) {
+    var t0 = null;
+    function step(t) {
+      if (t0 === null) t0 = t;
+      var k = Math.min(1, (t - t0) / ms);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))).toLocaleString('en-US');
+      if (k < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function play(stage) {
+    stage.setAttribute('data-state', 'play');
+    $$('[data-count]', stage).forEach(function (el) { count(el, +el.getAttribute('data-count'), 400); });
+  }
+  function replay(stage) {
+    if (!motion()) return;
+    stage.setAttribute('data-state', 'pre');
+    $$('[data-count]', stage).forEach(function (el) { el.textContent = '0'; });
+    void stage.offsetWidth;
+    play(stage);
+  }
+  var stages = $$('[data-stage]');
+  if (motion()) {
+    stages.forEach(function (s) {
+      s.setAttribute('data-state', 'pre');
+      $$('[data-count]', s).forEach(function (el) { el.textContent = '0'; });
+    });
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { io.unobserve(e.target); play(e.target); } });
+      }, { threshold: 0.3 });
+      stages.forEach(function (s) { io.observe(s); });
+    } else {
+      stages.forEach(play);
+    }
+  }
+  $('#replay-ent').addEventListener('click', function () { $$('#entrance [data-stage]').forEach(replay); });
+
+  // 開合
+  var oc = $('#oc');
+  function setupToggle(btn, box) {
+    box.setAttribute('data-state', 'closed');
+    function done() { box.setAttribute('data-state', 'closed'); }
+    function open() {
+      box.setAttribute('data-state', 'open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+    function close() {
+      btn.setAttribute('aria-expanded', 'false');
+      if (!motion()) return done();
+      box.setAttribute('data-state', 'closing');
+      var finished = false;
+      function end() { if (!finished) { finished = true; if (box.getAttribute('data-state') === 'closing') done(); } }
+      box.addEventListener('animationend', end, { once: true });
+      setTimeout(end, 400);
+    }
+    btn.addEventListener('click', function (e) {
+      var st = box.getAttribute('data-state');
+      if (st === 'open') close(); else open();
+    });
+    document.addEventListener('click', function (e) {
+      if (box.getAttribute('data-state') === 'open' && !box.contains(e.target) && !btn.contains(e.target)) close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && box.getAttribute('data-state') === 'open') { close(); btn.focus(); }
+    });
+  }
+  setupToggle($('#dd-btn'), $('#dd-menu'));
+  setupToggle($('#pop-btn'), $('#pop-box'));
+  $$('[data-setbtn]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-setbtn');
+      oc.setAttribute('data-set', k);
+      $$('[data-setbtn]').forEach(function (o) {
+        var on = o === b; o.classList.toggle('on', on); o.setAttribute('aria-pressed', String(on));
+      });
+      $$('#oc-table tbody tr').forEach(function (r) { r.classList.toggle('cur', r.getAttribute('data-row') === k); });
+    });
+  });
+
+  // 強度
+  var intBox = $('#int');
+  $$('[data-intbtn]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-intbtn');
+      intBox.setAttribute('data-int', k);
+      $$('[data-intbtn]').forEach(function (o) {
+        var on = o === b; o.classList.toggle('on', on); o.setAttribute('aria-pressed', String(on));
+      });
+      $$('#int-table tbody tr').forEach(function (r) { r.classList.toggle('cur', r.getAttribute('data-row') === k); });
+      replay(intBox);
+    });
+  });
+  $('#replay-int').addEventListener('click', function () { replay(intBox); });
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 [
   {
-    "id": "PROJ-2026-01",
+    "id": "3",
     "title": "idea-trigger",
     "status": "Active",
     "statusType": "active",
@@ -8,11 +8,10 @@
     "tags": [],
     "techniques": [],
     "started": "2026.08",
-    "repo": "idea-trigger",
-    "implementationId": 3
+    "repo": "idea-trigger"
   },
   {
-    "id": "PROJ-2026-02",
+    "id": "2",
     "title": "my-dev-grid-front",
     "status": "Active",
     "statusType": "active",
@@ -46,11 +45,10 @@
       }
     ],
     "started": "2026.06",
-    "repo": "my-dev-grid-front",
-    "implementationId": 2
+    "repo": "my-dev-grid-front"
   },
   {
-    "id": "PROJ-2025-01",
+    "id": "4",
     "title": "isbn-scanner",
     "status": "Archived",
     "statusType": "archived",
@@ -132,11 +130,10 @@
       }
     ],
     "started": "2025.12",
-    "repo": "isbn-scanner",
-    "implementationId": 4
+    "repo": "isbn-scanner"
   },
   {
-    "id": "PROJ-2025-02",
+    "id": "1",
     "title": "my-dev-grid",
     "status": "Active",
     "statusType": "active",
@@ -200,11 +197,10 @@
       }
     ],
     "started": "2025.06",
-    "repo": "my-dev-grid",
-    "implementationId": 1
+    "repo": "my-dev-grid"
   },
   {
-    "id": "PROJ-2025-03",
+    "id": "7",
     "title": "business-card-generator",
     "status": "Active",
     "statusType": "active",
@@ -238,11 +234,10 @@
       }
     ],
     "started": "2025.02",
-    "repo": "business-card-generator",
-    "implementationId": 7
+    "repo": "business-card-generator"
   },
   {
-    "id": "PROJ-2025-04",
+    "id": "10",
     "title": "my-profile",
     "status": "Active",
     "statusType": "active",
@@ -271,11 +266,10 @@
       }
     ],
     "started": "2025.02",
-    "repo": "my-profile",
-    "implementationId": 10
+    "repo": "my-profile"
   },
   {
-    "id": "PROJ-2024-01",
+    "id": "8",
     "title": "gym-people-count-parser",
     "status": "Active",
     "statusType": "active",
@@ -304,11 +298,10 @@
       }
     ],
     "started": "2024.11",
-    "repo": "gym-people-count-parser",
-    "implementationId": 8
+    "repo": "gym-people-count-parser"
   },
   {
-    "id": "PROJ-2024-02",
+    "id": "15",
     "title": "leetcode-practice",
     "status": "Active",
     "statusType": "active",
@@ -327,11 +320,10 @@
       }
     ],
     "started": "2024.07",
-    "repo": "leetcode-practice",
-    "implementationId": 15
+    "repo": "leetcode-practice"
   },
   {
-    "id": "PROJ-2024-03",
+    "id": "6",
     "title": "bulletin-api",
     "status": "Active",
     "statusType": "active",
@@ -365,11 +357,10 @@
       }
     ],
     "started": "2024.06",
-    "repo": "bulletin-api",
-    "implementationId": 6
+    "repo": "bulletin-api"
   },
   {
-    "id": "PROJ-2022-01",
+    "id": "11",
     "title": "api-demo",
     "status": "Active",
     "statusType": "active",
@@ -388,11 +379,10 @@
       }
     ],
     "started": "2022.05",
-    "repo": "api-demo",
-    "implementationId": 11
+    "repo": "api-demo"
   },
   {
-    "id": "PROJ-2022-02",
+    "id": "12",
     "title": "laravel-demo",
     "status": "Active",
     "statusType": "active",
@@ -411,11 +401,10 @@
       }
     ],
     "started": "2022.05",
-    "repo": "laravel-demo",
-    "implementationId": 12
+    "repo": "laravel-demo"
   },
   {
-    "id": "PROJ-2022-03",
+    "id": "5",
     "title": "Laravel-LearningLibrary",
     "status": "Active",
     "statusType": "active",
@@ -459,11 +448,10 @@
       }
     ],
     "started": "2022.04",
-    "repo": "Laravel-LearningLibrary",
-    "implementationId": 5
+    "repo": "Laravel-LearningLibrary"
   },
   {
-    "id": "PROJ-2022-04",
+    "id": "13",
     "title": "marqee-maker",
     "status": "Active",
     "statusType": "active",
@@ -497,11 +485,10 @@
       }
     ],
     "started": "2022.01",
-    "repo": "marqee-maker",
-    "implementationId": 13
+    "repo": "marqee-maker"
   },
   {
-    "id": "PROJ-2022-05",
+    "id": "9",
     "title": "vue-exercise",
     "status": "Active",
     "statusType": "active",
@@ -520,11 +507,10 @@
       }
     ],
     "started": "2022.01",
-    "repo": "vue-exercise",
-    "implementationId": 9
+    "repo": "vue-exercise"
   },
   {
-    "id": "PROJ-2021-01",
+    "id": "16",
     "title": "thesis",
     "status": "Active",
     "statusType": "active",
@@ -558,11 +544,10 @@
       }
     ],
     "started": "2021.12",
-    "repo": "thesis",
-    "implementationId": 16
+    "repo": "thesis"
   },
   {
-    "id": "PROJ-2021-02",
+    "id": "14",
     "title": "shorturl",
     "status": "Active",
     "statusType": "active",
@@ -601,7 +586,6 @@
       }
     ],
     "started": "2021.12",
-    "repo": "shorturl",
-    "implementationId": 14
+    "repo": "shorturl"
   }
 ]

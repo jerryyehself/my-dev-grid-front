@@ -75,9 +75,53 @@ export class ApiHttpError extends Error {
     readonly status: number,
     readonly path: string,
     readonly method = 'GET',
+    /** 後端錯誤回應的 JSON（解析不出來是 null）。要分辨 `reason` 這類固定代號時讀這裡。 */
+    readonly body: ApiErrorBody | null = null,
   ) {
     super(`API 請求失敗（${status}）：${path}`)
     this.name = 'ApiHttpError'
+  }
+
+  get reason(): string | null {
+    return this.body?.reason ?? null
+  }
+}
+
+/**
+ * 非 GET 請求收到非 2xx（422 除外，那個走 ApiValidationError）時丟的錯誤。
+ * 訊息格式沿用以前的 `Error`（含請求方法），另外帶狀態碼與後端回應的 `reason`／`errors`，
+ * 呼叫端要分辨 409（清單過期）或 502／503（外部服務出錯）時不用去猜 `message`。
+ */
+export class ApiRequestError extends Error {
+  constructor(
+    readonly status: number,
+    readonly path: string,
+    readonly method: string,
+    readonly body: ApiErrorBody | null = null,
+  ) {
+    super(`API 請求失敗（${status}）：${method} ${path}`)
+    this.name = 'ApiRequestError'
+  }
+
+  get reason(): string | null {
+    return this.body?.reason ?? null
+  }
+}
+
+/** 後端錯誤回應的共同形狀：`message` 是中文說明，`reason` 是固定代號，`errors` 以欄位為 key。 */
+export interface ApiErrorBody {
+  message?: string
+  reason?: string
+  errors?: Record<string, string[] | string>
+}
+
+/** 讀錯誤回應的 JSON；不是 JSON、或 mock 沒有 json() 時回 null，不讓它蓋掉原本的 HTTP 錯誤。 */
+async function readErrorBody(res: Response): Promise<ApiErrorBody | null> {
+  try {
+    const data: unknown = await res.json()
+    return data !== null && typeof data === 'object' ? (data as ApiErrorBody) : null
+  } catch {
+    return null
   }
 }
 
@@ -220,7 +264,7 @@ export async function apiGet<T>(path: string): Promise<T> {
       continue
     }
     if (!res.ok) {
-      throw new ApiHttpError(res.status, path)
+      throw new ApiHttpError(res.status, path, 'GET', await readErrorBody(res))
     }
     return res.json() as Promise<T>
   }
@@ -276,7 +320,7 @@ async function sendJson<T>(method: 'POST' | 'PUT', path: string, body: unknown):
   }
 
   if (!res.ok) {
-    throw new Error(`API 請求失敗（${res.status}）：${method} ${path}`)
+    throw new ApiRequestError(res.status, path, method, await readErrorBody(res))
   }
 
   return res.json() as Promise<T>

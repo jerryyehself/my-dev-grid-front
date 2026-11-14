@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchArticleOrDemo, fetchArticlesOrDemo, withTechniqueLabels } from './articles'
+import {
+  fetchArticleOrDemo,
+  fetchArticlesOrDemo,
+  sortArticlesByDateDesc,
+  withTechniqueLabels,
+  type ArticleDto,
+} from './articles'
 import articlesDemoFixture from '@/data/articlesDemoFixture.json'
 
 const mockFetch = vi.fn()
@@ -123,5 +129,23 @@ describe('技術名稱帶版本', () => {
     mockFetch.mockResolvedValue(jsonResponse(raw))
     const { article } = await fetchArticleOrDemo(1)
     expect(article.techniques.map((t) => t.title)).toEqual(['Vue 3', 'Vue'])
+  })
+})
+
+describe('sortArticlesByDateDesc', () => {
+  const dto = (id: number, creation: string | null, created: string | null) =>
+    ({ id, creation_date: creation, created_at: created }) as unknown as ArticleDto
+
+  it('它應該依顯示日期由新到舊排序，並且不改動傳入的陣列', () => {
+    const input = [dto(1, '2026-01-05', null), dto(2, null, '2026-03-01T10:00:00Z'), dto(3, '2026-02-10', null)]
+
+    expect(sortArticlesByDateDesc(input).map((a) => a.id)).toEqual([2, 3, 1])
+    expect(input.map((a) => a.id)).toEqual([1, 2, 3])
+  })
+
+  it('它應該把沒有日期的文章排在最後', () => {
+    const input = [dto(1, null, null), dto(2, '2026-01-05', null)]
+
+    expect(sortArticlesByDateDesc(input).map((a) => a.id)).toEqual([2, 1])
   })
 })

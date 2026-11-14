@@ -31,11 +31,22 @@ src/features/graph/
 | `src/stores/`                                | 全站狀態（例如登入狀態 `useAuthStore`）               |
 | `src/api/client.ts`                          | API 用戶端本身；各功能的端點呼叫放進功能資料夾        |
 | `src/layouts/`、`src/router/`、`src/assets/` | 維持原樣                                              |
+| `src/copy/common.ts`                         | 全站共用的訪客文字（見下一節）                        |
+
+## 訪客看得到的文字放哪裡
+
+- 全站共用的文字（導覽列、頁尾，以及兩個以上元件都會出現的載入中／載入失敗／空狀態句子）：`src/copy/common.ts`，用 `export const ... as const` 匯出，元件 import 使用，不要在元件裡再寫一份。
+- 頁面標題、標籤與副標：`src/router/index.ts` 的 `meta`。
+- 站名：`src/siteMeta.ts`。
+- 只有一個功能或元件用到的文字：留在那個元件裡，不搬進 `src/copy/`。
+- `src/copy/` 底下的檔案除了型別以外不 import 任何東西，避免循環依賴。
+- 用詞與語氣照 `.claude/skills/copy-language/`。
 
 ## 功能之間的界線
 
 - 不要 import 另一個功能資料夾裡的檔案。兩個功能都需要的東西，搬到上表的共用位置。
 - 共用位置的檔案不能 import `src/features/` 裡的東西（共用的不能依賴特定功能）。
+- 例外：首頁（`src/features/home/`）是把各功能摘要放在一起的組合頁，可以 import 其他功能的元件（例如 `KnowledgeGraphPanel.vue` 用圖譜的 `KnowledgeGraphCanvas.vue`）。其他功能之間仍然不行，其他功能也不能反過來 import 首頁。
 
 ## 舊功能怎麼搬
 
@@ -46,4 +57,6 @@ src/features/graph/
 - 搬的 commit 只動路徑與 import，不順手改程式。
 - 小修（改字、修一個 bug）不用為了它搬整個功能。
 
-另外，維護者有空檔時會主動分批搬，一次一個功能、一張只做搬移的 PR。順序：圖譜 → 文章 → 本體論 → 專案 → 其他。某個功能還有開著的 PR 改到它時，先跳過，避免衝突。
+舊功能已經全部搬進 `src/features/`。之後新增的功能直接放進功能資料夾。
+
+`docs/demos/` 放單檔 HTML 的 demo 頁（例如 `motion-demo.html`），用來在實作前先看效果；不進 `src/`、不被網站 import、不參與 build。

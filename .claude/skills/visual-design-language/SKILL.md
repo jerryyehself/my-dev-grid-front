@@ -236,13 +236,29 @@ needed to change, not just get named:
 - **Size**: `text-base` (16px), not `text-[15px]` — readability research is
   consistent that body copy under 16px reads as too small for sustained
   reading.
-- **Line height**: `leading-[1.6]`, not `leading-8` (2.0 — well above the
-  1.4–1.6 range WCAG-adjacent guidance cites). The old value wasn't
+- **Line height**: `leading-[1.6]`, not `leading-8` (2.0, the old value
+  was higher than needed). The old value wasn't
   arbitrary: without a width cap, several of these blocks ran 90–100+
   characters per line, and the oversized line-height was silently
   compensating for that. Fixing width is the more fundamental fix — a
   value picked to compensate for a different bug isn't a value worth
   keeping once that bug is fixed.
+  **Corrected 2026-11-13**: this bullet used to call 1.6 part of a "1.4–1.6
+  WCAG-adjacent range". That is wrong: WCAG 2.2 SC 1.4.8 (AAA) asks for a
+  line spacing of at least 1.5 within paragraphs, so 1.4 is below it, and
+  the criterion sets no upper bound. For CJK text the evidence range is
+  1.5–2.0 (W3C clreq §7.1.1.5). **Article body (`MarkdownBody.vue`'s
+  `<p>`/`<li>`) is now 16px with a 28px line height (`text-base leading-7`,
+  1.75)**, inside that range. Other prose (About) keeps `leading-[1.6]` for
+  now. **Rest of the article page type scale (2026-11-13, after the type
+  specimen)**: article title 36px/48px, h2 in the body 24px/36px, paragraph
+  spacing 24px, footnotes 14px/24px (end notes, sidenotes and the expanded
+  note box). The values are named constants at the top of `MarkdownBody.vue`
+  (`PARAGRAPH_GAP`, `H2_TEXT`, `FOOTNOTE_TEXT`); the title is on the `h1` in
+  `ArticleDetailView.vue`. The evidence for the title line height, paragraph
+  spacing and footnote size is weak to medium (one practice source and one
+  small phone experiment); they are choices made for consistency and low
+  risk, so revisit them if the live page reads too loose.
 - **Width**: `max-w-prose` (65ch), replacing ad hoc pixel caps
   (`max-w-[760px]`, `max-w-[620px]`, `max-w-2xl`) that were never derived
   from the 50–75-character-per-line readability range, just picked to look
@@ -250,6 +266,11 @@ needed to change, not just get named:
   its containing section — a section can stay wider to hold a heading or a
   non-text element (a diagram, a classification table) at its own width;
   only the text needs the narrower cap.
+
+Article reading width (2026-11-13): the article body column in
+`ArticleDetailView.vue` is capped at `max-w-[40em]` (640px at 16px, about 40
+CJK characters per line) instead of 65ch. `ch` is the width of "0", which
+says little about a CJK line; `em` is one CJK character.
 
 Applies to: `MarkdownBody.vue`'s rendered `<p>`/`<li>`, `ArticleDetailView.vue`'s
 intro paragraph and article-body wrapper, `AboutView.vue`'s origin-story
@@ -272,7 +293,7 @@ full explanatory sentences sat at 12px and some labels at 9–10px.
 | Running prose | 16px (see above) | article body, About paragraphs |
 | Full sentences a visitor reads | 14px (`text-sm`/`text-[14px]`) | page explanations, empty/error/demo-data notices, list-item titles |
 | Secondary sans text | 12px | tech-stack lines, legends, popover rows |
-| Mono uppercase labels (Latin/digits only) | 11px | dates, `PROJ-` ids, status badges, `STARTED`/`ROLE` |
+| Mono uppercase labels (Latin/digits only) | 11px | dates, status badges, `STARTED`/`REPO` |
 | Chinese labels | 13px, tracking ≤ 0.05em | 節點顏色, 語言／套件, 起點／終點, 所有文章 →, nav 淺色／登入 |
 | Chinese section headings | 15px bold | 近期知識網路, 近況板, 路徑查詢 |
 
@@ -318,6 +339,52 @@ detail, projects, graph, layout and navbar). Admin forms keep the 10px
 values that `BaseHint`, `BaseEyebrow size="field"` and `BaseTextarea` took
 from the 文章編輯頁 mockup. That is a deliberate exception. It is not an
 oversight.
+
+## Motion
+
+Rules, not final numbers. The site's motion policy (duration range, which
+pages may animate, `transform`/`opacity` only, `prefers-reduced-motion`,
+banned techniques) lives in `.claude/rules/ui.md` rule 2; this section does
+not repeat it, it adds the rules below on top. Each rule names where it was
+borrowed from: taste-skill v2.1.4 or v2.5.1 (MIT). Where the site's own
+policy and an upstream rule disagree, the site's policy wins.
+
+- **Every animation states its purpose in one line**, written in the issue or
+  PR that adds it. No purpose, no animation. (v2.5.1, "Why it moves".)
+- **Content stays complete without JS and under reduced motion.** Motion only
+  adds to a page that is already whole at rest; it must never hide text a
+  visitor could already be reading. (v2.5.1, "Why it moves" and Never list.)
+- **Don't give every section the same fade-in.** The same fade-up on every
+  block is the tell. If sections do enter, vary the motion with the content,
+  or let most of them not move and keep one deliberate moment. (v2.1.4 §9
+  "The same fade-up on every block"; v2.5.1 Never "a fade-in on every
+  section". The choice between "vary" and "mostly still" is pending the
+  motion demo decision.)
+- **Hover movement only for fine pointers**:
+  `@media (hover: hover) and (pointer: fine)`. Touch devices get no hover
+  displacement; keyboard focus shows the same state everywhere. (v2.5.1
+  `motion.md`.)
+- **Don't animate `width`, `height` or `margin`.** They reflow the page;
+  use `transform`/`opacity`. (v2.5.1 `motion.md` Never list.)
+- **The focus ring does not animate.** It appears at once. (v2.5.1
+  `motion.md` Never list.)
+- **No overshoot.** No bounce, no curve that passes its mark. (v2.5.1
+  `motion.md`, Curves.)
+
+### Motion tokens
+
+Pending the motion demo decision. Durations, curves and the exit-curve
+question (an accelerating exit, as the site's policy says, versus the same
+ease-out only shorter, as v2.5.1 does) are decided after the side-by-side
+demo; fill this table then, and cite which version each value comes from.
+
+| Token | Use | Value |
+|---|---|---|
+| press | button press | pending |
+| hover in / out | hover state | pending |
+| panel open / close | menus, dropdowns | pending |
+| entrance | section or heading entering | pending |
+| UI curve / entrance curve / exit curve | easing | pending |
 
 ## Extending the token set
 

@@ -86,7 +86,7 @@
       class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
       :style="widthStyle"
     >
-      © 2026 Jerry Yeh
+      {{ FOOTER_TEXT }}
     </footer>
   </div>
 </template>
@@ -94,6 +94,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TheNavbar from '@/components/TheNavbar.vue'
+import { FOOTER_TEXT } from '@/copy/common'
 
 // 大部分頁面共用 max-w-5xl（1024px）；個別頁面如果設計稿要更寬/更窄，
 // 透過 route.meta.contentWidth 覆蓋，不用整站改寬度。
