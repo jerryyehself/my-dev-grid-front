@@ -2,6 +2,7 @@ import { afterEach, describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import MarkdownBody from './MarkdownBody.vue'
+import { resolveType } from '@/test/cssTokens'
 
 const Stub = { template: '<div />' }
 
@@ -495,14 +496,15 @@ describe('MarkdownBody', () => {
     })
 
     describe('註腳字級：邊注、展開的註釋框、文末清單都是 14／24', () => {
-      const FOOTNOTE = ['text-sm', 'leading-6']
+      // 解出元素最後吃到幾 px（class 對回 variables.css 的 --article-* 變數）
+      const FOOTNOTE = { size: 14, leading: 24 }
 
       it('它應該讓邊注是 14／24', async () => {
         stubWide(true)
         const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true })
         await w.vm.$nextTick()
         const note = w.find('[data-fn-side]')
-        expect(note.classes()).toEqual(expect.arrayContaining(FOOTNOTE))
+        expect(resolveType(note.classes())).toMatchObject(FOOTNOTE)
         expect(note.classes()).not.toContain('leading-[1.5]')
       })
 
@@ -511,8 +513,76 @@ describe('MarkdownBody', () => {
         const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true })
         await markers(w)[0]!.trigger('click')
         const note = w.find('[id$="fnnote-1-1"]')
-        expect(note.classes()).toEqual(expect.arrayContaining(FOOTNOTE))
+        expect(resolveType(note.classes())).toMatchObject(FOOTNOTE)
         expect(note.classes()).not.toContain('leading-[1.5]')
+      })
+
+      it('它應該讓文末註釋清單是 14／24，清單編號用標籤字級 13', async () => {
+        const w = await mountMd('甲[^1]。\n\n[^1]: 一')
+        const ol = w.find('section ol')
+        expect(resolveType(ol.classes())).toMatchObject(FOOTNOTE)
+        // 編號（::marker）用標籤字級
+        expect(ol.classes()).toContain('marker:text-(length:--article-label-size)')
+      })
+    })
+
+    describe('註腳編號：標籤 13／20', () => {
+      it('它應該讓內文裡的上標編號是 13px，行高不撐開內文的行距', async () => {
+        const w = await mountMd('甲[^1]。\n\n[^1]: 一')
+        const sup = w.find('sup')
+        expect(resolveType(sup.classes()).size).toBe(13)
+        // 沒有給 sup 另外的行高變數：行高維持 sup 預設的 0，內文行距不變
+        expect(resolveType(sup.classes()).leading).toBeUndefined()
+      })
+
+      it('它應該讓邊注開頭的編號是 13／20，字距不超過 0.05em', async () => {
+        stubWide(true)
+        const w = await mountMd('甲[^1]。\n\n[^1]: 一', { sidenotes: true })
+        await w.vm.$nextTick()
+        const num = w.find('[data-fn-side] > span')
+        expect(num.text()).toBe('1')
+        const t = resolveType(num.classes())
+        expect([t.size, t.leading]).toEqual([13, 20])
+        expect(parseFloat(t.tracking!)).toBeLessThanOrEqual(0.05)
+      })
+    })
+
+    describe('文章內文字級：內文 16／28、h2 24／36、h3 16 加粗、段距 24', () => {
+      it('它應該讓段落是 16／28，段距 24', async () => {
+        const w = await mountMd('第一段\n\n第二段')
+        for (const p of w.findAll('p')) {
+          expect(resolveType(p.classes())).toMatchObject({ size: 16, leading: 28, marginBottom: 24 })
+        }
+      })
+
+      it('它應該讓清單項目是 16／28', async () => {
+        const w = await mountMd('- 項目甲\n- 項目乙')
+        for (const li of w.findAll('li')) {
+          expect(resolveType(li.classes())).toMatchObject({ size: 16, leading: 28 })
+        }
+      })
+
+      it('它應該讓二級標題是 24／36 加粗', async () => {
+        const w = await mountMd('## 二級')
+        const h = w.find('h3')
+        expect(resolveType(h.classes())).toMatchObject({ size: 24, leading: 36 })
+        expect(h.classes()).toContain('font-bold')
+      })
+
+      it('它應該讓三級標題是 16 加粗（靠加粗區分，不加大），不吃二級標題的行高', async () => {
+        const w = await mountMd('### 三級')
+        const h = w.find('h3')
+        expect(resolveType(h.classes()).size).toBe(16)
+        expect(resolveType(h.classes()).leading).toBeUndefined()
+        expect(h.classes()).toContain('font-bold')
+        expect(h.classes()).not.toContain('text-[15px]')
+      })
+
+      it('它應該讓四級以下標題維持原樣（14px），不被改成 16', async () => {
+        const w = await mountMd('#### 四級')
+        const h = w.find('h3')
+        expect(h.classes()).toContain('text-sm')
+        expect(resolveType(h.classes()).size).toBeUndefined()
       })
     })
 

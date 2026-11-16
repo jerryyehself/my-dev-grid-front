@@ -26,6 +26,16 @@ dark-slot candidates from the Gruvbox era — swapping a theme still means
 replacing the values inside the theme block, not renaming classes or touching
 the toggle logic.
 
+**Page background** (2026-11-16): one flat colour per theme, `--bg-page`
+(an alias, no new value): `--bg-paper-light` in the light theme,
+`--bg-paper-dark` in the dark one. The page-long gradient, the dark theme's
+scanlines and its vignette are gone: the same screen position had different
+colours on short and long pages, and brightness that carries no data is
+noise. A page may keep a texture (paper lines) inside its own band, never on
+`body`. Dark ground choice: against `--bg-paper-dark` the panel colour
+`--bg-folder` is 1.3:1 and muted text 6.9:1; against `--bg-paper-light` they
+would be 1.13:1 and 6.0:1.
+
 ## The chain: tokens → component rule → architecture → whole site
 
 Every visual decision should be traceable through four layers. Skipping a
@@ -253,9 +263,17 @@ needed to change, not just get named:
   now. **Rest of the article page type scale (2026-11-13, after the type
   specimen)**: article title 36px/48px, h2 in the body 24px/36px, paragraph
   spacing 24px, footnotes 14px/24px (end notes, sidenotes and the expanded
-  note box). The values are named constants at the top of `MarkdownBody.vue`
-  (`PARAGRAPH_GAP`, `H2_TEXT`, `FOOTNOTE_TEXT`); the title is on the `h1` in
-  `ArticleDetailView.vue`. The evidence for the title line height, paragraph
+  note box). The numbers live in one place, the `--article-*` variables at the
+  bottom of `src/assets/css/variables.css` (shared by both themes; rem, so
+  they follow the browser's font size). `MarkdownBody.vue` and
+  `ArticleDetailView.vue` only choose which group an element reads
+  (`text-(length:--article-body-size) leading-(--article-body-leading)` and
+  so on); change a number there, not in the components. Added in the same
+  pass (2026-11-16): h3 in the body is 16px bold (not enlarged), and the
+  article's date, category and footnote numbers are labels at 13/20 with
+  tracking 0.05em (`--article-label-*`; they were 11px at 0.24em, a style
+  made for uppercase Latin). A footnote's superscript number takes the 13px
+  size but keeps the `sup` line height of 0 so it does not widen the line. The evidence for the title line height, paragraph
   spacing and footnote size is weak to medium (one practice source and one
   small phone experiment); they are choices made for consistency and low
   risk, so revisit them if the live page reads too loose.
