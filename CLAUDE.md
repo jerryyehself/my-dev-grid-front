@@ -63,6 +63,10 @@ agent 不刪遠端分支：repo 開了「合併後自動刪除分支」，已合
 - **`develop` → `main` 的上線 PR 用 squash 合併**（repo 設定不允許 merge commit，
   2026-10-02 第一次上線 #90 時確認）。合併完一定要把 `main` 合併回 `develop`
   （`git merge --no-ff origin/main`，一般推送），不然下次上線的 PR 歷史會對不上。
+  `develop` 設了必要檢查，沒跑過 CI 的 merge commit 直推會被擋：先把它推到
+  `claude/merge-main-vX.Y.Z` 分支、開 PR 到 `develop` 只為了跑 CI，CI 全綠後用
+  `git push origin <同一個 SHA>:refs/heads/develop` 快轉推送；不要在網頁上合併那個 PR，
+  快轉推不上去就停下來問使用者。後端用同一套做法。
   回滾用 `git revert <squash commit>`。
 - `develop` 有 ruleset 擋刪除與 force push（2026-10-02 使用者設定）：repo 開了
   「合併後自動刪除分支」，#90 合併後 `develop` 曾被自動刪掉、事後還原。
