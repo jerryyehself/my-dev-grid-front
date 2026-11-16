@@ -74,9 +74,13 @@ export interface RowChoice {
   overwrite: boolean
 }
 
-/** 清單列的識別：路徑在一個版本裡不重複；slug 重複的 invalid 檔案會共用同一個 key，不能拿 key 當識別。 */
+/**
+ * 清單列的識別：路徑加 slug。只用路徑不夠：已匯入的檔案保留路徑、只改 slug 時，新 slug 的來源列與
+ * 舊 slug 的 removed 列共用同一個路徑。只用 key 也不夠：slug 重複或缺少的 invalid 檔案 key 會重複或是 null。
+ * 兩者合起來在一個版本裡不重複；用 NUL 隔開，路徑與 slug 都不會含有它。
+ */
 export function rowId(item: SourceItem): string {
-  return item.path
+  return `${item.path}\u0000${item.key ?? ''}`
 }
 
 export function defaultChoice(item: SourceItem): RowChoice {

@@ -29,6 +29,8 @@ import {
   MATCH_ITEM,
   NEW_ITEM,
   REMOVED_ITEM,
+  RENAMED_NEW_ITEM,
+  RENAMED_OLD_ITEM,
   UNCHANGED_ITEM,
   WARNING_ITEM,
   listingOf,
@@ -51,6 +53,35 @@ const choice = (over: Partial<RowChoice>): RowChoice => ({
   documentationId: null,
   overwrite: false,
   ...over,
+})
+
+describe('rowId', () => {
+  it('它應該讓清單裡每一列都有不同的識別，包含改 slug 後共用同一個路徑的新舊兩列', () => {
+    const items = [...ALL_ITEMS, RENAMED_NEW_ITEM, RENAMED_OLD_ITEM]
+    expect(RENAMED_NEW_ITEM.path).toBe(RENAMED_OLD_ITEM.path)
+    expect(new Set(items.map(rowId)).size).toBe(items.length)
+  })
+
+  it('它應該不論兩列的順序都讓新舊兩列的選擇各自獨立', () => {
+    for (const items of [
+      [RENAMED_NEW_ITEM, RENAMED_OLD_ITEM],
+      [RENAMED_OLD_ITEM, RENAMED_NEW_ITEM],
+    ]) {
+      const request = buildImportRequest(listingOf(items), {
+        [rowId(RENAMED_NEW_ITEM)]: choice({ action: 'link', documentationId: 21 }),
+        [rowId(RENAMED_OLD_ITEM)]: choice({ action: 'none' }),
+      })
+      expect(request.items).toEqual([
+        { key: 'renamed-new', expected_blob_sha: RENAMED_NEW_ITEM.blob_sha, action: 'link', documentation_id: 21 },
+      ])
+    }
+  })
+
+  it('它應該不把 key 為 null 的 invalid 列和同路徑的其他列混在一起', () => {
+    const same = { ...INVALID_ITEM, key: null }
+    const other = { ...INVALID_ITEM, key: 'x' }
+    expect(rowId(same)).not.toBe(rowId(other))
+  })
 })
 
 describe('allowedActions', () => {
