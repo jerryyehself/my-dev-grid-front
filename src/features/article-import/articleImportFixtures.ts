@@ -94,6 +94,27 @@ export const WARNING_ITEM = sourceItem({
   warnings: [{ code: 'email', message: 'email 地址', line: 7 }],
 })
 
+// 已匯入的檔案保留路徑、只改 slug：新 slug 的來源列與舊 slug 的 removed 列共用同一個 path（後端 ArticleSourceService
+// 的 removed 列取站上文章的 source_path）。不放進 ALL_ITEMS，免得動到其他測試的列數。
+export const RENAMED_NEW_ITEM = sourceItem({
+  status: 'possible_match',
+  key: 'renamed-new',
+  path: 'notes/renamed.md',
+  title: '改了 slug 的筆記',
+  blob_sha: sha('9'),
+  documentation_id: 21,
+  published: true,
+})
+export const RENAMED_OLD_ITEM = sourceItem({
+  status: 'removed',
+  key: 'renamed-old',
+  path: 'notes/renamed.md',
+  title: '舊 slug 留下的筆記',
+  blob_sha: null,
+  documentation_id: 17,
+  published: true,
+})
+
 export const ALL_ITEMS: SourceItem[] = [
   NEW_ITEM,
   CHANGED_ITEM,

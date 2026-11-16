@@ -12,6 +12,8 @@ import {
   CONFLICT_ITEM,
   MATCH_ITEM,
   NEW_ITEM,
+  RENAMED_NEW_ITEM,
+  RENAMED_OLD_ITEM,
   WARNING_ITEM,
   listingOf,
 } from './articleImportFixtures'
@@ -176,6 +178,32 @@ describe('ArticleImportView 清單', () => {
       expect(row(w, title).findAll('button'), title).toHaveLength(0)
     }
   })
+})
+
+describe('ArticleImportView 改 slug 的檔案', () => {
+  // 新 slug 的來源列與舊 slug 的 removed 列共用同一個 path；兩種排列都要正常（後端依 path 排序，同路徑的順序不固定）
+  const orders: [string, typeof ALL_ITEMS][] = [
+    ['新 slug 在前', [RENAMED_NEW_ITEM, RENAMED_OLD_ITEM]],
+    ['舊 slug 在前', [RENAMED_OLD_ITEM, RENAMED_NEW_ITEM]],
+  ]
+  for (const [label, items] of orders) {
+    it(`它應該在${label}時兩列都顯示、沒有重複 key 警告，而且預選的連結目標不被另一列蓋掉`, async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      try {
+        const w = await mountView(items)
+        await showAll(w)
+
+        expect(w.findAll('li[data-status]')).toHaveLength(2)
+        expect(warn.mock.calls.map((c) => String(c[0])).filter((m) => m.includes('Duplicate keys'))).toEqual([])
+
+        await pick(w, '改了 slug 的筆記', '連結既有文章')
+        const select = row(w, '改了 slug 的筆記').get('select').element as HTMLSelectElement
+        expect(select.value).toBe('21')
+      } finally {
+        warn.mockRestore()
+      }
+    })
+  }
 })
 
 describe('ArticleImportView 每種狀態能選的動作', () => {
