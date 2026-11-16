@@ -69,6 +69,6 @@ body {
   margin: 0;
   padding: 0;
   /* 用 token，不用 Tailwind 的 slate：頁面捲到底反彈時露出的底色才會跟著主題換 */
-  background-color: var(--bg-paper-light);
+  background-color: var(--bg-page);
 }
 </style>

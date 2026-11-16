@@ -1,23 +1,13 @@
-/* 覆蓋全站 Body 基礎外觀 */
+/* 覆蓋全站 Body 基礎外觀。背景是整頁一個純色（--bg-page，兩個主題各自指向既有的紙張色）。
+   以前是沿整份文件拉的漸層，加上夜讀主題的掃描線與暗角：同一個畫面位置在長頁和短頁顏色不同，
+   深色面板跟暗角邊緣同色會隱形（才多出 --list-surface 的補丁），亮度變化又不代表任何資料。
+   個別頁面自己的色帶（例如關於頁的橫線紙）可以有質感，但只畫在那一頁的色帶裡，不放在全站 body 上。 */
 body {
-    background-image: linear-gradient(to bottom, var(--bg-paper-light), var(--bg-paper-dark));
+    background-color: var(--bg-page);
     color: var(--text-ink-main);
     font-family: var(--font-sans);
     min-height: 100vh;
     margin: 0;
-}
-
-/* 夜讀主題的質感:掃描線壓得很淡,加暗角營造「暗室裡的一盞螢幕」而非機房 */
-.theme-terminal body {
-    background-image:
-        radial-gradient(ellipse at center, var(--bg-paper-dark) 0%, var(--bg-paper-light) 75%),
-        repeating-linear-gradient(
-            to bottom,
-            color-mix(in srgb, var(--accent-brass) 3%, transparent) 0px,
-            color-mix(in srgb, var(--accent-brass) 3%, transparent) 1px,
-            transparent 1px,
-            transparent 3px
-        );
 }
 
 /* 發光呼吸動畫:保留給「真的代表狀態」的地方用,例如知識圖譜的高權重節點。
