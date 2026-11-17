@@ -99,6 +99,18 @@ export async function fetchArticle(id: number): Promise<ArticleDto> {
   return withTechniqueLabels(await apiGet<RawArticleDto>(`/documentations/${id}`))
 }
 
+/**
+ * 訪客文章頁用：只有 post（0030）算文章。/documentations/:id 對所有 Documentation 都回得出來
+ * （官方文件網站等），網址手打進來時文章頁不該把它們當文章畫（署名會誤標在上面）。
+ * 不是 post 就丟 404，跟「這篇文章不存在」走同一條找不到的路。
+ * 編輯頁用 fetchArticle，不受這個限制。
+ */
+export async function fetchPostArticle(id: number): Promise<ArticleDto> {
+  const [scopeId, article] = await Promise.all([postScopeIdOnce(), fetchArticle(id)])
+  if (article.type !== scopeId) throw new ApiHttpError(404, `/documentations/${id}`)
+  return article
+}
+
 /** 文章顯示用的日期（YYYY-MM-DD）：優先用 creation_date，沒有才退回 created_at。 */
 export function displayDate(a: ArticleDto): string {
   const raw = a.creation_date ?? a.created_at
@@ -155,7 +167,7 @@ export async function fetchArticlesOrDemo(): Promise<{ articles: ArticleDto[]; l
 
 export async function fetchArticleOrDemo(id: number): Promise<{ article: ArticleDto; loadError: string | null }> {
   try {
-    return { article: await fetchArticle(id), loadError: null }
+    return { article: await fetchPostArticle(id), loadError: null }
   } catch (e) {
     // 404 是「這篇文章真的不存在」，不是載入失敗：不拿填充文章頂替（即使 demo 清單剛好有同一個
     // id），丟回去讓頁面顯示一般的找不到狀態。
