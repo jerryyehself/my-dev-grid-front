@@ -1,0 +1,156 @@
+/* 關於頁的線稿（頁首線稿與四張卡片草圖）。
+   顏色全部取自 variables.css 的 token，換主題時跟著走；下面的別名只是讓線稿規則短一點。
+   描線動畫：只有頁面根元素帶 .motion（useDrawOnScroll 在沒有要求減少動態時才加）才先藏線，
+   沒有 .motion 時草圖本來就是畫好的。每一筆 360 ms、間隔 110 ms，字淡入 200 ms。 */
+.about-page {
+  --pen: var(--text-ink-body);
+  --mark: var(--text-accent);
+  --del: var(--text-ink-muted);
+  --ghost: var(--bg-folder);
+  --bg: var(--bg-page);
+  /* 三個分類的色：同網站圖譜節點色 */
+  --c-doc: var(--node-doc);
+  --c-tech: var(--node-tech);
+  --c-impl: var(--node-impl);
+  /* 動態：站上規則 100–400 ms、進場用減速曲線（quint-out） */
+  --dur-stroke: 360ms;
+  --dur-text: 200ms;
+  --stagger: 110ms;
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.about-page .sk {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  overflow: hidden;
+}
+.about-page .sk .code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-weight: 600;
+}
+
+/* 線稿的筆：底線用內文墨色，「動作」那一筆用強調色，被劃掉的用淡墨 */
+.about-page .sk .ln {
+  fill: none;
+  stroke: var(--pen);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.about-page .sk .rd {
+  fill: none;
+  stroke: var(--mark);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.about-page .sk .dl {
+  fill: none;
+  stroke: var(--del);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.about-page .sk .gh {
+  fill: var(--ghost);
+  stroke: var(--del);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 4;
+}
+.about-page .sk .fl {
+  fill: var(--mark);
+  stroke: none;
+}
+.about-page .sk text {
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+.about-page .sk .lbl {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+/* 放大鏡的鏡片：用頁面底色蓋住後面的卡片，像透過鏡片看 */
+.about-page .sk .bgf {
+  fill: var(--bg);
+  stroke: none;
+}
+.about-page .sk .t-pen {
+  fill: var(--text-ink-body);
+}
+.about-page .sk .t-mark {
+  fill: var(--mark);
+}
+.about-page .sk .t-del {
+  fill: var(--del);
+}
+
+/* 三個分類的色：邊線、底色、字 */
+.about-page .sk .c-doc {
+  stroke: var(--c-doc);
+}
+.about-page .sk .c-tech {
+  stroke: var(--c-tech);
+}
+.about-page .sk .c-impl {
+  stroke: var(--c-impl);
+}
+.about-page .sk .tt {
+  stroke: none;
+  fill-opacity: 0.14;
+}
+.about-page .sk .tt.c-doc {
+  fill: var(--c-doc);
+}
+.about-page .sk .tt.c-tech {
+  fill: var(--c-tech);
+}
+.about-page .sk .tt.c-impl {
+  fill: var(--c-impl);
+}
+.about-page .sk .x-doc {
+  fill: var(--c-doc);
+}
+.about-page .sk .x-tech {
+  fill: var(--c-tech);
+}
+.about-page .sk .x-impl {
+  fill: var(--c-impl);
+}
+.about-page .sk .cl {
+  font-size: 10px;
+  font-weight: 500;
+  text-anchor: middle;
+}
+
+/* 描線：先把線藏起來（dash 長度 1、位移 1.01，pathLength 都設成 1），.on 之後位移回 0 就是一筆畫出來 */
+.about-page.motion .draw :is(path, circle, rect):not(.gh):not(.fl):not(.bgf):not(.tt) {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1.01;
+}
+.about-page.motion .draw :is(.gh, .fl, .bgf, .tt),
+.about-page.motion .draw text {
+  opacity: 0;
+}
+.about-page.motion .draw.on :is(path, circle, rect):not(.gh):not(.fl):not(.bgf):not(.tt) {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset var(--dur-stroke) var(--ease-enter) calc(var(--i) * var(--stagger));
+}
+.about-page.motion .draw.on :is(.gh, .fl, .bgf, .tt),
+.about-page.motion .draw.on text {
+  opacity: 1;
+  transition: opacity var(--dur-text) ease-out calc(var(--i) * var(--stagger));
+}
+
+/* 手機（＜640）草圖置中 */
+@media (max-width: 639.98px) {
+  .about-page .sk {
+    margin-inline: auto;
+  }
+}
+/* 單欄卡片的草圖上限 400 */
+@media (min-width: 640px) {
+  .about-page .sk {
+    max-width: 400px;
+  }
+}
