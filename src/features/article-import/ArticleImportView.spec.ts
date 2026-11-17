@@ -569,6 +569,42 @@ describe('ArticleImportView 匯入失敗', () => {
     expect(w.get('[data-test="submit-error"]').findAll('button')).toHaveLength(0)
   })
 
+  it.each([
+    { name: '409', error: new ApiRequestError(409, '/article-sources/import', 'POST', { reason: 'stale' }) },
+    { name: '422', error: new ApiValidationError({ 'items.0.documentation_id': '要連結的文章不存在或已刪除。' }) },
+  ])('它應該在 $name 被退回後擋下同一份選擇，改選或重新整理清單才能再送', async ({ error }) => {
+    const w = await failWith(error)
+    expect(importArticleSources).toHaveBeenCalledTimes(1)
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+    await submitButton(w).trigger('click')
+    expect(importArticleSources).toHaveBeenCalledTimes(1)
+
+    // 改選一列：請求不同了，可以再送
+    await pick(w, '有更新的筆記', '更新')
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+    // 改回原本的選擇：又是被退回過的同一份，再次擋下
+    await pick(w, '有更新的筆記', '不處理')
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+
+    // 重新整理清單：擋下的記錄清掉，原本那份選擇重新選了可以送
+    await w.findAll('button').find((b) => b.text() === '重新整理清單')!.trigger('click')
+    await flushPromises()
+    await pick(w, '新的筆記', '新增為草稿')
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+  })
+
+  it.each([
+    { name: '連不上後端', error: new TypeError('Failed to fetch') },
+    { name: '500', error: new ApiRequestError(500, '/article-sources/import', 'POST') },
+    { name: '503', error: new ApiRequestError(503, '/article-sources/import', 'POST', { reason: 'github_rate_limited' }) },
+  ])('它應該在 $name 失敗後不擋同一份選擇（可能只是暫時的）', async ({ error }) => {
+    const w = await failWith(error)
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+    await submitButton(w).trigger('click')
+    await flushPromises()
+    expect(importArticleSources).toHaveBeenCalledTimes(2)
+  })
+
   it('它應該在失敗後允許再送出一次（不卡在送出中）', async () => {
     const w = await failWith(new TypeError('Failed to fetch'))
     expect(submitButton(w).attributes('disabled')).toBeUndefined()

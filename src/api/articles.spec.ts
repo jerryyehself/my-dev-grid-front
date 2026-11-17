@@ -57,13 +57,39 @@ describe('fetchArticlesOrDemo', () => {
   })
 })
 
+// fetchArticleOrDemo() 先查 /scopes（確認是不是 post）才讀單篇；依 URL 回應，讓失敗只落在 /documentations/:id
+function mockArticle(respond: () => unknown) {
+  mockFetch.mockImplementation(async (url: string) => {
+    if (url.includes('/scopes')) {
+      return jsonResponse({
+        data: [
+          { id: 3, name: 'post', full_call_number: '0030' },
+          { id: 1, name: 'sourcesite', full_call_number: '0010' },
+        ],
+      })
+    }
+    return respond()
+  })
+}
+
 describe('fetchArticleOrDemo', () => {
   it('它應該在成功時回傳真實文章且 loadError 為 null', async () => {
-    const real = { id: demoId, title: 'real', techniques: [], implementations: [] }
-    mockFetch.mockResolvedValue(jsonResponse(real))
+    const real = { id: demoId, type: 3, title: 'real', techniques: [], implementations: [] }
+    mockArticle(async () => jsonResponse(real))
     const result = await fetchArticleOrDemo(demoId)
     expect(result.loadError).toBeNull()
     expect(result.article).toEqual(real)
+  })
+
+  it('它應該在文件不是 post 時回報不存在，即使 demo 有同 id 也不拿填充文章頂替', async () => {
+    // 官方文件網站（0010）這類 Documentation 用網址手打進來，不能當文章畫
+    mockArticle(async () => jsonResponse({ id: demoId, type: 1, title: 'Vue 官方文件', techniques: [], implementations: [] }))
+    await expect(fetchArticleOrDemo(demoId)).rejects.toMatchObject({ status: 404 })
+    // 近似的錯誤型別：type 為 null 或不在 scopes 裡的 id，一樣不是 post
+    mockArticle(async () => jsonResponse({ id: demoId, type: null, title: 'x', techniques: [], implementations: [] }))
+    await expect(fetchArticleOrDemo(demoId)).rejects.toMatchObject({ status: 404 })
+    mockArticle(async () => jsonResponse({ id: demoId, type: 99, title: 'x', techniques: [], implementations: [] }))
+    await expect(fetchArticleOrDemo(demoId)).rejects.toMatchObject({ status: 404 })
   })
 
   it('它應該在網路錯誤時退回同 id 的填充文章並回報 loadError', async () => {
@@ -74,14 +100,14 @@ describe('fetchArticleOrDemo', () => {
   })
 
   it('它應該在 HTTP 500 時退回同 id 的填充文章並回報 loadError', async () => {
-    mockFetch.mockResolvedValue(jsonResponse({}, 500))
+    mockArticle(async () => jsonResponse({}, 500))
     const result = await fetchArticleOrDemo(demoId)
     expect(result.loadError).toContain('GET /documentations/'+demoId+' 回傳 HTTP 500')
     expect(result.article.id).toBe(demoId)
   })
 
   it('它應該在 HTTP 404 時回報不存在，即使 demo 有同 id 也不拿填充文章頂替', async () => {
-    mockFetch.mockResolvedValue(jsonResponse({ message: 'Not Found' }, 404))
+    mockArticle(async () => jsonResponse({ message: 'Not Found' }, 404))
     await expect(fetchArticleOrDemo(demoId)).rejects.toMatchObject({ status: 404 })
   })
 
@@ -126,7 +152,7 @@ describe('技術名稱帶版本', () => {
     const { articles } = await fetchArticlesOrDemo()
     expect(articles[0]!.techniques.map((t) => t.title)).toEqual(['Vue 3', 'Vue'])
 
-    mockFetch.mockResolvedValue(jsonResponse(raw))
+    mockArticle(async () => jsonResponse(raw))
     const { article } = await fetchArticleOrDemo(1)
     expect(article.techniques.map((t) => t.title)).toEqual(['Vue 3', 'Vue'])
   })
