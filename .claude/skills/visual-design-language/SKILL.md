@@ -399,16 +399,17 @@ site's own policy and an upstream rule disagree, the site's policy wins.
 ### Motion tokens
 
 Two tiers. The default tier is for controls (buttons, menus, panels) and uses
-the control curve. The strong tier is for the cards-and-moment case only:
-card entrance and hover, and the one scroll moment (see the scrolling rule
-above). Never use the strong tier on a button or a menu. All durations stay
+the control curve. The strong tier is for clickable-card hover/focus and
+for the page's one deliberate moment (see the scrolling rule above); a card
+grid may enter with the entrance and stagger tokens only when it *is* that
+moment, never as cards scroll into view. Never use the strong tier on a button or a menu. All durations stay
 inside the 100-400 ms range in `.claude/rules/ui.md` rule 2.
 
 Curves:
 
 | Token | Value | Use | Source |
 |---|---|---|---|
-| ease-control | `cubic-bezier(.2, .8, .2, 1)` | every control step: press, hover in / out, panel open / close, slide, card hover | taste-skill v2.5.1 `--ease`; demo section (c) |
+| ease-control | `cubic-bezier(.2, .8, .2, 1)` | every control step: press, hover in / out, panel open / close, slide, card hover | taste-skill v2.5.1 `--ease`; demo section (a), v2.5.1 column; chosen in (c) |
 | ease-enter | `cubic-bezier(.22, 1, .36, 1)` | entrances settling into place (quint-out) | taste-skill v2.5.1 `--m-ease-enter` (same value as v2.1.4 `--ease-out`) |
 | ease-exit | same as the matching entrance | exits; no separate accelerating curve | v2.5.1 `motion.md`; demo section (a) |
 
@@ -417,15 +418,15 @@ Durations and distances:
 | Token | Use | Value | Source |
 |---|---|---|---|
 | press | button pressed state | 100 ms | v2.5.1 `--m-press` is 90 ms; raised to 100 ms to meet the floor in `ui.md` rule 2 |
-| hover-in | hover state coming on | 150 ms | v2.5.1 `--m-in`; demo section (c) |
-| hover-out | hover state going off | 120 ms | v2.5.1 `--m-out`; demo section (c) |
+| hover-in | hover state coming on | 150 ms | v2.5.1 `--m-in`; demo section (a), v2.5.1 column; chosen in (c) |
+| hover-out | hover state going off | 120 ms | v2.5.1 `--m-out`; demo section (a), v2.5.1 column; chosen in (c) |
 | panel-open | menu or dropdown opening | 200 ms | v2.5.1 `--m-panel`; demo section (c) |
 | panel-close | menu or dropdown closing | 120 ms | v2.5.1 `--m-close` (60% of panel-open); demo section (c) |
 | slide | an indicator travelling | 240 ms | v2.5.1 `--m-slide` |
-| entrance (strong) | card or moment entering | 24 px rise, 320 ms, `ease-enter` | demo section (d), strong setting; curve from v2.5.1 `--m-ease-enter` |
-| exit (strong) | card or moment leaving | 192-256 ms (60-80% of 320 ms), `ease-enter` | the exit rule above |
-| card hover (strong) | card lifting under a fine pointer or focus | 6 px up, scale 1.03, 200 ms, `ease-control` | demo section (d), strong setting |
-| stagger (strong) | delay between sibling cards entering | 80 ms | demo section (d), strong setting |
+| entrance (strong) | the page's one moment entering (only as that moment) | 24 px rise, 320 ms, `ease-enter` | demo section (d), strong setting; curve from v2.5.1 `--m-ease-enter` |
+| exit (strong) | the page's one moment leaving | 192-256 ms (60-80% of 320 ms), `ease-enter` | the exit rule above |
+| card hover (strong) | a linked/clickable card lifting under a fine pointer or focus | 6 px up, scale 1.03, 200 ms, `ease-control` | demo section (d), strong setting |
+| stagger (strong) | delay between sibling cards entering, only as the page's one moment; at most 3 siblings stagger, the rest enter with the third | 80 ms | demo section (d), strong setting |
 
 Check of the exit rule against the table: hover-out is 80% of hover-in and
 panel-close is 60% of panel-open.
@@ -446,7 +447,7 @@ will not be updated from there.
   shown by coloring the value (or a small mark beside it), not by putting a
   colored border or background around the whole row or card. Keep to the
   existing tokens; errors use `--text-error` (see the
-  destructive-action rule above).
+  destructive-action rule below).
 - **Show 0 and empty as they are.** A count of 0 is written `0`, not hidden
   and not replaced by a dash; an empty list says it is empty (see
   `copy-language` for the wording). Don't fill a gap with placeholder numbers.
@@ -562,7 +563,7 @@ default.
 
 Tells move with every model generation. Learn why each one reads as
 machine-made instead of memorising the list, and read the list as a set of
-signals: one tell proves little; clusters and repetition are the signal. This
+signals: one tell proves little; clusters and repetition are the signal (taste-skill v2.5.1 `copy-tells.md`). This
 list names tells, not replacements: it never says what to use instead, so it
 cannot become the next default. Every entry carries the date it was added and
 the source version. The three above were added 2026-08-22 (from the
@@ -580,7 +581,7 @@ From taste-skill v2.1.4 (MIT), layout and component tells:
 - **A row of identical cards, each topped by the same kind of icon.**
 - **A gray-bar fake dashboard** used as a hero picture instead of real
   content.
-- **Agency-style small print** used as decoration rather than as information.
+- **Agency-style small print** used as decoration rather than as information (a section label that names the section, such as `BaseEyebrow`, is information).
 
 From taste-skill v2.5.1 (MIT), motion and structure tells:
 - **A card that tilts, flips, scales, follows the pointer or glows at the
