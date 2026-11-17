@@ -33,7 +33,9 @@ const router = createRouter({
       meta: {
         tag: 'Home',
         title: 'IN / ARCHIVE',
-        subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
+        // 首頁沒有 kicker 也沒有副標：主題句就是 H1，由 HomeView 自己畫，
+        // 通用表頭不再畫一次。title 仍留著給分頁標題與捲動追蹤列用
+        hideHeader: true,
       },
     },
     {

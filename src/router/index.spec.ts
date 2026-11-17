@@ -191,3 +191,13 @@ describe('router：/articles 的署名', () => {
   })
 })
 
+
+// 首頁 C 版：主題句就是 H1（HomeView 自己畫），沒有 kicker、沒有副標，通用表頭不再畫一次
+describe('router：首頁表頭', () => {
+  it('它應該隱藏通用表頭、沒有副標，分頁標題用的 title 仍在', () => {
+    const meta = router.resolve('/').meta
+    expect(meta.hideHeader).toBe(true)
+    expect(meta.subtitle).toBeUndefined()
+    expect(meta.title).toBe('IN / ARCHIVE')
+  })
+})

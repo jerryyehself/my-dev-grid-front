@@ -22,6 +22,8 @@ export interface Project {
   /** 篩選用。2026-10-04 以前的示範資料快照沒有這個欄位，篩選時退回用 tags */
   techniques?: ProjectTechnique[]
   started: string
+  /** GitHub 建立日（YYYY-MM-DD），首頁「最新收錄」排序用；沒有日期（或舊快照）是空字串 */
+  createdDate?: string
   repo: string
   role?: string
 }
@@ -111,6 +113,7 @@ const toProject = (raw: ImplementationDto, scopeNames: Map<number, string>): Pro
     tags: techniques.map((t) => techniqueLabel(t.name, t.version)),
     techniques,
     started: toStartedYm(raw.git_repo_created_at),
+    createdDate: raw.git_repo_created_at ? raw.git_repo_created_at.slice(0, 10) : '',
     repo: raw.title,
   }
 }
