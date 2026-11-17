@@ -135,4 +135,29 @@ describe('GraphShortcutsHelp（首頁的閱讀方式）', () => {
     expect(wrapper.text()).not.toContain('節點的大小反映關係的多寡')
     expect(wrapper.text()).not.toContain('查詢更多路線')
   })
+
+  it('它應該在打開時把焦點交給關閉鈕，但不讓頁面跟著捲動（畫布常有一部分在視窗外）', async () => {
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+    const wrapper = mount(GraphShortcutsHelp, {
+      props: { open: false, isMac: false, reading: { layered: true } },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      attachTo: document.body,
+    })
+    await wrapper.setProps({ open: true })
+    await nextTick()
+    await nextTick()
+
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true })
+    focus.mockRestore()
+    wrapper.unmount()
+  })
+
+  it('它應該讓閱讀方式在窄畫布蓋住整個畫布（含縮放鈕）、操作說明維持坐在按鈕列上方', () => {
+    const reading = mountReading(true).find('[role="dialog"]')
+    const plain = mount(GraphShortcutsHelp, { props: { open: true, isMac: false } }).find('[role="dialog"]')
+
+    expect(reading.classes()).toContain('bottom-3')
+    expect(reading.classes()).not.toContain('bottom-[4.25rem]')
+    expect(plain.classes()).toContain('bottom-[4.25rem]')
+  })
 })

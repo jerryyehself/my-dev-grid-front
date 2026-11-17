@@ -31,7 +31,8 @@ watch(
     resizeObserver?.disconnect()
     if (!open) return
     await nextTick()
-    closeBtn.value?.focus()
+    // preventScroll：畫布常有一部分在視窗外（首頁），聚焦時瀏覽器不能為了露出按鈕把頁面捲走
+    closeBtn.value?.focus({ preventScroll: true })
     updateMoreBelow()
     if (body.value) {
       resizeObserver = new ResizeObserver(updateMoreBelow)
@@ -62,7 +63,12 @@ const KEYS: { keys: string[]; text: string }[] = [
     role="dialog"
     aria-modal="false"
     aria-labelledby="kg-help-title"
-    class="absolute z-30 inset-x-3 bottom-[4.25rem] max-h-[calc(100%-5rem)] @min-[640px]:inset-x-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
+    :class="
+      reading
+        ? 'inset-x-3 bottom-3 max-h-[calc(100%-1.5rem)]'
+        : 'inset-x-3 bottom-[4.25rem] max-h-[calc(100%-5rem)]'
+    "
+    class="absolute z-30 @min-[640px]:inset-x-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
   >
     <div class="shrink-0 flex items-center justify-between gap-2 pl-4 pr-1.5 pt-1.5">
       <h3 id="kg-help-title" class="text-[15px] font-bold text-(--text-ink-main)">

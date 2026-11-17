@@ -34,14 +34,15 @@ function to(e: NewEntry) {
       <li v-for="e in entries" :key="`${e.kind}-${e.id}`" class="shrink-0">
         <RouterLink
           :to="to(e)"
-          class="inline-flex items-center gap-2 min-h-11 px-3 rounded-lg border border-(--border-shelf) bg-(--bg-paper-light) text-[15px] text-(--text-ink-main) whitespace-nowrap hover:border-(--text-accent) transition-colors"
+          :title="e.title"
+          class="inline-flex items-center gap-2 min-h-11 max-w-[62vw] md:max-w-full px-3 rounded-lg border border-(--border-shelf) bg-(--bg-paper-light) text-[15px] text-(--text-ink-main) whitespace-nowrap hover:border-(--text-accent) transition-colors"
         >
-          <span class="text-[13px] text-(--text-ink-muted)">{{
+          <span class="shrink-0 text-[13px] text-(--text-ink-muted)">{{
             e.kind === 'article' ? '文章' : '實作'
           }}</span>
-          <span class="font-semibold">{{ e.kind === 'article' ? `〈${e.title}〉` : e.title }}</span>
+          <span class="min-w-0 truncate font-semibold">{{ e.kind === 'article' ? `〈${e.title}〉` : e.title }}</span>
           <span
-            class="rounded bg-(--text-ink-main) px-1.5 py-px text-[12px] leading-snug text-(--bg-paper-light)"
+            class="shrink-0 rounded bg-(--text-ink-main) px-1.5 py-px text-[12px] leading-snug text-(--bg-paper-light)"
             >新</span
           >
         </RouterLink>

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   controlsBottomInset,
   fitTransform,
+  fitTransformInBand,
   fitTransformWithInset,
   screenExtent,
   type FitItem,
@@ -63,5 +64,51 @@ describe('fitTransformWithInset', () => {
 
   it('它應該在寬畫布不留底邊', () => {
     expect(controlsBottomInset(976, 16)).toBe(0)
+  })
+})
+
+describe('fitTransformInBand', () => {
+  // 畫布 976×460，視窗只露出上面 330px：路線的終點在畫布下半（y 在 330 以下）就看不到
+  const W = 976
+  const H = 460
+  const items = [node(-200, -150), node(-100, 60), node(150, 200)]
+  const screenY = (worldY: number, fit: { k: number; cy: number }) => (worldY - fit.cy) * fit.k + H / 2
+
+  it('它應該讓每個節點都落在橫帶內（不只在畫布內）', () => {
+    const fit = fitTransformInBand(items, W, H, 0, 330, 48, 3)!
+
+    for (const it of items) {
+      const y = screenY(it.y, fit)
+      expect(y - it.r * fit.k).toBeGreaterThanOrEqual(0)
+      expect(y + it.r * fit.k).toBeLessThanOrEqual(330)
+    }
+  })
+
+  it('它應該不超過 maxK（不比整張圖更近），放得下時維持 maxK', () => {
+    const fit = fitTransformInBand(items, W, H, 0, 330, 48, 0.5)!
+
+    expect(fit.k).toBeCloseTo(0.5, 6)
+  })
+
+  it('它應該在橫帶放不下時縮小，而不是讓節點跑出橫帶', () => {
+    const tall = [node(0, -400), node(0, 400)]
+    const fit = fitTransformInBand(tall, W, H, 0, 300, 48, 3)!
+
+    expect(fit.k).toBeLessThan(0.4)
+    expect(screenY(400, fit) + tall[1]!.r * fit.k).toBeLessThanOrEqual(300)
+  })
+
+  it('它應該支援橫帶不從畫布頂端開始（頁面已經捲過一段）', () => {
+    const fit = fitTransformInBand(items, W, H, 100, 300, 48, 3)!
+
+    for (const it of items) {
+      const y = screenY(it.y, fit)
+      expect(y - it.r * fit.k).toBeGreaterThanOrEqual(100)
+      expect(y + it.r * fit.k).toBeLessThanOrEqual(400)
+    }
+  })
+
+  it('它應該在沒有節點時回 null', () => {
+    expect(fitTransformInBand([], W, H, 0, 300, 48, 3)).toBeNull()
   })
 })

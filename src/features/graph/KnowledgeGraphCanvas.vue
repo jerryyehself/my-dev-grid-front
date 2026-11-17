@@ -14,7 +14,12 @@ import { nodeKindLabel, endpointId, type SimLink, type SimNode } from './graphTy
 import { recencyScore, viridis, withAlpha } from './colorScale'
 import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './derivedEdges'
 import { typeClusterForce } from './clusterForce'
-import { controlsBottomInset, fitTransformWithInset, type FitItem } from './fitView'
+import {
+  controlsBottomInset,
+  fitTransformInBand,
+  fitTransformWithInset,
+  type FitItem,
+} from './fitView'
 import { LABEL_MAX_WIDTH_PX, placeLabels, truncateLabel, type LabelCandidate } from './labels'
 import GraphDisplaySettings from './GraphDisplaySettings.vue'
 import GraphLegend from './GraphLegend.vue'
@@ -405,8 +410,7 @@ function clampAllNodes() {
 // 不算進框景，免得滑過節點時鏡頭跟著跳。
 const FIT_PADDING_PX = 16
 // 只框部分節點（路徑查詢）時最多放大 2 倍：路徑常常只有三四個節點，放到最大會看不到周圍
-function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
-  if (!graph) return
+function fitItemsOf(filter?: (n: SimNode) => boolean): FitItem[] {
   const items: FitItem[] = simNodes
     .filter((n) => n.x != null && n.y != null && (!filter || filter(n)))
     .map((n) => ({
@@ -421,6 +425,11 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
     for (const t of Object.values(layerTargetsCache))
       items.push({ x: t.cx, y: t.cy, r: t.r, labelW: 0, labelH: 0 })
   }
+  return items
+}
+function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
+  if (!graph) return
+  const items = fitItemsOf(filter)
   // 窄畫布的控制按鈕橫排在右下角，底邊讓出按鈕列的高度，框景後最下面的節點不會被蓋住
   const pad = filter ? 48 : FIT_PADDING_PX
   const fit = fitTransformWithInset(
@@ -430,6 +439,37 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
     pad,
     controlsBottomInset(viewW, pad),
     filter ? 2 : 3,
+  )
+  if (!fit) return
+  graph.centerAt(fit.cx, fit.cy, durationMs)
+  graph.zoom(fit.k, durationMs)
+}
+
+// 首頁版本：路線亮起時，把鏡頭移到路線在「視窗內看得到的那一段畫布」裡完整看得到的位置。畫布有
+// 一部分在視窗底邊以下（首頁第一屏的下半被切掉），換一條路線後終點節點可能落在那裡。倍率不超過
+// 整張圖的框景倍率（不需要比整張圖更近），放不下才縮小。
+function revealRoute(durationMs = 0) {
+  if (!graph || !stage.value || !pathNodeIds) return
+  const wholeK = fitTransformWithInset(
+    fitItemsOf(),
+    viewW,
+    viewH,
+    FIT_PADDING_PX,
+    controlsBottomInset(viewW, FIT_PADDING_PX),
+  )?.k
+  const rect = stage.value.getBoundingClientRect()
+  const bandTop = Math.max(0, -rect.top)
+  const bandBottom = Math.min(viewH, window.innerHeight - rect.top)
+  // 視窗只露出一小截（或畫布整個在視窗外）時退回整個畫布，不然橫帶太矮、節點會縮成一點
+  const useBand = bandBottom - bandTop >= 120
+  const fit = fitTransformInBand(
+    fitItemsOf((n) => pathNodeIds?.has(n.id) ?? false),
+    viewW,
+    viewH,
+    useBand ? bandTop : 0,
+    useBand ? bandBottom - bandTop : viewH,
+    48,
+    wholeK ?? 2,
   )
   if (!fit) return
   graph.centerAt(fit.cx, fit.cy, durationMs)
@@ -792,6 +832,7 @@ async function boot() {
       if (!settling.value) return
       clampAllNodes()
       fitView(0, pathFitFilter())
+      if (props.homeMode) revealRoute(0)
       settling.value = false
     })
   graph.d3Force('charge')?.strength(-130)
@@ -1051,7 +1092,7 @@ function toggleHelp() {
 }
 function closeHelp() {
   helpOpen.value = false
-  stage.value?.focus()
+  stage.value?.focus({ preventScroll: true })
 }
 function clearSelection() {
   const had = pinnedNodeId != null || popover.open
@@ -1118,8 +1159,11 @@ watch(
       pathNodeIds = new Set(path.nodes.map((n) => n.id))
       pathEdgeKeys = new Set(path.edges.map((e) => linkKey(e.source, e.target)))
       // 找到路徑就把鏡頭帶過去，只框路徑上的節點。還沒收斂前交給第一次框景處理。
-      if (!settling.value && !props.homeMode)
-        fitView(400, (n) => pathNodeIds?.has(n.id) ?? false)
+      if (!settling.value) {
+        // 等路線卡換完內容（高度可能不同，畫布會跟著被推動）再量視窗內看得到的範圍
+        if (props.homeMode) void nextTick(() => revealRoute(400))
+        else fitView(400, (n) => pathNodeIds?.has(n.id) ?? false)
+      }
     }
     forceRedraw()
   },
