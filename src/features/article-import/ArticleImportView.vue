@@ -45,6 +45,8 @@ const choices = reactive<Record<string, RowChoice>>({})
 
 const submitting = ref(false)
 const submitError = ref<ImportError | null>(null)
+/** 後端已退回的那份請求（JSON）；選擇沒變、清單沒重讀就再送，必然得到同樣的 409／422，所以先擋下 */
+const rejectedRequestKey = ref<string | null>(null)
 const result = ref<ImportResponse | null>(null)
 
 type Filter = 'actionable' | 'all'
@@ -54,6 +56,7 @@ async function load() {
   loading.value = true
   loadError.value = null
   submitError.value = null
+  rejectedRequestKey.value = null
   try {
     // 站上文章只用來顯示標題與提供連結選項，失敗不擋清單
     const [next, existing] = await Promise.all([
@@ -115,13 +118,27 @@ const problemTexts = computed(() => {
   const byPath = new Map(items.value.map((i) => [i.path, i.title ?? i.key ?? i.path]))
   return problems.value.map((p) => describeProblem(p, (path) => byPath.get(path) ?? path))
 })
+// 目前選擇組成的請求；選擇有問題、還沒選時是 null
+const requestKey = computed(() =>
+  listing.value && count.value > 0 && problems.value.length === 0
+    ? JSON.stringify(buildImportRequest(listing.value, choices))
+    : null,
+)
 // 重新整理清單進行中不能送出：此時畫面上的選擇與清單版本即將被換掉
 const canSubmit = computed(
-  () => count.value > 0 && problems.value.length === 0 && !submitting.value && !loading.value,
+  () =>
+    count.value > 0 &&
+    problems.value.length === 0 &&
+    !submitting.value &&
+    !loading.value &&
+    requestKey.value !== rejectedRequestKey.value,
 )
 // 這幾種失敗都是「整批沒寫入或不確定有沒有寫入」，重新讀清單再選一次是對的出路；
 // 來源暫時不能用（unavailable）重讀也不會好，所以不給
 const REFRESHABLE_KINDS: ImportError['kind'][] = ['stale', 'validation', 'network']
+// 其中只有 409（清單過期）和 422（選擇沒通過驗證）是「同一份請求再送一次必定同樣失敗」；
+// 連不上後端可能只是一時的，重送是安全的，不擋
+const REJECTED_KINDS: ImportError['kind'][] = ['stale', 'validation']
 
 async function submit() {
   if (!listing.value || !canSubmit.value) return
@@ -132,6 +149,7 @@ async function submit() {
     result.value = await importArticleSources(buildImportRequest(listing.value, choices))
   } catch (e) {
     submitError.value = describeImportError(e)
+    if (REJECTED_KINDS.includes(submitError.value.kind)) rejectedRequestKey.value = requestKey.value
     return
   } finally {
     submitting.value = false
