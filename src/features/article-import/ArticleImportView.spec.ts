@@ -14,6 +14,7 @@ import {
   NEW_ITEM,
   RENAMED_NEW_ITEM,
   RENAMED_OLD_ITEM,
+  SITE_VERSION,
   WARNING_ITEM,
   listingOf,
 } from './articleImportFixtures'
@@ -308,9 +309,35 @@ describe('ArticleImportView conflict 覆蓋確認', () => {
           expected_blob_sha: CONFLICT_ITEM.blob_sha,
           action: 'update',
           overwrite_site_edits: true,
+          expected_site_version: SITE_VERSION,
         },
       ],
     })
+  })
+
+  it('它應該在清單沒給 site_version 時擋住覆蓋、說明原因，也不呼叫後端', async () => {
+    const noVersion = { ...CONFLICT_ITEM, site_version: null }
+    const w = await mountView([noVersion])
+    await pick(w, '兩邊都改過的筆記', '更新')
+    await row(w, '兩邊都改過的筆記').get('[role="switch"]').trigger('click')
+
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+    expect(w.get('[data-test="problems"]').text()).toContain('缺少站上版本')
+    await submitButton(w).trigger('click')
+    expect(importArticleSources).not.toHaveBeenCalled()
+  })
+
+  it('它應該不替其他動作帶 expected_site_version', async () => {
+    vi.mocked(importArticleSources).mockResolvedValue({ commit_sha: COMMIT, message: 'ok', data: [] })
+    const w = await mountView()
+    await pick(w, '新的筆記', '新增為草稿')
+    await pick(w, '有更新的筆記', '更新')
+    await submitButton(w).trigger('click')
+    await flushPromises()
+
+    const sent = vi.mocked(importArticleSources).mock.calls[0]![0]
+    expect(sent.items).toHaveLength(2)
+    for (const item of sent.items) expect(item).not.toHaveProperty('expected_site_version')
   })
 
   it('它應該在改回「不處理」之後不再要求確認', async () => {
@@ -529,6 +556,61 @@ describe('ArticleImportView 匯入失敗', () => {
       '站上的文章在清單產生之後有變動。這篇文章已經連結到其他來源檔案。檔案內容跟清單上的不同。沒有任何文章被寫入。請重新整理清單，再選一次。',
     )
     expect(box.findAll('button').map((b) => b.text())).toEqual(['重新整理清單'])
+  })
+
+  it('它應該在 409 說站上內容於清單載入後又改過時，用固定說明取代後端原文，並維持提供「重新整理清單」', async () => {
+    const w = await failWith(
+      new ApiRequestError(409, '/article-sources/import', 'POST', {
+        reason: 'conflict',
+        errors: {
+          'items.0.expected_site_version': [
+            '站上的標題、日期或內文在列出清單之後又改過，請重新整理清單，確認後再決定要不要覆蓋。',
+          ],
+        },
+      }),
+    )
+    const box = w.get('[data-test="submit-error"]')
+    expect(box.get('p').text()).toBe(
+      '站上的標題、日期或內文在清單載入之後又改過。沒有任何文章被寫入。請重新整理清單，確認站上現在的內容後，再決定要不要覆蓋。',
+    )
+    expect(box.findAll('button').map((b) => b.text())).toEqual(['重新整理清單'])
+  })
+
+  it('它應該在覆蓋被 409 退回後擋下同一份選擇，重新整理清單後才能再送', async () => {
+    vi.mocked(importArticleSources).mockRejectedValue(
+      new ApiRequestError(409, '/article-sources/import', 'POST', {
+        reason: 'conflict',
+        errors: { 'items.0.expected_site_version': ['站上又改過。'] },
+      }),
+    )
+    const w = await mountView()
+    await pick(w, '兩邊都改過的筆記', '更新')
+    await row(w, '兩邊都改過的筆記').get('[role="switch"]').trigger('click')
+    await submitButton(w).trigger('click')
+    await flushPromises()
+
+    expect(w.get('[data-test="submit-error"]').text()).toContain('清單載入之後又改過')
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+    await submitButton(w).trigger('click')
+    expect(importArticleSources).toHaveBeenCalledTimes(1)
+
+    // 重新整理後清單帶新的 site_version；重新選、重新確認覆蓋，送出的是新版本
+    const newer = 'e'.repeat(64)
+    vi.mocked(fetchArticleSources).mockResolvedValue(listingOf([{ ...CONFLICT_ITEM, site_version: newer }]))
+    vi.mocked(importArticleSources).mockResolvedValue({ commit_sha: COMMIT, message: 'ok', data: [] })
+    await w.get('[data-test="submit-error"]').findAll('button')[0]!.trigger('click')
+    await flushPromises()
+    expect(w.find('[data-test="submit-error"]').exists()).toBe(false)
+    await pick(w, '兩邊都改過的筆記', '更新')
+    await row(w, '兩邊都改過的筆記').get('[role="switch"]').trigger('click')
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+    await submitButton(w).trigger('click')
+    await flushPromises()
+    expect(importArticleSources).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(importArticleSources).mock.calls[1]![0].items[0]).toMatchObject({
+      overwrite_site_edits: true,
+      expected_site_version: newer,
+    })
   })
 
   it.each([
