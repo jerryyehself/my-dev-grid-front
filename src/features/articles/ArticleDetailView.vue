@@ -112,7 +112,7 @@
         <!-- 署名：文章結尾、上一篇／下一篇的上面。文章清單的標題下面是同一句（router 的 meta.subtitle）。
              mb-0 text-left：蓋掉 .global-page-wrapper p 的下距與桌機的兩端對齊 -->
         <p class="mt-10 mb-0 border-t border-(--border-shelf) pt-4 text-sm text-left text-(--text-ink-muted)">
-          {{ ARTICLE_BYLINE }}
+          {{ BYLINE }}
         </p>
 
         <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
@@ -183,7 +183,7 @@ import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { extractHeadings } from '@/components/markdown/headings'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { pageTitleOverride } from '@/siteMeta'
-import { ARTICLE_BYLINE, LOADING_TEXT } from '@/copy/common'
+import { BYLINE, LOADING_TEXT } from '@/copy/common'
 
 const route = useRoute()
 const articleId = computed(() => Number(route.params.id))

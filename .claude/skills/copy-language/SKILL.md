@@ -68,7 +68,7 @@ When a new term is settled with the user, add a row here **and** record the deci
 ## Formats
 
 **Page subtitle** (the line under a page title)
-- **Only where the page's purpose isn't evident from its content** (the user, 2026-10-01, D-83). List pages whose content shows what they are — `/articles`, `/projects` — get no subtitle; the home page and `/graph` keep theirs. The one exception is the article byline (「主筆　Claude　／　發想・審定　站主」, in `src/copy/common.ts`): `/articles` shows it in the subtitle slot, directly under the page title, and every article repeats it at its end. It is an attribution, not a description of the page. A page with no subtitle must still show some Chinese text above the fold (a count line, an empty state).
+- **Only where the page's purpose isn't evident from its content** (the user, 2026-10-01, D-83). List pages whose content shows what they are — `/articles`, `/projects` — get no subtitle; the home page and `/graph` keep theirs. The one exception is the byline (「由 Claude 撰寫，Jerry Yeh 發想並審定」, `BYLINE` in `src/copy/common.ts`, one source for all three places): `/articles` shows it in the subtitle slot, directly under the page title, every article repeats it at its end, and the About page shows it under the name. It is an attribution, not a description of the page. A page with no subtitle must still show some Chinese text above the fold (a count line, an empty state).
 - Describes what the page holds. **No usage instructions** — the controls are visible already
   (the user rejected 「…，可以用技術篩選」, 2026-10-01).
 - Put the information-carrying words first: "if users see only the first 2 words, they should
