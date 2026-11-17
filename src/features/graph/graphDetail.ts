@@ -11,6 +11,8 @@ export interface DetailNode {
   id: string
   label: string
   domainType: GraphNodeType
+  /** 文件類才有意義（post 是文章、sourcesite 是官方文件），給單一節點的類別名稱用 */
+  subtype?: string | null
 }
 
 export interface RelationGroup {
@@ -147,5 +149,5 @@ export function detailNodeOf(index: GraphDetailIndex | null, id: string): Detail
 }
 
 function toDetail(n: DetailNode): DetailNode {
-  return { id: n.id, label: n.label, domainType: n.domainType }
+  return { id: n.id, label: n.label, domainType: n.domainType, subtype: n.subtype ?? undefined }
 }

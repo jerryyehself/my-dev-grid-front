@@ -74,3 +74,12 @@ describe('GraphZoomControls', () => {
     expect(helpButton.attributes('aria-expanded')).toBe('true')
   })
 })
+
+describe('GraphZoomControls（首頁的「?」）', () => {
+  it('它應該讓「?」鈕的名稱跟著面板標題（首頁是「閱讀方式」）', () => {
+    const wrapper = mount(GraphZoomControls, { props: { helpOpen: false, helpLabel: '閱讀方式' } })
+    const buttons = wrapper.findAll('button')
+
+    expect(buttons.map((b) => b.attributes('aria-label'))).toEqual(['放大', '縮小', '全部置中', '閱讀方式'])
+  })
+})

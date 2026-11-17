@@ -14,6 +14,9 @@ import type { GraphNodeType } from '@/api/graph'
 // 多根節點元件不會自動繼承 class/style,關掉自動繼承免得 Vue 警告
 defineOptions({ inheritAttrs: false })
 
+// counts：首頁圖例在類別名後面帶數量；沒給就只有名稱（/graph）
+defineProps<{ counts?: Record<GraphNodeType, number> | null }>()
+
 const ITEMS: { type: GraphNodeType; label: string }[] = [
   { type: 'documentation', label: '文件' },
   { type: 'technique', label: '技術' },
@@ -25,5 +28,8 @@ const ITEMS: { type: GraphNodeType; label: string }[] = [
   <span v-for="item in ITEMS" :key="item.type" class="flex items-center gap-1.5">
     <span class="w-2 h-2 rounded-full" :style="{ background: FAMILY_COLOR[item.type] }"></span>
     {{ item.label }}
+    <b v-if="counts" class="font-semibold text-(--text-ink-main) tabular-nums">{{
+      counts[item.type]
+    }}</b>
   </span>
 </template>
