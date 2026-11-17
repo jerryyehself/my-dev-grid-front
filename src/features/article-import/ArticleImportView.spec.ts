@@ -570,9 +570,9 @@ describe('ArticleImportView 匯入失敗', () => {
   })
 
   it.each([
-    ['409', new ApiRequestError(409, '/article-sources/import', 'POST', { reason: 'stale' })],
-    ['422', new ApiValidationError({ 'items.0.documentation_id': '要連結的文章不存在或已刪除。' })],
-  ])('它應該在 %s 被退回後擋下同一份選擇，改選或重新整理清單才能再送', async (_status, error) => {
+    { name: '409', error: new ApiRequestError(409, '/article-sources/import', 'POST', { reason: 'stale' }) },
+    { name: '422', error: new ApiValidationError({ 'items.0.documentation_id': '要連結的文章不存在或已刪除。' }) },
+  ])('它應該在 $name 被退回後擋下同一份選擇，改選或重新整理清單才能再送', async ({ error }) => {
     const w = await failWith(error)
     expect(importArticleSources).toHaveBeenCalledTimes(1)
     expect(submitButton(w).attributes('disabled')).toBeDefined()
@@ -594,10 +594,10 @@ describe('ArticleImportView 匯入失敗', () => {
   })
 
   it.each([
-    ['連不上後端', new TypeError('Failed to fetch')],
-    ['500', new ApiRequestError(500, '/article-sources/import', 'POST')],
-    ['503', new ApiRequestError(503, '/article-sources/import', 'POST', { reason: 'github_rate_limited' })],
-  ])('它應該在 %s 失敗後不擋同一份選擇（可能只是暫時的）', async (_name, error) => {
+    { name: '連不上後端', error: new TypeError('Failed to fetch') },
+    { name: '500', error: new ApiRequestError(500, '/article-sources/import', 'POST') },
+    { name: '503', error: new ApiRequestError(503, '/article-sources/import', 'POST', { reason: 'github_rate_limited' }) },
+  ])('它應該在 $name 失敗後不擋同一份選擇（可能只是暫時的）', async ({ error }) => {
     const w = await failWith(error)
     expect(submitButton(w).attributes('disabled')).toBeUndefined()
     await submitButton(w).trigger('click')
