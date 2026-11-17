@@ -24,7 +24,7 @@
               phrase
             }}</span>
           </p>
-          <p class="mt-3.5 mb-0 text-sm text-(--text-ink-muted)">{{ BYLINE }}</p>
+          <p class="mt-3.5 mb-0 text-sm leading-[1.75] text-(--text-ink-muted)">{{ BYLINE }}</p>
           <p class="mt-6 mb-0 flex flex-wrap gap-3 max-sm:justify-center">
             <a :href="GITHUB_URL" :class="BUTTON">
               <svg
@@ -98,7 +98,7 @@ const WRAP = 'mx-auto w-full max-w-[1120px] px-4 md:px-8'
 
 // 頁首按鈕（GitHub、電子郵件）
 const BUTTON =
-  'inline-flex items-center gap-2 min-h-11 px-4 border border-(--text-ink-body) rounded-md text-base font-normal text-(--text-ink-main) no-underline transition-[background-color,color] duration-[160ms] ease-out hover:bg-(--text-ink-main) hover:text-(--bg-page) motion-reduce:transition-none'
+  'inline-flex items-center gap-2 min-h-11 px-4 border border-(--text-ink-body) rounded-md text-base leading-[1.75] font-normal text-(--text-ink-main) no-underline transition-[background-color,color] duration-[160ms] ease-out hover:bg-(--text-ink-main) hover:text-(--bg-page) motion-reduce:transition-none'
 
 // 職涯句分成幾個詞組：桌機每組不拆行（inline-block），手機接成一般文字
 const CAREER_PHRASES = [
