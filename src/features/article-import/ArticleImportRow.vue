@@ -134,7 +134,7 @@ const badgeClass = computed(
     </div>
 
     <p v-if="isConflict && action === 'update'" class="m-0 text-[13px] text-(--text-ink-body)">
-      站上的內文在上次匯入之後改過，更新會用來源的內容覆蓋。
+      站上的標題、日期或內文可能在上次匯入之後改過，更新會用來源的內容覆蓋。
     </p>
     <p v-if="overwritesPublished(item, choice)" class="m-0 text-[13px] text-(--text-ink-body)" data-test="published-note">
       這篇已發布，更新後站上會直接換成來源的內容。
