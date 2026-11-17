@@ -37,7 +37,7 @@ const MORE_LINK =
 
 <template>
   <main class="flex flex-col gap-4 sm:gap-5">
-    <!-- 主題句就是 H1（沒有 kicker、沒有副標）。標題用 --font-serif（D-60），跟其他頁的 H1 同一套 -->
+    <!-- 主題句就是 H1（沒有 kicker、沒有副標）。標題用 --font-serif，跟其他頁的 H1 同一套 -->
     <h1
       class="font-serif !font-black text-(--text-ink-main) text-[28px] sm:text-[34px] leading-tight"
     >
