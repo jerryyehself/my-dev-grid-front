@@ -360,49 +360,116 @@ oversight.
 
 ## Motion
 
-Rules, not final numbers. The site's motion policy (duration range, which
-pages may animate, `transform`/`opacity` only, `prefers-reduced-motion`,
-banned techniques) lives in `.claude/rules/ui.md` rule 2; this section does
-not repeat it, it adds the rules below on top. Each rule names where it was
-borrowed from: taste-skill v2.1.4 or v2.5.1 (MIT). Where the site's own
-policy and an upstream rule disagree, the site's policy wins.
+The site's motion policy (duration range, which pages may animate,
+`transform`/`opacity` only, `prefers-reduced-motion`, banned techniques)
+lives in `.claude/rules/ui.md` rule 2; this section does not repeat it, it
+adds the rules and the token table below on top. Each rule names where it
+was borrowed from: taste-skill v2.1.4 or v2.5.1 (MIT), or the section of the
+motion demo (`docs/demos/motion-demo.html`) that fixed the number. Where the
+site's own policy and an upstream rule disagree, the site's policy wins.
 
 - **Every animation states its purpose in one line**, written in the issue or
   PR that adds it. No purpose, no animation. (v2.5.1, "Why it moves".)
 - **Content stays complete without JS and under reduced motion.** Motion only
   adds to a page that is already whole at rest; it must never hide text a
   visitor could already be reading. (v2.5.1, "Why it moves" and Never list.)
-- **Don't give every section the same fade-in.** The same fade-up on every
-  block is the tell. If sections do enter, vary the motion with the content,
-  or let most of them not move and keep one deliberate moment. (v2.1.4 §9
-  "The same fade-up on every block"; v2.5.1 Never "a fade-in on every
-  section". The choice between "vary" and "mostly still" is pending the
-  motion demo decision.)
+- **Scrolling in: one deliberate moment per exploratory page, the rest stay
+  still.** A whole exploratory page (Home, About) keeps a single deliberate
+  entrance moment; every other section is already in place when it scrolls
+  into view. No fade-in on each block: the same fade-up on every block is the
+  tell. (Demo section (b), option C-1; v2.1.4 §9 "The same fade-up on every
+  block"; v2.5.1 Never "a fade-in on every section".)
 - **Hover movement only for fine pointers**:
   `@media (hover: hover) and (pointer: fine)`. Touch devices get no hover
   displacement; keyboard focus shows the same state everywhere. (v2.5.1
-  `motion.md`.)
+  `motion.md`; demo section (d).)
 - **Don't animate `width`, `height` or `margin`.** They reflow the page;
   use `transform`/`opacity`. (v2.5.1 `motion.md` Never list.)
 - **The focus ring does not animate.** It appears at once. (v2.5.1
   `motion.md` Never list.)
 - **No overshoot.** No bounce, no curve that passes its mark. (v2.5.1
   `motion.md`, Curves.)
+- **Enter and exit share one decelerating curve; exit is shorter.** An exit
+  takes 60-80% of the matching entrance and uses the same curve, not an
+  accelerating one. (v2.5.1 `motion.md`, which keeps one ease-out for
+  entering and leaving; the 60-80% range is the site's reading of v2.1.4
+  "exits 60-70% of the matching entrance", widened so every control token
+  below lands inside it; demo section (a).)
 
 ### Motion tokens
 
-Pending the motion demo decision. Durations, curves and the exit-curve
-question (an accelerating exit, as the site's policy says, versus the same
-ease-out only shorter, as v2.5.1 does) are decided after the side-by-side
-demo; fill this table then, and cite which version each value comes from.
+Two tiers. The default tier is for controls (buttons, menus, panels) and uses
+the control curve. The strong tier is for the cards-and-moment case only:
+card entrance and hover, and the one scroll moment (see the scrolling rule
+above). Never use the strong tier on a button or a menu. All durations stay
+inside the 100-400 ms range in `.claude/rules/ui.md` rule 2.
 
-| Token | Use | Value |
-|---|---|---|
-| press | button press | pending |
-| hover in / out | hover state | pending |
-| panel open / close | menus, dropdowns | pending |
-| entrance | section or heading entering | pending |
-| UI curve / entrance curve / exit curve | easing | pending |
+Curves:
+
+| Token | Value | Use | Source |
+|---|---|---|---|
+| ease-control | `cubic-bezier(.2, .8, .2, 1)` | every control step: press, hover in / out, panel open / close, slide, card hover | taste-skill v2.5.1 `--ease`; demo section (c) |
+| ease-enter | `cubic-bezier(.22, 1, .36, 1)` | entrances settling into place (quint-out) | taste-skill v2.5.1 `--m-ease-enter` (same value as v2.1.4 `--ease-out`) |
+| ease-exit | same as the matching entrance | exits; no separate accelerating curve | v2.5.1 `motion.md`; demo section (a) |
+
+Durations and distances:
+
+| Token | Use | Value | Source |
+|---|---|---|---|
+| press | button pressed state | 100 ms | v2.5.1 `--m-press` is 90 ms; raised to 100 ms to meet the floor in `ui.md` rule 2 |
+| hover-in | hover state coming on | 150 ms | v2.5.1 `--m-in`; demo section (c) |
+| hover-out | hover state going off | 120 ms | v2.5.1 `--m-out`; demo section (c) |
+| panel-open | menu or dropdown opening | 200 ms | v2.5.1 `--m-panel`; demo section (c) |
+| panel-close | menu or dropdown closing | 120 ms | v2.5.1 `--m-close` (60% of panel-open); demo section (c) |
+| slide | an indicator travelling | 240 ms | v2.5.1 `--m-slide` |
+| entrance (strong) | card or moment entering | 24 px rise, 320 ms, `ease-enter` | demo section (d), strong setting; curve from v2.5.1 `--m-ease-enter` |
+| exit (strong) | card or moment leaving | 192-256 ms (60-80% of 320 ms), `ease-enter` | the exit rule above |
+| card hover (strong) | card lifting under a fine pointer or focus | 6 px up, scale 1.03, 200 ms, `ease-control` | demo section (d), strong setting |
+| stagger (strong) | delay between sibling cards entering | 80 ms | demo section (d), strong setting |
+
+Check of the exit rule against the table: hover-out is 80% of hover-in and
+panel-close is 60% of panel-open.
+
+## Operational screens
+
+Rules for screens that show data to be read and compared (the admin page, the
+stat tiles, the status board, the ontology lists, the projects filter), as
+opposed to pages meant to be looked at. All four are from taste-skill v2.1.4
+(MIT) `app-screens`; that file no longer exists upstream in v2.5.1, so these
+will not be updated from there.
+
+- **Numbers sit in a column, right-aligned, in tabular figures.** Use
+  `tabular-nums` on any number that changes, is compared down a list, or sits
+  in a fixed-width cell, so digits keep one width and columns do not jitter.
+  Right-align a numeric column; left-align text.
+- **Color goes on the data, not on the outline.** A status or a threshold is
+  shown by coloring the value (or a small mark beside it), not by putting a
+  colored border or background around the whole row or card. Keep to the
+  existing tokens; errors use `--text-error` (see the
+  destructive-action rule above).
+- **Show 0 and empty as they are.** A count of 0 is written `0`, not hidden
+  and not replaced by a dash; an empty list says it is empty (see
+  `copy-language` for the wording). Don't fill a gap with placeholder numbers.
+- **Balance headings.** Headings use `text-wrap: balance` (Tailwind
+  `text-balance`) so a two-line title doesn't end on one orphaned word. As of
+  2026-11-17 no heading in `src/` uses it yet; add it when touching a heading,
+  not as a sweep.
+
+Where `tabular-nums` is already used (9 files in `src/`, counted with
+`grep -rl tabular-nums src` on 2026-11-17; copy the pattern from these):
+- `src/components/BaseStatTile.vue`: the stat value (mono, large).
+- `src/components/markdown/MarkdownBody.vue`: ordered-list markers (right-aligned
+  in a column sized by the widest number) and inline superscript reference numbers.
+- `src/features/admin/AdminView.vue`: counts in the admin summary.
+- `src/features/home/KnowledgeGraphPanel.vue`: the document, technique,
+  implementation and edge counts in the home graph sentence.
+- `src/features/home/StatusBoardPanel.vue`: article dates.
+- `src/features/ontology/OntologyScopesView.vue` and
+  `src/features/ontology/OntologyScopeDetailView.vue`: the fixed-width call
+  number column in the lists.
+- `src/features/projects/ProjectsFilterGroup.vue`: counts in the filter
+  chips.
+- `src/features/projects/ProjectsMobileLayout.vue`: the tag count badge.
 
 ## Extending the token set
 
@@ -490,6 +557,50 @@ before anyone could articulate why. The fix wasn't "pick a different accent
 color," it was grounding the hue choice in the subject itself (library
 materials: walnut wood, brass, aged leather) rather than a generic dark-mode
 default.
+
+#### The list is dated and moves
+
+Tells move with every model generation. Learn why each one reads as
+machine-made instead of memorising the list, and read the list as a set of
+signals: one tell proves little; clusters and repetition are the signal. This
+list names tells, not replacements: it never says what to use instead, so it
+cannot become the next default. Every entry carries the date it was added and
+the source version. The three above were added 2026-08-22 (from the
+`artifact-design` and `frontend-design` skills). The entries below were added
+2026-11-17.
+
+From taste-skill v2.1.4 (MIT), layout and component tells:
+- **A pill badge floating above a heading** as decoration (a data count inside
+  a filter chip is information, not this).
+- **One word of a heading styled differently** (colored, italic, underlined)
+  to fake emphasis.
+- **A floating pill-shaped navigation bar.**
+- **The same fade-up on every section.** See the Motion section's scrolling
+  rule.
+- **A row of identical cards, each topped by the same kind of icon.**
+- **A gray-bar fake dashboard** used as a hero picture instead of real
+  content.
+- **Agency-style small print** used as decoration rather than as information.
+
+From taste-skill v2.5.1 (MIT), motion and structure tells:
+- **A card that tilts, flips, scales, follows the pointer or glows at the
+  cursor; a magnetic button.** (The strong-tier hover lift in the Motion
+  tokens is a fixed 6 px rise and 1.03 scale under a fine pointer, not this.)
+- **Anything that advances by itself:** a carousel, an auto-advancing slider,
+  timed tabs, a rotating notice, a logo marquee.
+- **Blinking at random:** twinkling dots, glitter, flicker, hue cycling,
+  scrambled text. Every change should show a state, a step or real data.
+- **The section template:** every section being a small label, a claim
+  heading, a short lede and three or four cards. The tell is the repetition
+  down the whole page, not any one element of it.
+
+**After removing a tell, check for over-correction.** Look for the habit that
+replaced the one you removed (the plain card row that became a plain
+two-column list, the cut animation that became a hard-coded static layout
+with the same rhythm everywhere). Put real content in the gap, then re-read
+the result as if you had not made the change. A rule that made the page worse
+is broken on purpose. (taste-skill v2.5.1 `copy-voice.md` over-correction
+check; written upstream for copy, applied here to visuals.)
 
 ## Generating a color palette (fallback method)
 
