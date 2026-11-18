@@ -32,12 +32,12 @@ async function mountNavbar(initialPath = '/') {
 
 describe('TheNavbar', () => {
   beforeEach(() => {
-    document.documentElement.classList.remove('theme-terminal')
+    document.documentElement.classList.remove('theme-dark')
     localStorage.clear()
   })
 
   afterEach(() => {
-    document.documentElement.classList.remove('theme-terminal')
+    document.documentElement.classList.remove('theme-dark')
     localStorage.clear()
   })
 
@@ -96,5 +96,28 @@ describe('TheNavbar', () => {
     await wrapper.vm.$nextTick()
 
     expect(menuButton.attributes('aria-expanded')).toBe('false')
+  })
+
+  it('它應該在手機選單展開後中英並列（例如「ARTICLES 文章」），實作類用「實作」', async () => {
+    const wrapper = await mountNavbar('/')
+
+    await wrapper.find('button[aria-label="開啟導覽選單"]').trigger('click')
+
+    const menuText = wrapper
+      .findAll('a')
+      .map((a) => a.text().replace(/\s+/g, ''))
+    expect(menuText).toContain('HOME首頁')
+    expect(menuText).toContain('ARTICLES文章')
+    expect(menuText).toContain('PROJECTS實作')
+    expect(menuText).toContain('GRAPH圖譜')
+    expect(menuText).toContain('ABOUT關於')
+  })
+
+  it('它應該把手機版的主題鈕放在漢堡旁邊，而不是藏進選單（選單沒展開也找得到）', async () => {
+    const wrapper = await mountNavbar('/')
+
+    const mobileCluster = wrapper.find('div.md\\:hidden.flex.items-center')
+    expect(mobileCluster.find('[role="group"]').exists()).toBe(true)
+    expect(mobileCluster.find('button[aria-label="開啟導覽選單"]').exists()).toBe(true)
   })
 })

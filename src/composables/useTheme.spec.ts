@@ -12,30 +12,30 @@ async function freshUseTheme() {
 
 describe('useTheme', () => {
   beforeEach(() => {
-    document.documentElement.classList.remove('theme-terminal')
+    document.documentElement.classList.remove('theme-dark')
     localStorage.clear()
   })
 
   afterEach(() => {
-    document.documentElement.classList.remove('theme-terminal')
+    document.documentElement.classList.remove('theme-dark')
     localStorage.clear()
   })
 
-  it('它應該以 library 為初始狀態', async () => {
+  it('它應該以 light 為初始狀態', async () => {
     const useTheme = await freshUseTheme()
     const { theme } = useTheme()
 
-    expect(theme.value).toBe('library')
+    expect(theme.value).toBe('light')
   })
 
-  it('它應該在呼叫 toggleTheme 時把 library 切成 terminal，並掛上對應的 class', async () => {
+  it('它應該在呼叫 toggleTheme 時把 light 切成 dark，並掛上對應的 class', async () => {
     const useTheme = await freshUseTheme()
     const { theme, toggleTheme } = useTheme()
 
     toggleTheme()
 
-    expect(theme.value).toBe('terminal')
-    expect(document.documentElement.classList.contains('theme-terminal')).toBe(true)
+    expect(theme.value).toBe('dark')
+    expect(document.documentElement.classList.contains('theme-dark')).toBe(true)
   })
 
   it('它應該在連續呼叫兩次 toggleTheme 時切回原本的主題', async () => {
@@ -45,8 +45,8 @@ describe('useTheme', () => {
     toggleTheme()
     toggleTheme()
 
-    expect(theme.value).toBe('library')
-    expect(document.documentElement.classList.contains('theme-terminal')).toBe(false)
+    expect(theme.value).toBe('light')
+    expect(document.documentElement.classList.contains('theme-dark')).toBe(false)
   })
 
   it('它應該在 toggleTheme 後把選擇寫進 localStorage', async () => {
@@ -55,14 +55,30 @@ describe('useTheme', () => {
 
     toggleTheme()
 
-    expect(localStorage.getItem('theme')).toBe('terminal')
+    expect(localStorage.getItem('theme')).toBe('dark')
   })
 
-  it('它應該在文件上已經是 terminal 主題時將初始狀態讀成 terminal', async () => {
-    document.documentElement.classList.add('theme-terminal')
+  it('它應該在文件上已經是 dark 主題時將初始狀態讀成 dark', async () => {
+    document.documentElement.classList.add('theme-dark')
     const useTheme = await freshUseTheme()
     const { theme } = useTheme()
 
-    expect(theme.value).toBe('terminal')
+    expect(theme.value).toBe('dark')
+  })
+
+  it('它應該讓 setTheme 直接指定主題，指定目前已是的主題時不動', async () => {
+    const useTheme = await freshUseTheme()
+    const { theme, setTheme } = useTheme()
+
+    setTheme('light')
+    expect(localStorage.getItem('theme')).toBeNull()
+
+    setTheme('dark')
+    expect(theme.value).toBe('dark')
+    expect(localStorage.getItem('theme')).toBe('dark')
+
+    setTheme('light')
+    expect(theme.value).toBe('light')
+    expect(document.documentElement.classList.contains('theme-dark')).toBe(false)
   })
 })

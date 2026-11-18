@@ -26,7 +26,7 @@ import '../design/palettes/navy-v2.css'
 document.documentElement.classList.add('palette-navy-v2')
 ```
 
-兩個主題會一起換：`.theme-terminal` 在的時候套深色那組。
+兩個主題會一起換：`.theme-dark` 在的時候套深色那組。
 
 `navy-v2.css` 裡標「新增提案」的 token（`--bg-band-strong`、`--text-on-band`、`--accent-brass`、`--accent-secondary`、`--cat-fill-*`）已經討論過並採用（D-59），現在是 `variables.css` 的正式 token，About 頁在用。
 
