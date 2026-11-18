@@ -27,7 +27,7 @@ function to(e: NewEntry) {
 
 <template>
   <section v-if="entries.length" aria-label="最新收錄" class="w-full flex items-center gap-3 mb-1 sm:mb-2">
-    <h2 class="m-0 shrink-0 text-(length:--type-label-size) tracking-(--type-label-tracking) font-normal text-(--text-ink-muted)">
+    <h2 class="m-0 shrink-0 text-(length:--type-label-size) tracking-(--type-label-tracking) leading-(--type-label-leading) font-normal text-(--text-ink-muted)">
       最新收錄
     </h2>
     <ul class="flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible py-0.5 min-w-0">
@@ -37,12 +37,12 @@ function to(e: NewEntry) {
           :title="e.title"
           class="inline-flex items-center gap-2 min-h-11 max-w-[62vw] md:max-w-full px-3 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-body-size) text-(--text-ink-main) whitespace-nowrap hover:border-(--text-accent) transition-colors"
         >
-          <span class="shrink-0 text-(length:--type-label-size) text-(--text-ink-muted)">{{
+          <span class="shrink-0 text-(length:--type-label-size) leading-(--type-ui-leading) text-(--text-ink-muted)">{{
             e.kind === 'article' ? '文章' : '實作'
           }}</span>
           <span class="min-w-0 truncate font-normal">{{ e.kind === 'article' ? `〈${e.title}〉` : e.title }}</span>
           <span
-            class="shrink-0 rounded bg-(--text-ink-main) px-[5px] text-(length:--type-label-size) leading-(--type-label-leading) font-semibold text-(--bg-paper-light)"
+            class="shrink-0 min-w-6 text-center rounded bg-(--text-ink-main) px-[5px] text-(length:--type-label-size) leading-(--type-label-leading) font-semibold text-(--bg-paper-light)"
             >新</span
           >
         </RouterLink>

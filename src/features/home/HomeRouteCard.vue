@@ -40,14 +40,14 @@ const stations = computed(() =>
     <div class="flex items-start justify-between gap-3">
       <h2
         id="home-route-title"
-        class="m-0 text-(length:--type-label-size) tracking-(--type-label-tracking) font-bold text-(--text-accent) leading-(--type-label-leading) pt-3"
+        class="m-0 text-(length:--type-label-size) tracking-(--type-label-tracking) font-normal text-(--text-accent) leading-(--type-label-leading) pt-3"
       >
         {{ title }}
       </h2>
       <button
         v-if="canSwitch"
         type="button"
-        class="shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3.5 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-label-size) text-(--text-ink-body) hover:text-(--text-accent) hover:border-(--text-accent) cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+        class="shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-label-size) leading-(--type-ui-leading) text-(--text-ink-body) hover:text-(--text-accent) hover:border-(--text-accent) cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
         @click="$emit('switch')"
       >
         <span aria-hidden="true">↻</span>另一條路線
@@ -66,7 +66,7 @@ const stations = computed(() =>
       >
         <span
           v-if="i > 0"
-          class="shrink-0 text-(length:--type-label-size) tracking-(--type-label-tracking) text-(--text-ink-muted) whitespace-nowrap"
+          class="shrink-0 text-(length:--type-label-size) leading-(--type-ui-leading) text-(--text-ink-muted) whitespace-nowrap"
           >{{ route.verbs[i - 1] }} <span aria-hidden="true">▸</span></span
         >
         <component
@@ -78,7 +78,7 @@ const stations = computed(() =>
             s.to ? 'md:hover:border-(--text-accent) transition-colors' : '',
           ]"
         >
-          <span class="shrink-0 inline-flex items-center gap-1.5 text-(length:--type-label-size) text-(--text-ink-muted)">
+          <span class="shrink-0 inline-flex items-center gap-1.5 text-(length:--type-label-size) text-(--text-ink-muted)" :class="i === 0 ? 'font-semibold' : ''">
             <span
               aria-hidden="true"
               class="w-2 h-2 rounded-full"
