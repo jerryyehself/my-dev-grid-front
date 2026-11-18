@@ -37,7 +37,7 @@ html.palette-navy-v2 {
     --text-error: #c70d12;
 }
 
-html.palette-navy-v2.theme-terminal {
+html.palette-navy-v2.theme-dark {
     --bg-paper-light: #1d232d;
     --bg-paper-dark: #0d1529;
     --bg-nav-footer: #040a1a;

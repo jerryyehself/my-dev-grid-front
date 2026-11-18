@@ -27,7 +27,7 @@ html.palette-green {
     --node-impl: #8a3362;
 }
 
-html.palette-green.theme-terminal {
+html.palette-green.theme-dark {
     --bg-paper-light: #202723;
     --bg-paper-dark: #171d1a;
     --bg-nav-footer: #0c1812;

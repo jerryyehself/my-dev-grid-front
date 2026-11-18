@@ -1,18 +1,19 @@
 import { ref } from 'vue'
 
-export type ThemeName = 'library' | 'terminal'
+export type ThemeName = 'light' | 'dark'
 
 const STORAGE_KEY = 'theme'
-const TERMINAL_CLASS = 'theme-terminal'
+const DARK_CLASS = 'theme-dark'
 
-// 讀取目前套用中的主題:index.html 的 inline script 已經在畫面畫出來之前
-// 把 class 掛好了,這裡只是把那個結果同步進 Vue 的響應式狀態,不重複判斷邏輯。
+// 讀取目前套用中的主題:index.html 載入的 theme-init.js 已經在畫面畫出來之前
+// 把 class 掛好了(含 localStorage 舊值 library／terminal 轉成 light／dark、第一次造訪照 prefers-color-scheme),
+// 這裡只是把那個結果同步進 Vue 的響應式狀態,不重複判斷邏輯。
 const theme = ref<ThemeName>(
-  document.documentElement.classList.contains(TERMINAL_CLASS) ? 'terminal' : 'library',
+  document.documentElement.classList.contains(DARK_CLASS) ? 'dark' : 'light',
 )
 
 function applyTheme(next: ThemeName) {
-  document.documentElement.classList.toggle(TERMINAL_CLASS, next === 'terminal')
+  document.documentElement.classList.toggle(DARK_CLASS, next === 'dark')
   try {
     localStorage.setItem(STORAGE_KEY, next)
   } catch {
@@ -23,8 +24,13 @@ function applyTheme(next: ThemeName) {
 
 export function useTheme() {
   function toggleTheme() {
-    applyTheme(theme.value === 'library' ? 'terminal' : 'library')
+    applyTheme(theme.value === 'light' ? 'dark' : 'light')
   }
 
-  return { theme, toggleTheme }
+  /** 直接指定主題(主題切換的「明亮模式」「暗黑模式」兩顆鈕用),已經是該主題就不動。 */
+  function setTheme(next: ThemeName) {
+    if (theme.value !== next) applyTheme(next)
+  }
+
+  return { theme, toggleTheme, setTheme }
 }
