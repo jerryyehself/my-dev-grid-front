@@ -20,7 +20,7 @@ const { theme, setTheme } = useTheme()
   <div
     role="group"
     :aria-label="THEME_TOGGLE_LABEL"
-    class="relative inline-grid shrink-0 grid-cols-2 rounded-full border border-white/25 text-[13px] tracking-normal min-[400px]:tracking-[0.05em]"
+    class="relative inline-grid shrink-0 grid-cols-2 rounded-full border border-(--border-on-nav) text-[13px] tracking-normal min-[400px]:tracking-[0.05em] md:tracking-normal lg:tracking-[0.05em]"
   >
     <span
       aria-hidden="true"
@@ -29,7 +29,7 @@ const { theme, setTheme } = useTheme()
     ></span>
     <button
       type="button"
-      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
       :class="
         theme === 'light'
           ? 'text-(--bg-nav-footer)'
@@ -42,7 +42,7 @@ const { theme, setTheme } = useTheme()
     </button>
     <button
       type="button"
-      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
       :class="
         theme === 'dark'
           ? 'text-(--bg-nav-footer)'

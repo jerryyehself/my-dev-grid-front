@@ -12,18 +12,18 @@
            所以兩半一樣大，手機只縮字級不拿掉 -->
       <router-link
         to="/"
-        class="font-wordmark font-bold text-[16px] min-[360px]:text-[18px] min-[400px]:text-[20px] sm:text-[26px] leading-[normal] tracking-[0.05em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
+        class="font-wordmark font-bold text-[16px] min-[360px]:text-[18px] min-[400px]:text-[20px] md:text-[22px] lg:text-[26px] leading-[normal] tracking-[0.05em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
       >
         IN<span class="text-(--accent-brass) mx-[0.28em]">/</span>ARCHIVE
       </router-link>
 
       <!-- 手機寬度放不下五個導覽項目＋主題切換鈕，中大螢幕才用橫排 -->
-      <div class="hidden md:flex gap-6 h-full">
+      <div class="hidden md:flex md:gap-4 lg:gap-6 h-full">
         <router-link
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="flex flex-col items-center justify-center gap-1.5 h-full text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,opacity] font-semibold tracking-widest"
+          class="flex flex-col items-center justify-center gap-1.5 h-full text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,opacity] font-semibold md:tracking-wide lg:tracking-widest"
           active-class="!text-(--text-nav-hover) !opacity-100"
         >
           <span>{{ item.name }}</span>
@@ -95,9 +95,9 @@
           <span>{{ item.name }}</span>
           <span class="font-sans text-[13px] font-normal tracking-[0.05em]">{{ item.zh }}</span>
         </router-link>
-        <!-- 登入鈕有 1px 外框＋10px 內距,往左拉 11px 讓文字左緣跟上面選單項目一樣在 16px -->
-        <div class="pt-2 mt-1 border-t border-black/20 flex items-center -ml-[11px]">
-          <AuthStatus />
+        <!-- 登入鈕有 1px 外框＋10px 內距,AuthStatus 這一層往左拉 11px（分隔線不動）讓文字左緣跟上面選單項目一樣在 16px -->
+        <div class="pt-2 mt-1 border-t border-black/20 flex items-center">
+          <AuthStatus class="-ml-[11px]" />
         </div>
       </div>
     </Transition>

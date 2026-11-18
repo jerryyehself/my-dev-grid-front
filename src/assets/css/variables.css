@@ -36,6 +36,8 @@
     --text-accent: #922e39;
     /* 酒紅：淺色主題的強調色 */
     --border-shelf: rgba(22, 37, 65, 0.14);
+    /* 導覽列上的外框（登入鈕、主題切換鈕）：導覽列兩個主題都是藏青底，所以暗色不用覆寫。值同暗色的 --border-shelf */
+    --border-on-nav: rgba(179, 134, 55, 0.2);
     --bg-folder: #eaeff8;
     /* 淡藏青卡片底 */
     --bg-active-row: rgba(146, 46, 57, 0.08);
