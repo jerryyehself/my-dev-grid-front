@@ -78,7 +78,7 @@ async function handleSubmit() {
       <p
         v-if="authError"
         role="alert"
-        class="rounded-[6px] border border-(--text-error) px-3 py-2 text-[14px] text-(--text-error)"
+        class="rounded-[6px] border border-(--text-error) px-3 py-2 text-(length:--type-caption-size) text-(--text-error)"
       >
         {{ authError }}
       </p>

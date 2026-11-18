@@ -472,7 +472,7 @@ const publish = () => saveWithStatus(true)
       <!-- 設計稿裡這一行是 .lbl 唯一一處 letter-spacing:0.2em 的行內覆寫（頁首比欄位標題鬆一點），
            用 ! 是因為字距跟元件的預設是同一個 property，不加的話誰贏取決於 Tailwind 產生 CSS 的順序 -->
       <BaseEyebrow class="!tracking-[0.2em]">Article Editor</BaseEyebrow>
-      <h1 class="font-serif text-[26px] sm:text-[34px] font-extrabold tracking-tight text-(--text-ink-main)">
+      <h1 class="font-serif text-[26px] sm:text-[34px] font-bold tracking-tight text-(--text-ink-main)">
         {{ isEditing ? '編輯文章' : '新增文章' }}
       </h1>
       <p class="text-[13.5px] sm:text-sm text-(--text-ink-muted)">內文用 Markdown，腳註用 [^n] 標記</p>

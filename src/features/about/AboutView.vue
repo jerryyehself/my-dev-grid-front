@@ -18,7 +18,7 @@
             Jerry Yeh
           </h1>
           <p
-            class="mt-[18px] mb-0 max-w-[24em] text-[20px] min-[601px]:text-[23px] leading-[1.65] text-(--text-ink-main) text-pretty max-sm:mx-auto max-sm:text-balance max-sm:break-keep"
+            class="font-display mt-[18px] mb-0 max-w-[24em] text-[20px] min-[601px]:text-[23px] leading-[1.65] text-(--text-ink-main) text-pretty max-sm:mx-auto max-sm:text-balance max-sm:break-keep"
           >
             <span v-for="phrase in CAREER_PHRASES" :key="phrase" class="min-[601px]:inline-block">{{
               phrase

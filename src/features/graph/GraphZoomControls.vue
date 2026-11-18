@@ -76,10 +76,10 @@ defineEmits<{ zoomIn: []; zoomOut: []; fit: []; help: [] }>()
 
       <span
         aria-hidden="true"
-        class="pointer-events-none absolute right-0 bottom-full mb-2 @min-[640px]:right-full @min-[640px]:bottom-auto @min-[640px]:mb-0 @min-[640px]:mr-2 @min-[640px]:top-1/2 @min-[640px]:-translate-y-1/2 hidden group-hover:flex group-focus-visible:flex items-center gap-1.5 whitespace-nowrap rounded-md bg-(--text-ink-main) px-2 py-1 text-[13px] text-(--bg-paper-light)"
+        class="pointer-events-none absolute right-0 bottom-full mb-2 @min-[640px]:right-full @min-[640px]:bottom-auto @min-[640px]:mb-0 @min-[640px]:mr-2 @min-[640px]:top-1/2 @min-[640px]:-translate-y-1/2 hidden group-hover:flex group-focus-visible:flex items-center gap-1.5 whitespace-nowrap rounded-md bg-(--text-ink-main) px-2 py-1 text-(length:--type-label-size) text-(--bg-paper-light)"
       >
         {{ btn.label }}
-        <kbd class="font-mono text-[12px] rounded border border-current/40 px-1 leading-tight">{{
+        <kbd class="font-mono text-(length:--type-mono-size) rounded border border-current/40 px-1 leading-tight">{{
           btn.kbd
         }}</kbd>
       </span>

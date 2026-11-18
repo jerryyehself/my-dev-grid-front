@@ -1227,7 +1227,7 @@ onUnmounted(() => {
         class="kg-settling absolute inset-0 z-[5] flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
         :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       >
-        <span class="text-[13px] text-(--text-ink-body)/70"> 節點排列中… </span>
+        <span class="text-(length:--type-label-size) text-(--text-ink-body)/70"> 節點排列中… </span>
       </div>
 
       <div
@@ -1248,44 +1248,44 @@ onUnmounted(() => {
         >
           ×
         </button>
-        <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-1">
+        <div class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) mb-1">
           {{ popover.kind }}
         </div>
         <!-- 連線：一行「名稱 類別 動詞 → 名稱 類別」，放不下就在動詞前換行，「動詞 → 名稱」
              不拆開（模擬讀者審查：動詞停在行尾像句子被截斷）。名稱不能點，用墨色粗體 -->
         <h3
           v-if="popover.edge"
-          class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1 text-[15.5px] leading-[1.35] font-bold text-(--text-ink-main) [overflow-wrap:anywhere]"
+          class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1 text-(length:--type-body-size) leading-[1.35] font-bold text-(--text-ink-main) [overflow-wrap:anywhere]"
         >
           <span class="min-w-0"
             >{{ popover.edge.subject.label
-            }}<span class="ml-1.5 text-[13px] font-normal text-(--text-ink-body)">{{
+            }}<span class="ml-1.5 text-(length:--type-label-size) font-normal text-(--text-ink-body)">{{
               nodeKindLabel(popover.edge.subject)
             }}</span></span
           >
           <span class="min-w-0"
-            ><span class="whitespace-nowrap text-[14px] font-normal"
+            ><span class="whitespace-nowrap text-(length:--type-caption-size) font-normal"
               >{{ popover.edge.verb }} →&nbsp;</span
             >{{ popover.edge.object.label
-            }}<span class="ml-1.5 text-[13px] font-normal text-(--text-ink-body)">{{
+            }}<span class="ml-1.5 text-(length:--type-label-size) font-normal text-(--text-ink-body)">{{
               nodeKindLabel(popover.edge.object)
             }}</span></span
           >
         </h3>
-        <h3 v-else class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">
+        <h3 v-else class="text-(length:--type-body-size) font-bold text-(--text-ink-main) mb-2 leading-tight">
           {{ popover.title }}
         </h3>
         <div
           v-for="(row, i) in popover.rows"
           :key="i"
-          class="text-[12.5px] text-(--text-ink-body) mb-0.5"
+          class="text-(length:--type-label-size) text-(--text-ink-body) mb-0.5"
         >
           {{ row }}
         </div>
         <RouterLink
           v-if="popover.link?.kind === 'internal'"
           :to="popover.link.to"
-          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-(length:--type-caption-size) text-(--text-accent) hover:underline"
           >{{ popover.link.text }}</RouterLink
         >
         <a
@@ -1293,7 +1293,7 @@ onUnmounted(() => {
           :href="popover.link.href"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-(length:--type-caption-size) text-(--text-accent) hover:underline"
           >{{ popover.link.text }}</a
         >
         <!-- 文章節點才有，而且只給登入的人看（ArticleEditLink 內建 AuthOnly）。跟上面的「閱讀」
@@ -1303,7 +1303,7 @@ onUnmounted(() => {
           :article-id="popover.articleId"
           :title="popover.title"
           label="編輯這篇"
-          class="inline-flex items-center min-h-11 -mb-2 pl-1 text-[14px] text-(--text-ink-muted) hover:text-(--text-accent) hover:underline"
+          class="inline-flex items-center min-h-11 -mb-2 pl-1 text-(length:--type-caption-size) text-(--text-ink-muted) hover:text-(--text-accent) hover:underline"
         />
       </div>
 
@@ -1316,7 +1316,7 @@ onUnmounted(() => {
       >
         <span
           v-if="hint"
-          class="rounded-lg bg-(--text-ink-main)/90 px-4 py-2 text-[14px] text-(--bg-paper-light)"
+          class="rounded-lg bg-(--text-ink-main)/90 px-4 py-2 text-(length:--type-caption-size) text-(--bg-paper-light)"
           >{{ hint }}</span
         >
       </div>

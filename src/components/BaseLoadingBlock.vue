@@ -20,7 +20,7 @@ withDefaults(
 
 <template>
   <div
-    class="w-full flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) font-mono text-[11px] tracking-widest"
+    class="w-full flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-label-size)"
     :class="tone === 'error' ? 'text-(--text-error)' : 'text-(--text-ink-body)/40'"
     :style="{ height }"
   >

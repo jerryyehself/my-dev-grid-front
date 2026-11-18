@@ -137,16 +137,29 @@
     --text-error: #e57d71;
 }
 
-/* 全站字級 token（--type-*）。數字跟下面文章頁的同級相同，之後文章頁可改成指向這裡。 */
+/* 全站字級 token（--type-*，全站七級字級）。用 rem：使用者調瀏覽器字級時跟著縮放。
+   元件讀這些變數，不寫死 px。下面文章頁的 --article-* 數字跟同級相同，但測試要求它們是字面值，
+   所以不改成 var()，由 typeScale.spec.ts 守兩邊不會漂開。
+   例外不收進七級：字標（TheNavbar 的 20／26）、SVG 與畫布裡的字、圖示字元、後台表單的 10px。
+   關於頁（features/about）依設計定案不收進這張表，保留自己的字級，只有職稱那行用展示字。 */
 :root {
-    --type-display-size: 2.75rem; /* 44px，展示級（首頁主題句） */
+    --type-display-size: 2.75rem; /* 44px，第 1 級：展示（首頁主題句、404 標題） */
     --type-display-leading: 3.5rem; /* 56px */
-    --type-body-size: 1rem; /* 16px */
+    --type-title-size: 2.25rem; /* 36px，第 2 級：標題（文章、實作詳情的標題） */
+    --type-title-leading: 3rem; /* 48px */
+    --type-heading-size: 1.5rem; /* 24px，第 3 級：標題二（二級標題、頁標） */
+    --type-heading-leading: 2.25rem; /* 36px，會換行的標題 */
+    --type-page-title-leading: 2rem; /* 32px，單行頁標 */
+    --type-body-size: 1rem; /* 16px，第 4 級：內文 */
     --type-body-leading: 1.75rem; /* 28px，長文 */
     --type-ui-leading: 1.5rem; /* 24px，介面 */
-    --type-label-size: 0.8125rem; /* 13px */
+    --type-caption-size: 0.875rem; /* 14px，第 5 級：說明（完整句子、腳註、程式碼區塊） */
+    --type-caption-leading: 1.5rem; /* 24px，多行 */
+    --type-label-size: 0.8125rem; /* 13px，第 6 級：標籤（中文短標籤） */
     --type-label-leading: 1.25rem; /* 20px */
     --type-label-tracking: 0.05em;
+    --type-mono-size: 0.75rem; /* 12px，第 7 級：等寬（只放拉丁字母與數字） */
+    --type-mono-leading: 1rem; /* 16px */
 }
 
 /* 展示級是全站唯一會隨螢幕縮的字級 */

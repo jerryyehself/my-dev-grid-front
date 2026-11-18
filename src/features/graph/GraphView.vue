@@ -125,7 +125,7 @@ const pathResult = ref<GraphPathDto | null>(null)
     <!-- 3D 的圖例與操作說明。2D 的圖例、操作說明在共用畫布元件裡（D-87），這裡不重複 -->
     <div
       v-if="mode === '3d'"
-      class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-(--text-ink-muted)"
+      class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-(length:--type-label-size) text-(--text-ink-muted)"
     >
       <GraphLegendDots />
       <span class="flex items-center gap-1.5"

@@ -96,7 +96,7 @@ const stations = computed(() =>
     </ol>
 
     <!-- 用 div 不用 p：全站 .global-page-wrapper p 有 1.25rem 下邊距（書本段落樣式） -->
-    <div v-else class="mt-2 text-[14px] leading-relaxed text-(--text-ink-body)">
+    <div v-else class="mt-2 text-(length:--type-caption-size) leading-relaxed text-(--text-ink-body)">
       目前尚無從文章延伸的路線。文章與技術、實作建立關係後，路線會顯示在此。
     </div>
   </section>

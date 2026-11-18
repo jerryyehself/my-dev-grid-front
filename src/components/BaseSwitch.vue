@@ -17,7 +17,7 @@ const model = defineModel<boolean>({ required: true })
     type="button"
     role="switch"
     :aria-checked="model"
-    class="group inline-flex items-center gap-2 min-h-8 cursor-pointer text-[13px] text-(--text-ink-muted) hover:text-(--text-ink-main) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent) rounded-[6px]"
+    class="group inline-flex items-center gap-2 min-h-8 cursor-pointer text-(length:--type-label-size) text-(--text-ink-muted) hover:text-(--text-ink-main) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent) rounded-[6px]"
     @click="model = !model"
   >
     <span

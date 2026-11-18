@@ -71,7 +71,7 @@ const KEYS: { keys: string[]; text: string }[] = [
     class="absolute z-30 @min-[640px]:inset-x-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
   >
     <div class="shrink-0 flex items-center justify-between gap-2 pl-4 pr-1.5 pt-1.5">
-      <h3 id="kg-help-title" class="text-[15px] font-bold text-(--text-ink-main)">
+      <h3 id="kg-help-title" class="text-(length:--type-body-size) font-bold text-(--text-ink-main)">
         {{ reading ? '閱讀方式' : '操作說明' }}
       </h3>
       <button
@@ -96,7 +96,7 @@ const KEYS: { keys: string[]; text: string }[] = [
         @scroll.passive="updateMoreBelow"
       >
         <!-- 首頁的閱讀方式：用 div 不用 p（全站 .global-page-wrapper p 有段落下邊距） -->
-        <section v-if="reading" class="@min-[640px]:col-span-2 flex flex-col gap-1 text-[14px]">
+        <section v-if="reading" class="@min-[640px]:col-span-2 flex flex-col gap-1 text-(length:--type-caption-size)">
           <div>節點的大小反映關係的多寡。</div>
           <!-- 只有三層疊圖才有圓框；節點落在重疊處是因為三個圓框錯開疊放，不是因為彼此相關，要明講 -->
           <div v-if="reading.layered">
@@ -108,21 +108,21 @@ const KEYS: { keys: string[]; text: string }[] = [
             >查詢更多路線 →</RouterLink
           >
         </section>
-        <h4 v-if="reading" class="@min-[640px]:col-span-2 text-[14px] font-bold text-(--text-ink-main) -mb-1">
+        <h4 v-if="reading" class="@min-[640px]:col-span-2 text-(length:--type-caption-size) font-bold text-(--text-ink-main) -mb-1">
           操作
         </h4>
 
         <section class="@min-[640px]:row-span-2 [@media(hover:none)_and_(pointer:coarse)]:hidden">
-          <h4 class="text-[13px] text-(--text-ink-muted) mb-1">
+          <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">
             鍵盤（先點一下圖，或用 Tab 移到圖上）
           </h4>
-          <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[14px]">
+          <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-(length:--type-caption-size)">
             <template v-for="row in KEYS" :key="row.text">
               <dt class="flex gap-1">
                 <kbd
                   v-for="k in row.keys"
                   :key="k"
-                  class="min-w-6 whitespace-nowrap text-center font-mono text-[12px] rounded border border-(--border-shelf) bg-(--bg-folder) px-1 py-px"
+                  class="min-w-6 whitespace-nowrap text-center font-mono text-(length:--type-mono-size) rounded border border-(--border-shelf) bg-(--bg-folder) px-1 py-px"
                   >{{ k }}</kbd
                 >
               </dt>
@@ -132,8 +132,8 @@ const KEYS: { keys: string[]; text: string }[] = [
         </section>
 
         <section class="[@media(hover:none)_and_(pointer:coarse)]:hidden">
-          <h4 class="text-[13px] text-(--text-ink-muted) mb-1">滑鼠</h4>
-          <ul class="text-[14px] flex flex-col gap-0.5">
+          <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">滑鼠</h4>
+          <ul class="text-(length:--type-caption-size) flex flex-col gap-0.5">
             <li>按住 {{ isMac ? '⌘' : 'Ctrl' }} 再滾動滾輪：縮放</li>
             <li>拖曳空白處：移動畫面</li>
             <li>拖曳節點：調整位置</li>
@@ -142,8 +142,8 @@ const KEYS: { keys: string[]; text: string }[] = [
         </section>
 
         <section class="[@media(pointer:coarse)]:order-first">
-          <h4 class="text-[13px] text-(--text-ink-muted) mb-1">觸控</h4>
-          <ul class="text-[14px] flex flex-col gap-0.5">
+          <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">觸控</h4>
+          <ul class="text-(length:--type-caption-size) flex flex-col gap-0.5">
             <li>一指：捲動頁面、點選節點</li>
             <li>兩指：移動畫面、縮放</li>
           </ul>

@@ -82,7 +82,7 @@
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="relative flex items-center gap-3 min-h-11 font-mono text-[13px] text-(--text-nav-footer) opacity-85 font-semibold tracking-widest"
+          class="relative flex items-center gap-3 min-h-11 font-mono text-(length:--type-label-size) text-(--text-nav-footer) opacity-85 font-semibold tracking-widest"
           active-class="!text-(--text-nav-hover) !opacity-100"
           @click="isMenuOpen = false"
         >
@@ -93,7 +93,7 @@
             class="absolute -left-4 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-[2px] bg-(--text-nav-hover)"
           ></span>
           <span>{{ item.name }}</span>
-          <span class="font-sans text-[13px] font-normal tracking-[0.05em]">{{ item.zh }}</span>
+          <span class="font-sans text-(length:--type-label-size) font-normal tracking-[0.05em]">{{ item.zh }}</span>
         </router-link>
         <!-- 登入鈕有 1px 外框＋10px 內距,AuthStatus 這一層往左拉 11px（分隔線不動）讓文字左緣跟上面選單項目一樣在 16px -->
         <div class="pt-2 mt-1 border-t border-black/20 flex items-center">

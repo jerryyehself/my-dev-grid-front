@@ -16,7 +16,7 @@ const gradient = `linear-gradient(to right, ${VIRIDIS_STOPS.join(', ')})`
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-(--text-ink-muted)">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-(length:--type-label-size) text-(--text-ink-muted)">
     <template v-if="colorMode === 'type'">
       <GraphLegendDots :counts="counts" />
     </template>

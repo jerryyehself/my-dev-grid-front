@@ -20,7 +20,7 @@ const { theme, setTheme } = useTheme()
   <div
     role="group"
     :aria-label="THEME_TOGGLE_LABEL"
-    class="relative inline-grid shrink-0 grid-cols-2 rounded-full border border-(--border-on-nav) text-[13px] tracking-normal min-[400px]:tracking-[0.05em] md:tracking-normal lg:tracking-[0.05em]"
+    class="relative inline-grid shrink-0 grid-cols-2 rounded-full border border-(--border-on-nav) text-(length:--type-label-size) tracking-normal min-[400px]:tracking-[0.05em] md:tracking-normal lg:tracking-[0.05em]"
   >
     <span
       aria-hidden="true"
