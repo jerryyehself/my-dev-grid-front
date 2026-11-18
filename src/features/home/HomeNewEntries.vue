@@ -35,7 +35,7 @@ function to(e: NewEntry) {
         <RouterLink
           :to="to(e)"
           :title="e.title"
-          class="inline-flex items-center gap-2 min-h-11 max-w-[62vw] md:max-w-full px-3 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-body-size) text-(--text-ink-main) whitespace-nowrap hover:border-(--text-accent) transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+          class="inline-flex items-center gap-2 min-h-11 max-w-[62vw] md:max-w-full px-3 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-body-size) text-(--text-ink-main) whitespace-nowrap hover:border-(--text-accent) transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent)"
         >
           <span class="shrink-0 text-(length:--type-label-size) leading-(--type-ui-leading) text-(--text-ink-muted)">{{
             e.kind === 'article' ? '文章' : '實作'
