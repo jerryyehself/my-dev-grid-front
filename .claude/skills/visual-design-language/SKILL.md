@@ -417,6 +417,21 @@ token growth is how a design system stops being one.
 Aesthetic judgment ("does this look good") is necessary but not sufficient.
 Run decisions through these lenses too — they catch different failure modes:
 
+### Site positioning first (D-178)
+The positioning decision sits above every other lens. The site is an
+"external brain" whose form is grown from what it holds; the four checks:
+1. **Form grows from the data** — no decorative metaphor the data can't back.
+2. **It visibly changes** — new content changes the form, recent change is visible.
+3. **Unexpected connections** — an entry point from one item to related ones.
+4. **One fixed anchor** — a stable statement says whose brain and what about.
+
+How the content is *organised* (catalogue, index, archive) is not the
+positioning. Don't derive a style criterion — a typeface mood, an
+illustration motif, sample text — from the catalogue/library vocabulary
+(including the `.theme-library` class name and the archive wordmark, which
+predate D-178); derive it from the four checks. Research or mockup briefs
+for a visual decision cite D-178 and list these checks as the criteria.
+
 ### Norman's affordance / signifier / feedback
 - **Affordance & signifier**: does this element look like it does something —
   and if so, does it actually do that thing? A signifier that implies meaning
