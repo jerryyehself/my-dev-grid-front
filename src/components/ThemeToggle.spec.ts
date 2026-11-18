@@ -21,27 +21,27 @@ describe('ThemeToggle', () => {
     localStorage.clear()
   })
 
-  it('它應該預設是開燈（light）：「開燈」被按下、「關燈」沒有', async () => {
+  it('它應該預設是明亮模式（light）：「明亮模式」被按下、「暗黑模式」沒有', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
     const on = wrapper.findAll('button')[0]!
     const off = wrapper.findAll('button')[1]!
-    expect(on.text()).toBe('開燈')
-    expect(off.text()).toBe('關燈')
+    expect(on.text()).toBe('明亮模式')
+    expect(off.text()).toBe('暗黑模式')
     expect(on.attributes('aria-pressed')).toBe('true')
     expect(off.attributes('aria-pressed')).toBe('false')
   })
 
-  it('它應該用 group 包起來並帶上名稱，讓螢幕閱讀器讀得出這是燈光開關', async () => {
+  it('它應該用 group 包起來並帶上名稱，讓螢幕閱讀器讀得出這是顯示模式切換', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
     const group = wrapper.find('[role="group"]')
-    expect(group.attributes('aria-label')).toBe('燈光')
+    expect(group.attributes('aria-label')).toBe('顯示模式')
   })
 
-  it('它應該在點「關燈」後切成 dark、掛上 theme-dark、aria-pressed 跟著換', async () => {
+  it('它應該在點「暗黑模式」後切成 dark、掛上 theme-dark、aria-pressed 跟著換', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
@@ -55,7 +55,7 @@ describe('ThemeToggle', () => {
     expect(localStorage.getItem('theme')).toBe('dark')
   })
 
-  it('它應該在點「開燈」後切回 light、拿掉 theme-dark', async () => {
+  it('它應該在點「明亮模式」後切回 light、拿掉 theme-dark', async () => {
     document.documentElement.classList.add('theme-dark')
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)

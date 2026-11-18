@@ -4,7 +4,7 @@
     style="background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 7px)"
   >
     <div
-      class="w-full h-14 md:h-16 px-4 md:px-8 flex items-center justify-between font-mono text-xs"
+      class="w-full h-14 md:h-16 px-3 min-[360px]:px-4 md:px-8 flex items-center justify-between font-mono text-xs"
     >
       <!-- 字標（D-32 的「IN / ARCHIVE」，D-60 的寫法）：兩半等大、Libre Caslon Text 700、斜線用黃銅。
            以前 ARCHIVE 是 11px、65% 透明度，手機上還整個藏起來，字標只剩「IN」——
@@ -12,7 +12,7 @@
            所以兩半一樣大，手機只縮字級不拿掉 -->
       <router-link
         to="/"
-        class="font-wordmark font-bold text-[20px] sm:text-[26px] leading-[normal] tracking-[0.05em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
+        class="font-wordmark font-bold text-[16px] min-[360px]:text-[18px] min-[400px]:text-[20px] sm:text-[26px] leading-[normal] tracking-[0.05em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
       >
         IN<span class="text-(--accent-brass) mx-[0.28em]">/</span>ARCHIVE
       </router-link>
@@ -40,37 +40,37 @@
       </div>
 
       <!-- 手機:主題鈕露在漢堡旁邊,不藏進選單(開關要一眼找得到、一步按得到) -->
-      <div class="md:hidden flex items-center gap-2">
+      <div class="md:hidden flex shrink-0 items-center gap-1 min-[360px]:gap-2 -mr-2 min-[360px]:mr-0">
         <ThemeToggle />
         <button
           type="button"
-          class="flex items-center justify-center w-11 h-11 text-(--text-nav-footer)"
+          class="flex shrink-0 items-center justify-center w-11 h-11 text-(--text-nav-footer)"
           :aria-label="NAV_MENU_ARIA_LABEL"
           :aria-expanded="isMenuOpen"
           @click="isMenuOpen = !isMenuOpen"
         >
           <span class="relative w-5 h-3.5 block">
             <span
-              class="absolute left-0 top-0 w-5 h-[1.5px] bg-current transition-transform duration-200 ease-[cubic-bezier(.2,.8,.2,1)]"
-              :class="isMenuOpen ? 'translate-y-[6.25px] rotate-45' : ''"
+              class="absolute left-0 top-0 w-5 h-[1.5px] bg-current transition-transform ease-[cubic-bezier(.2,.8,.2,1)]"
+              :class="isMenuOpen ? 'duration-200 translate-y-[6.25px] rotate-45' : 'duration-[120ms]'"
             ></span>
             <span
-              class="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-[1.5px] bg-current transition-opacity duration-200 ease-[cubic-bezier(.2,.8,.2,1)]"
-              :class="isMenuOpen ? 'opacity-0' : 'opacity-100'"
+              class="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-[1.5px] bg-current transition-opacity ease-[cubic-bezier(.2,.8,.2,1)]"
+              :class="isMenuOpen ? 'duration-200 opacity-0' : 'duration-[120ms] opacity-100'"
             ></span>
             <span
-              class="absolute left-0 bottom-0 w-5 h-[1.5px] bg-current transition-transform duration-200 ease-[cubic-bezier(.2,.8,.2,1)]"
-              :class="isMenuOpen ? '-translate-y-[6.25px] -rotate-45' : ''"
+              class="absolute left-0 bottom-0 w-5 h-[1.5px] bg-current transition-transform ease-[cubic-bezier(.2,.8,.2,1)]"
+              :class="isMenuOpen ? 'duration-200 -translate-y-[6.25px] -rotate-45' : 'duration-[120ms]'"
             ></span>
           </span>
         </button>
       </div>
     </div>
 
-    <!-- 手機選單:只用 opacity／transform,開 200ms、收 120ms(panel-open／panel-close),同一條 ease-control 曲線 -->
+    <!-- 手機選單:只用 opacity／translate(Tailwind v4 的 -translate-y-1 是獨立的 translate 屬性,transition 要列 translate 才會動),開 200ms、收 120ms(panel-open／panel-close),同一條 ease-control 曲線 -->
     <Transition
-      enter-active-class="transition-[opacity,transform] duration-200 ease-[cubic-bezier(.2,.8,.2,1)]"
-      leave-active-class="transition-[opacity,transform] duration-[120ms] ease-[cubic-bezier(.2,.8,.2,1)]"
+      enter-active-class="transition-[opacity,translate] duration-200 ease-[cubic-bezier(.2,.8,.2,1)]"
+      leave-active-class="transition-[opacity,translate] duration-[120ms] ease-[cubic-bezier(.2,.8,.2,1)]"
       enter-from-class="opacity-0 -translate-y-1"
       leave-to-class="opacity-0 -translate-y-1"
     >
@@ -82,14 +82,21 @@
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="flex items-center gap-3 min-h-11 font-mono text-xs text-(--text-nav-footer) opacity-70 font-semibold tracking-widest"
+          class="relative flex items-center gap-3 min-h-11 font-mono text-[13px] text-(--text-nav-footer) opacity-85 font-semibold tracking-widest"
           active-class="!text-(--text-nav-hover) !opacity-100"
           @click="isMenuOpen = false"
         >
+          <!-- 目前頁的指示:左側色條(跟桌機的底部色條同色),不只靠變色 -->
+          <span
+            v-if="route.path === item.path"
+            aria-hidden="true"
+            class="absolute -left-4 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-[2px] bg-(--text-nav-hover)"
+          ></span>
           <span>{{ item.name }}</span>
           <span class="font-sans text-[13px] font-normal tracking-[0.05em]">{{ item.zh }}</span>
         </router-link>
-        <div class="pt-2 mt-1 border-t border-black/20 flex items-center">
+        <!-- 登入鈕有 1px 外框＋10px 內距,往左拉 11px 讓文字左緣跟上面選單項目一樣在 16px -->
+        <div class="pt-2 mt-1 border-t border-black/20 flex items-center -ml-[11px]">
           <AuthStatus />
         </div>
       </div>

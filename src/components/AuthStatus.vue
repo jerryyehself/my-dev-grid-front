@@ -18,9 +18,11 @@ const auth = useAuthStore()
 const router = useRouter()
 const showLoginEntry = import.meta.env.DEV
 
-// 三顆都是同一種膠囊，樣式集中在這裡，不要各寫一份再慢慢漂移
+// 三顆都是同一種膠囊，樣式集中在這裡，不要各寫一份再慢慢漂移。
+// 外框用暗色主題的 --border-shelf 值(黃銅 20%)：導覽列兩個主題都是藏青底，
+// 亮色主題的 --border-shelf 是藏青 14%，疊在藏青底上看不見，所以不用變數、直接寫死。
 const pillClass =
-  'inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,border-color,opacity]'
+  'inline-flex items-center rounded-full border border-[rgba(179,134,55,0.2)] px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,border-color,opacity]'
 
 // 登出失敗（後端沒確認）時留在原頁，錯誤提示由 AuthNotice 顯示，使用者可以再按一次
 async function handleLogout() {

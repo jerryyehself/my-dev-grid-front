@@ -27,7 +27,7 @@ export function useTheme() {
     applyTheme(theme.value === 'light' ? 'dark' : 'light')
   }
 
-  /** 直接指定主題(檯燈的「開燈」「關燈」兩顆鈕用),已經是該主題就不動。 */
+  /** 直接指定主題(主題切換的「明亮模式」「暗黑模式」兩顆鈕用),已經是該主題就不動。 */
   function setTheme(next: ThemeName) {
     if (theme.value !== next) applyTheme(next)
   }

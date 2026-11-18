@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -74,5 +74,29 @@ describe('theme-init.js', () => {
     runThemeInit(true)
 
     expect(isDark()).toBe(true)
+  })
+
+  it('它應該包在 IIFE 裡，不在 window 上留下 stored／theme 全域變數', () => {
+    localStorage.setItem('theme', 'dark')
+    runThemeInit(false)
+
+    expect('stored' in window).toBe(false)
+    expect('theme' in window).toBe(false)
+  })
+
+  it('它應該在 setItem 寫入失敗時，仍然套用剛讀到的舊值', () => {
+    localStorage.setItem('theme', 'terminal')
+    // 讓 setItem 丟錯（模擬額度滿了）；script 在 jsdom 同一個 window，Storage.prototype 是共用的
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError')
+    })
+    try {
+      runThemeInit(false)
+    } finally {
+      spy.mockRestore()
+    }
+
+    expect(isDark()).toBe(true)
+    expect(localStorage.getItem('theme')).toBe('terminal')
   })
 })

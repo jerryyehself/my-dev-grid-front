@@ -299,7 +299,7 @@ function render(node: MdNode): VNode[] {
           'h3',
           {
             id: slug,
-            // 導覽列（sticky，64px）+ MainLayout 捲動追蹤列（捲動超過 50px 才出現的
+            // 導覽列（sticky，桌機 64px、手機 56px；下面的總高度以桌機計）+ MainLayout 捲動追蹤列（捲動超過 50px 才出現的
             // 第二層 sticky，45px）疊起來共 109px，捲到錨點時要留出兩層的總高度，
             // 不然標題會卡在追蹤列底下、只露出一半——scroll-mt-24（96px）當初只算了
             // 導覽列那一層，沒算到追蹤列，2026-09-25 使用者實測抓到這個落差才補上。

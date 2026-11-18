@@ -25,10 +25,10 @@ export const NAV_LABELS_ZH = {
   about: '關於',
 } as const
 
-/** 主題切換（檯燈）：開燈＝淺色、關燈＝深色 */
-export const THEME_TOGGLE_LABEL = '燈光'
-export const THEME_LIGHT_ON_TEXT = '開燈'
-export const THEME_LIGHT_OFF_TEXT = '關燈'
+/** 主題切換：明亮模式＝淺色、暗黑模式＝深色 */
+export const THEME_TOGGLE_LABEL = '顯示模式'
+export const THEME_LIGHT_ON_TEXT = '明亮模式'
+export const THEME_LIGHT_OFF_TEXT = '暗黑模式'
 
 /** 手機版導覽選單按鈕的 aria-label */
 export const NAV_MENU_ARIA_LABEL = '開啟導覽選單'

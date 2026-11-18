@@ -10,8 +10,8 @@ const { theme, setTheme } = useTheme()
 </script>
 
 <template>
-  <!-- 檯燈「開燈｜關燈」(T3):兩顆鈕並排,兩個狀態同時看得到,選中的那顆反白。
-       開燈＝淺色、關燈＝深色。螢幕閱讀器讀成「燈光 群組:開燈,已按下」這類,
+  <!-- 「明亮模式｜暗黑模式」:兩顆鈕並排,兩個狀態同時看得到,選中的那顆反白。
+       明亮模式＝淺色、暗黑模式＝深色。螢幕閱讀器讀成「顯示模式 群組:明亮模式,已按下」這類,
        目前是哪一種由 aria-pressed 告知(不靠顏色)。
        選中的底色塊用 transform 滑過去(slide 240ms、ease-control),不動 width／left;
        prefers-reduced-motion 時 base.css 會把時間壓成 0.01ms。
@@ -20,7 +20,7 @@ const { theme, setTheme } = useTheme()
   <div
     role="group"
     :aria-label="THEME_TOGGLE_LABEL"
-    class="relative inline-grid grid-cols-2 rounded-full border border-white/25 text-[13px] tracking-[0.05em]"
+    class="relative inline-grid shrink-0 grid-cols-2 rounded-full border border-white/25 text-[13px] tracking-normal min-[400px]:tracking-[0.05em]"
   >
     <span
       aria-hidden="true"
@@ -29,7 +29,7 @@ const { theme, setTheme } = useTheme()
     ></span>
     <button
       type="button"
-      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 whitespace-nowrap transition-colors duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
       :class="
         theme === 'light'
           ? 'text-(--bg-nav-footer)'
@@ -42,7 +42,7 @@ const { theme, setTheme } = useTheme()
     </button>
     <button
       type="button"
-      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 whitespace-nowrap transition-colors duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
       :class="
         theme === 'dark'
           ? 'text-(--bg-nav-footer)'

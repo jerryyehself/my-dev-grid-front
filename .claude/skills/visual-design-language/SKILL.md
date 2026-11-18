@@ -120,7 +120,7 @@ static string, never actually reactive), `rgba(var(--text-ink-main), 0.1)`
 (invalid CSS — `rgba()` needs numeric R/G/B, not a hex-string token), and
 `text-amber-800 dark:text-amber-600` (hardcoded color, and `dark:` is
 Tailwind's own OS-preference dark mode, which has nothing to do with this
-project's theme toggle — it would never fire from clicking 晝間/夜讀). All
+project's theme toggle — it would never fire from clicking 明亮模式/暗黑模式). All
 three are the kind of bug that consolidating into a shared component makes
 visible and cheap to fix once, instead of silently repeated at every call site.
 
@@ -530,7 +530,7 @@ node highlight, once that feature exists.
 - **Visibility of system status** — e.g. the theme toggle always shows which
   theme is active, not just an icon that implies "click to change."
 - **Recognition rather than recall** — label the toggle with the theme's
-  actual name (currently 晝間/夜讀), not an icon the user has to learn.
+  actual name (currently 明亮模式/暗黑模式, i.e. light/dark), not an icon the user has to learn.
 - **Consistency and standards** — a shape/animation used for one meaning
   elsewhere on the site shouldn't be reused for a different meaning.
 - **Aesthetic and minimalist design** — every element competes with the ones

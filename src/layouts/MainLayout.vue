@@ -9,14 +9,14 @@
          v-if（不是純 opacity 切換）是刻意的：sticky 元素即使透明，沒拿掉還是會佔版面高度，
          之前就是這樣在每一頁頁首上方留了一段看不見的空白，怎麼調 header/main 的 padding 都調不掉。 -->
     <Transition
-      enter-active-class="transition-[opacity,transform] duration-200 ease-out"
-      leave-active-class="transition-[opacity,transform] duration-200 ease-out"
+      enter-active-class="transition-[opacity,translate] duration-200 ease-out"
+      leave-active-class="transition-[opacity,translate] duration-200 ease-out"
       enter-from-class="opacity-0 -translate-y-1"
       leave-to-class="opacity-0 -translate-y-1"
     >
       <div
         v-if="isScrolled"
-        class="sticky top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm"
+        class="sticky top-14 md:top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm"
       >
         <div class="w-full h-11 px-4 md:px-8 flex items-center gap-2.5 overflow-hidden">
           <span class="w-[3px] h-4 rounded-[2px] bg-(--text-accent) shrink-0"></span>
