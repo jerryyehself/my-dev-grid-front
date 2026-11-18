@@ -56,13 +56,13 @@ const stations = computed(() =>
 
     <ol
       v-if="route"
-      class="mt-3 grid grid-cols-[58px_minmax(0,1fr)] items-baseline gap-x-2 gap-y-0.5 md:flex md:flex-wrap md:items-center md:gap-2"
+      class="mt-3 flex flex-col gap-y-0.5 md:flex-row md:flex-wrap md:items-center md:gap-2"
     >
-      <!-- 手機：銜接詞佔 58px 一欄、站在右欄，第一站橫跨整列；li 用 contents 讓它們直接進 grid -->
+      <!-- 手機：每個 li 自己是兩欄 grid（銜接詞 58px＋站），第一站橫跨整列；不用 display: contents，以免清單語意被拿掉 -->
       <li
         v-for="(s, i) in stations"
         :key="s.id"
-        class="contents md:flex md:items-center md:gap-2 md:min-w-0"
+        class="grid grid-cols-[58px_minmax(0,1fr)] items-baseline gap-x-2 md:flex md:items-center md:gap-2 md:min-w-0"
       >
         <span
           v-if="i > 0"
@@ -75,7 +75,9 @@ const stations = computed(() =>
           class="min-w-0 inline-flex items-baseline gap-2 min-h-11 text-(length:--type-body-size) leading-(--type-ui-leading) text-(--text-ink-main) md:px-3 md:py-2 md:rounded-md md:border md:border-(--border-shelf) md:bg-(--bg-paper-light)"
           :class="[
             i === 0 ? 'max-md:col-span-full' : '',
-            s.to ? 'md:hover:border-(--text-accent) transition-colors' : '',
+            s.to
+              ? 'md:hover:border-(--text-accent) transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)'
+              : '',
           ]"
         >
           <span class="shrink-0 inline-flex items-center gap-1.5 text-(length:--type-label-size) text-(--text-ink-muted)" :class="i === 0 ? 'font-semibold' : ''">

@@ -111,6 +111,8 @@ describe('HomeView（C 版：路線當主角）', () => {
     expect(card.text()).toContain('討論 ▸')
     expect(card.text()).toContain('被使用 ▸')
     expect(card.findAll('li')).toHaveLength(3)
+    // li 不能用 display: contents，Safari 會把清單語意拿掉
+    for (const li of card.findAll('li')) expect(li.classes()).not.toContain('contents')
     expect(card.find('button').exists()).toBe(false)
     // 同一條路線在圖上亮起
     expect(wrapper.find('.canvas').attributes('data-route')).toBe('Vue SPA 部署>Vue 3>my-dev-grid-front')

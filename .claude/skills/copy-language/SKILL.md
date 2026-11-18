@@ -34,7 +34,7 @@ Grounded in what the site already says (About, home), not invented:
   探索…的旅程).
 - **Catalogue vocabulary, because the site is a catalogue.** (Catalogue describes how the content is organised; the site's positioning is D-178, see `visual-design-language`.) 目錄, 編, 類別, 關係 are literal
   descriptions of how the site works — About: 「分類與雙向關係沿用圖書館編目的做法」 — not
-  decoration. Home: 「私人藏書，公開目錄」; 「文章、技術與專案的目錄，條目之間以雙向關係連結」. Use this vocabulary
+  decoration. Use this vocabulary
   where it is literally true; don't stretch it onto things it doesn't describe.
 - **Specific over general.** A line that could sit on anyone's site (「做過的專案與技術」) is too plain
   even if correct. Prefer the detail only this site has. Specific means facts, not flavour: a
