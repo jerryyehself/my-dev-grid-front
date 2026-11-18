@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { edgeRelation, edgeRelationText, relationFromNode } from './graphRelationPhrase'
+import { edgeRelation, edgeRelationText, relationFromNode, routeSegmentVerb } from './graphRelationPhrase'
+import { nodeKindLabel } from './graphTypes'
 
 const doc = { domainType: 'documentation' as const, label: 'Vue 官方文件' }
 const tech = { domainType: 'technique' as const, label: 'Vue' }
@@ -108,5 +109,46 @@ describe('edgeRelationText', () => {
     expect(edgeRelationText(edgeRelation(tech, vue3, 'hasVersion'))).toBe(
       'Vue 3（技術） 版本 → Vue（技術）',
     )
+  })
+})
+
+describe('單一節點的類別名稱（文章／官方文件）', () => {
+  it('它應該依子類標：post 是文章、sourcesite 與 document 是官方文件，其餘退回類別名「文件」', () => {
+    expect(nodeKindLabel({ domainType: 'documentation', subtype: 'post' })).toBe('文章')
+    expect(nodeKindLabel({ domainType: 'documentation', subtype: 'sourcesite' })).toBe('官方文件')
+    expect(nodeKindLabel({ domainType: 'documentation', subtype: 'document' })).toBe('官方文件')
+    expect(nodeKindLabel({ domainType: 'documentation', subtype: null })).toBe('文件')
+    expect(nodeKindLabel({ domainType: 'documentation' })).toBe('文件')
+    expect(nodeKindLabel({ domainType: 'documentation', subtype: 'conversation' })).toBe('文件')
+    // 只有文件類看子類；其他類別不受影響
+    expect(nodeKindLabel({ domainType: 'technique', subtype: 'post' })).toBe('技術')
+    expect(nodeKindLabel({ domainType: 'implementation', subtype: null })).toBe('實作')
+  })
+
+  it('它應該讓純文字版的類別名稱也依子類（滑過提示、小卡）', () => {
+    const post = { domainType: 'documentation' as const, label: '一篇文章', subtype: 'post' }
+    const site = { domainType: 'documentation' as const, label: 'Vue 官方文件', subtype: 'sourcesite' }
+
+    expect(edgeRelationText(edgeRelation(post, tech, 'about'))).toBe('一篇文章（文章） 討論 → Vue（技術）')
+    expect(edgeRelationText(edgeRelation(site, tech, 'specs'))).toBe('Vue 官方文件（官方文件） 說明 → Vue（技術）')
+  })
+})
+
+describe('routeSegmentVerb', () => {
+  const doc1 = { id: 'documentation-1', domainType: 'documentation' as const, label: 'a' }
+  const t1 = { id: 'technique-1', domainType: 'technique' as const, label: 'Vue' }
+  const i1 = { id: 'implementation-1', domainType: 'implementation' as const, label: 'x' }
+
+  it('它應該在主詞是前一站時用主動、在後一站時用被動，不管邊存的方向', () => {
+    expect(routeSegmentVerb(doc1, t1, { source: doc1.id, target: t1.id, predicate: 'about' })).toBe('討論')
+    expect(routeSegmentVerb(doc1, t1, { source: t1.id, target: doc1.id, predicate: 'subjectOf' })).toBe('討論')
+    expect(routeSegmentVerb(t1, i1, { source: i1.id, target: t1.id, predicate: 'uses' })).toBe('被使用')
+    expect(routeSegmentVerb(i1, t1, { source: i1.id, target: t1.id, predicate: 'uses' })).toBe('使用')
+    expect(routeSegmentVerb(t1, doc1, { source: doc1.id, target: t1.id, predicate: 'specs' })).toBe('被說明')
+  })
+
+  it('它應該在不認得的述詞時標「相關」，沒有主被動之分', () => {
+    expect(routeSegmentVerb(doc1, t1, { source: doc1.id, target: t1.id, predicate: 'mystery' })).toBe('相關')
+    expect(routeSegmentVerb(t1, doc1, { source: doc1.id, target: t1.id, predicate: 'mystery' })).toBe('相關')
   })
 })

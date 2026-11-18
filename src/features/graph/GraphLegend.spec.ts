@@ -44,3 +44,32 @@ describe('GraphLegend', () => {
     expect(wrapper.text()).toContain('間接關聯')
   })
 })
+
+describe('GraphLegend（首頁版本）', () => {
+  const counts = { documentation: 12, technique: 53, implementation: 19, edges: 153 }
+
+  it('它應該把類別名稱保持「文件」，後面帶各類數量與直接關係條數', () => {
+    const wrapper = mount(GraphLegend, { props: { colorMode: 'type', showIndirect: false, counts } })
+    const text = wrapper.text().replace(/\s+/g, ' ')
+
+    expect(text).toContain('文件 12')
+    expect(text).toContain('技術 53')
+    expect(text).toContain('實作 19')
+    expect(text).toContain('直接關係153')
+    expect(text).not.toContain('文章與文件')
+  })
+
+  it('它應該在沒給 counts 時（/graph）不印數字', () => {
+    const wrapper = mount(GraphLegend, { props: { colorMode: 'type', showIndirect: false } })
+
+    expect(wrapper.find('b').exists()).toBe(false)
+  })
+
+  it('它應該只在路線亮起時顯示「目前路線」', async () => {
+    const wrapper = mount(GraphLegend, { props: { colorMode: 'type', showIndirect: false, counts } })
+    expect(wrapper.text()).not.toContain('目前路線')
+
+    await wrapper.setProps({ routeLit: true })
+    expect(wrapper.text()).toContain('目前路線')
+  })
+})

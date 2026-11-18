@@ -34,7 +34,7 @@ Grounded in what the site already says (About, home), not invented:
   探索…的旅程).
 - **Catalogue vocabulary, because the site is a catalogue.** (Catalogue describes how the content is organised; the site's positioning is D-178, see `visual-design-language`.) 目錄, 編, 類別, 關係 are literal
   descriptions of how the site works — About: 「分類與雙向關係沿用圖書館編目的做法」 — not
-  decoration. Home: 「私人藏書，公開目錄」; 「文章、技術與專案的目錄，條目之間以雙向關係連結」. Use this vocabulary
+  decoration. Use this vocabulary
   where it is literally true; don't stretch it onto things it doesn't describe.
 - **Specific over general.** A line that could sit on anyone's site (「做過的專案與技術」) is too plain
   even if correct. Prefer the detail only this site has. Specific means facts, not flavour: a
@@ -58,6 +58,8 @@ Grounded in what the site already says (About, home), not invented:
 | Page titles as they are, English included (`Articles`, `Production Artifacts`); no first-person titles (`My Articles`) | translating titles to Chinese; 我的／My in a title | D-76; the user, 2026-11-13 |
 | 收在目錄裡 (for "recorded in the catalogue") | 登記 on visitor pages; 一筆一筆記下來 (retired: the GitHub sync creates links automatically, so "recorded one by one" is untrue for relations) | the user, 2026-10-01 (D-82); 一筆一筆記下來 retired 2026-11-13 |
 | 條目 (an entry of the catalogue, outside the graph views: subtitles, detail cards, the About page); 節點 stays only inside the graph views themselves (graph legend, display settings, loading text) | 節點 in non-graph copy | the user, 2026-11-13 |
+| 文章 = an article: the owner's own writing; official blog posts count as 文章 too (English *article*; `documentation` subtype `post`). 文件 = official documentation (English *document*; subtype `sourcesite`, also `document`). Two different things, never merged into one word. The graph legend and the class filter name the whole `documentation` class, so they keep the category label 文件 (a document is any recorded information, which includes the owner's articles). A single node's small card, hover tooltip and detail card say 文章 or 官方文件 according to its subtype (no subtype: fall back to 文件). The home route card always starts from 文章 | 文件 for the owner's articles in a single-node label; 文章 for official docs; one word standing for both in a single-node label | the user, 2026-11-17 |
+| 心智模式 (the home theme sentence: 「一位圖資背景後端工程師的工作心智模式」) | 心智模型: 模式 and 模型 are different words, never used as synonyms | the user, 2026-11-17 |
 | Kickers (the small English line above a title) may repeat the title as a design element; they must still be accurate (`Projects`, not `Dashboard & Tools`) | an inaccurate kicker | the user, 2026-11-13 |
 | Path diagram segments show the Chinese short verb (使用／說明／記錄／討論／需要／版本／相關); the arrow is always ▸, along the route. When the verb's subject is the next station, use the passive form: 被使用, 被說明, 被記錄, 被討論, 被需要, and 有版本 for 版本; 相關 never changes | `USES ▸`, `SPECS ▸`; `◂ 使用` (an arrow against the route) | the user, 2026-11-13 |
 | 關聯對象 (the column of things a relation points to, in `/graph` detail-card tables); 這兩個 (the pair at either end of an indirect link) | 節點, 連到的節點 (graph-theory jargon); 兩端 (read as a near-duplicate of 兩邊都連到) | the user, 2026-10-03 (D-88) |
@@ -68,7 +70,7 @@ When a new term is settled with the user, add a row here **and** record the deci
 ## Formats
 
 **Page subtitle** (the line under a page title)
-- **Only where the page's purpose isn't evident from its content** (the user, 2026-10-01, D-83). List pages whose content shows what they are — `/articles`, `/projects` — get no subtitle; the home page and `/graph` keep theirs. The one exception is the byline (「由 Claude 撰寫，Jerry Yeh 發想並審定」, `BYLINE` in `src/copy/common.ts`, one source for all three places): `/articles` shows it in the subtitle slot, directly under the page title, every article repeats it at its end, and the About page shows it under the name. It is an attribution, not a description of the page. A page with no subtitle must still show some Chinese text above the fold (a count line, an empty state).
+- **Only where the page's purpose isn't evident from its content** (the user, 2026-10-01, D-83). List pages whose content shows what they are — `/articles`, `/projects` — get no subtitle; `/graph` keeps its own. The home page has no subtitle and no kicker: its theme sentence is the H1. The one exception is the byline (「由 Claude 撰寫，Jerry Yeh 發想並審定」, `BYLINE` in `src/copy/common.ts`, one source for all three places): `/articles` shows it in the subtitle slot, directly under the page title, every article repeats it at its end, and the About page shows it under the name. It is an attribution, not a description of the page. A page with no subtitle must still show some Chinese text above the fold (a count line, an empty state).
 - Describes what the page holds. **No usage instructions** — the controls are visible already
   (the user rejected 「…，可以用技術篩選」, 2026-10-01).
 - Put the information-carrying words first: "if users see only the first 2 words, they should
