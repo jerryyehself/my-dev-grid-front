@@ -1,7 +1,7 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
-import { ARTICLE_BYLINE } from '@/copy/common'
+import { BYLINE } from '@/copy/common'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,13 +42,13 @@ const router = createRouter({
       component: () => import('@/features/about/AboutView.vue'),
       meta: {
         tag: 'About',
-        title: '私人藏書，公開目錄',
+        title: '關於',
         subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
-        // About 頁自己畫了一個滿版橫幅當作大標題，跟 MainLayout 的通用表頭是同一件事，
-        // 兩個都顯示會重複兩次，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
+        // About 頁自己畫了頁首（名字、職涯句、按鈕與線稿），跟 MainLayout 的通用表頭是同一件事，
+        // 兩個都顯示會重複，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
         hideHeader: true,
-        // 整頁由滿版色帶組成（照片橫幅到 AUTHOR 色帶），主內容區上下都不留白，
-        // 第一段貼齊導覽列、最後一段貼齊頁尾。只有這頁需要，其他 hideHeader 頁面仍要上留白
+        // 內容欄寬度與上下留白由頁面自己決定（1120 寬、頁首上留白 64），不套 MainLayout 的欄寬與
+        // .global-page-wrapper 的文件排版預設值。只有這頁需要，其他 hideHeader 頁面仍要上留白
         fullBleed: true,
       },
     },
@@ -86,7 +86,7 @@ const router = createRouter({
         tag: 'Articles',
         title: 'Articles',
         // 標題下面那一行是文章署名，不是頁面說明；放在副標的位置，才會貼在標題正下方
-        subtitle: ARTICLE_BYLINE,
+        subtitle: BYLINE,
       },
     },
     {

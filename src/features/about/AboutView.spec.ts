@@ -1,7 +1,18 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import AboutView from './AboutView.vue'
+import { BYLINE } from '@/copy/common'
+
+// CONTACT_EMAIL 是模組層級常數：用 hoisted 的物件讓每個 case 換值，其餘設定照原樣
+const config = vi.hoisted(() => ({ email: '' }))
+vi.mock('./aboutConfig', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./aboutConfig')>()
+  const mocked = { ...actual }
+  // 每次讀取都回傳目前的 config.email，case 之間換值不用重新載入模組
+  Object.defineProperty(mocked, 'CONTACT_EMAIL', { get: () => config.email, enumerable: true })
+  return mocked
+})
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -18,45 +29,79 @@ function visitorText(wrapper: VueWrapper): string {
   return [wrapper.text(), ...attrs].filter(Boolean).join('\n')
 }
 
-const switchToBackward = (wrapper: VueWrapper) =>
-  wrapper
-    .findAll('button')
-    .find((b) => b.text() === '從技術看')!
-    .trigger('click')
-
 describe('AboutView', () => {
-  it('它應該不出現第一人稱「我」，兩個示範方向都一樣', async () => {
+  beforeEach(() => {
+    config.email = ''
+  })
+
+  it('它應該顯示名字、職涯句與工作模式四張卡片', () => {
     const wrapper = mountAbout()
+
+    expect(wrapper.get('h1').text()).toBe('Jerry Yeh')
+    expect(wrapper.text()).toContain('圖書資訊學出身，兩年程式教學、三年後端工程師。')
+    expect(wrapper.get('h2').text()).toBe('工作模式與理念')
+    expect(wrapper.findAll('h3').map((h) => h.text())).toEqual([
+      '跨域整合',
+      '需求洞察',
+      '實證導向',
+      '持續評鑑',
+    ])
+    wrapper.unmount()
+  })
+
+  it('它應該在名字下面顯示共用的署名句，且整頁只出現一次', () => {
+    const wrapper = mountAbout()
+
+    expect(BYLINE).toBe('由 Claude 撰寫，Jerry Yeh 發想並審定')
+    expect(wrapper.text().split(BYLINE)).toHaveLength(2)
+    const byline = wrapper.findAll('p').find((p) => p.text() === BYLINE)!
+    expect(byline.element.previousElementSibling?.tagName).toBe('P')
+    expect(byline.element.parentElement?.querySelector('h1')).not.toBeNull()
+    wrapper.unmount()
+  })
+
+  it('它應該在信箱留空時不畫電子郵件按鈕，只留 GitHub', () => {
+    const wrapper = mountAbout()
+
+    expect(wrapper.text()).not.toContain('電子郵件')
+    expect(wrapper.find('a[href^="mailto:"]').exists()).toBe(false)
+    expect(wrapper.find('a[href="https://github.com/jerryyehself"]').text()).toBe('GitHub')
+    wrapper.unmount()
+  })
+
+  it('它應該在填了信箱後畫出電子郵件按鈕，連到 mailto', () => {
+    config.email = 'someone@example.test'
+    const wrapper = mountAbout()
+
+    const mail = wrapper.get('a[href^="mailto:"]')
+    expect(mail.attributes('href')).toBe('mailto:someone@example.test')
+    expect(mail.text()).toBe('電子郵件')
+    wrapper.unmount()
+  })
+
+  it('它應該在所有卡片都還沒有連結時，整頁不出現「確認詳情」與任何提示文字', () => {
+    const wrapper = mountAbout()
+
+    expect(wrapper.text()).not.toContain('確認詳情')
+    expect(wrapper.text()).not.toContain('待定')
+    expect(wrapper.text()).not.toContain('示意')
+    expect(wrapper.find('li a').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('它應該為頁首與四張卡片各畫一張有文字說明的線稿', () => {
+    const wrapper = mountAbout()
+
+    const svgs = wrapper.findAll('svg[role="img"]')
+    expect(svgs).toHaveLength(5)
+    for (const svg of svgs) expect(svg.attributes('aria-label')).toBeTruthy()
+    wrapper.unmount()
+  })
+
+  it('它應該不出現第一人稱「我」', () => {
+    const wrapper = mountAbout()
+
     expect(visitorText(wrapper)).not.toContain('我')
-
-    await switchToBackward(wrapper)
-    expect(visitorText(wrapper)).not.toContain('我')
-    wrapper.unmount()
-  })
-
-  it('它應該用 Vue 官方文件與 Vue 示範雙向關係，不出現「這篇文章」與「Vue 3」', async () => {
-    const wrapper = mountAbout()
-    expect(wrapper.text()).toContain('從 Vue 官方文件，找到它說明的技術：Vue。')
-
-    await switchToBackward(wrapper)
-    expect(wrapper.text()).toContain('從 Vue 反查，列出說明它的文件和使用它的專案。')
-
-    expect(wrapper.text()).not.toContain('這篇文章')
-    expect(wrapper.text()).not.toMatch(/Vue\s*3/)
-    wrapper.unmount()
-  })
-
-  it('它應該不再說文章是「自己寫的」', () => {
-    const wrapper = mountAbout()
-    expect(wrapper.text()).not.toContain('自己寫')
-    expect(wrapper.text()).toContain('收錄文章、用過的技術、做過的專案，以及這些技術的官方文件。')
-    wrapper.unmount()
-  })
-
-  it('它應該在 COLOPHON 只寫分工，不列 plugin', () => {
-    const wrapper = mountAbout()
-    expect(wrapper.text()).not.toMatch(/plugin/i)
-    expect(wrapper.text()).not.toContain('主 session')
     wrapper.unmount()
   })
 })

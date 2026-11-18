@@ -1,683 +1,113 @@
 <template>
-  <!-- About 頁：照設計稿 canvas HcnHo2yYoWQdFypRg7Y2qU 的 E 版（Catalog.dc.html，版本 25）實作。
-       2026-09-29 改版的主要決定：D-58（這頁介紹網站，不介紹作者；拿掉 Timeline 與自我介紹）、D-59（配色）、D-60（字型）。
-       整頁由滿版色帶組成，route meta 設了 fullBleed，MainLayout 不套內容欄寬度也不留上下白。
-       顏色一律走 token，設計稿裡沒有對應 token 的值才寫成 color-mix()，理由寫在各處註解。 -->
-  <!-- leading-[normal]：設計稿沒指定行高的文字都是瀏覽器預設的 normal，不是 body 的 1.5。
-       少了這行，分類卡、述詞標籤、卡片標題都會被撐高（分類卡多 12px，會蓋住「技術」卡下緣的兩個箭頭）；
-       需要特定行高的段落與標題各自寫了 leading-[…]，不受影響 -->
-  <div class="w-full leading-[normal]">
-    <!-- ① 照片橫幅。用 <img> 不用 CSS 背景圖，才能給 alt -->
-    <header
-      class="relative overflow-hidden bg-(--bg-band-strong) h-[440px] sm:h-[520px] lg:h-[600px] flex flex-col justify-end"
-    >
-      <img
-        :src="heroPhoto"
-        alt="木製卡片目錄櫃，一整排帶黃銅標籤框的抽屜"
-        class="absolute inset-0 w-full h-full object-cover object-[center_38%]"
-      />
-      <div :class="[WRAP, 'relative pb-12 lg:pb-[72px]']">
-        <div class="flex items-center gap-3.5 mb-[22px]">
-          <span class="w-10 h-0.5 bg-(--accent-brass)" aria-hidden="true"></span>
-          <span :class="[KICKER, 'text-(--text-on-band)']">ABOUT</span>
-        </div>
-        <h1
-          class="m-0 font-serif font-black text-[44px] sm:text-[64px] lg:text-[92px] leading-[1.12] tracking-[0.02em] text-(--text-on-band)"
-        >
-          私人藏書<br />公開目錄
-        </h1>
-        <p
-          class="mt-5 lg:mt-7 mb-0 max-w-[620px] text-[17px] lg:text-[19px] leading-[1.7] text-(--text-on-band)"
-        >
-          文章、技術與專案的目錄，條目之間以雙向關係連結
-        </p>
-      </div>
-    </header>
-
-    <!-- ② SCOPE：收了什麼、為什麼這樣編 -->
-    <section class="bg-(--bg-paper-light) pt-16 pb-16 lg:pt-[112px] lg:pb-[104px]">
-      <div :class="[WRAP, 'grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-10 items-start']">
-        <div class="lg:col-span-6 flex flex-col gap-4">
-          <div :class="[KICKER, 'text-(--text-accent)']">SCOPE</div>
-          <h2 :class="H2">收錄範圍</h2>
-          <p class="mt-5 mb-0 text-[18px] leading-[1.75] text-(--text-ink-main)">
-            收錄文章、用過的技術、做過的專案，以及這些技術的官方文件。
-          </p>
-          <p class="m-0 text-[16px] leading-[1.75] text-(--text-ink-body)">
-            條目之間以關係相連，整份目錄可以當成一張圖瀏覽。
-          </p>
-          <p class="m-0 text-[16px] leading-[1.75] text-(--text-ink-body)">
-            分類與雙向關係沿用圖書館編目的做法。
-          </p>
-        </div>
-        <figure class="lg:col-start-8 lg:col-span-5 m-0 lg:mt-2">
-          <img
-            :src="drawerPhoto"
-            alt="一只拉出來的卡片目錄抽屜，裡面排滿索引卡"
-            class="block w-full h-[240px] sm:h-[300px] object-cover rounded-[4px] bg-(--bg-folder)"
-            :style="{ boxShadow: shadow(8, 14) }"
-          />
-        </figure>
-      </div>
-    </section>
-
-    <!-- ③ RELATIONS：雙向關係，用一條真的關係從兩頭示範 -->
-    <section class="bg-(--bg-paper-dark) pt-16 pb-16 lg:pt-[104px] lg:pb-[112px]">
-      <div :class="[WRAP, 'flex flex-col gap-10 lg:gap-14']">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-5 items-start">
-          <div class="lg:col-span-5 flex flex-col gap-4">
-            <div :class="[KICKER, 'text-(--text-accent)']">RELATIONS</div>
-            <h2 :class="H2">從哪一頭<br />都找得回來</h2>
-          </div>
+  <!-- 關於頁：照 v1 定版的設計稿實作（單欄卡片，文字在左、草圖在右；頁首三類卡片線稿；
+       草圖都在同一邊，卡片之間只靠留白；描線動畫尊重 prefers-reduced-motion）。
+       整頁自己畫表頭與寬度（route meta 設了 hideHeader、fullBleed），顏色一律走 variables.css 的 token。
+       字重 300 是設計稿的內文字重，其他頁不受影響。 -->
+  <div
+    ref="root"
+    class="about-page pb-[88px] min-[601px]:pb-[112px] text-[17px] font-light leading-[1.75] text-(--text-ink-body)"
+  >
+    <div :class="WRAP">
+      <header
+        class="grid grid-cols-1 gap-x-14 gap-y-6 items-center pt-11 min-[861px]:pt-16 min-[861px]:grid-cols-[minmax(0,1fr)_minmax(0,340px)]"
+      >
+        <div class="min-w-0 max-sm:text-center">
+          <h1
+            class="m-0 font-serif font-bold text-[36px] min-[601px]:text-[44px] leading-[1.25] tracking-[0.01em] text-(--text-ink-main)"
+          >
+            Jerry Yeh
+          </h1>
           <p
-            class="lg:col-start-7 lg:col-span-6 m-0 lg:mt-[34px] text-[17px] lg:text-[18px] leading-[1.75] text-(--text-ink-main)"
+            class="mt-[18px] mb-0 max-w-[24em] text-[20px] min-[601px]:text-[23px] leading-[1.65] text-(--text-ink-main) text-pretty max-sm:mx-auto max-sm:text-balance max-sm:break-keep"
           >
-            關係兩頭都查得到：從一份文件，能找到它說明的技術；從一項技術，也能反查說明它的文件和使用它的專案。
+            <span v-for="phrase in CAREER_PHRASES" :key="phrase" class="min-[601px]:inline-block">{{
+              phrase
+            }}</span>
           </p>
-        </div>
-
-        <!-- 目錄卡：橫線是卡片上的格線，底部圓孔是穿目錄桿的孔，都是裝飾 -->
-        <div
-          class="relative self-center w-full max-w-[880px] rounded-[6px] px-5 pt-7 pb-14 sm:px-14 sm:pt-9 sm:pb-16 flex flex-col gap-[30px] bg-(--bg-paper-light)"
-          :style="{
-            backgroundImage: `repeating-linear-gradient(180deg, transparent 0, transparent 39px, ${mix('--text-ink-main', 9)} 39px, ${mix('--text-ink-main', 9)} 40px)`,
-            boxShadow: shadow(10, 16, '0 18px 40px'),
-          }"
-        >
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div :class="[MONO, 'font-bold text-[15px] text-(--text-ink-main)']">
-              同一條關係，從兩頭看
-            </div>
-            <!-- 全站統一的「幾選一」切換（D-66）；深色主題選中改成黃銅，原本的藏青實心在深色底上看不出來 -->
-            <BaseSegmented
-              v-model="dir"
-              :options="DIRECTIONS"
-              label="切換從哪一頭看這條關係"
-              size="md"
-            />
-          </div>
-
-          <div class="min-h-[224px] flex flex-col justify-center">
-            <!-- 從文件看：文件 —說明→ 技術 -->
-            <div
-              v-if="dir === 'forward'"
-              class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-[3fr_5fr_3fr] sm:gap-x-7 sm:items-end"
-            >
-              <EntryChip
-                :code="CLASSES.doc.code"
-                :label="CLASSES.doc.name"
-                :fill="CLASSES.doc.fill"
-                title="Vue 官方文件"
-                focus
-              />
-              <RelationArrow label="說明" predicate="specs" />
-              <EntryChip
-                :code="CLASSES.tech.code"
-                :label="CLASSES.tech.name"
-                :fill="CLASSES.tech.fill"
-                title="Vue"
-                end
-              />
-            </div>
-
-            <!-- 從技術看：技術 —被說明→ 文件、技術 —被使用→ 實作。反向是兩條關係，所以是兩支箭頭 -->
-            <div
-              v-else
-              class="flex flex-col items-center gap-3 sm:grid sm:grid-cols-[3fr_5fr_3fr] sm:grid-rows-[auto_auto] sm:gap-x-7 sm:gap-y-[18px] sm:items-end"
-            >
-              <div class="sm:row-span-2 sm:self-center">
-                <EntryChip
-                  :code="CLASSES.tech.code"
-                  :label="CLASSES.tech.name"
-                  :fill="CLASSES.tech.fill"
-                  title="Vue"
-                  focus
-                />
-              </div>
-              <RelationArrow label="被說明" predicate="specifiedBy" />
-              <EntryChip
-                :code="CLASSES.doc.code"
-                :label="CLASSES.doc.name"
-                :fill="CLASSES.doc.fill"
-                title="Vue 官方文件"
-                end
-              />
-              <!-- 手機直排時兩支箭頭上下疊，第二支看起來像從「Vue 官方文件」出發（模擬讀者審查 2026-10-01），
-                   所以手機版在「被使用」前面再放一次 Vue；桌機版 Vue 跨兩列，兩支箭頭共用同一個起點 -->
-              <div class="sm:hidden mt-3">
-                <EntryChip
-                  :code="CLASSES.tech.code"
-                  :label="CLASSES.tech.name"
-                  :fill="CLASSES.tech.fill"
-                  title="Vue"
-                  focus
-                />
-              </div>
-              <RelationArrow label="被使用" predicate="usedBy" />
-              <EntryChip
-                :code="CLASSES.impl.code"
-                :label="CLASSES.impl.name"
-                :fill="CLASSES.impl.fill"
-                title="my-dev-grid"
-                end
-              />
-            </div>
-          </div>
-
-          <p
-            class="m-0 text-center text-[18px] sm:text-[20px] font-bold leading-[1.6] text-(--text-ink-main)"
-            aria-live="polite"
-          >
-            {{ sentence }}
-          </p>
-          <div
-            class="absolute left-1/2 bottom-[18px] w-[18px] h-[18px] -ml-[9px] rounded-full bg-(--bg-paper-dark)"
-            :style="{ boxShadow: `inset 0 1px 2px ${mix('--bg-nav-footer', 35)}` }"
-            aria-hidden="true"
-          ></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ④ CLASS NUMBERS：三大類與它們之間的述詞。述詞以後端 RelationSeeder 為準
-         （文件→技術 specs、文件→實作 documents、實作→技術 uses。2026-09-30 以前後端把這一對定義反了，
-         技術→實作叫 uses，後來改名 usedBy；2026-10-04 這張圖改從實作畫向技術，跟首頁、/graph 一致，D-90） -->
-    <section
-      class="bg-(--bg-band-strong) pt-16 pb-16 lg:pt-24 lg:pb-[104px]"
-      style="
-        background-image:
-          repeating-linear-gradient(
-            0deg,
-            rgba(255, 255, 255, 0.028) 0,
-            rgba(255, 255, 255, 0.028) 1px,
-            transparent 1px,
-            transparent 3px
-          ),
-          repeating-linear-gradient(
-            90deg,
-            rgba(0, 0, 0, 0.07) 0,
-            rgba(0, 0, 0, 0.07) 1px,
-            transparent 1px,
-            transparent 3px
-          );
-      "
-    >
-      <div :class="[WRAP, 'flex flex-col gap-10']">
-        <div class="flex flex-col gap-3.5">
-          <div :class="[KICKER, 'text-(--accent-brass)']">CLASS NUMBERS</div>
-          <h2
-            class="m-0 font-serif font-black text-[30px] sm:text-[34px] lg:text-[40px] leading-[1.3] text-(--text-on-band)"
-          >
-            目錄分成三大類
-          </h2>
-        </div>
-
-        <!-- 桌機：三張分類卡排成三角形。座標照設計稿的 1088×470 畫框換算成百分比，
-             窄一點的桌機（1024 起）等比例縮。
-             連線是單向箭頭，從主詞指向受詞，標的是那個方向的述詞。設計稿畫的是雙向箭頭加「specs / specifiedBy」，
-             但「說明」「使用」只讀得通一個方向，雙向箭頭看不出哪個名字是哪個方向——後端的 uses 就是這樣
-             被讀反的（2026-09-30 使用者決定拆成單向，ER model 概念圖同一天也改了）。反方向在上面「從兩頭看」 -->
-        <div class="hidden lg:block relative w-full max-w-[1088px] aspect-[1088/470] self-center">
-          <svg
-            viewBox="0 0 1088 470"
-            class="absolute inset-0 w-full h-full text-(--accent-brass)"
-            aria-hidden="true"
-          >
-            <defs>
-              <marker
-                id="about-class-arrow"
-                viewBox="0 0 10 10"
-                refX="9"
-                refY="5"
-                markerWidth="8"
-                markerHeight="8"
-                orient="auto-start-reverse"
-              >
-                <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
-              </marker>
-            </defs>
-            <g
-              stroke="currentColor"
-              stroke-width="2"
-              marker-end="url(#about-class-arrow)"
-            >
-              <line x1="203" y1="346" x2="466" y2="124" />
-              <line x1="260" y1="411" x2="828" y2="411" />
-              <line x1="885" y1="346" x2="622" y2="124" />
-            </g>
-          </svg>
-          <ClassCard
-            v-for="c in CLASS_LIST"
-            :key="c.code"
-            :card="c"
-            class="absolute w-[22.98%]"
-            :style="{ left: c.pos.left, top: c.pos.top }"
-          />
-          <RelationLabel
-            v-for="r in CLASS_RELATIONS"
-            :key="r.predicate"
-            :relation="r"
-            class="absolute -translate-x-1/2 -translate-y-1/2"
-            :style="{ left: r.pos.left, top: r.pos.top }"
-          />
-        </div>
-
-        <!-- 手機與平板：三角形放不下，改成三張卡並排或直排，下面列出三條關係 -->
-        <div class="lg:hidden flex flex-col gap-6">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <ClassCard v-for="c in CLASS_LIST" :key="c.code" :card="c" />
-          </div>
-          <ul class="m-0 p-0 list-none flex flex-col gap-3">
-            <li
-              v-for="r in CLASS_RELATIONS"
-              :key="r.predicate"
-              class="flex flex-wrap items-center gap-3"
-            >
-              <span class="text-[15px] text-(--text-on-band)">{{ r.from }} → {{ r.to }}</span>
-              <RelationLabel :relation="r" />
-            </li>
-          </ul>
-        </div>
-
-        <div
-          class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pt-8 border-t"
-          :style="{ borderColor: mix('--text-on-band', 18) }"
-        >
-          <router-link
-            to="/graph"
-            :class="[
-              MONO,
-              'self-start sm:self-auto shrink-0 inline-flex items-center min-h-11 px-[22px] rounded-[6px] border-[1.5px] border-(--accent-brass) text-(--accent-brass) font-bold text-[15px] tracking-[0.05em] no-underline hover:bg-(--accent-brass) hover:text-(--bg-band-strong) transition-colors',
-            ]"
-          >
-            看知識圖譜
-          </router-link>
-        </div>
-      </div>
-    </section>
-
-    <!-- ⑤ COLOPHON：誰做了什麼。系統設計拆兩半：畫面是 Claude 的，架構與規則由人決定 -->
-    <section class="bg-(--bg-paper-light) pt-16 pb-16 lg:pt-[104px] lg:pb-[112px]">
-      <div :class="[WRAP, 'flex flex-col gap-10 lg:gap-14']">
-        <div class="flex flex-col gap-4">
-          <div :class="[KICKER, 'text-(--text-accent)']">COLOPHON</div>
-          <h2 :class="H2">程式和畫面多半由 AI 產出<br />架構和規則由人決定</h2>
-        </div>
-
-        <!-- 分隔線設計稿是藏青 #162541；用 --text-ink-main（淺色 #202839）是為了深色主題下還看得到 -->
-        <div
-          class="grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-12 border-t-2 border-(--text-ink-main) pt-11 items-start"
-        >
-          <div class="lg:col-span-4 flex flex-col gap-[18px]">
-            <div
-              class="font-serif font-black text-[64px] lg:text-[80px] leading-[0.9] text-(--text-accent)"
-            >
-              人工
-            </div>
-            <SeparatedList
-              :items="HUMAN_ROLES"
-              class="text-[18px] leading-[1.8] text-(--text-ink-main)"
-            />
-          </div>
-
-          <div class="lg:col-start-6 lg:col-span-7 flex flex-col gap-[18px]">
-            <div class="flex flex-wrap items-baseline gap-x-5 gap-y-2">
-              <div
-                :class="[
-                  MONO,
-                  'font-bold text-[64px] lg:text-[80px] leading-[0.9] text-(--text-ink-main)',
-                ]"
-              >
-                AI
-              </div>
-              <div class="text-[16px] leading-[1.6] text-(--text-ink-body)">
-                程式和畫面主要由 Claude 產出：
-              </div>
-            </div>
-
-            <div
-              class="rounded-[4px] bg-(--bg-paper-light) px-[22px] pt-5 pb-[22px] flex flex-col gap-2"
-              :style="{ boxShadow: shadow(10, 10, '0 6px 14px') }"
-            >
-              <span class="text-[20px] font-bold text-(--text-ink-main)">Claude</span>
-              <span class="text-[15px] leading-[1.7] text-(--text-ink-body)"
-                >負責協調與排程，也寫大部分程式：</span
-              >
-              <SeparatedList
-                :items="CLAUDE_ROLES"
-                class="text-[16px] leading-[1.9] text-(--text-ink-main)"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ⑥ AUTHOR：作者只留一行（D-58），連結用 44px 的圖示按鈕 -->
-    <section class="bg-(--bg-band-strong) py-10 lg:py-11">
-      <div :class="[WRAP, 'flex flex-wrap items-center gap-x-7 gap-y-3']">
-        <span :class="[KICKER, 'text-(--accent-brass)']">AUTHOR</span>
-        <span class="text-[18px] font-bold text-(--text-on-band) whitespace-nowrap">Jerry Yeh</span>
-        <span class="text-[16px] text-(--text-on-band)">圖書資訊學背景，現在做後端。</span>
-        <span class="sm:ml-auto flex gap-3 text-(--accent-brass)">
-          <a
-            v-for="l in LINKS"
-            :key="l.label"
-            :href="l.href"
-            :aria-label="l.label"
-            :title="l.label"
-            class="inline-flex items-center justify-center w-11 h-11 rounded-[6px] border hover:bg-(--accent-brass) hover:text-(--bg-band-strong) transition-colors"
-            :style="{ borderColor: mix('--accent-brass', 50) }"
-            v-bind="l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {}"
-          >
-            <svg
-              v-if="l.icon === 'github'"
-              width="20"
-              height="20"
-              viewBox="0 0 16 16"
-              aria-hidden="true"
-            >
-              <path
+          <p class="mt-3.5 mb-0 text-sm leading-[1.75] text-(--text-ink-muted)">{{ BYLINE }}</p>
+          <p class="mt-6 mb-0 flex flex-wrap gap-3 max-sm:justify-center">
+            <a :href="GITHUB_URL" :class="BUTTON">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 16 16"
                 fill="currentColor"
-                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
-              />
-            </svg>
-            <svg
-              v-else
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <path d="M3 7l9 6 9-6" />
-            </svg>
-          </a>
-        </span>
-      </div>
-    </section>
+                aria-hidden="true"
+              >
+                <path
+                  d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+                />
+              </svg>
+              GitHub
+            </a>
+            <!-- 信箱還沒填（CONTACT_EMAIL 是空字串）就不畫這顆按鈕 -->
+            <a v-if="CONTACT_EMAIL" :href="`mailto:${CONTACT_EMAIL}`" :class="BUTTON">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                aria-hidden="true"
+              >
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="m3 7 9 6 9-6" />
+              </svg>
+              電子郵件
+            </a>
+          </p>
+        </div>
+        <div
+          class="draw max-w-[300px] max-sm:mx-auto min-[861px]:max-w-none"
+          data-testid="about-hero-art"
+        >
+          <AboutHeroArt />
+        </div>
+      </header>
+
+      <section class="pt-16 min-[601px]:pt-[72px]" aria-labelledby="about-ways">
+        <h2
+          id="about-ways"
+          class="m-0 font-serif font-bold text-[28px] min-[601px]:text-[32px] leading-[1.3] text-(--text-accent) text-balance sm:max-w-[880px] sm:mx-auto"
+        >
+          工作模式與理念
+        </h2>
+        <ul
+          class="mt-8 p-0 list-none grid grid-cols-[minmax(0,1fr)] gap-12 sm:gap-8 sm:max-w-[880px] sm:mx-auto"
+        >
+          <AboutCard v-for="card in ABOUT_CARDS" :key="card.id" :card="card" />
+        </ul>
+      </section>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, defineComponent, h, type PropType } from 'vue'
-import BaseSegmented from '@/components/BaseSegmented.vue'
-import heroPhoto from '@/assets/about/card-catalog-hero.jpg'
-import drawerPhoto from '@/assets/about/catalog-drawer.jpg'
+import { ref } from 'vue'
+import { BYLINE } from '@/copy/common'
+import AboutCard from './AboutCard.vue'
+import AboutHeroArt from './AboutHeroArt.vue'
+import { ABOUT_CARDS } from './aboutCards'
+import { CONTACT_EMAIL, GITHUB_URL } from './aboutConfig'
+import { useDrawOnScroll } from './useDrawOnScroll'
+import './aboutSketch.css'
 
-// 設計稿用 Courier Prime 當分類號／小標的字（index.html 已載入），Tailwind 的 font-mono 是系統等寬字，不是它
-const MONO = "font-['Courier_Prime',ui-monospace,monospace]"
-const KICKER = `${MONO} font-bold text-[13px] tracking-[0.24em]`
-const H2 =
-  'm-0 font-serif font-black text-[30px] sm:text-[38px] lg:text-[46px] leading-[1.3] text-(--text-ink-main)'
-// 內容欄：設計稿是 1280 寬的畫框、左右各 96px，等於內容 1088px
-const WRAP = 'mx-auto w-full max-w-[1088px] px-5 sm:px-8 xl:px-0'
+// 內容欄：寬 1120（含左右內距），內距手機 16、≥768 為 32
+const WRAP = 'mx-auto w-full max-w-[1120px] px-4 md:px-8'
 
-/** 設計稿裡沒有 token 的半透明色，都是某個 token 的透明版本，用 color-mix 從 token 算，換主題時跟著走 */
-function mix(token: string, percent: number): string {
-  return `color-mix(in srgb, var(${token}) ${percent}%, transparent)`
-}
-/**
- * 設計稿的藏青陰影（rgba(22,37,65,…)）。用 --bg-nav-footer 算：淺色主題它就是 #162541，
- * 深色主題是近黑的 #040a1a，陰影才不會在深底上變成一圈亮邊
- */
-function shadow(edge: number, blur: number, far = '0 14px 30px'): string {
-  return `0 1px 0 ${mix('--bg-nav-footer', edge)}, ${far} ${mix('--bg-nav-footer', blur)}`
-}
+// 頁首按鈕（GitHub、電子郵件）
+const BUTTON =
+  'inline-flex items-center gap-2 min-h-11 px-4 border border-(--text-ink-body) rounded-md text-base leading-[1.75] font-normal text-(--text-ink-main) no-underline transition-[background-color,color] duration-[160ms] ease-out hover:bg-(--text-ink-main) hover:text-(--bg-page) motion-reduce:transition-none'
 
-type Dir = 'forward' | 'backward'
-const DIRECTIONS: { value: Dir; label: string }[] = [
-  { value: 'forward', label: '從文件看' },
-  { value: 'backward', label: '從技術看' },
-]
-const dir = ref<Dir>('forward')
-const sentence = computed(() =>
-  dir.value === 'forward'
-    ? '從 Vue 官方文件，找到它說明的技術：Vue。'
-    : '從 Vue 反查，列出說明它的文件和使用它的專案。',
-)
-
-const CLASSES = {
-  doc: {
-    code: '0000',
-    name: '文件',
-    desc: '文章、參考資料',
-    fill: '--cat-fill-doc',
-    pos: { left: '0%', top: '74.89%' },
-  },
-  tech: {
-    code: '1000',
-    name: '技術',
-    desc: '語言、框架、工具',
-    fill: '--cat-fill-tech',
-    pos: { left: '38.51%', top: '0%' },
-  },
-  impl: {
-    code: '2000',
-    name: '實作',
-    desc: '專案',
-    fill: '--cat-fill-impl',
-    pos: { left: '77.02%', top: '74.89%' },
-  },
-}
-const CLASS_LIST = [CLASSES.doc, CLASSES.tech, CLASSES.impl]
-type ClassDef = (typeof CLASS_LIST)[number]
-
-// 標籤座標同樣是設計稿 1088×470 畫框裡的中心點換算成百分比
-// 動詞跟首頁、/graph 連線的簡短標示是同一套（graphRelationPhrase.ts）。2026-10-04 使用者要求一致：
-// 原本畫成「技術 用在 實作」，改成「實作 使用 → 技術」（主詞在前，D-88／D-90）。specs 原本照設計稿譯「寫到」，
-// 2026-10-01 改成「說明」：資料裡 specs 的主詞是官方文件網站，意思是「這份文件是這個技術的說明」，
-// 「寫到」是文章提到某技術，是另一種關係。完整的述詞對照表要先查來源詞彙，還沒做（D-73）
-const CLASS_RELATIONS = [
-  {
-    from: '文件',
-    to: '技術',
-    label: '說明',
-    predicate: 'specs',
-    pos: { left: '30.70%', top: '50%' },
-  },
-  {
-    from: '文件',
-    to: '實作',
-    label: '記錄',
-    predicate: 'documents',
-    pos: { left: '50%', top: '87.45%' },
-  },
-  {
-    from: '實作',
-    to: '技術',
-    label: '使用',
-    predicate: 'uses',
-    pos: { left: '69.30%', top: '50%' },
-  },
-]
-type RelationDef = (typeof CLASS_RELATIONS)[number]
-
-const HUMAN_ROLES = ['資料模型', '系統架構', 'AI 分工與交接', '審核規則', '驗收']
-const CLAUDE_ROLES = [
-  '需求拆解與排程',
-  '前後端程式碼',
-  '設計稿與配色',
-  '測試與 CI 修正',
-  '審核 PR',
-  '派工給其他 AI',
-  '決策紀錄與文件',
-]
-const LINKS = [
-  { label: 'GitHub', href: 'https://github.com/jerryyehself', icon: 'github', external: true },
-  { label: 'Email', href: 'mailto:jerry40522@gmail.com', icon: 'mail', external: false },
+// 職涯句分成幾個詞組：桌機每組不拆行（inline-block），手機接成一般文字
+const CAREER_PHRASES = [
+  '圖書資訊學出身，',
+  '兩年程式教學、三年後端工程師。',
+  '習慣先替東西分類、',
+  '找出彼此的關係，再寫成程式。',
 ]
 
-// ---- 這頁專用的小元件：只在這裡用，抽成獨立檔案反而要多跳一層才看得懂 ----
-
-// 下面幾個小元件共用這頁的 MONO、mix() 和由頁面資料推出來的型別，拆成獨立檔案要連這些一起搬，
-// 不是單純的搬移；所以這個檔案先不套用「一個檔案一個元件」，之後整頁重構時再一起處理。
-/* eslint-disable vue/one-component-per-file */
-
-/** 切換卡裡的一筆條目：上面是分類號，下面是條目名。focus 是「從哪一頭看」的那一筆，框線改成強調色 */
-const EntryChip = defineComponent({
-  props: {
-    code: { type: String, required: true },
-    label: { type: String, required: true },
-    fill: { type: String, required: true },
-    title: { type: String, required: true },
-    focus: Boolean,
-    end: Boolean,
-  },
-  setup(props) {
-    return () =>
-      h(
-        'div',
-        { class: ['flex flex-col gap-2 items-center w-fit', props.end ? 'sm:ml-auto' : ''] },
-        [
-          h(
-            'span',
-            { class: [MONO, 'font-bold text-[14px]'], style: { color: `var(${props.fill})` } },
-            `${props.code} ${props.label}`,
-          ),
-          h(
-            'span',
-            {
-              class: [
-                'text-[20px] sm:text-[22px] font-bold rounded-[6px] px-5 py-3 whitespace-nowrap',
-                props.focus
-                  ? 'border-2 border-(--text-accent) bg-(--bg-paper-light) text-(--text-ink-main)'
-                  : 'border bg-(--bg-folder) text-(--text-ink-body)',
-              ],
-              style: props.focus ? undefined : { borderColor: mix('--text-ink-main', 30) },
-            },
-            props.title,
-          ),
-        ],
-      )
-  },
-})
-
-/**
- * 述詞＋箭頭。箭頭用 CSS 畫（線段＋三角形），不用 → 字元：字元箭頭的粗細和垂直位置
- * 會跟著字型走，跟線段對不齊（使用者決定 #11）。手機版改成往下的箭頭。
- * 顏色設計稿是 #162541；用 --text-ink-main 是為了深色主題下箭頭還看得到
- */
-const RelationArrow = defineComponent({
-  props: {
-    label: { type: String, required: true },
-    predicate: { type: String, required: true },
-  },
-  setup(props) {
-    return () =>
-      h('div', { class: 'flex flex-col items-center gap-1.5 sm:mb-[26px] w-full' }, [
-        h('span', { class: 'text-[15px] font-bold text-(--text-ink-main)' }, props.label),
-        h('span', { class: [MONO, 'text-[13px] text-(--text-ink-muted)'] }, props.predicate),
-        // 桌機：水平
-        h('div', { class: 'hidden sm:flex items-center w-full mt-1', 'aria-hidden': 'true' }, [
-          h('div', { class: 'flex-1 h-0.5 bg-(--text-ink-main)' }),
-          h('div', {
-            class:
-              'w-0 h-0 border-y-[6px] border-y-transparent border-l-[11px] border-l-(--text-ink-main)',
-          }),
-        ]),
-        // 手機：垂直
-        h(
-          'div',
-          { class: 'flex sm:hidden flex-col items-center h-8 mt-1', 'aria-hidden': 'true' },
-          [
-            h('div', { class: 'flex-1 w-0.5 bg-(--text-ink-main)' }),
-            h('div', {
-              class:
-                'w-0 h-0 border-x-[6px] border-x-transparent border-t-[11px] border-t-(--text-ink-main)',
-            }),
-          ],
-        ),
-      ])
-  },
-})
-
-/**
- * 分類卡：黃銅框＋分類號色帶＋類名。黃銅框的漸層設計稿是 #d9b06a→#a87a35，
- * 這裡用 --accent-brass 往亮、往暗各推一階（淺色主題約 #d1a968→#a57e3f），換主題時跟著走。
- * 分類號是白字放在 --cat-fill-* 上——那組顏色就是針對白字 4.5:1 驗證過的，兩個主題同值
- */
-const ClassCard = defineComponent({
-  props: { card: { type: Object as PropType<ClassDef>, required: true } },
-  setup(props) {
-    return () =>
-      h(
-        'div',
-        {
-          class: 'box-border border-[3px] border-(--accent-brass) rounded-[3px] p-1',
-          style: {
-            background:
-              'linear-gradient(180deg, color-mix(in srgb, var(--accent-brass), white 15%), color-mix(in srgb, var(--accent-brass), black 18%))',
-            boxShadow: '0 6px 14px rgba(0, 0, 0, 0.3)',
-          },
-        },
-        [
-          h('div', { class: 'bg-(--bg-paper-light) flex flex-col' }, [
-            h(
-              'div',
-              {
-                class: [MONO, 'px-4 py-1.5 font-bold text-[18px] tracking-[0.12em] text-white'],
-                style: { background: `var(${props.card.fill})` },
-              },
-              props.card.code,
-            ),
-            h('div', { class: 'px-4 pt-3 pb-3.5 flex flex-col gap-1' }, [
-              h(
-                'span',
-                { class: 'font-serif font-black text-[26px] text-(--text-ink-main)' },
-                props.card.name,
-              ),
-              h('span', { class: 'text-[15px] text-(--text-ink-body)' }, props.card.desc),
-            ]),
-          ]),
-        ],
-      )
-  },
-})
-
-/** 三類之間的述詞標籤，放在色帶上 */
-const RelationLabel = defineComponent({
-  props: { relation: { type: Object as PropType<RelationDef>, required: true } },
-  setup(props) {
-    return () =>
-      h(
-        'div',
-        {
-          class:
-            'inline-flex flex-col items-center gap-0.5 whitespace-nowrap rounded-[6px] border px-3.5 py-2 bg-(--bg-band-strong)',
-          style: { borderColor: mix('--accent-brass', 55) },
-        },
-        [
-          h('span', { class: 'text-[16px] font-bold text-(--text-on-band)' }, props.relation.label),
-          h(
-            'span',
-            { class: [MONO, 'text-[13px] text-(--accent-brass)'] },
-            props.relation.predicate,
-          ),
-        ],
-      )
-  },
-})
-
-/** 用「｜」隔開的清單，每一項不斷行 */
-const SeparatedList = defineComponent({
-  props: { items: { type: Array as PropType<string[]>, required: true } },
-  setup(props) {
-    return () =>
-      h(
-        'div',
-        props.items.flatMap((item, i) => [
-          ...(i > 0
-            ? [h('span', { class: 'text-(--text-accent)', 'aria-hidden': 'true' }, '｜')]
-            : []),
-          h('span', { class: 'whitespace-nowrap' }, item),
-        ]),
-      )
-  },
-})
+const root = ref<HTMLElement | null>(null)
+useDrawOnScroll(root)
 </script>
