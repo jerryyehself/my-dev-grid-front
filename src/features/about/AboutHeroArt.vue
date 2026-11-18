@@ -20,7 +20,7 @@
         style="--i: 0"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-doc" x="18" y="14.5" style="--i: 0">文件</text>
+      <text class="cl x-doc" x="18" y="16.8" style="--i: 0">文件</text>
     </g>
     <g transform="translate(50 10) rotate(7)">
       <path
@@ -34,7 +34,7 @@
         style="--i: 0"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-tech" x="18" y="14.5" style="--i: 0">技術</text>
+      <text class="cl x-tech" x="18" y="16.8" style="--i: 0">技術</text>
     </g>
     <g transform="translate(30 58) rotate(5)">
       <path
@@ -48,7 +48,7 @@
         style="--i: 1"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-impl" x="18" y="14.5" style="--i: 1">實作</text>
+      <text class="cl x-impl" x="18" y="16.8" style="--i: 1">實作</text>
     </g>
     <g transform="translate(4 98) rotate(-6)">
       <path
@@ -62,7 +62,7 @@
         style="--i: 1"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-tech" x="18" y="14.5" style="--i: 1">技術</text>
+      <text class="cl x-tech" x="18" y="16.8" style="--i: 1">技術</text>
     </g>
     <g transform="translate(52 96) rotate(9)">
       <path
@@ -76,7 +76,7 @@
         style="--i: 2"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-doc" x="18" y="14.5" style="--i: 2">文件</text>
+      <text class="cl x-doc" x="18" y="16.8" style="--i: 2">文件</text>
     </g>
     <g transform="translate(26 146) rotate(-5)">
       <path
@@ -90,7 +90,7 @@
         style="--i: 2"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-impl" x="18" y="14.5" style="--i: 2">實作</text>
+      <text class="cl x-impl" x="18" y="16.8" style="--i: 2">實作</text>
     </g>
     <path class="ln" pathLength="1" style="--i: 3" d="M100 96H124M117 90L125 96L117 102" />
     <path
@@ -111,7 +111,7 @@
         style="--i: 4"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-doc" x="18" y="14.5" style="--i: 4">文件</text>
+      <text class="cl x-doc" x="18" y="16.8" style="--i: 4">文件</text>
     </g>
     <g transform="translate(173 33) rotate(0)">
       <path
@@ -145,7 +145,7 @@
         style="--i: 5"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-tech" x="18" y="14.5" style="--i: 5">技術</text>
+      <text class="cl x-tech" x="18" y="16.8" style="--i: 5">技術</text>
     </g>
     <g transform="translate(173 85) rotate(0)">
       <path
@@ -184,7 +184,7 @@
         style="--i: 6"
         d="M4 0H32Q36 0 36 4V18Q36 22 32 22H4Q0 22 0 18V4Q0 0 4 0Z"
       />
-      <text class="cl x-impl" x="18" y="14.5" style="--i: 6">實作</text>
+      <text class="cl x-impl" x="18" y="16.8" style="--i: 6">實作</text>
     </g>
     <g transform="translate(173 137) rotate(0)">
       <path
