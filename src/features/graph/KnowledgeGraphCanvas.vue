@@ -161,7 +161,7 @@ function css(varName: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
 }
 function isDark(): boolean {
-  return document.documentElement.classList.contains('theme-terminal')
+  return document.documentElement.classList.contains('theme-dark')
 }
 function typeColor(type: GraphNodeType): string {
   return css(`--node-${type === 'documentation' ? 'doc' : type === 'technique' ? 'tech' : 'impl'}`)

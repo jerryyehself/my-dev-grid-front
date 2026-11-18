@@ -41,7 +41,7 @@ describe('全站背景（base.css／variables.css）', () => {
     const body = baseCss.match(/^body\s*\{[^}]*\}/m)?.[0] ?? ''
     expect(body).toContain('background-color: var(--bg-page)')
     expect(body).not.toContain('background-image')
-    expect(baseCss).not.toMatch(/\.theme-terminal\s+body/)
+    expect(baseCss).not.toMatch(/\.theme-dark\s+body/)
   })
 
   it('它應該在 base.css 裡一個漸層也沒有（掃描線是 repeating-linear-gradient、暗角是 radial-gradient）', () => {
@@ -51,7 +51,7 @@ describe('全站背景（base.css／variables.css）', () => {
   })
 
   it('它應該兩個主題都定義 --bg-page，而且只是指向既有的紙張色（沒有新色值）', () => {
-    expect(variablesCss).toMatch(/\.theme-library\s*\{[^}]*--bg-page:\s*var\(--bg-paper-light\);/)
-    expect(variablesCss).toMatch(/\.theme-terminal\s*\{[^}]*--bg-page:\s*var\(--bg-paper-dark\);/)
+    expect(variablesCss).toMatch(/\.theme-light\s*\{[^}]*--bg-page:\s*var\(--bg-paper-light\);/)
+    expect(variablesCss).toMatch(/\.theme-dark\s*\{[^}]*--bg-page:\s*var\(--bg-paper-dark\);/)
   })
 })

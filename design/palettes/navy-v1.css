@@ -27,7 +27,7 @@ html.palette-navy-v1 {
     --node-impl: #59479a;
 }
 
-html.palette-navy-v1.theme-terminal {
+html.palette-navy-v1.theme-dark {
     --bg-paper-light: #21252c;
     --bg-paper-dark: #181b22;
     --bg-nav-footer: #0e1523;

@@ -90,7 +90,7 @@ Rule of Three 說第三次。Martin Fowler 在《Refactoring》裡寫下來、�
   --text-accent: #b45309;      /* 黃銅 */
   --bg-folder: rgba(146, 64, 14, 0.04);
 }
-.theme-terminal {
+.theme-dark {
   --text-accent: #fabd2f;      /* Gruvbox 黃 */
   --bg-folder: rgba(250, 189, 47, 0.07);
 }
@@ -112,7 +112,7 @@ focus:shadow-[0_0_0_3px_rgba(180,83,9,0.08)]
 
 \`\`\`css
 :root          { --focus-ring: rgba(180, 83, 9, 0.08); }
-.theme-terminal{ --focus-ring: rgba(250, 189, 47, 0.15); }
+.theme-dark{ --focus-ring: rgba(250, 189, 47, 0.15); }
 \`\`\`
 
 深色底要多一點 alpha 才看得出來，比例比照 \`--bg-folder\` 的 0.04 → 0.07。

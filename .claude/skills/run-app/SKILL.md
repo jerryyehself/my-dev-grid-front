@@ -110,8 +110,8 @@ symlink above exists).
 
 ```js
 await page.evaluate((theme) => {
-  document.documentElement.classList.toggle('theme-terminal', theme === 'terminal');
-}, 'terminal'); // 'library' (default) needs no class
+  document.documentElement.classList.toggle('theme-dark', theme === 'dark');
+}, 'dark'); // 'light' (default) needs no class
 ```
 
 ## 5. Representative pages for a visual/CSS change
@@ -124,7 +124,7 @@ await page.evaluate((theme) => {
   wrapped paragraphs; `fetchArticle(id)` doesn't filter by `status`, so a
   draft (`status: 0`) still loads directly by id even though it won't
   appear in `/articles`' list or prev/next.
-- Always check both `.theme-library` (default) and `.theme-terminal`, and
+- Always check both `.theme-light` (default) and `.theme-dark`, and
   at least one narrow viewport (~390px) — this project's own
   `visual-design-language` skill requires whole-site/both-theme checks
   before calling a visual decision done.

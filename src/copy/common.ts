@@ -16,6 +16,20 @@ export const NAV_LABELS = {
   about: 'ABOUT',
 } as const
 
+/** 導覽列各項的中文名（手機選單中英並列用，例如「ARTICLES 文章」）；同一個目的地全站只用一個中文名，「實作」照 copy-language 的定案 */
+export const NAV_LABELS_ZH = {
+  home: '首頁',
+  articles: '文章',
+  projects: '實作',
+  graph: '圖譜',
+  about: '關於',
+} as const
+
+/** 主題切換（檯燈）：開燈＝淺色、關燈＝深色 */
+export const THEME_TOGGLE_LABEL = '燈光'
+export const THEME_LIGHT_ON_TEXT = '開燈'
+export const THEME_LIGHT_OFF_TEXT = '關燈'
+
 /** 手機版導覽選單按鈕的 aria-label */
 export const NAV_MENU_ARIA_LABEL = '開啟導覽選單'
 

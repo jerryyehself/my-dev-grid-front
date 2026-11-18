@@ -12,12 +12,12 @@
 
 /* 📚 1. 淺色主題 */
 :root,
-.theme-library {
+.theme-light {
     /* 📄 紙張底色 */
     --bg-paper-light: #f6f5f2;
     --bg-paper-dark: #e4ebf5;
     /* 整頁底色（純色）：只是別名，沒有新色值。淺色用卡紙底；
-       深色用 --bg-paper-dark（見 .theme-terminal），拿掉暗角漸層之後面板（--bg-folder）對它有 1.3:1 */
+       深色用 --bg-paper-dark（見 .theme-dark），拿掉暗角漸層之後面板（--bg-folder）對它有 1.3:1 */
     --bg-page: var(--bg-paper-light);
 
     /* 導覽列與頁尾（藏青書脊） */
@@ -88,8 +88,8 @@
     --text-error: #c70d12;
 }
 
-/* 🕯️ 2. 深色主題（class 名稱沿用 .theme-terminal，useTheme 與測試都靠它） */
-.theme-terminal {
+/* 🕯️ 2. 深色主題（.theme-dark，useTheme、theme-init.js 與測試都靠這個 class） */
+.theme-dark {
     --bg-paper-light: #1d232d;
     --bg-paper-dark: #0d1529;
     --bg-page: var(--bg-paper-dark);

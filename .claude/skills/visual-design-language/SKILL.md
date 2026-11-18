@@ -11,7 +11,7 @@ checked against more than taste: a choice that looks fine but doesn't mean
 anything (see the nav dot example below) is a bug, not a style preference.
 
 **Current themes** (since 2026-09-29, D-59): both
-`.theme-library` (light, default) and `.theme-terminal` (dark, toggled via
+`.theme-light` (light, default) and `.theme-dark` (dark, toggled via
 `useTheme.ts` / `ThemeToggle.vue`) are filled with the **navy v2** palette —
 card-stock ground, navy (`--bg-nav-footer`/`--bg-band-strong`), wine accent in
 light / brass accent in dark, brass as a third color. Values were generated and
@@ -43,7 +43,7 @@ layer is usually how inconsistency creeps in.
 
 1. **Tokens.** Colors live in `src/assets/css/variables.css` as semantic CSS
    variables — `--bg-*`, `--text-*`, `--border-*` — not literal hex values in
-   components. Two themes are already defined there (`:root`/`.theme-library`
+   components. Two themes are already defined there (`:root`/`.theme-light`
    default, `.theme-cyber` alternate); components consume them via Tailwind's
    `bg-(--bg-nav-footer)` / `text-(--text-ink-main)` syntax.
 
@@ -81,7 +81,7 @@ layer is usually how inconsistency creeps in.
 
 **Concrete bug this caught**: `MainLayout.vue`'s page title, sticky-header
 background, and footer were hardcoded to `text-stone-950` / `bg-[#f4f0e1]` /
-`border-stone-200` instead of tokens. Both shipped themes (library, cyber)
+`border-stone-200` instead of tokens. Both shipped themes (light, cyber)
 happen to have light paper backgrounds, so it never showed — until a dark-paper
 theme candidate made the title unreadable (near-black text on near-black
 background). Fixed by routing all of it through `--text-ink-main` /
@@ -502,9 +502,9 @@ not the positioning. For a page or a style direction (typeface, illustration,
 palette), derive the criteria from the four checks, not from catalogue/library
 imagery, and cite D-178 in the research or mockup brief. Sample text is real
 copy from the site, not a phrase invented for its theme. The `IN / ARCHIVE`
-wordmark stays; the internal theme names `library`/`terminal` are code names,
-to be renamed with the theme-toggle rework (new names not settled) —
-neither is a style criterion.
+wordmark stays; the internal theme names are neutral `light`/`dark`
+(renamed from the old `library`/`terminal` code names) — neither is a style
+criterion.
 
 ### Norman's affordance / signifier / feedback
 - **Affordance & signifier**: does this element look like it does something —
