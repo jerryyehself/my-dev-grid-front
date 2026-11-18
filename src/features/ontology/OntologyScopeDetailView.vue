@@ -87,7 +87,7 @@ function familyDot(fullCallNumber: string | undefined): string {
     <!-- 麵包屑。只連到「確實存在的頁面」——「本體論」那一層原本是純文字，因為
          一覽（規格第 6 步）還沒做；第 6 步做完之後它就是一個真的連結了。 -->
     <div
-      class="mb-5 flex flex-wrap items-center gap-2 font-mono text-(length:--type-label-size) text-(--text-ink-muted)"
+      class="mb-5 flex flex-wrap items-center gap-2 font-mono text-[11px] text-(--text-ink-muted)"
     >
       <span class="inline-block h-2 w-2 rounded-full" :class="familyDot(scope.full_call_number)" />
       <router-link
@@ -176,7 +176,7 @@ function familyDot(fullCallNumber: string | undefined): string {
               class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors hover:bg-(--bg-active-row)"
             >
               <span
-                class="w-14 shrink-0 font-mono text-(length:--type-mono-size) tabular-nums text-(--text-ink-muted)"
+                class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"
                 >{{ row.full_call_number }}</span
               >
               <span class="min-w-0 flex-1 truncate font-medium text-(--text-ink-main)">{{
@@ -210,7 +210,7 @@ function familyDot(fullCallNumber: string | undefined): string {
               class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors hover:bg-(--bg-active-row)"
             >
               <span
-                class="w-14 shrink-0 font-mono text-(length:--type-mono-size) tabular-nums text-(--text-ink-muted)"
+                class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"
                 >{{ relation.full_call_number }}</span
               >
               <span class="min-w-0 flex-1 truncate font-medium text-(--text-ink-main)">
@@ -243,7 +243,7 @@ function familyDot(fullCallNumber: string | undefined): string {
               class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors hover:bg-(--bg-active-row)"
             >
               <span
-                class="w-14 shrink-0 font-mono text-(length:--type-mono-size) tabular-nums text-(--text-ink-muted)"
+                class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"
                 >{{ relation.full_call_number }}</span
               >
               <span class="min-w-0 flex-1 truncate font-medium text-(--text-ink-main)">

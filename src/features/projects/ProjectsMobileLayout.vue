@@ -60,7 +60,7 @@ defineExpose({
       <span class="text-(length:--type-caption-size) text-(--text-ink-main)">
         依技術篩選<span v-if="selectedTags.size > 0" class="text-(--text-accent)">：{{ selectedTagList.join('、') }}</span>
       </span>
-      <span aria-hidden="true" class="font-mono text-(length:--type-label-size) text-(--text-ink-muted)">{{ filterOpen ? '收合 ▴' : '展開 ▾' }}</span>
+      <span aria-hidden="true" class="text-(length:--type-label-size) text-(--text-ink-muted)">{{ filterOpen ? '收合 ▴' : '展開 ▾' }}</span>
     </button>
     <div
       id="project-filter-panel"
@@ -76,7 +76,7 @@ defineExpose({
             v-for="tag in group.tags"
             :key="tag.label"
             type="button"
-            class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-[3px] pr-1 pl-[11px] font-mono text-(length:--type-label-size) transition-colors"
+            class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-[3px] pr-1 pl-[11px] font-sans text-(length:--type-label-size) transition-colors"
             :class="
               tag.selected
                 ? 'border-(--text-accent) bg-(--bg-folder) text-(--text-accent)'
@@ -94,11 +94,11 @@ defineExpose({
         </div>
       </template>
       <div class="col-span-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-(--border-shelf) pt-3">
-        <p class="m-0 text-left text-(length:--type-label-size) text-(--text-ink-muted)">選一個技術會包含它的所有版本，例如 Vue 也包含 Vue 3。</p>
+        <p class="m-0 text-left text-(length:--type-label-size) leading-(--type-label-leading) text-(--text-ink-muted)">選一個技術會包含它的所有版本，例如 Vue 也包含 Vue 3。</p>
         <button
           v-if="selectedTags.size > 0"
           type="button"
-          class="cursor-pointer border-b border-(--text-accent) pb-0.5 font-mono text-(length:--type-label-size) font-bold tracking-[0.05em] text-(--text-accent)"
+          class="cursor-pointer border-b border-(--text-accent) pb-0.5 text-(length:--type-label-size) font-bold tracking-[0.05em] text-(--text-accent)"
           @click="emit('clearFilter')"
         >
           清除篩選 ×
@@ -106,7 +106,7 @@ defineExpose({
       </div>
     </div>
 
-    <p v-if="projects.length > 0" class="m-0 mb-2 text-left text-(length:--type-label-size) text-(--text-ink-muted)" aria-live="polite">
+    <p v-if="projects.length > 0" class="m-0 mb-2 text-left text-(length:--type-label-size) leading-(--type-label-leading) text-(--text-ink-muted)" aria-live="polite">
       <template v-if="selectedTags.size > 0">{{ projects.length }} / {{ totalCount }} 個專案符合篩選，</template>
       <template v-else>{{ totalCount }} 個專案，</template>由新到舊排列
     </p>
@@ -150,15 +150,15 @@ defineExpose({
           </BaseTag>
         </div>
 
-        <h2 class="mb-3.5 text-(length:--type-heading-size) leading-(--type-heading-leading) font-extrabold text-(--text-ink-main)">
+        <h2 class="mb-3.5 text-(length:--type-heading-size) leading-(--type-heading-leading) font-serif font-bold text-(--text-ink-main)">
           {{ selected.title }}
         </h2>
 
-        <p v-if="selected.desc" class="mb-6 max-w-2xl text-left text-sm leading-relaxed text-(--text-ink-body) sm:text-justify sm:text-(length:--type-body-size)">
+        <p v-if="selected.desc" class="mb-6 max-w-2xl text-left text-(length:--type-caption-size) leading-(--type-caption-leading) sm:leading-(--type-body-leading) text-(--text-ink-body) sm:text-justify sm:text-(length:--type-body-size)">
           {{ selected.desc }}
         </p>
 
-        <div class="mb-6 flex flex-wrap gap-2 font-mono text-(length:--type-label-size)">
+        <div class="mb-6 flex flex-wrap gap-2">
           <BaseTag
             v-for="tag in selectedTechniqueTags"
             :key="tag.label"

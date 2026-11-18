@@ -303,7 +303,7 @@ function render(node: MdNode): VNode[] {
             // 第二層 sticky，45px）疊起來共 109px，捲到錨點時要留出兩層的總高度，
             // 不然標題會卡在追蹤列底下、只露出一半——scroll-mt-24（96px）當初只算了
             // 導覽列那一層，沒算到追蹤列，2026-09-25 使用者實測抓到這個落差才補上。
-            class: `${size} font-bold text-(--text-ink-main) mt-8 mb-2.5 scroll-mt-32`,
+            class: `${size} ${node.depth === 2 ? 'font-serif ' : ''}font-bold text-(--text-ink-main) mt-8 mb-2.5 scroll-mt-32`,
           },
           kids(node),
         ),
@@ -332,7 +332,7 @@ function render(node: MdNode): VNode[] {
           'code',
           {
             class:
-              'font-mono text-(length:--type-label-size) [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5',
+              'font-mono text-(length:--type-caption-size) [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5',
           },
           node.value ?? '',
         ),

@@ -54,7 +54,7 @@ body {
     .global-page-wrapper p {
         font-size: var(--type-body-size);
         color: var(--text-ink-body);
-        line-height: var(--type-body-leading);
+        line-height: 1.75;
         margin-bottom: 1.25rem;
         /* 讓段落左右對齊，像實體書一樣工整。
            只在 640px 以上才套用:窄欄分散對齊會擠出「河道」——中文之間被拉開

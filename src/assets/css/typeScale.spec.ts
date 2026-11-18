@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { existsSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { readCss } from '@/test/cssTokens'
 
 const variablesCss = readCss('variables.css')
@@ -67,7 +67,32 @@ describe('展示字（main.css）', () => {
     expect(existsSync(`${dir}/CactusClassicalSerif-display.woff2`)).toBe(true)
     expect(existsSync(`${dir}/CactusClassicalSerif-OFL.txt`)).toBe(true)
     // 子集只有三處用到的字；超過 20 KB 代表被換成完整字型了
-    expect(statSync(`${dir}/CactusClassicalSerif-display.woff2`).size).toBeLessThan(20 * 1024)
+    const size = statSync(`${dir}/CactusClassicalSerif-display.woff2`).size
+    expect(size).toBeLessThan(20 * 1024)
+    // 下限：Vite 預設把小於 4096 bytes 的資源內嵌成 data: URI，而 CSP 的 font-src 不含 data:，
+    // 字型會被擋掉、畫面默默退到後備字
+    expect(size).toBeGreaterThan(4 * 1024)
+  })
+
+  it('它應該讓子集腳本的 TEXTS 應該跟三處原始字串一致', () => {
+    const root = process.cwd()
+    const py = readFileSync(`${root}/design/fonts/subset-display.py`, 'utf-8')
+    const block = py.match(/TEXTS = \[([\s\S]*?)\n\]/)![1]!
+    const texts = [...block.matchAll(/^\s*"([^"]+)",/gm)].map((m) => m[1]!)
+    expect(texts).toHaveLength(3)
+
+    const home = readFileSync(`${root}/src/features/home/HomeView.vue`, 'utf-8')
+    const h1 = home.match(/<h1[\s\S]*?<\/h1>/)![0]!.replace(/<[^>]+>/g, '').replace(/\s+/g, '')
+    expect(texts[0]).toBe(h1)
+
+    const notFound = readFileSync(`${root}/src/views/NotFoundView.vue`, 'utf-8')
+    const nfH1 = notFound.match(/<h1[\s\S]*?<\/h1>/)![0]!.replace(/<[^>]+>/g, '').replace(/\s+/g, '')
+    expect(texts[1]).toBe(nfH1)
+
+    const about = readFileSync(`${root}/src/features/about/AboutView.vue`, 'utf-8')
+    const phrases = about.match(/const CAREER_PHRASES = \[([\s\S]*?)\n\]/)![1]!
+    const career = [...phrases.matchAll(/'([^']+)'/g)].map((m) => m[1]!).join('')
+    expect(texts[2]).toBe(career)
   })
 
   it('它應該後備到 Noto Serif TC', () => {

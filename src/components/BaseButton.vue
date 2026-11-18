@@ -17,7 +17,7 @@ withDefaults(
       variant === 'ghost' &&
         'px-1 py-1 text-(length:--type-mono-size) tracking-[0.3em] text-(--text-ink-muted) hover:text-(--text-ink-main)',
       variant === 'tab' && [
-        'h-[34px] flex items-center px-4 rounded-t border text-(length:--type-mono-size) uppercase tracking-wider cursor-pointer',
+        'h-[34px] flex items-center px-4 rounded-t border font-sans normal-case text-(length:--type-label-size) tracking-[0.05em] cursor-pointer',
         active
           ? 'text-(--text-accent) border-(--border-shelf) border-b-transparent font-bold bg-(--bg-paper-light) pt-2.5 pb-2'
           : 'text-(--text-ink-muted) font-medium border-transparent bg-(--bg-folder) hover:text-(--text-ink-main) hover:bg-(--bg-folder)/70 pt-2 pb-2',

@@ -182,7 +182,7 @@ const TH = 'text-left align-top font-normal text-(length:--type-label-size) trac
             </div>
           </dl>
         </template>
-        <p v-else class="mt-1 text-(--text-ink-muted)">沒有直接關係。</p>
+        <p v-else class="mt-1 text-(length:--type-caption-size) text-(--text-ink-muted)">沒有直接關係。</p>
 
         <!-- 間接關聯：只在顯示設定打開「間接關聯」時列出，跟直接關係分開一張表 -->
         <template v-if="indirect">
@@ -226,7 +226,7 @@ const TH = 'text-left align-top font-normal text-(length:--type-label-size) trac
               </tr>
             </tbody>
           </table>
-          <p v-else class="mt-4 text-(--text-ink-muted)">沒有間接關聯。</p>
+          <p v-else class="mt-4 text-(length:--type-caption-size) text-(--text-ink-muted)">沒有間接關聯。</p>
         </template>
       </template>
     </template>

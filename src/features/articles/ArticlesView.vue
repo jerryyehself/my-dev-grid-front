@@ -153,7 +153,7 @@ const folderArticles = computed(() => {
           <div
             class="absolute -left-[24.5px] top-[7px] w-[7px] h-[7px] rounded-full bg-(--text-ink-muted)"
           ></div>
-          <div class="flex items-center gap-3 mb-2 font-mono text-(length:--type-label-size) uppercase tracking-wider">
+          <div class="flex items-center gap-3 mb-2 text-(length:--type-label-size) leading-(--type-label-leading) tracking-[0.05em]">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article)[0] }}</span>
             <!-- 登入後才有（ArticleEditLink 內建 AuthOnly）。relative z-10：標題連結的 ::after 撐滿整列，
@@ -172,7 +172,7 @@ const folderArticles = computed(() => {
               {{ article.title }}
             </RouterLink>
           </h3>
-          <p class="text-(--text-ink-body) text-sm leading-relaxed text-left sm:text-justify max-w-[620px]">
+          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left sm:text-justify max-w-[620px]">
             {{ summaryOf(article) }}
           </p>
         </article>
@@ -216,7 +216,7 @@ const folderArticles = computed(() => {
           :key="article.id"
           class="relative p-5 sm:p-6 hover:bg-(--bg-folder) transition-colors"
         >
-          <div class="flex items-center gap-3 mb-2 font-mono text-(length:--type-label-size) uppercase tracking-wider">
+          <div class="flex items-center gap-3 mb-2 text-(length:--type-label-size) leading-(--type-label-leading) tracking-[0.05em]">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article).join(' / ') }}</span>
             <ArticleEditLink :article-id="article.id" :title="article.title" :class="EDIT_LINK_CLASS" />
@@ -229,7 +229,7 @@ const folderArticles = computed(() => {
               {{ article.title }}
             </RouterLink>
           </h3>
-          <p class="text-(--text-ink-body) text-sm leading-relaxed text-left sm:text-justify max-w-[700px]">
+          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left sm:text-justify max-w-[700px]">
             {{ summaryOf(article) }}
           </p>
         </article>

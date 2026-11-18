@@ -15,6 +15,7 @@ TEXTS = [
     "圖書資訊學出身，兩年程式教學、三年後端工程師。習慣先替東西分類、找出彼此的關係，再寫成程式。",  # AboutView.vue 的 CAREER_PHRASES
 ]
 OUT = "src/assets/fonts/CactusClassicalSerif-display.woff2"
+LICENSE = "src/assets/fonts/CactusClassicalSerif-OFL.txt"
 
 src = sys.argv[1]
 chars = "".join(sorted(set("".join(TEXTS))))
@@ -29,5 +30,12 @@ font = subset.load_font(src, opts)
 sub = subset.Subsetter(opts)
 sub.populate(text=chars)
 sub.subset(font)
+# 上游字型沒有 name ID 0（版權），部署出去的檔要帶著：用授權檔第一行
+with open(LICENSE, encoding="utf-8") as f:
+    copyright_line = f.readline().strip()
+name = font["name"]
+name.removeNames(nameID=0)
+name.setName(copyright_line, 0, 3, 1, 0x409)
+name.setName(copyright_line, 0, 1, 0, 0)
 subset.save_font(font, OUT, opts)
 print(f"{len(chars)} 個字 -> {OUT}")
