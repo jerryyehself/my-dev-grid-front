@@ -1,6 +1,5 @@
 import type { GraphNodeType } from '@/api/graph'
 import { endpointId } from './graphTypes'
-import { isStaleLink } from './staleEdge'
 
 // 推導邊（bipartite network projection / one-mode projection，見
 // https://en.wikipedia.org/wiki/Bipartite_network_projection）：這個 ontology
@@ -35,8 +34,6 @@ export interface DerivedNodeInput {
 export interface DerivedLinkInput {
   source?: string | number | { id: string }
   target?: string | number | { id: string }
-  // 後端標記的過期邊；沒有這個欄位（舊版 API、示範資料）當 false
-  stale?: boolean
 }
 export interface DerivedEdge {
   source: string
@@ -56,9 +53,6 @@ export function computeDerivedEdges(
   // 優先於算出來的猜測，不要疊床架屋(同一對節點又是實線又是虛線)。
   const realSameTypePairs = new Set<string>()
   for (const l of realLinks) {
-    // 過期邊（同步很久沒看到）可能已經不成立，不拿來推導間接關聯；它自己仍在圖上淡化顯示。
-    // 共用 isStaleLink：只有明確是 true 才算過期
-    if (isStaleLink(l)) continue
     const s = endpointId(l.source)
     const t = endpointId(l.target)
     if (!neighbors.has(s)) neighbors.set(s, new Set())

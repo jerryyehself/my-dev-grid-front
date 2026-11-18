@@ -9,7 +9,7 @@ import { edgeRelation, edgeRelationText, type EdgeRelation } from './graphRelati
 import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
 import type { GraphPocSelection } from './graphPocData'
 import { useTheme } from '@/composables/useTheme'
-import { directLinkStyle, isStaleLink } from './staleEdge'
+import { directLinkStyle } from './linkStyle'
 import { nodeKindLabel, endpointId, type SimLink, type SimNode } from './graphTypes'
 import { recencyScore, viridis, withAlpha } from './colorScale'
 import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './derivedEdges'
@@ -282,12 +282,11 @@ function derivedStrength(l: SimLink): number {
 // 同時開著時取聯集：連到被篩掉那層的邊，就算碰到選取節點也一樣淡化。
 // 沒有 hover／固定選取時：推導邊用 --accent-secondary（淺色黃銅、深色玫瑰）加虛線，跟灰色
 // 實線的直接關係分開；透明度再依 derivedStrength() 分級，共用鄰居越多越明顯。
-// 直接關係（含過期邊）的顏色與線寬由 staleEdge.ts 的 directLinkStyle 決定，推導邊在下面另外算
+// 直接關係的顏色與線寬由 linkStyle.ts 的 directLinkStyle 決定，推導邊在下面另外算
 function directLinkStyleOf(l: SimLink) {
   return directLinkStyle({
     edgeReal: css('--edge-real'),
     accent: css('--text-accent'),
-    stale: isStaleLink(l),
     hasFocus: !!(pathNodeIds || focusId()),
     touchesFocus: linkTouchesFocus(l),
     filterDimmed: isLinkFilterDimmed(l),
@@ -624,7 +623,6 @@ async function boot() {
     target: e.target,
     predicate: e.predicate,
     label: e.label,
-    stale: e.stale === true,
   })) as SimLink[]
   // 同類別節點透過共同鄰居推導出來的關聯（見 derivedEdges.ts 檔頭註解）
   const derivedLinks: SimLink[] = computeDerivedEdges(simNodes, simLinks)
@@ -736,8 +734,7 @@ async function boot() {
       ctx.fill()
     })
     .linkColor((l) => linkDisplayColor(l))
-    // 真實邊寬度 1.5：三層疊圖之後線條密度變高，太細會糊成一片。
-    // 過期邊較細（1），見 staleEdge.ts 的 directLinkStyle
+    // 真實邊寬度 1.5：三層疊圖之後線條密度變高，太細會糊成一片，見 linkStyle.ts 的 directLinkStyle
     .linkWidth((l) =>
       l.derived
         ? linkTouchesFocus(l) && !isLinkFilterDimmed(l)

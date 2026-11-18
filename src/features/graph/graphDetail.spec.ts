@@ -160,24 +160,6 @@ describe('indirectRelationsOf', () => {
       ['B', 1],
     ])
   })
-
-  it('它應該不把過期邊算進間接關聯，但過期邊仍是直接關係', () => {
-    const staleDto: GraphDto = {
-      nodes: [
-        node('d1', 'documentation', 'A'),
-        node('d2', 'documentation', 'B'),
-        node('t1', 'technique', 't1'),
-      ],
-      edges: [edge('d1', 't1', 'specs'), { ...edge('d2', 't1', 'specs'), stale: true }],
-    }
-    const staleIndex = buildGraphDetailIndex(staleDto)
-    expect(indirectRelationsOf(staleIndex, 'd1')).toEqual([])
-    expect(indirectRelationsOf(staleIndex, 'd2')).toEqual([])
-    expect(staleIndex.neighbors.get('d2')).toEqual(new Set(['t1']))
-    // 同一份資料沒有 stale 旗標時照常推導
-    staleDto.edges[1]!.stale = false
-    expect(indirectRelationsOf(buildGraphDetailIndex(staleDto), 'd1')).toHaveLength(1)
-  })
 })
 
 describe('nodeSelectionOf', () => {
