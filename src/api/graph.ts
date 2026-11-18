@@ -27,8 +27,7 @@ export interface GraphEdgeDto {
   predicate: string | null
   label: string | null
   relation_id: number | null
-  // 後端 GitHub 同步很久沒再看到的「技術—實作」邊會是 true，畫面上淡化顯示；
-  // 舊版 API 與示範資料快照沒有這個欄位，所以是 optional，沒有就當 false
+  /** @deprecated 後端之後會移除這個欄位；現在一律是 false，前端不再依它改變畫面 */
   stale?: boolean
 }
 
