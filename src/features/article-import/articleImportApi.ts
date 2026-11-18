@@ -30,6 +30,8 @@ export interface SourceItem {
   blob_sha: string | null
   title: string | null
   status: SourceStatus
+  /** 站上目前標題、日期與內文的版本（64 位小寫十六進位）；只有 conflict 有，其他是 null。覆蓋時要原樣帶回 expected_site_version。 */
+  site_version: string | null
   /** 已連結（或標題相同、可能對應）的站上文章。 */
   documentation_id: number | null
   /** 對應文章是否已發布；沒有對應或已刪除是 null。 */
@@ -54,6 +56,8 @@ export interface ImportRequestItem {
   documentation_id?: number
   /** 對 conflict 的 update 設成 true 才會覆蓋站上的修改。 */
   overwrite_site_edits?: boolean
+  /** 覆蓋站上的修改時必帶：清單項目的 site_version。站上在列出清單之後又改過，後端回 409。 */
+  expected_site_version?: string
 }
 
 export interface ImportRequest {

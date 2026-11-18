@@ -31,6 +31,7 @@ import {
   REMOVED_ITEM,
   RENAMED_NEW_ITEM,
   RENAMED_OLD_ITEM,
+  SITE_VERSION,
   UNCHANGED_ITEM,
   WARNING_ITEM,
   listingOf,
@@ -127,7 +128,13 @@ describe('buildImportRequest', () => {
       items: [
         { key: 'new-note', expected_blob_sha: NEW_ITEM.blob_sha, action: 'create' },
         { key: 'changed-note', expected_blob_sha: CHANGED_ITEM.blob_sha, action: 'update' },
-        { key: 'conflict-note', expected_blob_sha: CONFLICT_ITEM.blob_sha, action: 'update', overwrite_site_edits: true },
+        {
+          key: 'conflict-note',
+          expected_blob_sha: CONFLICT_ITEM.blob_sha,
+          action: 'update',
+          overwrite_site_edits: true,
+          expected_site_version: SITE_VERSION,
+        },
         { key: 'match-note', expected_blob_sha: MATCH_ITEM.blob_sha, action: 'link', documentation_id: 21 },
       ],
     })
@@ -140,6 +147,7 @@ describe('buildImportRequest', () => {
     })
     for (const item of request.items) {
       expect(item).not.toHaveProperty('overwrite_site_edits')
+      expect(item).not.toHaveProperty('expected_site_version')
       expect(item).not.toHaveProperty('documentation_id')
     }
   })
@@ -152,6 +160,42 @@ describe('buildImportRequest', () => {
       [rowId(REMOVED_ITEM)]: choice({ action: 'update' }),
     })
     expect(request.items).toEqual([])
+  })
+})
+
+describe('buildImportRequest 的 expected_site_version', () => {
+  it('它應該把清單上的 site_version 原樣帶在確認覆蓋的 conflict 更新上', () => {
+    const request = buildImportRequest(listingOf([CONFLICT_ITEM]), {
+      [rowId(CONFLICT_ITEM)]: choice({ action: 'update', overwrite: true }),
+    })
+    expect(request.items[0]).toMatchObject({ overwrite_site_edits: true, expected_site_version: SITE_VERSION })
+  })
+
+  it('它應該在沒確認覆蓋、或不是 conflict 時都不帶 expected_site_version', () => {
+    const withVersion = { ...CHANGED_ITEM, site_version: SITE_VERSION } // 就算清單給了也不該帶
+    const request = buildImportRequest(listingOf([CONFLICT_ITEM, withVersion, NEW_ITEM]), {
+      [rowId(CONFLICT_ITEM)]: choice({ action: 'update', overwrite: false }),
+      [rowId(withVersion)]: choice({ action: 'update', overwrite: true }),
+      [rowId(NEW_ITEM)]: choice({ action: 'create' }),
+    })
+    expect(request.items).toHaveLength(3)
+    for (const item of request.items) {
+      expect(item).not.toHaveProperty('expected_site_version')
+      expect(item).not.toHaveProperty('overwrite_site_edits')
+    }
+  })
+
+  it.each([
+    { label: 'null', value: null },
+    { label: '欄位不存在（後端還沒更新）', value: undefined },
+    { label: '空字串', value: '' },
+  ])('它應該在 conflict 的 site_version 是 $label 時不送覆蓋', ({ value }) => {
+    const item = { ...CONFLICT_ITEM, site_version: value as never }
+    const request = buildImportRequest(listingOf([item]), {
+      [rowId(item)]: choice({ action: 'update', overwrite: true }),
+    })
+    expect(request.items[0]).not.toHaveProperty('overwrite_site_edits')
+    expect(request.items[0]).not.toHaveProperty('expected_site_version')
   })
 })
 
@@ -172,6 +216,23 @@ describe('selectionProblems', () => {
       [rowId(CONFLICT_ITEM)]: choice({ action: 'update', overwrite: false }),
     })
     expect(problems).toEqual([{ kind: 'overwrite_unconfirmed', path: CONFLICT_ITEM.path }])
+  })
+
+  it.each([null, undefined, ''])('它應該擋下確認覆蓋、但清單沒給 site_version（%s）的 conflict 更新', (value) => {
+    const item = { ...CONFLICT_ITEM, site_version: value as never }
+    const problems = selectionProblems(listingOf([item]), {
+      [rowId(item)]: choice({ action: 'update', overwrite: true }),
+    })
+    expect(problems).toEqual([{ kind: 'site_version_missing', path: item.path }])
+  })
+
+  it('它應該不因為缺 site_version 擋下沒選更新、或沒確認覆蓋的列', () => {
+    const item = { ...CONFLICT_ITEM, site_version: null }
+    expect(selectionProblems(listingOf([item]), { [rowId(item)]: choice({ action: 'none' }) })).toEqual([])
+    // 沒確認覆蓋時只報「請先勾選確認」，不重複報缺版本
+    expect(
+      selectionProblems(listingOf([item]), { [rowId(item)]: choice({ action: 'update', overwrite: false }) }),
+    ).toEqual([{ kind: 'overwrite_unconfirmed', path: item.path }])
   })
 
   it('它應該擋下沒選目標的連結', () => {
@@ -208,6 +269,7 @@ describe('selectionProblems', () => {
     expect(describeProblem({ kind: 'missing_target', path: 'p' }, titleOf)).toContain('T:p')
     expect(describeProblem({ kind: 'duplicate_target', documentationId: 5 }, titleOf)).toContain('#5')
     expect(describeProblem({ kind: 'overwrite_unconfirmed', path: 'p' }, titleOf)).toContain('覆蓋')
+    expect(describeProblem({ kind: 'site_version_missing', path: 'p' }, titleOf)).toContain('T:p')
   })
 })
 
@@ -287,6 +349,52 @@ describe('describeImportError', () => {
   ])('它應該在 409 $label 時只顯示原本的說明', ({ errors }) => {
     const error = describeImportError(new ApiRequestError(409, '/x', 'POST', { errors } as never))
     expect(error.message).toBe('沒有任何文章被寫入。請重新整理清單，再選一次。')
+  })
+
+  describe('409 的 items.N.expected_site_version', () => {
+    const SITE_MESSAGE = '站上的標題、日期或內文在列出清單之後又改過，請重新整理清單，確認後再決定要不要覆蓋。'
+    const TAIL = '沒有任何文章被寫入。請重新整理清單，確認站上現在的內容後，再決定要不要覆蓋。'
+
+    it('它應該說成站上內容在清單載入之後又改過，不重複後端原文與 reason 說明', () => {
+      const error = describeImportError(
+        new ApiRequestError(409, '/x', 'POST', {
+          reason: 'conflict',
+          errors: { 'items.0.expected_site_version': [SITE_MESSAGE] },
+        }),
+      )
+      expect(error).toEqual({
+        kind: 'stale',
+        message: `站上的標題、日期或內文在清單載入之後又改過。${TAIL}`,
+      })
+    })
+
+    it('它應該對多個項目只說一次，其他項目的原因照舊列在後面', () => {
+      const error = describeImportError(
+        new ApiRequestError(409, '/x', 'POST', {
+          reason: 'conflict',
+          errors: {
+            'items.0.expected_site_version': [SITE_MESSAGE],
+            'items.3.expected_site_version': [SITE_MESSAGE],
+            'items.1.documentation_id': ['這篇文章已經連結到其他來源檔案。'],
+          },
+        }),
+      )
+      expect(error.message).toBe(
+        `站上的標題、日期或內文在清單載入之後又改過。這篇文章已經連結到其他來源檔案。${TAIL}`,
+      )
+    })
+
+    it.each([
+      'items.0.expected_site_versions',
+      'items.x.expected_site_version',
+      'expected_site_version',
+      'items.0.expected_blob_sha',
+    ])('它應該不把近似的 key（%s）當成站上內容改過', (key) => {
+      const error = describeImportError(
+        new ApiRequestError(409, '/x', 'POST', { reason: 'conflict', errors: { [key]: ['別的原因。'] } }),
+      )
+      expect(error.message).toBe(`${REASON_TEXT.conflict}別的原因。沒有任何文章被寫入。請重新整理清單，再選一次。`)
+    })
   })
 
   it('它應該把沒有 reason 的 409 也當成要重新整理', () => {

@@ -28,8 +28,6 @@
     /* 🎛️ 導覽列毛玻璃（跟配色無關的控制值） */
     --nav-bg-opacity: 0.65;
     /* 調整此數值控制透明度 (0.0 到 1.0) */
-    --nav-blur: 12px;
-    /* 調整此數值控制毛玻璃模糊度 (0px 代表關閉) */
 
     /* ✒️ 文字與線條 */
     --text-ink-main: #202839;
@@ -101,7 +99,6 @@
     --text-nav-hover: #b38637;
 
     --nav-bg-opacity: 0.95;
-    --nav-blur: 0px;
 
     --text-ink-main: #e8edf6;
     --text-ink-body: #c8ced9;

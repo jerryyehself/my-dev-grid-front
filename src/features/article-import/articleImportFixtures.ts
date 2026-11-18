@@ -6,12 +6,16 @@ export const COMMIT = 'c'.repeat(40)
 
 const sha = (c: string) => c.repeat(40)
 
+/** 後端 site_version 是 sha256（64 位十六進位）。 */
+export const SITE_VERSION = 'd'.repeat(64)
+
 export function sourceItem(overrides: Partial<SourceItem> & Pick<SourceItem, 'status'>): SourceItem {
   return {
     key: 'a-note',
     path: 'notes/a-note.md',
     blob_sha: sha('a'),
     title: '一篇筆記',
+    site_version: null,
     documentation_id: null,
     published: null,
     reason: null,
@@ -37,6 +41,7 @@ export const CONFLICT_ITEM = sourceItem({
   path: 'notes/conflict-note.md',
   title: '兩邊都改過的筆記',
   blob_sha: sha('3'),
+  site_version: SITE_VERSION,
   documentation_id: 13,
   published: false,
 })

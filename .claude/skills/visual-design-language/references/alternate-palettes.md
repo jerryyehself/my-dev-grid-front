@@ -26,7 +26,6 @@
     --text-nav-hover: #f0b44c;
 
     --nav-bg-opacity: 0.95;
-    --nav-blur: 0px;
 
     --text-ink-main: #f1e5d0;
     --text-ink-body: #c5ae87;
@@ -50,7 +49,6 @@
     --text-nav-hover: #41c889;
 
     --nav-bg-opacity: 0.95;
-    --nav-blur: 0px;
 
     --text-ink-main: #d0f1e2;
     --text-ink-body: #87c5a8;
@@ -74,7 +72,6 @@
     --text-nav-hover: #d16847;
 
     --nav-bg-opacity: 0.95;
-    --nav-blur: 0px;
 
     --text-ink-main: #f1d7d0;
     --text-ink-body: #c59587;
