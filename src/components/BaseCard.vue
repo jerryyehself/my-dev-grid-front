@@ -12,7 +12,7 @@ withDefaults(defineProps<{ variant?: 'card' | 'panel' }>(), { variant: 'card' })
   <div
     :class="[
       'flex flex-col bg-(--bg-paper-light) border border-(--border-shelf)',
-      variant === 'card' && 'p-6 rounded-xl shadow-xs hover:border-(--text-accent)/30 transition-all group',
+      variant === 'card' && 'p-6 rounded-xl hover:border-(--text-accent)/30 transition-colors group',
       variant === 'panel' && 'p-4 rounded-[6px]',
     ]"
   >

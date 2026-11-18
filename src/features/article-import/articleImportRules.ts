@@ -102,6 +102,8 @@ export type SelectionProblem =
   | { kind: 'missing_target'; path: string }
   | { kind: 'duplicate_target'; documentationId: number }
   | { kind: 'overwrite_unconfirmed'; path: string }
+  /** 清單沒給站上版本（site_version），沒辦法確認要覆蓋的是哪一版站上內容。 */
+  | { kind: 'site_version_missing'; path: string }
 
 /** 有選動作的列，且確實能送出（有 key 與 blob SHA、動作在狀態允許的範圍內）。 */
 function selectedRows(
@@ -117,6 +119,16 @@ function selectedRows(
     rows.push({ item, choice })
   }
   return rows
+}
+
+/** 這一列會送出 overwrite_site_edits（conflict 的更新，而且已確認覆蓋）。 */
+function willOverwrite(item: SourceItem, choice: RowChoice): boolean {
+  return item.status === 'conflict' && choice.action === 'update' && choice.overwrite
+}
+
+/** 用 typeof 而不只擋 null：後端還沒更新時欄位整個不存在（undefined），也要當成沒有。 */
+function hasSiteVersion(item: SourceItem): item is SourceItem & { site_version: string } {
+  return typeof item.site_version === 'string' && item.site_version !== ''
 }
 
 /** 送出前能先確定會被退回的問題。空陣列才可以送出。 */
@@ -143,6 +155,8 @@ export function selectionProblems(
     }
     if (item.status === 'conflict' && choice.action === 'update' && !choice.overwrite) {
       problems.push({ kind: 'overwrite_unconfirmed', path: item.path })
+    } else if (willOverwrite(item, choice) && !hasSiteVersion(item)) {
+      problems.push({ kind: 'site_version_missing', path: item.path })
     }
   }
   for (const documentationId of duplicated) problems.push({ kind: 'duplicate_target', documentationId })
@@ -154,7 +168,12 @@ export function selectedCount(listing: SourceListing, choices: Record<string, Ro
   return selectedRows(listing, choices).length
 }
 
-/** 把選擇組成請求。欄位只帶後端需要的：documentation_id 只給 link，overwrite_site_edits 只給 conflict 的 update。 */
+/**
+ * 把選擇組成請求。欄位只帶後端需要的：documentation_id 只給 link，overwrite_site_edits 與
+ * expected_site_version 只給 conflict 的 update。
+ * 清單沒給 site_version 時不送覆蓋（selectionProblems 已經先擋下；這裡是第二道）：寧可讓後端因為
+ * 缺少 overwrite_site_edits 退回，也不要在沒帶版本的情況下覆蓋。
+ */
 export function buildImportRequest(
   listing: SourceListing,
   choices: Record<string, RowChoice>,
@@ -166,8 +185,9 @@ export function buildImportRequest(
       action: choice.action as ImportAction,
     }
     if (choice.action === 'link') request.documentation_id = choice.documentationId!
-    if (item.status === 'conflict' && choice.action === 'update' && choice.overwrite) {
+    if (willOverwrite(item, choice) && hasSiteVersion(item)) {
       request.overwrite_site_edits = true
+      request.expected_site_version = item.site_version
     }
     return request
   })
@@ -228,11 +248,18 @@ function reasonText(reason: string | null, status: number): string {
   return `來源暫時無法使用（HTTP ${status}）。`
 }
 
+/** 後端 409 errors 裡「站上內容在列出清單之後又改過」的 key（items.N.expected_site_version）。 */
+const SITE_VERSION_ERROR_KEY = /^items\.\d+\.expected_site_version$/
+
+/** 站上內容在清單載入之後又改過：後端的原文（「請重新整理清單，確認後再決定要不要覆蓋」）改用這句固定的說明。 */
+const SITE_EDITED_TEXT = '站上的標題、日期或內文在清單載入之後又改過。'
+
 /** 後端 errors 的內容攤平成不重複的訊息；沒有 errors、或不是預期的形狀時回空陣列。 */
-function uniqueErrorMessages(errors: unknown): string[] {
+function uniqueErrorMessages(errors: unknown, include: (key: string) => boolean = () => true): string[] {
   if (typeof errors !== 'object' || errors === null) return []
   const messages = new Set<string>()
-  for (const value of Object.values(errors)) {
+  for (const [key, value] of Object.entries(errors)) {
+    if (!include(key)) continue
     for (const message of Array.isArray(value) ? value : [value]) {
       if (typeof message === 'string' && message !== '') messages.add(message)
     }
@@ -249,6 +276,17 @@ function asSentence(message: string): string {
 export function describeImportError(e: unknown): ImportError {
   if (e instanceof ApiRequestError || e instanceof ApiHttpError) {
     if (e.status === 409) {
+      const errorKeys = typeof e.body?.errors === 'object' && e.body.errors !== null ? Object.keys(e.body.errors) : []
+      if (errorKeys.some((key) => SITE_VERSION_ERROR_KEY.test(key))) {
+        // 其他項目的原因照舊列出；這一項改用固定說明，出路是重讀清單、看過站上現在的內容再決定
+        const others = uniqueErrorMessages(e.body?.errors, (key) => !SITE_VERSION_ERROR_KEY.test(key))
+          .map(asSentence)
+          .join('')
+        return {
+          kind: 'stale',
+          message: `${SITE_EDITED_TEXT}${others}沒有任何文章被寫入。請重新整理清單，確認站上現在的內容後，再決定要不要覆蓋。`,
+        }
+      }
       const detail = e.reason !== null && e.reason in REASON_TEXT ? REASON_TEXT[e.reason] : ''
       // 後端 errors 列出每一項被退回的原因（以請求欄位為 key），key 對使用者沒有意義，只留訊息
       const reasons = uniqueErrorMessages(e.body?.errors).map(asSentence).join('')
@@ -293,5 +331,7 @@ export function describeProblem(
       return `文章 #${problem.documentationId} 被選了不只一次，一篇文章只能連結一個來源檔案。`
     case 'overwrite_unconfirmed':
       return `「${titleOf(problem.path)}」要覆蓋站上的修改，請先勾選確認。`
+    case 'site_version_missing':
+      return `「${titleOf(problem.path)}」的清單資料缺少站上版本，沒辦法確認覆蓋的是哪一版，請重新整理清單。`
   }
 }
