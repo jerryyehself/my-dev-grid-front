@@ -35,19 +35,19 @@ const stations = computed(() =>
 <template>
   <section
     aria-labelledby="home-route-title"
-    class="w-full rounded-xl border border-(--border-shelf) bg-(--bg-folder) px-4 py-4 sm:px-6 sm:py-5"
+    class="w-full rounded-xl border border-(--border-shelf) bg-(--bg-folder) px-4 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6"
   >
     <div class="flex items-start justify-between gap-3">
       <h2
         id="home-route-title"
-        class="m-0 text-[15px] tracking-[0.05em] font-bold text-(--text-accent) leading-snug pt-2.5"
+        class="m-0 text-(length:--type-label-size) tracking-(--type-label-tracking) font-bold text-(--text-accent) leading-(--type-label-leading) pt-3"
       >
         {{ title }}
       </h2>
       <button
         v-if="canSwitch"
         type="button"
-        class="shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3.5 rounded-lg border border-(--border-shelf) bg-(--bg-paper-light) text-[14px] text-(--text-ink-body) hover:text-(--text-accent) hover:border-(--text-accent) cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+        class="shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3.5 rounded-lg border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-label-size) text-(--text-ink-body) hover:text-(--text-accent) hover:border-(--text-accent) cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
         @click="$emit('switch')"
       >
         <span aria-hidden="true">↻</span>另一條路線
@@ -56,21 +56,29 @@ const stations = computed(() =>
 
     <ol
       v-if="route"
-      class="mt-3 flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-2.5"
+      class="mt-3 grid grid-cols-[58px_minmax(0,1fr)] items-baseline gap-x-2 gap-y-0.5 md:flex md:flex-wrap md:items-center md:gap-2"
     >
-      <li v-for="(s, i) in stations" :key="s.id" class="flex items-center gap-2 min-w-0">
+      <!-- 手機：銜接詞佔 58px 一欄、站在右欄，第一站橫跨整列；li 用 contents 讓它們直接進 grid -->
+      <li
+        v-for="(s, i) in stations"
+        :key="s.id"
+        class="contents md:flex md:items-center md:gap-2 md:min-w-0"
+      >
         <span
           v-if="i > 0"
-          class="w-[5.5rem] md:w-auto shrink-0 text-[13px] tracking-[0.05em] text-(--text-ink-muted) whitespace-nowrap"
+          class="shrink-0 text-(length:--type-label-size) tracking-(--type-label-tracking) text-(--text-ink-muted) whitespace-nowrap"
           >{{ route.verbs[i - 1] }} <span aria-hidden="true">▸</span></span
         >
         <component
           :is="s.to ? RouterLink : 'span'"
           :to="s.to ?? undefined"
-          class="min-w-0 inline-flex items-baseline gap-2 min-h-11 px-3 py-2 rounded-lg border border-(--border-shelf) bg-(--bg-paper-light) text-[15px] leading-snug text-(--text-ink-main)"
-          :class="s.to ? 'hover:border-(--text-accent) transition-colors' : ''"
+          class="min-w-0 inline-flex items-baseline gap-2 min-h-11 text-(length:--type-body-size) leading-(--type-ui-leading) text-(--text-ink-main) md:px-3 md:py-2 md:rounded-md md:border md:border-(--border-shelf) md:bg-(--bg-paper-light)"
+          :class="[
+            i === 0 ? 'max-md:col-span-full' : '',
+            s.to ? 'md:hover:border-(--text-accent) transition-colors' : '',
+          ]"
         >
-          <span class="shrink-0 inline-flex items-center gap-1.5 text-[13px] text-(--text-ink-muted)">
+          <span class="shrink-0 inline-flex items-center gap-1.5 text-(length:--type-label-size) text-(--text-ink-muted)">
             <span
               aria-hidden="true"
               class="w-2 h-2 rounded-full"
@@ -78,7 +86,7 @@ const stations = computed(() =>
             ></span
             >{{ s.kind }}
           </span>
-          <span class="font-semibold [overflow-wrap:anywhere]">{{
+          <span :class="i === 0 ? 'font-semibold' : 'font-normal'" class="[overflow-wrap:anywhere]">{{
             s.type === 'documentation' ? `〈${s.label}〉` : s.label
           }}</span>
         </component>

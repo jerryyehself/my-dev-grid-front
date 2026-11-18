@@ -36,10 +36,12 @@ const MORE_LINK =
 </script>
 
 <template>
-  <main class="flex flex-col gap-4 sm:gap-5">
+  <main class="flex flex-col gap-3 sm:gap-4">
     <!-- 主題句就是 H1（沒有 kicker、沒有副標）。標題用 --font-serif，跟其他頁的 H1 同一套 -->
+    <!-- 導覽列底到 H1：桌機 40（MainLayout 的 hideHeader 已留 32，這裡補 8）、手機 24（已留 24）；
+         H1 到下一塊：桌機 40、手機 24。flex 的 gap 另外算，所以 mb 要扣掉 gap -->
     <h1
-      class="font-serif !font-black text-(--text-ink-main) text-[28px] sm:text-[34px] leading-tight"
+      class="font-serif !font-bold text-(--text-ink-main) text-(length:--type-display-size) leading-(--type-display-leading) sm:mt-2 mb-3 sm:mb-6"
     >
       一位圖資背景後端工程師的工作心智模式
     </h1>
