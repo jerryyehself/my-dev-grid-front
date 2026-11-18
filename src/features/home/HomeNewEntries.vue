@@ -42,7 +42,7 @@ function to(e: NewEntry) {
           }}</span>
           <span class="min-w-0 truncate font-semibold">{{ e.kind === 'article' ? `〈${e.title}〉` : e.title }}</span>
           <span
-            class="shrink-0 rounded bg-(--text-ink-main) px-1.5 py-px text-[12px] leading-snug text-(--bg-paper-light)"
+            class="shrink-0 rounded bg-(--text-ink-main) px-1.5 py-px text-[13px] leading-snug text-(--bg-paper-light)"
             >新</span
           >
         </RouterLink>
