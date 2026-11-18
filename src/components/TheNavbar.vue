@@ -12,7 +12,7 @@
            所以兩半一樣大，手機只縮字級不拿掉 -->
       <router-link
         to="/"
-        class="font-wordmark font-bold text-[16px] min-[360px]:text-[18px] min-[400px]:text-[20px] md:text-[22px] lg:text-[26px] leading-[normal] tracking-[0.05em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
+        class="font-wordmark font-bold text-[16px] min-[360px]:text-[18px] min-[400px]:text-[20px] sm:text-[26px] md:text-[22px] lg:text-[26px] leading-[normal] tracking-[0.05em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
       >
         IN<span class="text-(--accent-brass) mx-[0.28em]">/</span>ARCHIVE
       </router-link>
