@@ -232,7 +232,7 @@ describe('ArticleDetailView', () => {
   })
 
   describe('署名', () => {
-    const BYLINE = '主筆\u3000Claude\u3000\uff0f\u3000發想\u30fb審定\u3000站主'
+    const BYLINE = '由 Claude 撰寫，Jerry Yeh 發想並審定'
 
     it('它應該在每篇文章的結尾顯示署名一次，在正文與註釋後面、上一篇／下一篇前面', async () => {
       fetchArticleOrDemo.mockResolvedValue({

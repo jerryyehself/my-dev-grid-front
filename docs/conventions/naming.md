@@ -33,9 +33,3 @@
 - 變數、函式用 camelCase，結尾不加底線。
 - 型別、interface 用 PascalCase：`AuthUser`、`PhraseNode`。
 - 模組層級、值固定不變的常數用 UPPER_CASE：`REFRESH_CONFLICT_RETRY_MS`。一般的 `const` 變數仍用 camelCase。
-
-## 目前已知不符的地方
-
-下次改到這些檔案時順手修正，不需要為它們單獨開 PR：
-
-- `src/features/about/AboutView.vue` 在同一個檔案裡用 `defineComponent` 定義了幾個小元件。這些小元件共用頁面裡的 `MONO`、`mix()` 與型別，拆出去要一起搬，所以這個檔案用 `eslint-disable vue/one-component-per-file` 暫時放行；拆開後把那行拿掉。
