@@ -11,7 +11,7 @@ withDefaults(
 <template>
   <button
     :class="[
-      'font-mono transition-all disabled:opacity-40 disabled:pointer-events-none',
+      'font-mono transition-[color,background-color,border-color,opacity] disabled:opacity-40 disabled:pointer-events-none',
       variant === 'primary' &&
         'rounded-full border border-(--border-shelf) px-2.5 py-1 text-[11px] tracking-[0.3em] text-(--text-ink-body) opacity-70 hover:opacity-100 hover:text-(--text-accent)',
       variant === 'ghost' &&

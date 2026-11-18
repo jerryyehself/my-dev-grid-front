@@ -20,7 +20,7 @@ const showLoginEntry = import.meta.env.DEV
 
 // 三顆都是同一種膠囊，樣式集中在這裡，不要各寫一份再慢慢漂移
 const pillClass =
-  'inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all'
+  'inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,opacity]'
 
 // 登出失敗（後端沒確認）時留在原頁，錯誤提示由 AuthNotice 顯示，使用者可以再按一次
 async function handleLogout() {

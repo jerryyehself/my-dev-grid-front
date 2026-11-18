@@ -23,7 +23,7 @@
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="flex flex-col items-center justify-center gap-1.5 h-full text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-all font-semibold tracking-widest"
+          class="flex flex-col items-center justify-center gap-1.5 h-full text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,opacity] font-semibold tracking-widest"
           active-class="!text-(--text-nav-hover) !opacity-100"
         >
           <span>{{ item.name }}</span>
@@ -48,16 +48,16 @@
       >
         <span class="relative w-5 h-3.5 block">
           <span
-            class="absolute left-0 w-5 h-[1.5px] bg-current transition-all"
-            :class="isMenuOpen ? 'top-1/2 -translate-y-1/2 rotate-45' : 'top-0'"
+            class="absolute left-0 top-0 w-5 h-[1.5px] bg-current transition-transform"
+            :class="isMenuOpen ? 'translate-y-[6.25px] rotate-45' : ''"
           ></span>
           <span
             class="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-[1.5px] bg-current transition-opacity"
             :class="isMenuOpen ? 'opacity-0' : 'opacity-100'"
           ></span>
           <span
-            class="absolute left-0 w-5 h-[1.5px] bg-current transition-all"
-            :class="isMenuOpen ? 'top-1/2 -translate-y-1/2 -rotate-45' : 'bottom-0'"
+            class="absolute left-0 bottom-0 w-5 h-[1.5px] bg-current transition-transform"
+            :class="isMenuOpen ? '-translate-y-[6.25px] -rotate-45' : ''"
           ></span>
         </span>
       </button>
