@@ -95,7 +95,7 @@ function onKeydown(e: KeyboardEvent) {
 
 <template>
   <div>
-    <div class="mb-2 text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)">{{ group.label }}</div>
+    <div class="mb-2 text-(length:--type-label-size) leading-5 tracking-[0.05em] text-(--text-ink-muted)">{{ group.label }}</div>
 
     <template v-if="searchable">
       <input
@@ -139,13 +139,13 @@ function onKeydown(e: KeyboardEvent) {
             }}<mark class="bg-transparent font-semibold text-(--text-ink-main)">{{ highlight(tag.label).hit }}</mark
             >{{ highlight(tag.label).after }}<span v-if="tag.selected" class="sr-only">，已選</span>
           </span>
-          <span class="shrink-0 text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)">{{ tag.count }}</span>
+          <span class="shrink-0 text-(length:--type-label-size) leading-5 tracking-[0.05em] text-(--text-ink-muted)">{{ tag.count }}</span>
         </li>
       </ul>
       <p
         v-if="needle && !matches.length"
         role="status"
-        class="m-0 mb-2 text-left text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)"
+        class="m-0 mb-2 text-left text-(length:--type-label-size) leading-5 tracking-[0.05em] text-(--text-ink-muted)"
       >
         找不到符合「{{ query.trim() }}」的{{ group.label }}
       </p>
@@ -160,7 +160,7 @@ function onKeydown(e: KeyboardEvent) {
         type="button"
         :aria-pressed="tag.selected"
         :aria-label="`${tag.label}，${tag.count} 個專案`"
-        class="inline-flex h-7 cursor-pointer items-center gap-2 rounded-full border py-0 pr-1 pl-3 text-[13px] leading-5 tracking-[0.04em] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+        class="inline-flex h-7 cursor-pointer items-center gap-2 rounded-full border py-0 pr-1 pl-3 text-(length:--type-label-size) leading-5 tracking-[0.04em] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
         :class="
           tag.selected
             ? 'border-(--bg-selected) bg-(--bg-selected) text-(--text-on-selected)'
@@ -181,7 +181,7 @@ function onKeydown(e: KeyboardEvent) {
         >
       </button>
     </div>
-    <p v-if="hiddenCount > 0" class="m-0 mt-2 text-left text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)">
+    <p v-if="hiddenCount > 0" class="m-0 mt-2 text-left text-(length:--type-label-size) leading-5 tracking-[0.05em] text-(--text-ink-muted)">
       另 {{ hiddenCount }} 個，輸入搜尋
     </p>
   </div>

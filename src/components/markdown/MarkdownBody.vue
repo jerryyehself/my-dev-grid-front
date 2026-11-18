@@ -332,7 +332,7 @@ function render(node: MdNode): VNode[] {
           'code',
           {
             class:
-              'font-mono text-[13px] [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5',
+              'font-mono text-(length:--type-label-size) [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5',
           },
           node.value ?? '',
         ),
@@ -348,7 +348,7 @@ function render(node: MdNode): VNode[] {
             {
               'data-lang': node.lang ?? undefined,
               ...scrollRegion(codeLabel(node.lang)),
-              class: `block my-1.5 p-2.5 overflow-x-auto whitespace-pre font-mono text-[12.5px] leading-6 text-left text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] ${SCROLL_REGION_FOCUS}`,
+              class: `block my-1.5 p-2.5 overflow-x-auto whitespace-pre font-mono text-(length:--type-caption-size) leading-6 text-left text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] ${SCROLL_REGION_FOCUS}`,
             },
             node.value ?? '',
           ),
@@ -361,7 +361,7 @@ function render(node: MdNode): VNode[] {
           'pre',
           {
             ...scrollRegion(codeLabel(node.lang)),
-            class: `font-mono text-[12.5px] leading-6 bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] p-3.5 overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}`,
+            class: `font-mono text-(length:--type-caption-size) leading-6 bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] p-3.5 overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}`,
           },
           [h('code', { 'data-lang': node.lang ?? undefined }, node.value ?? '')],
         ),
@@ -497,7 +497,7 @@ function render(node: MdNode): VNode[] {
       if (noteDepth > 0) {
         return [
           h('span', { ...scrollRegion(TABLE_LABEL), class: `block my-1.5 overflow-x-auto ${SCROLL_REGION_FOCUS}` }, [
-            h('span', { role: 'table', class: 'table w-full border-collapse text-[12.5px]' }, [
+            h('span', { role: 'table', class: 'table w-full border-collapse text-(length:--type-label-size)' }, [
               head
                 ? h(
                     'span',
@@ -516,7 +516,7 @@ function render(node: MdNode): VNode[] {
       }
       return [
         h('div', { ...scrollRegion(TABLE_LABEL), class: `overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}` }, [
-          h('table', { class: 'w-full border-collapse text-[13.5px]' }, [
+          h('table', { class: 'w-full border-collapse text-(length:--type-caption-size)' }, [
             head ? h('thead', {}, renderRow(head, node.align, true)) : null,
             h(
               'tbody',

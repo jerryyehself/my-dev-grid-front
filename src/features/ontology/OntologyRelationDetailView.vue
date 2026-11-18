@@ -119,7 +119,7 @@ const lockReason = computed(() => {
 
   <div v-else class="w-full">
     <div
-      class="mb-5 flex flex-wrap items-center gap-2 font-mono text-[11px] text-(--text-ink-muted)"
+      class="mb-5 flex flex-wrap items-center gap-2 font-mono text-(length:--type-label-size) text-(--text-ink-muted)"
     >
       <router-link
         :to="{ name: 'ontology-scopes' }"
@@ -259,7 +259,7 @@ const lockReason = computed(() => {
           <span class="truncate text-(--text-ink-main)">{{ edge.subject_title }}</span>
           <!-- source 是這條邊來自哪一張連結表。留著不是為了好看——同一對實體
                可以被兩張不同的表連起來,不標出來就看不出這一列是哪一條。 -->
-          <span class="font-mono text-[10px] tracking-wide text-(--text-ink-muted)">{{
+          <span class="font-mono text-(length:--type-mono-size) tracking-wide text-(--text-ink-muted)">{{
             edge.source
           }}</span>
           <span class="truncate text-(--text-ink-main) sm:text-right">{{ edge.object_title }}</span>
@@ -268,7 +268,7 @@ const lockReason = computed(() => {
 
       <div
         v-if="edges.last_page > 1"
-        class="mt-3 flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-(--text-ink-muted)"
+        class="mt-3 flex flex-wrap items-center justify-between gap-2 font-mono text-(length:--type-mono-size) text-(--text-ink-muted)"
       >
         <span
           >{{ (edges.current_page - 1) * edges.per_page + 1 }}–{{

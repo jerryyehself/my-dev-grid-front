@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
+    <div class="text-(length:--type-mono-size) font-mono uppercase tracking-[0.24em] text-(--text-ink-muted) mb-2.5">
       Related Projects
     </div>
     <div class="flex flex-col gap-2">

@@ -152,7 +152,7 @@ function show<T>(state: CountState<T>, pick: (v: T) => number): string {
     <!-- 表頭，跟文章管理頁同一套 -->
     <div class="flex flex-col gap-[7px]">
       <BaseEyebrow class="!tracking-[0.2em]">Admin</BaseEyebrow>
-      <h1 class="font-serif text-[26px] sm:text-[30px] font-extrabold tracking-[-0.02em] text-(--text-ink-main)">
+      <h1 class="font-serif text-[26px] sm:text-[30px] font-bold tracking-[-0.02em] text-(--text-ink-main)">
         管理
       </h1>
     </div>

@@ -53,7 +53,7 @@ function summaryOf(a: ArticleDto): string {
 // 每篇文章右上角的「編輯」。所在那一列是 mono 大寫小字，這顆是中文，照 D-68 的中文標籤下限用 13px、
 // 不套大寫與寬字距
 const EDIT_LINK_CLASS =
-  'relative z-10 ml-auto font-sans normal-case text-[13px] tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out'
+  'relative z-10 ml-auto font-sans normal-case text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out'
 
 const viewMode = ref<'timeline' | 'folder'>('timeline')
 const VIEW_MODES = [
@@ -104,7 +104,7 @@ const folderArticles = computed(() => {
       <AuthOnly>
         <router-link
           :to="{ name: 'article-manage' }"
-          class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
@@ -128,7 +128,7 @@ const folderArticles = computed(() => {
     <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
     <!-- 一篇已發布的文章都沒有時，兩種排列都只剩空白；頁面拿掉副標後連一句中文都沒有（D-83），
          補一句空狀態 -->
-    <p v-if="timelineGroups.length === 0" class="py-12 text-center text-[15px] text-(--text-ink-body)">
+    <p v-if="timelineGroups.length === 0" class="py-12 text-center text-(length:--type-caption-size) text-(--text-ink-body)">
       {{ ARTICLES_EMPTY_TEXT }}
     </p>
     <!-- 時間軸：依日期線性掃視 -->
@@ -140,7 +140,7 @@ const folderArticles = computed(() => {
           <div
             class="absolute -left-7 top-0.5 w-3 h-3 rounded-full bg-(--text-accent) ring-[3px] ring-(--bg-paper-light)"
           ></div>
-          <div class="text-[13px] tracking-[0.05em] font-bold text-(--text-accent)">
+          <div class="text-(length:--type-label-size) tracking-[0.05em] font-bold text-(--text-accent)">
             {{ group.month }}
           </div>
         </div>
@@ -153,7 +153,7 @@ const folderArticles = computed(() => {
           <div
             class="absolute -left-[24.5px] top-[7px] w-[7px] h-[7px] rounded-full bg-(--text-ink-muted)"
           ></div>
-          <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
+          <div class="flex items-center gap-3 mb-2 font-mono text-(length:--type-label-size) uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article)[0] }}</span>
             <!-- 登入後才有（ArticleEditLink 內建 AuthOnly）。relative z-10：標題連結的 ::after 撐滿整列，
@@ -216,12 +216,12 @@ const folderArticles = computed(() => {
           :key="article.id"
           class="relative p-5 sm:p-6 hover:bg-(--bg-folder) transition-colors"
         >
-          <div class="flex items-center gap-3 mb-2 font-mono text-[11px] uppercase tracking-wider">
+          <div class="flex items-center gap-3 mb-2 font-mono text-(length:--type-label-size) uppercase tracking-wider">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
             <span v-if="tagsOf(article).length" class="text-(--text-accent) font-bold">{{ tagsOf(article).join(' / ') }}</span>
             <ArticleEditLink :article-id="article.id" :title="article.title" :class="EDIT_LINK_CLASS" />
           </div>
-          <h3 class="text-[15px] font-bold text-(--text-ink-main) mb-1.5">
+          <h3 class="text-(length:--type-body-size) font-bold text-(--text-ink-main) mb-1.5">
             <RouterLink
               :to="{ name: 'article-detail', params: { id: article.id } }"
               class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"

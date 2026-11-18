@@ -173,7 +173,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div class="flex flex-col gap-[7px]">
         <BaseEyebrow class="!tracking-[0.2em]">Import Articles</BaseEyebrow>
-        <h1 class="font-serif text-[26px] sm:text-[30px] font-extrabold tracking-[-0.02em] text-(--text-ink-main)">
+        <h1 class="font-serif text-[26px] sm:text-[30px] font-bold tracking-[-0.02em] text-(--text-ink-main)">
           匯入文章
         </h1>
       </div>

@@ -40,7 +40,7 @@ body {
    讓各元件真正能覆蓋這裡的預設印刷排版，而不是被無條件蓋掉。 */
 @layer base {
     .global-page-wrapper h2 {
-        font-size: 1.25rem;
+        font-size: var(--type-heading-size);
         font-weight: 800;
         letter-spacing: -0.025em;
         color: var(--text-ink-main);
@@ -52,9 +52,9 @@ body {
 
     /* 📖 仿實體書籍印刷的內文段落 */
     .global-page-wrapper p {
-        font-size: 0.9375rem;
+        font-size: var(--type-body-size);
         color: var(--text-ink-body);
-        line-height: 1.8;
+        line-height: var(--type-body-leading);
         margin-bottom: 1.25rem;
         /* 讓段落左右對齊，像實體書一樣工整。
            只在 640px 以上才套用:窄欄分散對齊會擠出「河道」——中文之間被拉開
@@ -77,7 +77,7 @@ body {
         color: var(--text-ink-main);
         padding: 0.2rem 0.4rem;
         border-radius: 0.125rem;
-        font-size: 0.875rem;
+        font-size: var(--type-caption-size);
     }
 }
 /* ♿ 尊重系統的「減少動態效果」設定。

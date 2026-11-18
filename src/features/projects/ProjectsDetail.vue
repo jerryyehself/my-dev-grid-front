@@ -20,7 +20,7 @@ const techniques = computed(() =>
 const withLogo = computed(() => techniques.value.filter((t) => t.icon))
 const textOnly = computed(() => techniques.value.filter((t) => !t.icon))
 
-const labelClass = 'text-[13px] leading-5 tracking-[0.05em] text-(--text-ink-muted)'
+const labelClass = 'text-(length:--type-label-size) leading-5 tracking-[0.05em] text-(--text-ink-muted)'
 const isArchived = computed(() => props.project.statusType === 'archived')
 
 // 品牌色的相對亮度很低（接近黑色）時，在深色主題會看不見
@@ -38,7 +38,7 @@ function isNearBlack(hex: string): boolean {
     <div>
       <!-- 站上通用的 .global-page-wrapper h2／p 有自己的字級、邊距、對齊，這裡的 utility 要明確蓋過 -->
       <h2
-        class="mt-2 mb-0 block text-[36px] leading-[44px] font-bold tracking-[-0.01em] break-words text-(--text-ink-main) font-serif"
+        class="mt-2 mb-0 block text-(length:--type-title-size) leading-(--type-title-leading) font-bold tracking-[-0.01em] break-words text-(--text-ink-main) font-serif"
       >
         {{ project.title }}
       </h2>
@@ -52,7 +52,7 @@ function isNearBlack(hex: string): boolean {
         <li
           v-for="tech in withLogo"
           :key="tech.label"
-          class="inline-flex h-7 items-center gap-2 text-[13px] leading-5 tracking-[0.04em] text-(--text-ink-body)"
+          class="inline-flex h-7 items-center gap-2 text-(length:--type-label-size) leading-5 tracking-[0.04em] text-(--text-ink-body)"
         >
           <!-- 第三方 logo 用品牌原色、不改圖；品牌色接近黑色的（GitHub Pages、JSON）在深色主題改用文字色，
                對應品牌本身提供的反白版本。路徑資料來自 simple-icons，用 <path :d> 畫，不經過 v-html -->
@@ -73,7 +73,7 @@ function isNearBlack(hex: string): boolean {
         <li
           v-for="tech in textOnly"
           :key="tech.label"
-          class="inline-flex h-7 items-center rounded-[4px] bg-(--bg-folder) px-3 text-[13px] leading-5 tracking-[0.04em] text-(--text-ink-body)"
+          class="inline-flex h-7 items-center rounded-[4px] bg-(--bg-folder) px-3 text-(length:--type-label-size) leading-5 tracking-[0.04em] text-(--text-ink-body)"
         >
           {{ tech.label }}
         </li>

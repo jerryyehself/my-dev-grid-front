@@ -7,5 +7,5 @@ defineProps<{ message: string }>()
 </script>
 
 <template>
-  <p role="alert" class="text-[14px] text-(--text-error)">{{ message }}</p>
+  <p role="alert" class="text-(length:--type-caption-size) text-(--text-error)">{{ message }}</p>
 </template>

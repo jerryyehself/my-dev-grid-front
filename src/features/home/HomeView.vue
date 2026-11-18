@@ -32,18 +32,19 @@ function switchRoute() {
 }
 
 const MORE_LINK =
-  'inline-flex items-center min-h-11 text-[13px] tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent)'
+  'inline-flex items-center min-h-11 text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent)'
 </script>
 
 <template>
   <main class="flex flex-col gap-3 sm:gap-4">
-    <!-- 主題句就是 H1（沒有 kicker、沒有副標）。標題用 --font-serif，跟其他頁的 H1 同一套 -->
+    <!-- 主題句就是 H1（沒有 kicker、沒有副標）。用展示字 --font-display（Cactus Classical Serif，後備 Noto Serif TC 700）。
+         手機 36px 一行放不下 18 個字，分成 6／6／6 三段（inline-block），斷行只會落在段與段之間，不會把「工程師」拆開 -->
     <!-- 導覽列底到 H1：桌機 40（MainLayout 的 hideHeader 已留 32，這裡補 8）、手機 24（已留 24）；
          H1 到下一塊：桌機 40、手機 24。flex 的 gap 另外算，所以 mb 要扣掉 gap -->
     <h1
-      class="font-serif !font-bold text-(--text-ink-main) text-(length:--type-display-size) leading-(--type-display-leading) sm:mt-2 mb-3 sm:mb-6"
+      class="font-display !font-bold text-(--text-ink-main) text-(length:--type-display-size) leading-(--type-display-leading) sm:mt-2 mb-3 sm:mb-6"
     >
-      一位圖資背景後端工程師的工作心智模式
+      <span class="inline-block">一位圖資背景</span><span class="inline-block">後端工程師的</span><span class="inline-block">工作心智模式</span>
     </h1>
 
     <!-- 載入中先佔住卡片的位置，載入完成時版面才不會跳 -->

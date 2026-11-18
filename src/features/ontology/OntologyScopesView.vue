@@ -140,7 +140,7 @@ function familyDot(fullCallNumber: string | undefined): string {
             class="flex min-w-0 flex-1 items-baseline gap-2.5 text-sm transition-colors hover:text-(--text-accent)"
           >
             <span
-              class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"
+              class="w-14 shrink-0 font-mono text-(length:--type-mono-size) tabular-nums text-(--text-ink-muted)"
               >{{ child.full_call_number }}</span
             >
             <span class="shrink-0 font-medium text-(--text-ink-main)">{{ child.name }}</span>
@@ -186,7 +186,7 @@ function familyDot(fullCallNumber: string | undefined): string {
             class="flex min-w-0 flex-1 items-baseline gap-2.5 text-sm transition-colors hover:text-(--text-accent)"
           >
             <span
-              class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"
+              class="w-14 shrink-0 font-mono text-(length:--type-mono-size) tabular-nums text-(--text-ink-muted)"
               >{{ row.full_call_number }}</span
             >
             <span class="min-w-0 flex-1 truncate font-medium text-(--text-ink-main)">{{

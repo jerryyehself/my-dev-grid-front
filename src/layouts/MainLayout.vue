@@ -22,12 +22,12 @@
           <span class="w-[3px] h-4 rounded-[2px] bg-(--text-accent) shrink-0"></span>
           <span
             v-if="$slots.tag"
-            class="shrink-0 text-[11px] font-mono uppercase tracking-widest text-(--text-ink-muted)"
+            class="shrink-0 text-(length:--type-mono-size) font-mono uppercase tracking-widest text-(--text-ink-muted)"
           >
             <slot name="tag"></slot>
           </span>
           <span v-if="$slots.tag" class="text-(--text-ink-muted)/50 shrink-0">›</span>
-          <h2 class="text-[13px] font-bold text-(--text-ink-main) truncate">
+          <h2 class="text-(length:--type-label-size) font-bold text-(--text-ink-main) truncate">
             <slot name="title"></slot>
           </h2>
         </div>
@@ -40,14 +40,15 @@
       <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
         <div
           v-if="$slots.tag"
-          class="flex-shrink-0 font-mono text-[11px] tracking-[0.2em] uppercase font-bold text-(--text-accent)"
+          class="flex-shrink-0 font-mono text-(length:--type-mono-size) tracking-[0.2em] uppercase font-bold text-(--text-accent)"
         >
           <slot name="tag"></slot>
         </div>
 
-        <!-- 頁面標題用 --font-serif（Noto Serif TC 900），跟 About 的章節標題同一套（D-60）。
+        <!-- 頁面標題用 --font-serif（Noto Serif TC 700），跟 About 的章節標題同一套（D-60；全站襯線標題字重 700）。
+             字級是第 3 級標題二，單行頁標行高 32。
              以前這裡沒指定字型，標題吃的是內文的無襯線字，換了 --font-serif 也到不了這裡 -->
-        <h1 class="font-serif !font-black text-(--text-ink-main) text-[28px] sm:text-[34px] leading-tight">
+        <h1 class="font-serif !font-bold text-(--text-ink-main) text-(length:--type-heading-size) leading-(--type-page-title-leading)">
           <slot name="title"></slot>
         </h1>
 

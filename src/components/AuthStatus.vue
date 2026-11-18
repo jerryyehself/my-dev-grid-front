@@ -20,7 +20,7 @@ const showLoginEntry = import.meta.env.DEV
 
 // 三顆都是同一種膠囊，樣式集中在這裡，不要各寫一份再慢慢漂移
 const pillClass =
-  'inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-[13px] tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,border-color,opacity]'
+  'inline-flex items-center rounded-full border border-(--border-shelf) px-2.5 py-1 text-(length:--type-label-size) tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,border-color,opacity]'
 
 // 登出失敗（後端沒確認）時留在原頁，錯誤提示由 AuthNotice 顯示，使用者可以再按一次
 async function handleLogout() {
@@ -35,7 +35,7 @@ async function handleLogout() {
          黃銅圓點＋報讀器才唸的「已登入：」說明這是狀態；滑過去的 title 給完整名字（太長會截斷） -->
     <span
       v-if="auth.isAuthenticated"
-      class="inline-flex items-center gap-1.5 min-w-0 max-w-[140px] text-[13px] tracking-[0.05em] text-(--text-nav-footer)"
+      class="inline-flex items-center gap-1.5 min-w-0 max-w-[140px] text-(length:--type-label-size) tracking-[0.05em] text-(--text-nav-footer)"
       :title="`已登入：${auth.displayName}`"
       data-test="auth-user"
     >
