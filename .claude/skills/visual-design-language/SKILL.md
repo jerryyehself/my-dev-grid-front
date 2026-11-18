@@ -1,6 +1,6 @@
 ---
 name: visual-design-language
-description: This project's (my-dev-grid-front) visual design language and the method for extending it — how a style decision turns into design tokens, then a component rule, then an architecture pattern, then something that holds across the whole site. Use this whenever making or evaluating a visual/UI decision here — new component styling, a new theme or color palette, typography, icons, animation, or reviewing whether an existing element's look is justified. Also covers the fallback method for generating color palettes when external color tools are unreachable, and the evaluation lenses (Norman's design principles, NN/g heuristics, common AI-generated-design clichés) to run every visual decision through.
+description: This project's (my-dev-grid-front) visual design language and the method for extending it — how a style decision turns into design tokens, then a component rule, then an architecture pattern, then something that holds across the whole site. Use this whenever making or evaluating a visual/UI decision here — new component styling, a new theme or color palette, typography, icons, animation, or reviewing whether an existing element's look is justified. Also covers the fallback method for generating color palettes when external color tools are unreachable, and the evaluation lenses (site positioning D-178 first, then Norman's design principles, NN/g heuristics, common AI-generated-design clichés) to run every visual decision through.
 ---
 
 # Visual Design Language
@@ -417,6 +417,27 @@ token growth is how a design system stops being one.
 Aesthetic judgment ("does this look good") is necessary but not sufficient.
 Run decisions through these lenses too — they catch different failure modes:
 
+### Site positioning first (D-178)
+Check this first; it does not override the contrast, accessibility and
+interaction rules below. The site is an "external brain" whose form is grown
+from what it holds; the four checks:
+1. **Form grows from the data** — no decorative metaphor the data can't back.
+2. **It visibly changes** — new things read, used or made change the form, and
+   recent change is visible.
+3. **Unexpected connections** — not only totals: an entry point from one item
+   to related ones.
+4. **One fixed anchor** — a stable statement or central subject says whose
+   brain and what about (not a count).
+
+Catalogue, index and archive describe how the content is *organised*; they are
+not the positioning. For a page or a style direction (typeface, illustration,
+palette), derive the criteria from the four checks, not from catalogue/library
+imagery, and cite D-178 in the research or mockup brief. Sample text is real
+copy from the site, not a phrase invented for its theme. The `IN / ARCHIVE`
+wordmark stays; the internal theme names `library`/`terminal` are code names,
+to be renamed with the theme-toggle rework (new names not settled) —
+neither is a style criterion.
+
 ### Norman's affordance / signifier / feedback
 - **Affordance & signifier**: does this element look like it does something —
   and if so, does it actually do that thing? A signifier that implies meaning
@@ -489,7 +510,8 @@ match for cliché #2 — which is very likely *why* it read as generic/wrong
 before anyone could articulate why. The fix wasn't "pick a different accent
 color," it was grounding the hue choice in the subject itself (library
 materials: walnut wood, brass, aged leather) rather than a generic dark-mode
-default.
+default. (That 2026-09 reasoning is kept as history; ground new
+choices in the D-178 checks above, not in library imagery.)
 
 ## Generating a color palette (fallback method)
 
