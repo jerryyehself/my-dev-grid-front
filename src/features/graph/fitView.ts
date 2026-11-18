@@ -101,3 +101,24 @@ export const NARROW_CANVAS_PX = 640
 export function controlsBottomInset(viewW: number, pad: number): number {
   return viewW < NARROW_CANVAS_PX ? Math.max(0, 46 + 12 + 4 - pad) : 0
 }
+
+/**
+ * 只讓畫布中的一條橫帶（bandTop 起、高 bandHeight，畫布座標）看得到整組節點：首頁的畫布有一部分
+ * 在視窗底邊以下，路線的節點落在那裡就看不到。maxK 是不能放大超過的倍率（通常是整張圖的框景倍率，
+ * 路線只是在圖上亮起來，不需要比整張圖更近）；放不下就縮小。
+ * 回傳的 cx、cy 是要交給 centerAt（對準畫布正中央）的世界座標，節點組的中心會落在橫帶中央。
+ */
+export function fitTransformInBand(
+  items: FitItem[],
+  viewW: number,
+  viewH: number,
+  bandTop: number,
+  bandHeight: number,
+  pad: number,
+  maxK: number,
+): FitResult | null {
+  const fit = fitTransform(items, viewW, bandHeight, pad, maxK)
+  if (!fit) return null
+  const bandCenterY = bandTop + bandHeight / 2
+  return { ...fit, cy: fit.cy - (bandCenterY - viewH / 2) / fit.k }
+}

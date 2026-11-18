@@ -12,7 +12,7 @@ import {
   type DetailNode,
   type GraphDetailIndex,
 } from './graphDetail'
-import { TYPE_LABEL } from './graphTypes'
+import { nodeKindLabel } from './graphTypes'
 
 // /graph 點節點／點連線之後的詳情卡（2D、3D 共用同一張）。內容排成表格：選了節點就列出它的
 // 直接關係（依關係分組），選了連線就列起點／關係／終點。表格裡的節點名稱都是按鈕，按了改選那個
@@ -122,7 +122,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
     <!-- ───── 選了節點：標題＋連結，下面是它的直接關係表 ───── -->
     <template v-if="nodeSel">
       <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">
-        {{ TYPE_LABEL[nodeSel.domainType] }}
+        {{ nodeKindLabel(nodeSel) }}
       </p>
       <h2
         ref="title"
@@ -248,7 +248,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
                   <button type="button" :class="NODE_BTN" @click="pick(end.id)">
                     {{ end.label }}</button
                   ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-                    TYPE_LABEL[end.domainType]
+                    nodeKindLabel(end)
                   }}</span>
                 </template>
               </span>
@@ -283,7 +283,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
           ><button type="button" :class="NODE_BTN" @click="pick(direct.subject.id)">
             {{ direct.subject.label }}</button
           ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-            TYPE_LABEL[direct.subject.domainType]
+            nodeKindLabel(direct.subject)
           }}</span></span
         >
         <span class="font-bold text-(--text-ink-main)">{{ direct.verb }} →</span>
@@ -291,7 +291,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
           ><button type="button" :class="NODE_BTN" @click="pick(direct.object.id)">
             {{ direct.object.label }}</button
           ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-            TYPE_LABEL[direct.object.domainType]
+            nodeKindLabel(direct.object)
           }}</span></span
         >
       </p>

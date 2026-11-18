@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { nextTick, onUnmounted, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 
 // 圖譜的操作說明面板（D-87）：鍵盤快捷鍵＋滑鼠／觸控手勢。浮在畫布上，不擋整頁（非強制對話框），
 // Esc 或「關閉」收起，焦點交回畫布（由父元件處理，見 KnowledgeGraphCanvas 的 closeHelp）。
-const props = defineProps<{ open: boolean; isMac: boolean }>()
+// reading：首頁版本。標題是「閱讀方式」，上半段先講怎麼讀這張圖（節點大小；三層疊圖時加圓框），
+// 接著是「操作」段（下面原本的鍵盤、滑鼠、觸控），最後一條連結帶去 /graph 查更多路線。
+// 沒給（/graph）就是原本的純操作說明。
+const props = defineProps<{
+  open: boolean
+  isMac: boolean
+  reading?: { layered: boolean } | null
+}>()
 defineEmits<{ close: [] }>()
 
 const closeBtn = ref<HTMLButtonElement>()
@@ -23,7 +31,8 @@ watch(
     resizeObserver?.disconnect()
     if (!open) return
     await nextTick()
-    closeBtn.value?.focus()
+    // preventScroll：畫布常有一部分在視窗外（首頁），聚焦時瀏覽器不能為了露出按鈕把頁面捲走
+    closeBtn.value?.focus({ preventScroll: true })
     updateMoreBelow()
     if (body.value) {
       resizeObserver = new ResizeObserver(updateMoreBelow)
@@ -54,15 +63,22 @@ const KEYS: { keys: string[]; text: string }[] = [
     role="dialog"
     aria-modal="false"
     aria-labelledby="kg-help-title"
-    class="absolute z-30 inset-x-3 bottom-[4.25rem] max-h-[calc(100%-5rem)] @min-[640px]:inset-x-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
+    :class="
+      reading
+        ? 'inset-x-3 bottom-3 max-h-[calc(100%-1.5rem)]'
+        : 'inset-x-3 bottom-[4.25rem] max-h-[calc(100%-5rem)]'
+    "
+    class="absolute z-30 @min-[640px]:inset-x-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
   >
     <div class="shrink-0 flex items-center justify-between gap-2 pl-4 pr-1.5 pt-1.5">
-      <h3 id="kg-help-title" class="text-[15px] font-bold text-(--text-ink-main)">操作說明</h3>
+      <h3 id="kg-help-title" class="text-[15px] font-bold text-(--text-ink-main)">
+        {{ reading ? '閱讀方式' : '操作說明' }}
+      </h3>
       <button
         ref="closeBtn"
         type="button"
         class="w-11 h-11 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) text-lg leading-none cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent)"
-        aria-label="關閉操作說明"
+        :aria-label="reading ? '關閉' : '關閉操作說明'"
         @click="$emit('close')"
       >
         ×
@@ -79,6 +95,23 @@ const KEYS: { keys: string[]; text: string }[] = [
         class="min-h-0 overflow-y-auto px-4 pb-3.5 pt-1 grid gap-3 @min-[640px]:grid-cols-2 @min-[640px]:gap-x-6 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent) rounded-b-xl"
         @scroll.passive="updateMoreBelow"
       >
+        <!-- 首頁的閱讀方式：用 div 不用 p（全站 .global-page-wrapper p 有段落下邊距） -->
+        <section v-if="reading" class="@min-[640px]:col-span-2 flex flex-col gap-1 text-[14px]">
+          <div>節點的大小反映關係的多寡。</div>
+          <!-- 只有三層疊圖才有圓框；節點落在重疊處是因為三個圓框錯開疊放，不是因為彼此相關，要明講 -->
+          <div v-if="reading.layered">
+            圓框：三大類各自的範圍，錯開疊放；落在重疊處不代表彼此有關。
+          </div>
+          <RouterLink
+            to="/graph"
+            class="inline-flex items-center min-h-11 text-(--text-accent) hover:underline"
+            >查詢更多路線 →</RouterLink
+          >
+        </section>
+        <h4 v-if="reading" class="@min-[640px]:col-span-2 text-[14px] font-bold text-(--text-ink-main) -mb-1">
+          操作
+        </h4>
+
         <section class="@min-[640px]:row-span-2 [@media(hover:none)_and_(pointer:coarse)]:hidden">
           <h4 class="text-[13px] text-(--text-ink-muted) mb-1">
             鍵盤（先點一下圖，或用 Tab 移到圖上）

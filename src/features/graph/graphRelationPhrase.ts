@@ -1,4 +1,5 @@
 import type { GraphNodeType } from '@/api/graph'
+import { TYPE_LABEL, nodeKindLabel } from './graphTypes'
 
 // 圖譜上「這條線是什麼關係」的簡短標示：/graph 詳情卡（2026-10-03，D-88：用「技術」「版本」這樣
 // 的簡短標示，圖形化的內容不該寫成口語句子），2026-10-04 首頁彈窗與滑過提示也改用
@@ -12,15 +13,11 @@ import type { GraphNodeType } from '@/api/graph'
 // 那是另一種關係，譯「討論」：about 指「整篇在講這個」，「提及」在辭典裡是順帶提到，意思太輕；
 // 「論及」太書面，所以都不選。文章連到專案的 aboutProject／projectSubjectOf 是同一種關係，同樣譯「討論」。
 
-const TYPE_LABEL: Record<GraphNodeType, string> = {
-  documentation: '文件',
-  technique: '技術',
-  implementation: '實作',
-}
-
 export interface PhraseNode {
   domainType: GraphNodeType
   label: string
+  /** 文件類的子類（post 文章、sourcesite 官方文件）；有的話純文字版的類別名稱說得更準 */
+  subtype?: string | null
 }
 
 /** 技術的版本關係（Dublin Core）：isVersionOf 的主詞是版本，hasVersion 的主詞是主技術 */
@@ -120,5 +117,32 @@ export function edgeRelation(
 
 /** 純文字版（滑過提示、彈窗的 title）：「vue-exercise（實作） 使用 → Vue（技術）」 */
 export function edgeRelationText({ subject, object, verb }: EdgeRelation): string {
-  return `${subject.label}（${TYPE_LABEL[subject.domainType]}） ${verb} → ${object.label}（${TYPE_LABEL[object.domainType]}）`
+  return `${subject.label}（${nodeKindLabel(subject)}） ${verb} → ${object.label}（${nodeKindLabel(object)}）`
+}
+
+// 路線／路徑上的一段：箭頭一律順著路線方向（▸）。動詞的主詞由兩端類別決定，不一定是路線上的前
+// 一站；主詞在後一站時改用被動說法，讓「前一站 ＋ 動詞 ＋ 後一站」讀起來仍是對的。
+// 相關沒有主被動之分；版本的主詞永遠是版本那一端，從主技術走向版本時說「有版本」。
+const PASSIVE_VERB: Record<string, string> = {
+  使用: '被使用',
+  說明: '被說明',
+  記錄: '被記錄',
+  討論: '被討論',
+  需要: '被需要',
+  版本: '有版本',
+}
+
+/**
+ * 路線上從 `from` 走到 `to` 這一段的動詞（不含箭頭）；edge 是這兩站之間那條邊（source／target
+ * 是邊原本存的方向，不一定跟路線方向一致）。
+ */
+export function routeSegmentVerb(
+  from: PhraseNode & { id: string },
+  to: PhraseNode & { id: string },
+  edge: { source: string; target: string; predicate: string | null },
+): string {
+  const source = edge.source === from.id ? from : to
+  const target = source === from ? to : from
+  const r = edgeRelation(source, target, edge.predicate)
+  return r.subject === from ? r.verb : (PASSIVE_VERB[r.verb] ?? r.verb)
 }

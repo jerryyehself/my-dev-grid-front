@@ -32,6 +32,20 @@ export const TYPE_LABEL: Record<GraphNodeType, string> = {
   implementation: '實作',
 }
 
+/**
+ * 單一節點的類別名稱（點節點的小卡、滑過提示、詳情卡的標題）。圖例與「突顯類別」鈕講的是整個
+ * documentation 類，叫「文件」；但這一類同時裝著站主的文章（subtype post）和官方文件
+ * （sourcesite、document），單一節點要說清楚是哪一種：文章、官方文件。subtype 空的
+ * （未公開條目）或其他子類，退回類別名「文件」。
+ */
+export function nodeKindLabel(n: { domainType: GraphNodeType; subtype?: string | null }): string {
+  if (n.domainType === 'documentation') {
+    if (n.subtype === 'post') return '文章'
+    if (n.subtype === 'sourcesite' || n.subtype === 'document') return '官方文件'
+  }
+  return TYPE_LABEL[n.domainType]
+}
+
 export function endpointId(x: string | number | { id: string } | undefined): string {
   if (x == null) return ''
   return typeof x === 'object' ? x.id : String(x)

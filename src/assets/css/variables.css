@@ -135,6 +135,26 @@
     --text-error: #e57d71;
 }
 
+/* 全站字級 token（--type-*）。數字跟下面文章頁的同級相同，之後文章頁可改成指向這裡。 */
+:root {
+    --type-display-size: 2.75rem; /* 44px，展示級（首頁主題句） */
+    --type-display-leading: 3.5rem; /* 56px */
+    --type-body-size: 1rem; /* 16px */
+    --type-body-leading: 1.75rem; /* 28px，長文 */
+    --type-ui-leading: 1.5rem; /* 24px，介面 */
+    --type-label-size: 0.8125rem; /* 13px */
+    --type-label-leading: 1.25rem; /* 20px */
+    --type-label-tracking: 0.05em;
+}
+
+/* 展示級是全站唯一會隨螢幕縮的字級 */
+@media (max-width: 600px) {
+    :root {
+        --type-display-size: 2.25rem; /* 36px */
+        --type-display-leading: 2.75rem; /* 44px */
+    }
+}
+
 /* ==========================================================================
    文章內頁的字級與間距（定案值）。只管文章頁（標題、內文、二級／三級標題、註腳、標籤），
    其他頁的行高不動。兩個主題共用，所以放在主題區塊外面。

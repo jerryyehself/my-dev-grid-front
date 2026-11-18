@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { RouterLinkStub, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import GraphShortcutsHelp from './GraphShortcutsHelp.vue'
 
@@ -87,5 +87,77 @@ describe('GraphShortcutsHelp', () => {
     wrapper.unmount()
 
     expect(disconnect).toHaveBeenCalledOnce()
+  })
+})
+
+describe('GraphShortcutsHelp（首頁的閱讀方式）', () => {
+  const mountReading = (layered: boolean) =>
+    mount(GraphShortcutsHelp, {
+      props: { open: true, isMac: false, reading: { layered } },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    })
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    )
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('它應該標題寫「閱讀方式」，先講節點大小，接著「操作」段，最後一條連去 /graph 的連結', () => {
+    const wrapper = mountReading(true)
+    const text = wrapper.text()
+
+    expect(wrapper.find('#kg-help-title').text()).toBe('閱讀方式')
+    expect(text).toContain('節點的大小反映關係的多寡。')
+    expect(text).toContain('圓框：三大類各自的範圍，錯開疊放；落在重疊處不代表彼此有關。')
+    expect(wrapper.findAll('h4').map((h) => h.text())).toContain('操作')
+    const link = wrapper.findComponent(RouterLinkStub)
+    expect(link.text()).toBe('查詢更多路線 →')
+    expect(link.props('to')).toBe('/graph')
+    expect(wrapper.find('button').attributes('aria-label')).toBe('關閉')
+  })
+
+  it('它應該在不是三層疊圖時拿掉圓框那一句', () => {
+    expect(mountReading(false).text()).not.toContain('圓框')
+  })
+
+  it('它應該在沒給 reading（/graph）時維持原本的操作說明，沒有閱讀方式與連結', () => {
+    const wrapper = mount(GraphShortcutsHelp, { props: { open: true, isMac: false } })
+
+    expect(wrapper.find('#kg-help-title').text()).toBe('操作說明')
+    expect(wrapper.text()).not.toContain('節點的大小反映關係的多寡')
+    expect(wrapper.text()).not.toContain('查詢更多路線')
+  })
+
+  it('它應該在打開時把焦點交給關閉鈕，但不讓頁面跟著捲動（畫布常有一部分在視窗外）', async () => {
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+    const wrapper = mount(GraphShortcutsHelp, {
+      props: { open: false, isMac: false, reading: { layered: true } },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+      attachTo: document.body,
+    })
+    await wrapper.setProps({ open: true })
+    await nextTick()
+    await nextTick()
+
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true })
+    focus.mockRestore()
+    wrapper.unmount()
+  })
+
+  it('它應該讓閱讀方式在窄畫布蓋住整個畫布（含縮放鈕）、操作說明維持坐在按鈕列上方', () => {
+    const reading = mountReading(true).find('[role="dialog"]')
+    const plain = mount(GraphShortcutsHelp, { props: { open: true, isMac: false } }).find('[role="dialog"]')
+
+    expect(reading.classes()).toContain('bottom-3')
+    expect(reading.classes()).not.toContain('bottom-[4.25rem]')
+    expect(plain.classes()).toContain('bottom-[4.25rem]')
   })
 })
