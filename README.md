@@ -59,7 +59,7 @@
 | `/ontology/scopes`、`/ontology/scopes/new`、`/ontology/scopes/:id`、`/ontology/scopes/:id/edit` | 階層分類號一覽/詳情/新增/編輯 |
 | `/ontology/relations`、`/ontology/relations/new`、`/ontology/relations/:id`、`/ontology/relations/:id/edit` | 述詞一覽/詳情/新增/編輯。被任何邊引用的述詞，編輯頁裡主詞/受詞/名稱/子類號會鎖成唯讀（只剩備註能改） |
 
-`Technique`／`Implementation`／`Documentation` 這三種實體本身（不是上面的分類/述詞定義）目前完全靠後端 GitHub sync 自動建立，還沒有任何介面能手動編輯（已知的技術債）。
+`Technique`／`Implementation`／`Documentation` 這三種實體本身（不是上面的分類/述詞定義）目前完全靠後端 GitHub sync 自動建立，還沒有任何介面能手動編輯（已知限制，見 [`docs/tech-debt.md`](docs/tech-debt.md)）。
 
 ## 文章內文的渲染
 
