@@ -42,7 +42,7 @@ const router = createRouter({
       component: () => import('@/features/about/AboutView.vue'),
       meta: {
         tag: 'About',
-        title: '私人藏書，公開目錄',
+        title: '關於',
         subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
         // About 頁自己畫了頁首（名字、職涯句、按鈕與線稿），跟 MainLayout 的通用表頭是同一件事，
         // 兩個都顯示會重複，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
