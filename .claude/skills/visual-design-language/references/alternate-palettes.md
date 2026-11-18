@@ -1,6 +1,6 @@
 # 備用色票（未套用，寫好留著以後直接套）
 
-夜讀主題（`.theme-terminal`）目前套用的是 Gruvbox（見 `SKILL.md`）。以下三組是同一輪
+深色主題（`.theme-dark`）目前套用的是 Gruvbox（見 `SKILL.md`）。以下三組是同一輪
 比較裡沒選中的候選，全部算過真實 WCAG 對比度、跑過 AI 生成套路檢查，隨時可以拿來換掉
 `variables.css` 裡 `.theme-dark` 區塊的內容——**不用改 class 名稱、不用碰
 `useTheme.ts`/`ThemeToggle.vue`，換色只要換 `.theme-dark { ... }` 裡的值**。
