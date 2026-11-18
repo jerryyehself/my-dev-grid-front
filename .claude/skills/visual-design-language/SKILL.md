@@ -434,8 +434,8 @@ not the positioning. For a page or a style direction (typeface, illustration,
 palette), derive the criteria from the four checks, not from catalogue/library
 imagery, and cite D-178 in the research or mockup brief. Sample text is real
 copy from the site, not a phrase invented for its theme. The `IN / ARCHIVE`
-wordmark stays; the internal theme names `library`/`terminal` are code names
-due to be renamed to neutral `light`/`dark` with the theme-toggle rework —
+wordmark stays; the internal theme names `library`/`terminal` are code names,
+to be renamed with the theme-toggle rework (new names not settled) —
 neither is a style criterion.
 
 ### Norman's affordance / signifier / feedback
