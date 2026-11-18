@@ -26,11 +26,11 @@
 - **淘汰條件**：編輯器或腳註功能被取代時一併移除。
 - **程式位置**：`src/features/articles/insertFootnote.ts:88-107`（`insertFootnote()`，插入位置 `at` 在第 90 行算出）；呼叫端 `src/features/articles/ArticleEditorView.vue:252`。
 
-## Technique／Implementation／Documentation 沒有手動編輯介面
+## Technique／Implementation 沒有手動編輯介面
 
-- **問題**：`Technique`、`Implementation`、`Documentation` 這三種實體只由後端的 GitHub 同步建立，前端沒有任何介面能手動新增或修改。分類與述詞的定義（`Scope`、`Relation`）不在此限，已有管理頁。
-- **影響**：這三種實體的內容只能靠同步更新，同步沒帶進來的欄位無法手動補或修正，前端只能不顯示。
+- **問題**：`Technique`、`Implementation` 這兩種實體只由後端的 GitHub 同步建立，前端沒有任何介面能手動新增或修改。`Documentation`（文章）已經可以在文章編輯頁新增與編輯，分類與述詞的定義（`Scope`、`Relation`）也有管理頁，都不在此限。
+- **影響**：這兩種實體的內容只能靠同步更新，同步沒帶進來的欄位無法手動補或修正，前端只能不顯示。
 - **為什麼現在不修**：資料來源以 GitHub 為準，手動編輯會和下一次同步互相覆蓋，需要先決定衝突時誰優先，這是後端與前端要一起設計的功能。
 - **重新評估的條件**：同步無法涵蓋的資料欄位變多，或需要手動修正同步結果的情況反覆出現。
-- **淘汰條件**：前端有這三種實體的編輯介面，或同步機制被取代。
+- **淘汰條件**：前端有這兩種實體的編輯介面，或同步機制被取代。
 - **程式位置**：前端目前只有讀取端，`src/api/projects.ts:119`（`fetchProjects()`）；管理頁的清單見 `README.md`「管理頁面」一節。
