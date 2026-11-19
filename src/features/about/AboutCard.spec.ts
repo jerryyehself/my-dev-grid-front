@@ -52,6 +52,9 @@ describe('AboutCard', () => {
     expect(a.text()).toContain('論文')
     expect(a.text()).toContain('↗')
     expect(a.find('.sr-only').text()).toBe('（另開新分頁）')
+    // 連結用 inline-block 加 text-balance：label 與 ↗ 同屬一段文字流，手機換行時 ↗ 跟著最後一個字，不會被拆成獨立 flex 項目
+    expect(a.classes()).toContain('text-balance')
+    expect(a.classes()).not.toContain('inline-flex')
   })
 
   it('它應該讓站內路徑繼續走 router-link，不開新分頁、也不加 ↗', () => {

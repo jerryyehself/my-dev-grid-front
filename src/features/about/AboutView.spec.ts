@@ -87,6 +87,7 @@ describe('AboutView', () => {
     const withLink = wrapper.findAll('li[id^="about-"]').filter((li) => li.text().includes('確認詳情'))
     expect(withLink.map((li) => li.attributes('id'))).toEqual(['about-insight'])
     const a = withLink[0]!.get('a')
+    expect(a.text()).toContain('小說讀者資訊尋找心智模型與FRBR之比較研究')
     expect(a.attributes('href')).toBe('https://www.airitilibrary.com/Article/Detail/U0002-2307202123134400')
     expect(a.attributes('target')).toBe('_blank')
     expect(a.attributes('rel')).toBe('noopener noreferrer')
