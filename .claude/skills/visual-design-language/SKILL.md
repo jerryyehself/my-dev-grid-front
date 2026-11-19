@@ -181,12 +181,17 @@ needs before that view exists. Wait for the second real usage.
 **Concrete example — `TheNavbar.vue`**: several bugs surfaced only once
 real users/devices/data hit the nav, not from looking at it on a desktop
 screenshot:
-- Its content (logo, links, theme toggle) was capped to the same
-  `max-w-5xl` content column every page uses. Nav chrome reads correctly
-  full-bleed to the viewport edge instead — a different rule than page
-  *content*, which does want the shared column. Chrome-width and
-  content-width are not the same decision just because they share a number
-  by default.
+- The nav background stays full-bleed to the viewport edge, but its inner row
+  (logo, links, toggle) aligns to the widest content container: `1120px` with
+  the same side padding as the page header and content (16px, 24px from
+  `sm`; 12px below 360px so the wordmark fits). Bars stacked under the nav
+  (the scroll-tracking bar, the mobile menu panel) follow that same inner
+  row, so the wordmark, breadcrumb and menu links share one left edge. The
+  old version capped the content to `max-w-5xl`, which was a bug: it tied the
+  nav to the narrower per-page column. 1120 is the widest listing-page
+  container. The one exception is the article detail page
+  (`contentWidth: '1216px'` for the side-note column): its content runs 48px
+  past the nav row on each side, which is accepted.
 - The active-link indicator was a 4px dot to the left of the label, with the
   label also switching to bold. Neither matched the intended design: an
   underline-style ribbon below the label, color-only (no weight change) —
