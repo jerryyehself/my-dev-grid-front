@@ -93,8 +93,8 @@ import { CONTACT_EMAIL, GITHUB_URL } from './aboutConfig'
 import { useDrawOnScroll } from './useDrawOnScroll'
 import './aboutSketch.css'
 
-// 內容欄：寬 1120（含左右內距），內距手機 16、≥768 為 32
-const WRAP = 'mx-auto w-full max-w-[1120px] px-4 md:px-8'
+// 內容欄：寬 1120（含左右內距），內距 12／16／24（<360／<640／≥640），跟導覽列與 MainLayout 同一組
+const WRAP = 'mx-auto w-full max-w-[1120px] px-3 min-[360px]:px-4 sm:px-6'
 
 // 頁首按鈕（GitHub、電子郵件）
 const BUTTON =
