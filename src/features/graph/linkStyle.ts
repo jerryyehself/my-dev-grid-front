@@ -37,3 +37,33 @@ export function directLinkStyle(opts: {
   }
   return { color: opts.edgeReal, width: LINK_WIDTH }
 }
+
+// 「專案 → 技術」的「關於」連線：專案在講某個技術、但程式裡沒有使用證據。線本身跟「使用」
+// 完全一樣（同色實線，顏色、線寬、三種狀態都沿用 directLinkStyle），只在線的中點多畫一個
+// 空心小圈當記號，不佔用虛線（虛線在全站只代表間接關聯）。
+// 後端述詞：subjectOfProject（技術 → 專案，GitHub 同步寫的方向）與反向的 projectAbout。
+// 3D 版（GraphPoc3D.vue）畫不了線中點的圈，這次不區分「關於」與「使用」。
+export const ABOUT_PREDICATES: readonly string[] = ['subjectOfProject', 'projectAbout']
+
+export function isAboutLink(predicate: string | null | undefined): boolean {
+  return predicate != null && ABOUT_PREDICATES.includes(predicate)
+}
+
+const ABOUT_MARKER_RADIUS = 3
+const ABOUT_MARKER_LINE_WIDTH = 1.5
+
+// 中點圈：描邊顏色直接用該條線的顏色（hover／選取時跟著變 accent，淡出時跟著淡出），
+// 填色是畫布底色，把圈裡面的線蓋掉才是空心。
+export function aboutMarkerStyle(opts: { lineColor: string; canvasBg: string }): {
+  radius: number
+  lineWidth: number
+  stroke: string
+  fill: string
+} {
+  return {
+    radius: ABOUT_MARKER_RADIUS,
+    lineWidth: ABOUT_MARKER_LINE_WIDTH,
+    stroke: opts.lineColor,
+    fill: opts.canvasBg,
+  }
+}

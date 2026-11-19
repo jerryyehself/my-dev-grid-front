@@ -36,6 +36,13 @@ const gradient = `linear-gradient(to right, ${VIRIDIS_STOPS.join(', ')})`
         counts.edges
       }}</b></span
     >
+    <span class="flex items-center gap-1.5"
+      ><span class="relative w-4 h-0 border-t border-(--edge-real)"
+        ><span
+          class="absolute left-1/2 top-0 w-[7px] h-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-(--edge-real) bg-(--canvas-bg)"
+        ></span></span
+      >關於</span
+    >
     <span v-if="routeLit" class="flex items-center gap-1.5"
       ><span class="w-4 h-0 border-t-[3px] border-(--text-accent)"></span>目前路線</span
     >
