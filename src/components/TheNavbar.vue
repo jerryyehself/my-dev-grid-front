@@ -82,7 +82,7 @@
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="relative flex items-center gap-3 min-h-11 font-mono text-(length:--type-label-size) text-(--text-nav-footer) opacity-85 font-semibold tracking-widest"
+          class="relative flex items-center gap-3 min-h-11 font-mono text-(length:--type-mono-size) text-(--text-nav-footer) opacity-85 font-semibold tracking-widest"
           active-class="!text-(--text-nav-hover) !opacity-100"
           @click="isMenuOpen = false"
         >
