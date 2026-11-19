@@ -148,7 +148,7 @@ describe('TheNavbar', () => {
       await wrapper.find('button[aria-label="開啟導覽選單"]').trigger('click')
       await wrapper.vm.$nextTick()
 
-      const first = wrapper.find('div.md\\:hidden.border-t a')
+      const first = wrapper.find('[data-test="mobile-menu"] a')
       expect(document.activeElement).toBe(first.element)
       wrapper.unmount()
     })
@@ -159,7 +159,7 @@ describe('TheNavbar', () => {
       await button.trigger('click')
       await wrapper.vm.$nextTick()
 
-      await wrapper.find('div.md\\:hidden.border-t a').trigger('keydown', { key: 'Escape' })
+      await wrapper.find('[data-test="mobile-menu"] a').trigger('keydown', { key: 'Escape' })
 
       expect(button.attributes('aria-expanded')).toBe('false')
       expect(document.activeElement).toBe(button.element)

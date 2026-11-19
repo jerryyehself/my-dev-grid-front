@@ -122,4 +122,15 @@ describe('AuthStatus', () => {
     expect(auth.isAuthenticated).toBe(false)
     vi.unstubAllGlobals()
   })
+
+  it('它應該只在 md～lg 之間把名字改成只給報讀器（md:max-lg:sr-only），不用會蓋掉 truncate 的 lg:not-sr-only', async () => {
+    const auth = useAuthStore()
+    auth.token = 'test-token'
+    auth.user = { id: 1, name: 'Jerry', email: 'j@example.com' }
+    const wrapper = await mountStatus()
+    const name = wrapper.find('[data-test="auth-user"] span.truncate')
+    expect(name.classes()).toContain('md:max-lg:sr-only')
+    expect(name.classes()).toContain('truncate')
+    expect(name.classes()).not.toContain('lg:not-sr-only')
+  })
 })

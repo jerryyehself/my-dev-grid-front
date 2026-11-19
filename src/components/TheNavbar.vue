@@ -5,7 +5,7 @@
     @keydown.esc="closeMenuByEscape"
   >
     <div
-      class="w-full h-14 md:h-16 px-3 min-[360px]:px-4 md:px-6 lg:px-8 flex items-center justify-between font-mono text-(length:--type-mono-size)"
+      class="w-full h-14 md:h-16 px-3 min-[360px]:px-4 md:px-6 lg:px-8 flex items-center justify-between font-mono text-(length:--type-mono-size) leading-(--type-mono-leading)"
     >
       <!-- 字標（D-32 的「IN / ARCHIVE」，D-60 的寫法）：兩半等大、Libre Caslon Text 700、斜線用黃銅。
            以前 ARCHIVE 是 11px、65% 透明度，手機上還整個藏起來，字標只剩「IN」——
@@ -79,6 +79,7 @@
       <div
         v-if="isMenuOpen"
         ref="menuPanel"
+        data-test="mobile-menu"
         class="md:hidden border-t border-black/30 bg-(--bg-nav-footer) px-4 py-3 flex flex-col gap-1"
       >
         <router-link
