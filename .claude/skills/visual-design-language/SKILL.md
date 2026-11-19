@@ -188,8 +188,10 @@ screenshot:
   (the scroll-tracking bar, the mobile menu panel) follow that same inner
   row, so the wordmark, breadcrumb and menu links share one left edge. The
   old version capped the content to `max-w-5xl`, which was a bug: it tied the
-  nav to the narrower per-page column. 1120 is the widest container any page
-  uses, so the nav never sits inside the content column.
+  nav to the narrower per-page column. 1120 is the widest listing-page
+  container. The one exception is the article detail page
+  (`contentWidth: '1216px'` for the side-note column): its content runs 48px
+  past the nav row on each side, which is accepted.
 - The active-link indicator was a 4px dot to the left of the label, with the
   label also switching to bold. Neither matched the intended design: an
   underline-style ribbon below the label, color-only (no weight change) —
