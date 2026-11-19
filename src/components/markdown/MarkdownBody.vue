@@ -23,7 +23,7 @@ import { RouterLink } from 'vue-router'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
-import { extractHeadings } from './headings'
+import { extractHeadings, stripHeadingIds } from './headings'
 import { safeLink } from './safeLink'
 import { buildFootnoteIndex, splitLastChar, stackSidenotes, type FootnoteInfo } from './footnotes'
 
@@ -100,7 +100,7 @@ function isFocusVisible(target: EventTarget | null): boolean {
   }
 }
 
-const tree = computed(() => processor.parse(props.source) as unknown as MdNode)
+const tree = computed(() => processor.parse(stripHeadingIds(props.source).source) as unknown as MdNode)
 
 /** 這篇的所有標題，依文件順序。父層要拿去做目錄,所以 expose 出去。 */
 const headings = computed(() => extractHeadings(props.source))
