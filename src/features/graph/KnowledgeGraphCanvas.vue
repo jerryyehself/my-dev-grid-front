@@ -9,7 +9,12 @@ import { edgeRelation, edgeRelationText, type EdgeRelation } from './graphRelati
 import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
 import type { GraphPocSelection } from './graphPocData'
 import { useTheme } from '@/composables/useTheme'
-import { directLinkStyle } from './linkStyle'
+import {
+  aboutLinkCanvasMode,
+  aboutMarkerStyle,
+  directLinkStyle,
+  drawAboutMarker,
+} from './linkStyle'
 import { nodeKindLabel, endpointId, type SimLink, type SimNode } from './graphTypes'
 import { recencyScore, viridis, withAlpha } from './colorScale'
 import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './derivedEdges'
@@ -745,6 +750,15 @@ async function boot() {
     // 推導邊用虛線跟真實邊區分開來——這是唯一負責「這條線是不是資料庫真實關聯」
     // 這件事的視覺線索，顏色/寬度只負責亮不亮。
     .linkLineDash((l) => (l.derived ? [5, 4] : null))
+    // 「關於」連線在線中點多畫一個空心小圈（樣式見 linkStyle.ts）；其餘連線不畫。
+    .linkCanvasObjectMode((l) => aboutLinkCanvasMode(l))
+    .linkCanvasObject((l, ctx) =>
+      drawAboutMarker(
+        ctx,
+        l,
+        aboutMarkerStyle({ line: directLinkStyleOf(l), canvasBg: css('--canvas-bg') }),
+      ),
+    )
     .linkVisibility((l) => !l.derived || showIndirect.value)
     .linkLabel((l) => {
       if (lastPointerType === 'touch') return ''
