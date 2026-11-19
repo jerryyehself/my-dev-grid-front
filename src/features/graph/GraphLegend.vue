@@ -11,6 +11,8 @@ defineProps<{
   counts?: { documentation: number; technique: number; implementation: number; edges: number } | null
   /** 首頁：有路線亮起時多一項「目前路線」 */
   routeLit?: boolean
+  /** 圖上有「關於」連線才列「關於」這一項 */
+  hasAbout?: boolean
 }>()
 const gradient = `linear-gradient(to right, ${VIRIDIS_STOPS.join(', ')})`
 </script>
@@ -36,7 +38,7 @@ const gradient = `linear-gradient(to right, ${VIRIDIS_STOPS.join(', ')})`
         counts.edges
       }}</b></span
     >
-    <span class="flex items-center gap-1.5"
+    <span v-if="hasAbout" class="flex items-center gap-1.5"
       ><span class="relative w-4 h-0 border-t border-(--edge-real)"
         ><span
           class="absolute left-1/2 top-0 w-[7px] h-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-(--edge-real) bg-(--canvas-bg)"

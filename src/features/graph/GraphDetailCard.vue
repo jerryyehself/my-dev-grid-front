@@ -190,7 +190,7 @@ const TH = 'text-left align-top font-normal text-(length:--type-label-size) trac
             <caption class="text-left pb-1">
               <span class="block text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent)">間接關聯</span>
               <span class="block text-(--text-ink-muted)"
-                >跟這一項連到相同對象的同類項目。</span
+                >跟這個條目連到相同對象的同類條目。</span
               >
             </caption>
             <colgroup>

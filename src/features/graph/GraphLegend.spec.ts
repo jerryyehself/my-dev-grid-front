@@ -49,7 +49,7 @@ describe('GraphLegend 的「關於」圖例', () => {
   it.each(['type', 'overlay'] as const)(
     '它應該在 %s 模式顯示「關於」：線上有一個空心圈',
     (colorMode) => {
-      const wrapper = mount(GraphLegend, { props: { colorMode, showIndirect: false } })
+      const wrapper = mount(GraphLegend, { props: { colorMode, showIndirect: false, hasAbout: true } })
 
       const item = wrapper.findAll('span.flex').find((el) => el.text() === '關於')
       expect(item).toBeDefined()
@@ -62,6 +62,14 @@ describe('GraphLegend 的「關於」圖例', () => {
       expect(ring.classes()).toContain('bg-(--canvas-bg)')
     },
   )
+
+  it('它應該在圖上沒有「關於」連線時不列「關於」', async () => {
+    const wrapper = mount(GraphLegend, { props: { colorMode: 'type', showIndirect: false } })
+    expect(wrapper.text()).not.toContain('關於')
+
+    await wrapper.setProps({ hasAbout: true })
+    expect(wrapper.text()).toContain('關於')
+  })
 })
 
 describe('GraphLegend（首頁版本）', () => {

@@ -137,10 +137,10 @@ function onKeydown(e: KeyboardEvent) {
           <template v-if="showIndirect">
             共
             {{ indirectCount }}
-            條：同類的兩項連到相同對象時畫成虛線，共同對象越多，線越明顯。由直接關係推算而來。
+            條：同類的兩個節點連到相同對象時畫成虛線，共同對象越多，線越明顯。由直接關係推算而來。
           </template>
           <template v-else
-            >以虛線標出連到相同對象的同類項目，由直接關係推算而來。</template
+            >以虛線標出連到相同對象的同類節點，由直接關係推算而來。</template
           >
         </p>
       </div>
