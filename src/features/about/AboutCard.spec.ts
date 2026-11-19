@@ -41,4 +41,41 @@ describe('AboutCard', () => {
     expect(links.map((a) => a.text())).toEqual(['第一篇', '第二篇'])
     expect(links.map((a) => a.attributes('href'))).toEqual(['/articles/1', '/articles/2'])
   })
+
+  it('它應該把 http／https 開頭的連結畫成開新分頁的 <a>，並帶 noopener noreferrer', () => {
+    const wrapper = mountCard(card([{ label: '論文', to: 'https://example.com/thesis' }]))
+
+    const a = wrapper.get('a')
+    expect(a.attributes('href')).toBe('https://example.com/thesis')
+    expect(a.attributes('target')).toBe('_blank')
+    expect(a.attributes('rel')).toBe('noopener noreferrer')
+    expect(a.text()).toContain('論文')
+    expect(a.text()).toContain('↗')
+    expect(a.find('.sr-only').text()).toBe('（另開新分頁）')
+  })
+
+  it('它應該讓站內路徑繼續走 router-link，不開新分頁、也不加 ↗', () => {
+    const wrapper = mountCard(card([{ label: '站內', to: '/articles/1' }]))
+
+    const a = wrapper.get('a')
+    expect(a.attributes('href')).toBe('/articles/1')
+    expect(a.attributes('target')).toBeUndefined()
+    expect(a.attributes('rel')).toBeUndefined()
+    expect(a.text()).toBe('站內')
+  })
+
+  it('它應該只把 http／https 開頭的當站外：長得像但不是的仍走站內路由', () => {
+    const wrapper = mountCard(
+      card([
+        { label: '近似', to: 'httpfoo/bar' },
+        { label: '寫在路徑裡', to: '/redirect/https://example.com' },
+      ]),
+    )
+
+    for (const a of wrapper.findAll('a')) {
+      expect(a.attributes('target')).toBeUndefined()
+      expect(a.text()).not.toContain('↗')
+    }
+    expect(wrapper.findAll('a')).toHaveLength(2)
+  })
 })

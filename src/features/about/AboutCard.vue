@@ -26,10 +26,18 @@
             :key="link.to"
             class="flex flex-wrap items-center gap-x-2.5 max-sm:justify-center"
           >
-            <router-link
-              :to="link.to"
-              class="inline-flex items-center min-h-10 text-base font-normal leading-[1.45] text-(--text-accent) underline decoration-1 underline-offset-[5px] decoration-[color-mix(in_srgb,currentColor_35%,transparent)] hover:decoration-current"
+            <!-- 站外網址（http／https 開頭）用 <a>、開新分頁，尾巴接 ↗（跟圖譜的「前往原始網站 ↗」同一個做法）；
+                 其他當站內路徑走 router-link -->
+            <a
+              v-if="isExternal(link.to)"
+              :href="link.to"
+              target="_blank"
+              rel="noopener noreferrer"
+              :class="linkClass"
             >
+              {{ link.label }}<span aria-hidden="true">&nbsp;↗</span><span class="sr-only">（另開新分頁）</span>
+            </a>
+            <router-link v-else :to="link.to" :class="linkClass">
               {{ link.label }}
             </router-link>
           </li>
@@ -49,4 +57,9 @@
 import type { AboutCardData } from './aboutCards'
 
 defineProps<{ card: AboutCardData }>()
+
+const isExternal = (to: string) => /^https?:\/\//i.test(to)
+
+const linkClass =
+  'inline-flex items-center min-h-10 text-base font-normal leading-[1.45] text-(--text-accent) underline decoration-1 underline-offset-[5px] decoration-[color-mix(in_srgb,currentColor_35%,transparent)] hover:decoration-current'
 </script>

@@ -79,13 +79,20 @@ describe('AboutView', () => {
     wrapper.unmount()
   })
 
-  it('它應該在所有卡片都還沒有連結時，整頁不出現「確認詳情」與任何提示文字', () => {
+  it('它應該只有「需求洞察」卡有「確認詳情」（連到碩士論文），其他三張沒有連結也沒有提示文字', () => {
     const wrapper = mountAbout()
 
-    expect(wrapper.text()).not.toContain('確認詳情')
     expect(wrapper.text()).not.toContain('待定')
     expect(wrapper.text()).not.toContain('示意')
-    expect(wrapper.find('li a').exists()).toBe(false)
+    const withLink = wrapper.findAll('li[id^="about-"]').filter((li) => li.text().includes('確認詳情'))
+    expect(withLink.map((li) => li.attributes('id'))).toEqual(['about-insight'])
+    const a = withLink[0]!.get('a')
+    expect(a.attributes('href')).toBe('https://www.airitilibrary.com/Article/Detail/U0002-2307202123134400')
+    expect(a.attributes('target')).toBe('_blank')
+    expect(a.attributes('rel')).toBe('noopener noreferrer')
+    for (const id of ['integration', 'evidence', 'review']) {
+      expect(wrapper.get(`#about-${id}`).find('a').exists()).toBe(false)
+    }
     wrapper.unmount()
   })
 
