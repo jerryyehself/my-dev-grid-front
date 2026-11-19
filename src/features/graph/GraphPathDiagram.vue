@@ -45,7 +45,7 @@ function segmentLabel(i: number): string {
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-accent)" stroke-width="1.6" stroke-linecap="round" class="opacity-70">
       <circle cx="6" cy="6" r="3" /><circle cx="18" cy="18" r="3" /><path d="M8.5 8.5 L11 11 M13 13 L15.5 15.5" stroke-dasharray="2 3" />
     </svg>
-    <p class="text-(length:--type-label-size) font-semibold text-(--text-ink-main)">這兩項之間沒有路徑</p>
+    <p class="text-(length:--type-label-size) font-semibold text-(--text-ink-main)">這兩個條目之間沒有路徑</p>
   </div>
 
   <div v-else-if="path && path.found" class="overflow-x-auto rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-6 py-5">

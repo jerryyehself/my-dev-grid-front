@@ -41,6 +41,7 @@ export function directLinkStyle(opts: {
 // 「專案 → 技術」的「關於」連線：專案在講某個技術、但程式裡沒有使用證據。線本身跟「使用」
 // 完全一樣（同色實線，顏色、線寬、三種狀態都沿用 directLinkStyle），只在線的中點多畫一個
 // 空心小圈當記號，不佔用虛線（虛線在全站只代表間接關聯）。
+// 滑過提示與連線卡的動詞是「關於」、主詞是實作（graphRelationPhrase.ts）。
 // 後端述詞：圖譜 API 只回 subjectOfProject（技術 → 專案，GitHub 同步寫的方向）；
 // projectAbout 是預防反向命名而加的，目前 API 不會回。
 // 3D 版（GraphPoc3D.vue）畫不了線中點的圈，這次不區分「關於」與「使用」。

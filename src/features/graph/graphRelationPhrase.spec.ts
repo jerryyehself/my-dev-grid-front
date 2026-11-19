@@ -98,6 +98,18 @@ describe('edgeRelationText', () => {
     )
   })
 
+  it('它應該讓「關於」連線標「關於」、主詞一律是實作，不管邊存的方向', () => {
+    const brief = (r: ReturnType<typeof edgeRelation>) => [r.subject.label, r.verb, r.object.label]
+    // 圖譜 API 回的方向是技術 → 實作（subjectOfProject）
+    expect(brief(edgeRelation(tech, impl, 'subjectOfProject'))).toEqual(['my-dev-grid', '關於', 'Vue'])
+    expect(brief(edgeRelation(impl, tech, 'projectAbout'))).toEqual(['my-dev-grid', '關於', 'Vue'])
+    expect(edgeRelationText(edgeRelation(tech, impl, 'subjectOfProject'))).toBe(
+      'my-dev-grid（實作） 關於 → Vue（技術）',
+    )
+    // 「關於」只認實作與技術兩端；文件連過來對不上就標「相關」
+    expect(brief(edgeRelation(doc, tech, 'subjectOfProject'))).toEqual(['Vue 官方文件', '相關', 'Vue'])
+  })
+
   it('它應該將滑過提示的純文字寫成「名稱（類別） 動詞 → 名稱（類別）」', () => {
     expect(edgeRelationText(edgeRelation(tech, impl, 'usedBy'))).toBe(
       'my-dev-grid（實作） 使用 → Vue（技術）',
@@ -145,6 +157,12 @@ describe('routeSegmentVerb', () => {
     expect(routeSegmentVerb(t1, i1, { source: i1.id, target: t1.id, predicate: 'uses' })).toBe('被使用')
     expect(routeSegmentVerb(i1, t1, { source: i1.id, target: t1.id, predicate: 'uses' })).toBe('使用')
     expect(routeSegmentVerb(t1, doc1, { source: doc1.id, target: t1.id, predicate: 'specs' })).toBe('被說明')
+  })
+
+  it('它應該讓「關於」連線從實作走是「關於」，從技術走是「是主題」', () => {
+    const edge = { source: t1.id, target: i1.id, predicate: 'subjectOfProject' }
+    expect(routeSegmentVerb(i1, t1, edge)).toBe('關於')
+    expect(routeSegmentVerb(t1, i1, edge)).toBe('是主題')
   })
 
   it('它應該在不認得的述詞時標「相關」，沒有主被動之分', () => {

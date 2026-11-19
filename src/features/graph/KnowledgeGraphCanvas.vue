@@ -14,6 +14,7 @@ import {
   aboutMarkerStyle,
   directLinkStyle,
   drawAboutMarker,
+  isAboutLink,
 } from './linkStyle'
 import { nodeKindLabel, endpointId, type SimLink, type SimNode } from './graphTypes'
 import { recencyScore, viridis, withAlpha } from './colorScale'
@@ -142,6 +143,8 @@ const legendCounts = computed(() =>
     : null,
 )
 const routeLit = computed(() => props.homeMode && !!props.highlightPath?.found)
+// 圖上沒有任何「關於」連線時，圖例不列「關於」
+const hasAboutLink = computed(() => props.data.edges.some((e) => isAboutLink(e.predicate)))
 const settingsOpen = ref(false)
 const helpOpen = ref(false)
 const isMac = isMacLike()
@@ -1198,6 +1201,7 @@ onUnmounted(() => {
       :show-indirect="showIndirect"
       :counts="legendCounts"
       :route-lit="routeLit"
+      :has-about="hasAboutLink"
     />
 
     <!-- 畫布區塊：可以用 Tab 移到這裡（tabindex=0），有焦點時鍵盤快捷鍵才有效（WCAG 2.1.4）。

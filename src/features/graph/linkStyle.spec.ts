@@ -171,4 +171,14 @@ describe('drawAboutMarker', () => {
     )
     expect(raw.beginPath).not.toHaveBeenCalled()
   })
+
+  it('它應該在終點還是 id、起點已有座標時也不畫', () => {
+    const { ctx, raw } = fakeCtx()
+    drawAboutMarker(
+      ctx,
+      { source: { x: 1, y: 1 }, target: 'b' },
+      aboutMarkerStyle({ line: directLinkStyle(base), canvasBg: bg }),
+    )
+    expect(raw.beginPath).not.toHaveBeenCalled()
+  })
 })

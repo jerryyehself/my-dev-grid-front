@@ -102,6 +102,6 @@ describe('GraphPathDiagram', () => {
   it('它應該在找不到路徑時只留一句話，不用「節點」，也不重述同一件事', () => {
     const wrapper = render({ found: false, nodes: [], edges: [] })
 
-    expect(wrapper.text()).toBe('這兩項之間沒有路徑')
+    expect(wrapper.text()).toBe('這兩個條目之間沒有路徑')
   })
 })

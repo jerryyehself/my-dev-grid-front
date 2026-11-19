@@ -53,6 +53,9 @@ const DOCUMENTS: CrossVerb = { from: 'documentation', to: 'implementation', verb
 const USES: CrossVerb = { from: 'implementation', to: 'technique', verb: '使用' }
 const ABOUT_TECHNIQUE: CrossVerb = { from: 'documentation', to: 'technique', verb: '討論' }
 const ABOUT_IMPLEMENTATION: CrossVerb = { from: 'documentation', to: 'implementation', verb: '討論' }
+// 實作連到技術的「關於」連線（專案在講這個技術，但程式裡沒有使用證據；樣式見 linkStyle.ts）：
+// 動詞沿用圖例已有的「關於」，主詞一律是實作，跟「使用」同一個方向
+const PROJECT_ABOUT: CrossVerb = { from: 'implementation', to: 'technique', verb: '關於' }
 
 /** 跨類述詞 → 這個述詞允許的（主詞類別、受詞類別）與動詞；about 可以連到技術也可以連到實作 */
 const CROSS_PREDICATE: Record<string, CrossVerb[]> = {
@@ -70,6 +73,9 @@ const CROSS_PREDICATE: Record<string, CrossVerb[]> = {
   // 後端把文件→專案的 about 另外拆成這一對述詞
   aboutProject: [ABOUT_IMPLEMENTATION],
   projectSubjectOf: [ABOUT_IMPLEMENTATION],
+  // 圖譜 API 回的是 subjectOfProject（技術 → 實作）；projectAbout 是它的反向名稱
+  subjectOfProject: [PROJECT_ABOUT],
+  projectAbout: [PROJECT_ABOUT],
 }
 
 // 述詞是空的（舊資料沒有填關係）時，退回只看兩端類別的預設動詞
@@ -130,6 +136,8 @@ const PASSIVE_VERB: Record<string, string> = {
   討論: '被討論',
   需要: '被需要',
   版本: '有版本',
+  // 從技術走向「關於」它的實作：技術是那個實作的主題
+  關於: '是主題',
 }
 
 /**
