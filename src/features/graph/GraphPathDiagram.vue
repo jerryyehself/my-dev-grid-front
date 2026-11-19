@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { nodeColorVar } from '@/api/ontology'
 import type { GraphPathDto } from '@/api/graph'
 import { routeSegmentVerb } from './graphRelationPhrase'
+import { scrollEdges, type ScrollEdges } from './scrollEdges'
 
 const props = defineProps<{ path: GraphPathDto | null }>()
 
@@ -38,6 +39,41 @@ function segmentLabel(i: number): string {
   )
   return `${verb} ▸`
 }
+
+// 捲動提示：手機寬度下路線圖比容器寬，右側的站名與連線動詞落在畫面外，讀者看不出
+// 可以往右捲。還有內容的那一側用 mask 把內容淡出，捲到底那側就不淡。用 mask 而不是
+// 疊一層底色漸層：mask 只改透明度、不帶顏色，亮暗兩個主題不用各配一組色；不加
+// 「往右滑」之類的文字，邊緣被切淡的動詞本身就是提示。漸層出現、消失不做動畫
+// （/graph 是任務型頁面，動態越少越好），所以也沒有 prefers-reduced-motion 要另外關的東西。
+const scroller = ref<HTMLElement | null>(null)
+const edges = ref<ScrollEdges>({ overflowing: false, start: false, end: false })
+
+function updateEdges() {
+  const el = scroller.value
+  if (!el) return
+  edges.value = scrollEdges(el.scrollLeft, el.scrollWidth, el.clientWidth)
+}
+
+// 容器寬度會隨視窗、側欄變；路徑換了 SVG 寬度也會變，兩種都要重算。沒有
+// ResizeObserver 的環境（舊瀏覽器、測試）退回監聽視窗 resize。
+let resizeObserver: ResizeObserver | null = null
+function observe(el: HTMLElement | null) {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+  window.removeEventListener('resize', updateEdges)
+  if (!el) return
+  if (typeof ResizeObserver === 'function') {
+    resizeObserver = new ResizeObserver(updateEdges)
+    resizeObserver.observe(el)
+  } else {
+    window.addEventListener('resize', updateEdges)
+  }
+  updateEdges()
+}
+watch(scroller, observe)
+// flush: 'post'：等新路徑的 SVG 畫進 DOM 後再量寬度
+watch(() => props.path, updateEdges, { flush: 'post' })
+onBeforeUnmount(() => observe(null))
 </script>
 
 <template>
@@ -48,61 +84,99 @@ function segmentLabel(i: number): string {
     <p class="text-(length:--type-label-size) font-semibold text-(--text-ink-main)">這兩個條目之間沒有路徑</p>
   </div>
 
-  <div v-else-if="path && path.found" class="overflow-x-auto rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-6 py-5">
-    <svg :width="layout.width" :height="layout.height" :viewBox="`0 0 ${layout.width} ${layout.height}`">
-      <line
-        v-if="layout.stations.length > 1"
-        :x1="layout.stations[0]!.x"
-        y1="45"
-        :x2="layout.stations[layout.stations.length - 1]!.x"
-        y2="45"
-        stroke="var(--text-accent)"
-        stroke-width="3"
-      />
+  <!-- 焦點外框畫在外層：內層捲動容器有 mask，外框畫在內層會被 mask 一起切掉，鍵盤使用者
+       看不到焦點。用 :has(:focus-visible)，滑鼠點擊時不顯示外框。 -->
+  <div
+    v-else-if="path && path.found"
+    class="rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--text-accent)"
+  >
+    <!-- 會捲動時加 tabindex，鍵盤使用者才能聚焦後用方向鍵捲；不會捲動時不多一個 Tab 停點 -->
+    <div
+      ref="scroller"
+      data-testid="path-scroller"
+      class="path-scroller overflow-x-auto rounded-xl px-6 py-5 outline-none"
+      :data-fade-start="edges.start || undefined"
+      :data-fade-end="edges.end || undefined"
+      :tabindex="edges.overflowing ? 0 : undefined"
+      @scroll.passive="updateEdges"
+    >
+      <svg :width="layout.width" :height="layout.height" :viewBox="`0 0 ${layout.width} ${layout.height}`">
+        <line
+          v-if="layout.stations.length > 1"
+          :x1="layout.stations[0]!.x"
+          y1="45"
+          :x2="layout.stations[layout.stations.length - 1]!.x"
+          y2="45"
+          stroke="var(--text-accent)"
+          stroke-width="3"
+        />
 
-      <template v-for="(station, i) in layout.stations" :key="station.node.id">
-        <circle :cx="station.x" cy="45" r="9" :fill="`var(${nodeColorVar(station.node.type)})`" stroke="var(--bg-paper-light)" stroke-width="3" />
-        <text
-          :x="station.x"
-          :y="station.labelBelow ? 70 : 26"
-          text-anchor="middle"
-          font-size="12"
-          font-weight="600"
-          fill="var(--text-ink-main)"
-          font-family="ui-sans-serif, system-ui, sans-serif"
-        >
-          {{ station.node.label }}
-        </text>
+        <template v-for="(station, i) in layout.stations" :key="station.node.id">
+          <circle :cx="station.x" cy="45" r="9" :fill="`var(${nodeColorVar(station.node.type)})`" stroke="var(--bg-paper-light)" stroke-width="3" />
+          <text
+            :x="station.x"
+            :y="station.labelBelow ? 70 : 26"
+            text-anchor="middle"
+            font-size="12"
+            font-weight="600"
+            fill="var(--text-ink-main)"
+            font-family="ui-sans-serif, system-ui, sans-serif"
+          >
+            {{ station.node.label }}
+          </text>
 
-        <!-- 段落標籤：畫在這一站到下一站的中點，關係名稱+方向箭頭；沒有定義反向關係的
-             逆向 hop（防呆分支，目前種子資料不會真的觸發）額外標一個小圖示，不用虛線
-             （虛線全站只代表首頁的「間接關聯」——推算出來、資料庫裡沒有的關係，這裡的邊都是直接關係，
-             不能借用。2026-09-30 之前這頁的虛線代表「同型別關聯」，後來統一成實線）。 -->
-        <template v-if="path.edges[i]">
-          <text
-            :x="(station.x + layout.stations[i + 1]!.x) / 2"
-            y="34"
-            text-anchor="middle"
-            font-size="11"
-            letter-spacing="0.05em"
-            fill="var(--text-ink-body)"
-            font-family="ui-monospace, monospace"
-          >
-            {{ segmentLabel(i) }}
-          </text>
-          <text
-            v-if="!path.edges[i]!.hasDefinedReverse"
-            :x="(station.x + layout.stations[i + 1]!.x) / 2"
-            y="60"
-            text-anchor="middle"
-            font-size="13"
-            fill="var(--text-accent)"
-            font-family="ui-monospace, monospace"
-          >
-            ⟲ 逆向借用
-          </text>
+          <!-- 段落標籤：畫在這一站到下一站的中點，關係名稱+方向箭頭；沒有定義反向關係的
+               逆向 hop（防呆分支，目前種子資料不會真的觸發）額外標一個小圖示，不用虛線
+               （虛線全站只代表首頁的「間接關聯」——推算出來、資料庫裡沒有的關係，這裡的邊都是直接關係，
+               不能借用。2026-09-30 之前這頁的虛線代表「同型別關聯」，後來統一成實線）。 -->
+          <template v-if="path.edges[i]">
+            <text
+              :x="(station.x + layout.stations[i + 1]!.x) / 2"
+              y="34"
+              text-anchor="middle"
+              font-size="11"
+              letter-spacing="0.05em"
+              fill="var(--text-ink-body)"
+              font-family="ui-monospace, monospace"
+            >
+              {{ segmentLabel(i) }}
+            </text>
+            <text
+              v-if="!path.edges[i]!.hasDefinedReverse"
+              :x="(station.x + layout.stations[i + 1]!.x) / 2"
+              y="60"
+              text-anchor="middle"
+              font-size="13"
+              fill="var(--text-accent)"
+              font-family="ui-monospace, monospace"
+            >
+              ⟲ 逆向借用
+            </text>
+          </template>
         </template>
-      </template>
-    </svg>
+      </svg>
+    </div>
   </div>
 </template>
+
+<style scoped>
+/* 淡出寬度 48px：大約一個連線動詞的一半，看得出字被切到、也還讀得到開頭幾個字。
+   mask 的 black／transparent 只代表不透明度，不是畫面上的顏色。 */
+.path-scroller {
+  --fade-start: 0px;
+  --fade-end: 0px;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black var(--fade-start),
+    black calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+}
+.path-scroller[data-fade-start] {
+  --fade-start: 48px;
+}
+.path-scroller[data-fade-end] {
+  --fade-end: 48px;
+}
+</style>
