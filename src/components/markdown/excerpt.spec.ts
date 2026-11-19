@@ -12,6 +12,10 @@ describe('excerptOf', () => {
     expect(excerptOf(source)).toBe('正文第一段。')
   })
 
+  it('它應該跳過帶 {#id} 的標題，摘要裡不會出現', () => {
+    expect(excerptOf('## 標題 {#intro}\n\n正文第一段。')).toBe('正文第一段。')
+  })
+
   it('它應該移除粗體、連結與行內程式碼語法並保留文字', () => {
     expect(excerptOf('這是 **粗體**、[連結](https://example.com) 與 `code`。')).toBe(
       '這是 粗體、連結 與 code。',

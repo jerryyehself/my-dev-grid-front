@@ -1473,4 +1473,13 @@ describe('MarkdownBody', () => {
       })
     })
   })
+
+  it('它應該剝掉標題行尾的 {#id} 並拿它當標題的 id', async () => {
+    const w = await mountMd('## 背景 {#bg}\n\n內文 {#keep}\n\n```\n## 碼 {#c}\n```')
+    const h = w.find('h3')
+    expect(h.text()).toBe('背景')
+    expect(h.attributes('id')).toBe('bg')
+    expect(w.text()).toContain('內文 {#keep}')
+    expect(w.text()).toContain('## 碼 {#c}')
+  })
 })
