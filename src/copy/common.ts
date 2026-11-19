@@ -32,6 +32,7 @@ export const THEME_LIGHT_OFF_TEXT = '暗黑模式'
 
 /** 手機版導覽選單按鈕的 aria-label */
 export const NAV_MENU_ARIA_LABEL = '開啟導覽選單'
+export const NAV_MENU_CLOSE_ARIA_LABEL = '關閉導覽選單'
 
 /** 頁尾 */
 export const FOOTER_TEXT = '© 2026 Jerry Yeh'

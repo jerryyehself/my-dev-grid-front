@@ -2,9 +2,10 @@
   <nav
     class="sticky top-0 z-50 w-full bg-(--bg-nav-footer) border-b border-black/30 shadow-md transition-colors duration-300"
     style="background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 7px)"
+    @keydown.esc="closeMenuByEscape"
   >
     <div
-      class="w-full h-14 md:h-16 px-3 min-[360px]:px-4 md:px-8 flex items-center justify-between font-mono text-xs"
+      class="w-full h-14 md:h-16 px-3 min-[360px]:px-4 md:px-6 lg:px-8 flex items-center justify-between font-mono text-(length:--type-mono-size)"
     >
       <!-- 字標（D-32 的「IN / ARCHIVE」，D-60 的寫法）：兩半等大、Libre Caslon Text 700、斜線用黃銅。
            以前 ARCHIVE 是 11px、65% 透明度，手機上還整個藏起來，字標只剩「IN」——
@@ -18,7 +19,7 @@
       </router-link>
 
       <!-- 手機寬度放不下五個導覽項目＋主題切換鈕，中大螢幕才用橫排 -->
-      <div class="hidden md:flex md:gap-4 lg:gap-6 h-full">
+      <div class="hidden md:flex md:gap-3 lg:gap-6 h-full">
         <router-link
           v-for="item in navItems"
           :key="item.path"
@@ -43,9 +44,10 @@
       <div class="md:hidden flex shrink-0 items-center gap-1 min-[360px]:gap-2 -mr-2 min-[360px]:mr-0">
         <ThemeToggle />
         <button
+          ref="menuButton"
           type="button"
           class="flex shrink-0 items-center justify-center w-11 h-11 text-(--text-nav-footer)"
-          :aria-label="NAV_MENU_ARIA_LABEL"
+          :aria-label="isMenuOpen ? NAV_MENU_CLOSE_ARIA_LABEL : NAV_MENU_ARIA_LABEL"
           :aria-expanded="isMenuOpen"
           @click="isMenuOpen = !isMenuOpen"
         >
@@ -76,6 +78,7 @@
     >
       <div
         v-if="isMenuOpen"
+        ref="menuPanel"
         class="md:hidden border-t border-black/30 bg-(--bg-nav-footer) px-4 py-3 flex flex-col gap-1"
       >
         <router-link
@@ -105,11 +108,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import AuthStatus from '@/components/AuthStatus.vue'
-import { NAV_LABELS, NAV_LABELS_ZH, NAV_MENU_ARIA_LABEL } from '@/copy/common'
+import { NAV_LABELS, NAV_LABELS_ZH, NAV_MENU_ARIA_LABEL, NAV_MENU_CLOSE_ARIA_LABEL } from '@/copy/common'
 
 // ⚡ 引入當前路由，用於精準驅動 Active 色條的動態樣式
 const route = useRoute()
@@ -135,6 +138,22 @@ const navItems = ref<NavItem[]>([
 ])
 
 const isMenuOpen = ref(false)
+const menuButton = ref<HTMLButtonElement | null>(null)
+const menuPanel = ref<HTMLElement | null>(null)
+
+// 展開後把焦點移進選單（第一個連結），鍵盤與報讀器使用者才不用從漢堡鈕再 Tab 一輪
+watch(isMenuOpen, async (open) => {
+  if (!open) return
+  await nextTick()
+  menuPanel.value?.querySelector<HTMLElement>('a, button')?.focus()
+})
+
+// Escape 收起選單，焦點回到漢堡鈕（焦點原本在已被移除的選單連結上，不拉回來就掉到 body）
+function closeMenuByEscape() {
+  if (!isMenuOpen.value) return
+  isMenuOpen.value = false
+  menuButton.value?.focus()
+}
 watch(
   () => route.path,
   () => {

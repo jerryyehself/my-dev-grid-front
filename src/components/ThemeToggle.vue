@@ -29,7 +29,7 @@ const { theme, setTheme } = useTheme()
     ></span>
     <button
       type="button"
-      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1.5 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
       :class="
         theme === 'light'
           ? 'text-(--bg-nav-footer)'
@@ -42,7 +42,7 @@ const { theme, setTheme } = useTheme()
     </button>
     <button
       type="button"
-      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1.5 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
       :class="
         theme === 'dark'
           ? 'text-(--bg-nav-footer)'

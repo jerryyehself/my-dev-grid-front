@@ -120,4 +120,58 @@ describe('TheNavbar', () => {
     expect(mobileCluster.find('[role="group"]').exists()).toBe(true)
     expect(mobileCluster.find('button[aria-label="開啟導覽選單"]').exists()).toBe(true)
   })
+
+  describe('手機選單的無障礙行為', () => {
+    async function mountAttached() {
+      const router = makeRouter()
+      router.push('/')
+      await router.isReady()
+      return mount(TheNavbar, { attachTo: document.body, global: { plugins: [router, createPinia()] } })
+    }
+
+    it('它應該在展開時把 aria-label 換成「關閉導覽選單」，收起後換回來', async () => {
+      const wrapper = await mountNavbar('/')
+      const button = wrapper.find('button[aria-label="開啟導覽選單"]')
+      expect(button.attributes('aria-expanded')).toBe('false')
+
+      await button.trigger('click')
+      expect(button.attributes('aria-label')).toBe('關閉導覽選單')
+      expect(button.attributes('aria-expanded')).toBe('true')
+
+      await button.trigger('click')
+      expect(button.attributes('aria-label')).toBe('開啟導覽選單')
+      expect(button.attributes('aria-expanded')).toBe('false')
+    })
+
+    it('它應該在展開後把焦點移進選單', async () => {
+      const wrapper = await mountAttached()
+      await wrapper.find('button[aria-label="開啟導覽選單"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const first = wrapper.find('div.md\\:hidden.border-t a')
+      expect(document.activeElement).toBe(first.element)
+      wrapper.unmount()
+    })
+
+    it('它應該在按 Escape 後收起選單，焦點回到漢堡按鈕', async () => {
+      const wrapper = await mountAttached()
+      const button = wrapper.find('button[aria-label="開啟導覽選單"]')
+      await button.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('div.md\\:hidden.border-t a').trigger('keydown', { key: 'Escape' })
+
+      expect(button.attributes('aria-expanded')).toBe('false')
+      expect(document.activeElement).toBe(button.element)
+      wrapper.unmount()
+    })
+
+    it('它應該在選單沒展開時按 Escape 不搶焦點', async () => {
+      const wrapper = await mountAttached()
+      const button = wrapper.find('button[aria-label="開啟導覽選單"]')
+      await wrapper.find('nav').trigger('keydown', { key: 'Escape' })
+      expect(document.activeElement).not.toBe(button.element)
+      wrapper.unmount()
+    })
+  })
 })

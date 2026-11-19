@@ -21,7 +21,7 @@ const showLoginEntry = import.meta.env.DEV
 // 三顆都是同一種膠囊，樣式集中在這裡，不要各寫一份再慢慢漂移。
 // 外框用 --border-on-nav：導覽列兩個主題都是藏青底，不能用隨主題變的 --border-shelf。
 const pillClass =
-  'inline-flex items-center rounded-full border border-(--border-on-nav) px-2.5 py-1 text-(length:--type-label-size) tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,border-color,opacity]'
+  'inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-(--border-on-nav) px-2.5 md:px-2 lg:px-2.5 py-1 text-(length:--type-label-size) tracking-[0.05em] text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,border-color,opacity]'
 
 // 登出失敗（後端沒確認）時留在原頁，錯誤提示由 AuthNotice 顯示，使用者可以再按一次
 async function handleLogout() {
@@ -42,7 +42,8 @@ async function handleLogout() {
     >
       <span aria-hidden="true" class="w-2 h-2 shrink-0 rounded-full bg-(--accent-brass)" />
       <span class="sr-only">已登入：</span>
-      <span class="truncate">{{ auth.displayName }}</span>
+      <!-- 768–1023px 導覽列橫排放不下名字（放了會橫向捲動），只留圓點與報讀器文字，完整名字在 title -->
+      <span class="truncate md:sr-only lg:not-sr-only">{{ auth.displayName }}</span>
     </span>
     <!-- 後台入口（/admin）。跟登出一樣只在登入後出現，訪客看到的導覽列完全不變——
          理由同 AuthOnly.vue：訪客登入不了，看得到進不去的入口只會像網站沒做完。
