@@ -1,4 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest'
+import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import type { GraphNodeType, GraphPathDto } from '@/api/graph'
 import GraphPathDiagram from './GraphPathDiagram.vue'
@@ -160,6 +161,21 @@ describe('GraphPathDiagram', () => {
 
       expect(fades(scroller)).toEqual(expected)
       expect(scroller.attributes('tabindex')).toBe('0')
+    })
+
+    it('它應該在換成另一條路徑後重算淡出狀態', async () => {
+      const { wrapper, scroller } = await mountWithSize(700, 390)
+      unmount = () => wrapper.unmount()
+      await scrollTo(scroller, 0)
+      expect(fades(scroller).end).toBe(true)
+
+      // 換成兩站的短路徑：內容變窄到放得下，沒有捲動事件也要拿掉淡出
+      Object.defineProperty(scroller.element, 'scrollWidth', { configurable: true, value: 300 })
+      await wrapper.setProps({ path: { found: true, nodes: longPath.nodes.slice(0, 2), edges: longPath.edges.slice(0, 1) } })
+      await nextTick()
+
+      expect(fades(scroller)).toEqual({ start: false, end: false })
+      expect(scroller.attributes('tabindex')).toBeUndefined()
     })
 
     it('它應該在視窗變寬到放得下時拿掉淡出', async () => {

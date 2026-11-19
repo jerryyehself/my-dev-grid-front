@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { nodeColorVar } from '@/api/ontology'
 import type { GraphPathDto } from '@/api/graph'
 import { routeSegmentVerb } from './graphRelationPhrase'
@@ -71,10 +71,8 @@ function observe(el: HTMLElement | null) {
   updateEdges()
 }
 watch(scroller, observe)
-watch(
-  () => props.path,
-  () => nextTick(updateEdges),
-)
+// flush: 'post'：等新路徑的 SVG 畫進 DOM 後再量寬度
+watch(() => props.path, updateEdges, { flush: 'post' })
 onBeforeUnmount(() => observe(null))
 </script>
 
@@ -86,12 +84,17 @@ onBeforeUnmount(() => observe(null))
     <p class="text-(length:--type-label-size) font-semibold text-(--text-ink-main)">這兩個條目之間沒有路徑</p>
   </div>
 
-  <div v-else-if="path && path.found" class="rounded-xl border border-(--border-shelf) bg-(--bg-paper-light)">
+  <!-- 焦點外框畫在外層：內層捲動容器有 mask，外框畫在內層會被 mask 一起切掉，鍵盤使用者
+       看不到焦點。用 :has(:focus-visible)，滑鼠點擊時不顯示外框。 -->
+  <div
+    v-else-if="path && path.found"
+    class="rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-(--text-accent)"
+  >
     <!-- 會捲動時加 tabindex，鍵盤使用者才能聚焦後用方向鍵捲；不會捲動時不多一個 Tab 停點 -->
     <div
       ref="scroller"
       data-testid="path-scroller"
-      class="path-scroller overflow-x-auto rounded-xl px-6 py-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+      class="path-scroller overflow-x-auto rounded-xl px-6 py-5 outline-none"
       :data-fade-start="edges.start || undefined"
       :data-fade-end="edges.end || undefined"
       :tabindex="edges.overflowing ? 0 : undefined"
