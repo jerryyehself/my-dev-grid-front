@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import type { GraphNodeType, GraphPathDto } from '@/api/graph'
 import GraphPathDiagram from './GraphPathDiagram.vue'
@@ -104,4 +104,76 @@ describe('GraphPathDiagram', () => {
 
     expect(wrapper.text()).toBe('這兩個條目之間沒有路徑')
   })
+
+  describe('捲動提示', () => {
+    const longPath: GraphPathDto = {
+      found: true,
+      nodes: [
+        node('documentation-1', 'documentation', 'Vue 官方文件'),
+        node('technique-1', 'technique', 'Vue'),
+        node('implementation-1', 'implementation', 'my-dev-grid'),
+        node('technique-2', 'technique', 'Vite'),
+      ],
+      edges: [edge('documentation-1', 'technique-1', 'specs'), edge('technique-1', 'implementation-1', 'usedBy'), edge('implementation-1', 'technique-2', 'uses')],
+    }
+
+    // jsdom 不排版，scrollWidth／clientWidth 永遠是 0：在捲動容器上蓋掉這兩個值模擬窄螢幕
+    const mountWithSize = async (scrollWidth: number, clientWidth: number) => {
+      const wrapper = mount(GraphPathDiagram, { props: { path: longPath }, attachTo: document.body })
+      const scroller = wrapper.find('[data-testid="path-scroller"]')
+      Object.defineProperty(scroller.element, 'scrollWidth', { configurable: true, value: scrollWidth })
+      Object.defineProperty(scroller.element, 'clientWidth', { configurable: true, value: clientWidth })
+      return { wrapper, scroller }
+    }
+    const scrollTo = async (scroller: Awaited<ReturnType<typeof mountWithSize>>['scroller'], left: number) => {
+      ;(scroller.element as HTMLElement).scrollLeft = left
+      await scroller.trigger('scroll')
+    }
+    const fades = (scroller: Awaited<ReturnType<typeof mountWithSize>>['scroller']) => ({
+      start: scroller.attributes('data-fade-start') !== undefined,
+      end: scroller.attributes('data-fade-end') !== undefined,
+    })
+
+    let unmount: (() => void) | null = null
+    afterEach(() => {
+      unmount?.()
+      unmount = null
+    })
+
+    it('它應該在內容放得下時兩側都不淡出，也不多一個 Tab 停點', async () => {
+      const { wrapper, scroller } = await mountWithSize(700, 1000)
+      unmount = () => wrapper.unmount()
+      await scrollTo(scroller, 0)
+
+      expect(fades(scroller)).toEqual({ start: false, end: false })
+      expect(scroller.attributes('tabindex')).toBeUndefined()
+    })
+
+    it.each([
+      { where: '起點', left: 0, expected: { start: false, end: true } },
+      { where: '中間', left: 150, expected: { start: true, end: true } },
+      { where: '終點', left: 310, expected: { start: true, end: false } },
+    ])('它應該在捲到$where時只淡出還有內容的那一側', async ({ left, expected }) => {
+      const { wrapper, scroller } = await mountWithSize(700, 390)
+      unmount = () => wrapper.unmount()
+      await scrollTo(scroller, left)
+
+      expect(fades(scroller)).toEqual(expected)
+      expect(scroller.attributes('tabindex')).toBe('0')
+    })
+
+    it('它應該在視窗變寬到放得下時拿掉淡出', async () => {
+      const { wrapper, scroller } = await mountWithSize(700, 390)
+      unmount = () => wrapper.unmount()
+      await scrollTo(scroller, 0)
+      expect(fades(scroller).end).toBe(true)
+
+      Object.defineProperty(scroller.element, 'clientWidth', { configurable: true, value: 800 })
+      window.dispatchEvent(new Event('resize'))
+      await wrapper.vm.$nextTick()
+
+      expect(fades(scroller)).toEqual({ start: false, end: false })
+    })
+  })
 })
+
