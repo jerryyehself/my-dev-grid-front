@@ -110,6 +110,26 @@ describe('stripHeadingIds', () => {
     expect(strip(src)).toBe(src.replace('## 真標題 {#d}', '## 真標題'))
   })
 
+  it.each(['\u00a0', '\u3000'])('它應該不把後面接 NBSP／全形空白的圍欄當成關閉：%j', (space) => {
+    const src = '```\n```' + space + '\n## x {#a}\n```'
+    expect(strip(src)).toBe(src)
+  })
+
+  it('它應該不讓不同字元的圍欄關閉區塊', () => {
+    const src = '```\n~~~\n## x {#a}\n```'
+    expect(strip(src)).toBe(src)
+  })
+
+  it('它應該不把資訊字串含反引號的行當成圍欄', () => {
+    expect(strip('```js `x`\n## z {#a}')).toBe('```js `x`\n## z')
+  })
+
+  it('它應該不把關閉圍欄後接資訊字串的行當成關閉', () => {
+    const src = '```\n```js\n## x {#a}\n```'
+    expect(strip(src)).toBe(src)
+    expect(strip('```\n## x {#a}\n```js\n```')).toBe('```\n## x {#a}\n```js\n```')
+  })
+
   it('它應該不動內文裡的 {#keep}，標題行只剝行尾那個', () => {
     expect(strip('段落 {#keep}\n\n## 標題 {#keep} 中間 {#id1}')).toBe('段落 {#keep}\n\n## 標題 {#keep} 中間')
   })
@@ -132,6 +152,21 @@ describe('extractHeadings 明確 ID', () => {
   it('它應該讓自動 slug 避開明確 ID', () => {
     expect(extractHeadings('## 甲\n\n## 乙 {#abc}').map((h) => h.slug)).toEqual(['甲', 'abc'])
     expect(extractHeadings('## a\n\n## 別的 {#a}').map((h) => h.slug)).toEqual(['a-2', 'a'])
+  })
+
+  it('它應該在兩個標題寫同一個明確 ID 時只讓第一個用原 ID', () => {
+    expect(extractHeadings('## 甲 {#a}\n\n## 乙 {#a}').map((h) => h.slug)).toEqual(['a', 'a-2'])
+  })
+
+  it('它應該讓重複的明確 ID 避開其他已用的 slug', () => {
+    expect(extractHeadings('## 甲 {#a}\n\n## 乙 {#a}\n\n## 丙 {#a-2}\n\n## 丁 {#a}').map((h) => h.slug)).toEqual([
+      'a',
+      'a-3',
+      'a-2',
+      'a-4',
+    ])
+    const slugs = extractHeadings('## a\n\n## 甲 {#a}\n\n## 乙 {#a}').map((h) => h.slug)
+    expect(new Set(slugs).size).toBe(slugs.length)
   })
 
   it('它應該不影響 CRLF 原稿的標題', () => {

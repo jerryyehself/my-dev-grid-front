@@ -10,7 +10,8 @@ export interface Heading {
   slug: string
 }
 
-// 標題行尾的明確 ID：`## 標題 {#stable-id}`。規則與後端的段落切分一致——
+// 標題行尾的明確 ID：`## 標題 {#stable-id}`。規則與後端的段落切分一致
+// （對照的實作是 `my-dev-grid` 的 `app/Services/ArticleUnitSplitter.php`，改這裡要一起看那邊）——
 // 只認 ATX 標題（最多 3 空白縮排、井號後要有空白），`{#id}` 後面只能接收尾井號與空白，
 // 程式碼區塊（``` 或 ~~~，含較長圍欄）裡不動，內文裡的 `{#...}` 不動，格式不合的不動。
 const FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/
@@ -33,7 +34,8 @@ export function stripHeadingIds(source: string): { source: string; ids: Map<numb
       if (fence === null) {
         // 反引號開頭的區塊，資訊字串裡不能再有反引號，否則只是行內程式碼
         if (marker[0] !== '`' || !f[2]!.includes('`')) fence = { char: marker[0]!, length: marker.length }
-      } else if (marker[0] === fence.char && marker.length >= fence.length && f[2]!.trim() === '') {
+      } else if (marker[0] === fence.char && marker.length >= fence.length && /^[ \t]*$/.test(f[2]!)) {
+        // CommonMark：關閉圍欄後面只能接空格或 tab；不能用 trim()，它會把 NBSP、全形空白也吃掉
         fence = null
       }
       return raw
@@ -73,14 +75,24 @@ export function slugify(text: string): string {
 
 /**
  * 把同名標題後面補流水號，免得兩個 id 撞在一起讓錨點指到第一個。
- * 明確 ID（`explicit[i]` 非 null）原樣使用，並先保留起來，自動 slug 不會撞上它。
+ * 明確 ID（`explicit[i]` 非 null）先保留起來，自動 slug 不會撞上它。
+ * 兩個標題寫了同一個明確 ID 時，只有第一個用原 ID；之後重複的把它當自動 slug 的基底接流水號
+ * （`a`、`a-2`），不然會輸出重複的 HTML id 與 v-for key。
  */
 function dedupe(slugs: string[], explicit: (string | null)[]): string[] {
   const seen = new Map<string, number>()
   const used = new Set<string>(explicit.filter((e): e is string => e !== null))
-  return slugs.map((s, i) => {
+  const emitted = new Set<string>()
+  return slugs.map((auto, i) => {
     const fixed = explicit[i]
-    if (fixed != null) return fixed
+    let s = auto
+    if (fixed != null) {
+      if (!emitted.has(fixed)) {
+        emitted.add(fixed)
+        return fixed
+      }
+      s = fixed
+    }
     let n = (seen.get(s) ?? 0) + 1
     let candidate = n === 1 ? s : `${s}-${n}`
     while (used.has(candidate)) {
