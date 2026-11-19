@@ -82,6 +82,8 @@ export interface FootnoteInsertion {
  *
  * 文末定義前的空行：最後一個非空行是別的定義就只換行（定義連在一起），否則空一行，
  * 讓定義跟內文分開；原本結尾已經有的換行會算進去，不會越補越多。
+ *
+ * 已知限制，見 docs/tech-debt.md「插入腳註不檢查游標是否在程式碼區塊內」。
  */
 export function insertFootnote(body: string, start: number, end: number): FootnoteInsertion {
   const number = nextFootnoteNumber(body)
