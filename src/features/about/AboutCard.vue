@@ -61,5 +61,5 @@ defineProps<{ card: AboutCardData }>()
 const isExternal = (to: string) => /^https?:\/\//i.test(to)
 
 const linkClass =
-  'inline-flex items-center min-h-10 text-base font-normal leading-[1.45] text-(--text-accent) underline decoration-1 underline-offset-[5px] decoration-[color-mix(in_srgb,currentColor_35%,transparent)] hover:decoration-current'
+  'inline-block py-2.5 text-balance text-base font-normal leading-[1.45] text-(--text-accent) underline decoration-1 underline-offset-[5px] decoration-[color-mix(in_srgb,currentColor_35%,transparent)] hover:decoration-current'
 </script>
