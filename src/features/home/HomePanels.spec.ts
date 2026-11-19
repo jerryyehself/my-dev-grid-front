@@ -72,6 +72,16 @@ beforeEach(() => {
 })
 
 describe('HomeView（C 版：路線當主角）', () => {
+  it('它應該讓 H1 的畫面文字與 aria-label 去掉 <wbr> 和空白後內容一致', async () => {
+    const wrapper = await mountHome()
+    const h1 = wrapper.find('h1')
+
+    const visible = h1.html().replace(/<wbr\s*\/?>/g, '').replace(/<[^>]+>/g, '').replace(/\s+/g, '')
+    const label = (h1.attributes('aria-label') ?? '').replace(/\s+/g, '')
+    expect(label).not.toBe('')
+    expect(label).toBe(visible)
+  })
+
   it('它應該用主題句當 H1，而且沒有舊的「知識網路」標題、統計句與專案／近期文章欄', async () => {
     const wrapper = await mountHome()
 

@@ -27,7 +27,7 @@ onUnmounted(() => robots?.remove())
 
 <template>
   <div class="w-full flex flex-col items-center text-center py-16 lg:py-24">
-    <div class="font-mono font-bold text-(length:--type-label-size) tracking-[0.24em] text-(--text-accent)">404</div>
+    <div class="font-mono font-bold text-(length:--type-mono-size) tracking-[0.24em] text-(--text-accent)">404</div>
     <h1
       class="mt-4 mb-0 font-display font-bold text-(length:--type-display-size) leading-(--type-display-leading) text-(--text-ink-main)"
     >
