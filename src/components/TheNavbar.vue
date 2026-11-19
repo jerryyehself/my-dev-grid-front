@@ -1,11 +1,13 @@
 <template>
+  <!-- 底色是平色、只留底線：斜紋與陰影不帶任何資訊，界線交給 border-b（線條而不是陰影） -->
   <nav
-    class="sticky top-0 z-50 w-full bg-(--bg-nav-footer) border-b border-black/30 shadow-md transition-colors duration-300"
-    style="background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 7px)"
+    class="sticky top-0 z-50 w-full bg-(--bg-nav-footer) border-b border-black/30 transition-colors duration-300"
     @keydown.esc="closeMenuByEscape"
   >
+    <!-- 底色撐滿全寬，內層用跟頁首、內容同一個容器（1120 寬、左右內距 16／24），字標左緣跟頁首 H1 對齊。
+         360 以下維持 12 內距，字標才放得下 -->
     <div
-      class="w-full h-14 md:h-16 px-3 min-[360px]:px-4 md:px-6 lg:px-8 flex items-center justify-between font-mono text-(length:--type-mono-size) leading-(--type-mono-leading)"
+      class="w-full max-w-[1120px] mx-auto h-14 md:h-16 px-3 min-[360px]:px-4 sm:px-6 flex items-center justify-between font-mono text-(length:--type-mono-size) leading-(--type-mono-leading)"
     >
       <!-- 字標（D-32 的「IN / ARCHIVE」，D-60 的寫法）：兩半等大、Libre Caslon Text 700、斜線用黃銅。
            以前 ARCHIVE 是 11px、65% 透明度，手機上還整個藏起來，字標只剩「IN」——
