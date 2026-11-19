@@ -15,7 +15,7 @@ export interface AboutCardData {
   title: string
   situation: string
   /**
-   * 「確認詳情」的文章連結。空陣列就不顯示「確認詳情」，也不放任何提示文字；
+   * 「確認詳情」底下的連結，每個連結的文字就是所連文章或論文的標題。空陣列就不顯示「確認詳情」，也不放任何提示文字；
    * 有了就把 { label, to } 補進來；to 是 http／https 開頭的就當站外連結。
    */
   links: AboutCardLink[]
@@ -37,7 +37,7 @@ export const ABOUT_CARDS: AboutCardData[] = [
     situation: '找出使用者沒說出口、但用了會接受的需求',
     links: [
       {
-        label: '碩士論文摘要（華藝線上圖書館）',
+        label: '小說讀者資訊尋找心智模型與FRBR之比較研究',
         to: 'https://www.airitilibrary.com/Article/Detail/U0002-2307202123134400',
       },
     ],
