@@ -18,7 +18,8 @@
         v-if="isScrolled"
         class="sticky top-14 md:top-16 z-40 w-full border-b border-(--border-shelf) bg-(--bg-paper-dark)/90 backdrop-blur-md shadow-sm"
       >
-        <div class="w-full h-11 px-4 md:px-8 flex items-center gap-2.5 overflow-hidden">
+        <!-- 底色撐滿全寬，內層跟導覽列同一條內列（1120 寬、內距 12／16／24），麵包屑左緣才會對齊字標 -->
+        <div class="w-full max-w-[1120px] mx-auto h-11 px-3 min-[360px]:px-4 sm:px-6 flex items-center gap-2.5 overflow-hidden">
           <span class="w-[3px] h-4 rounded-[2px] bg-(--text-accent) shrink-0"></span>
           <span
             v-if="$slots.tag"
