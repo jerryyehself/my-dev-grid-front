@@ -173,7 +173,7 @@ function show<T>(state: CountState<T>, pick: (v: T) => number): string {
       >
         <div class="flex flex-col gap-1 min-w-0">
           <h2 :id="`admin-${row.id}`" class="m-0 text-[15px] font-bold text-(--text-ink-main)">{{ row.title }}</h2>
-          <div class="flex flex-wrap gap-x-4 text-[13px] text-(--text-ink-body)" :aria-busy="row.busy">
+          <div class="flex flex-wrap gap-x-4 text-(length:--type-label-size) text-(--text-ink-body)" :aria-busy="row.busy">
             <span v-for="stat in row.stats" :key="stat.label">
               {{ stat.label }} <span class="font-mono tabular-nums font-bold">{{ stat.value }}</span>
             </span>
@@ -199,10 +199,10 @@ function show<T>(state: CountState<T>, pick: (v: T) => number): string {
       class="border border-dashed border-(--border-shelf) rounded-[6px] px-4 sm:px-5 py-4 flex flex-col gap-2"
       aria-labelledby="admin-synced"
     >
-      <h2 id="admin-synced" class="m-0 text-[13px] tracking-[0.05em] font-bold text-(--text-ink-muted)">
+      <h2 id="admin-synced" class="m-0 text-(length:--type-label-size) tracking-[0.05em] font-bold text-(--text-ink-muted)">
         從 GitHub 自動同步
       </h2>
-      <div class="flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-(--text-ink-body)">
+      <div class="flex flex-wrap gap-x-6 gap-y-1 text-(length:--type-label-size) text-(--text-ink-body)">
         <span :aria-busy="counts.projects.status === 'loading'">
           專案 <span class="font-mono tabular-nums font-bold">{{ show(counts.projects, (v) => v) }}</span>
         </span>

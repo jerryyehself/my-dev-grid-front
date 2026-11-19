@@ -185,7 +185,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       </div>
     </div>
 
-    <p class="m-0 text-[13px] leading-[1.8] text-(--text-ink-body)">
+    <p class="m-0 text-(length:--type-label-size) leading-[1.8] text-(--text-ink-body)">
       列出來源裡標了 <code class="font-mono">import: true</code> 的 Markdown 檔。新增的文章一律是草稿；整批一起寫入，任何一篇不行就全部不寫。
     </p>
 
@@ -200,12 +200,12 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       >
         <h2 id="import-result" class="m-0 text-[15px] font-bold text-(--text-ink-main)">
           已匯入 {{ result.data.length }} 篇
-          <span class="text-[13px] font-normal text-(--text-ink-body)">
+          <span class="text-(length:--type-label-size) font-normal text-(--text-ink-body)">
             （新增 {{ resultCounts.create }}、更新 {{ resultCounts.update }}、連結 {{ resultCounts.link }}）
           </span>
         </h2>
         <ul class="m-0 p-0 list-none flex flex-col gap-2">
-          <li v-for="row in result.data" :key="row.key" class="flex flex-col gap-0.5 text-[13px]">
+          <li v-for="row in result.data" :key="row.key" class="flex flex-col gap-0.5 text-(length:--type-label-size)">
             <div class="flex flex-wrap items-baseline gap-x-2">
               <span class="font-mono text-[11px] tracking-[0.08em] text-(--text-ink-muted)">{{ ACTION_LABEL[row.action] }}</span>
               <router-link
@@ -272,7 +272,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       </ul>
       <p
         v-else
-        class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-5 py-10 text-center text-[13px] text-(--text-ink-muted)"
+        class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-5 py-10 text-center text-(length:--type-label-size) text-(--text-ink-muted)"
       >
         來源裡沒有標了 import: true 的 Markdown 檔。
       </p>
@@ -280,7 +280,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       <!-- 送出列 -->
       <div class="flex flex-col gap-3 border-t border-(--border-shelf) pt-4">
         <ul v-if="count > 0 && problemTexts.length" class="m-0 p-0 list-none flex flex-col gap-1" data-test="problems">
-          <li v-for="text in problemTexts" :key="text" class="text-[13px] text-(--text-error)">{{ text }}</li>
+          <li v-for="text in problemTexts" :key="text" class="text-(length:--type-label-size) text-(--text-error)">{{ text }}</li>
         </ul>
 
         <div v-if="submitError" role="alert" class="flex flex-col items-start gap-2" data-test="submit-error">
@@ -291,7 +291,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
         </div>
 
         <div class="flex items-center justify-between gap-3">
-          <span class="text-[13px] text-(--text-ink-body)">已選 {{ count }} 項</span>
+          <span class="text-(length:--type-label-size) text-(--text-ink-body)">已選 {{ count }} 項</span>
           <button
             type="button"
             :disabled="!canSubmit"
