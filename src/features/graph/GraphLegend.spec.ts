@@ -45,11 +45,32 @@ describe('GraphLegend', () => {
   })
 })
 
+describe('GraphLegend 的「關於」圖例', () => {
+  it.each(['type', 'overlay'] as const)(
+    '它應該在 %s 模式顯示「關於」：線上有一個空心圈',
+    (colorMode) => {
+      const wrapper = mount(GraphLegend, { props: { colorMode, showIndirect: false } })
+
+      const item = wrapper.findAll('span.flex').find((el) => el.text() === '關於')
+      expect(item).toBeDefined()
+      const line = item!.find('span.relative')
+      expect(line.classes()).toContain('border-t')
+      expect(line.classes()).toContain('border-(--edge-real)')
+      const ring = line.find('span.absolute')
+      expect(ring.classes()).toContain('rounded-full')
+      expect(ring.classes()).toContain('border-(--edge-real)')
+      expect(ring.classes()).toContain('bg-(--canvas-bg)')
+    },
+  )
+})
+
 describe('GraphLegend（首頁版本）', () => {
   const counts = { documentation: 12, technique: 53, implementation: 19, edges: 153 }
 
   it('它應該把類別名稱保持「文件」，後面帶各類數量與直接關係條數', () => {
-    const wrapper = mount(GraphLegend, { props: { colorMode: 'type', showIndirect: false, counts } })
+    const wrapper = mount(GraphLegend, {
+      props: { colorMode: 'type', showIndirect: false, counts },
+    })
     const text = wrapper.text().replace(/\s+/g, ' ')
 
     expect(text).toContain('文件 12')
@@ -66,7 +87,9 @@ describe('GraphLegend（首頁版本）', () => {
   })
 
   it('它應該只在路線亮起時顯示「目前路線」', async () => {
-    const wrapper = mount(GraphLegend, { props: { colorMode: 'type', showIndirect: false, counts } })
+    const wrapper = mount(GraphLegend, {
+      props: { colorMode: 'type', showIndirect: false, counts },
+    })
     expect(wrapper.text()).not.toContain('目前路線')
 
     await wrapper.setProps({ routeLit: true })

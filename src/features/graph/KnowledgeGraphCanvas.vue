@@ -9,7 +9,12 @@ import { edgeRelation, edgeRelationText, type EdgeRelation } from './graphRelati
 import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
 import type { GraphPocSelection } from './graphPocData'
 import { useTheme } from '@/composables/useTheme'
-import { aboutMarkerStyle, directLinkStyle, isAboutLink } from './linkStyle'
+import {
+  aboutLinkCanvasMode,
+  aboutMarkerStyle,
+  directLinkStyle,
+  drawAboutMarker,
+} from './linkStyle'
 import { nodeKindLabel, endpointId, type SimLink, type SimNode } from './graphTypes'
 import { recencyScore, viridis, withAlpha } from './colorScale'
 import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './derivedEdges'
@@ -746,20 +751,14 @@ async function boot() {
     // 這件事的視覺線索，顏色/寬度只負責亮不亮。
     .linkLineDash((l) => (l.derived ? [5, 4] : null))
     // 「關於」連線在線中點多畫一個空心小圈（樣式見 linkStyle.ts）；其餘連線不畫。
-    .linkCanvasObjectMode((l) => (!l.derived && isAboutLink(l.predicate) ? 'after' : undefined))
-    .linkCanvasObject((l, ctx) => {
-      const s = l.source
-      const t = l.target
-      if (typeof s !== 'object' || typeof t !== 'object') return
-      const m = aboutMarkerStyle({ lineColor: directLinkStyleOf(l).color, canvasBg: css('--canvas-bg') })
-      ctx.beginPath()
-      ctx.arc(((s.x ?? 0) + (t.x ?? 0)) / 2, ((s.y ?? 0) + (t.y ?? 0)) / 2, m.radius, 0, 2 * Math.PI)
-      ctx.fillStyle = m.fill
-      ctx.fill()
-      ctx.lineWidth = m.lineWidth
-      ctx.strokeStyle = m.stroke
-      ctx.stroke()
-    })
+    .linkCanvasObjectMode((l) => aboutLinkCanvasMode(l))
+    .linkCanvasObject((l, ctx) =>
+      drawAboutMarker(
+        ctx,
+        l,
+        aboutMarkerStyle({ line: directLinkStyleOf(l), canvasBg: css('--canvas-bg') }),
+      ),
+    )
     .linkVisibility((l) => !l.derived || showIndirect.value)
     .linkLabel((l) => {
       if (lastPointerType === 'touch') return ''

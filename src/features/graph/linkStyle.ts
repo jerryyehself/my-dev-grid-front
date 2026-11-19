@@ -41,7 +41,8 @@ export function directLinkStyle(opts: {
 // 「專案 → 技術」的「關於」連線：專案在講某個技術、但程式裡沒有使用證據。線本身跟「使用」
 // 完全一樣（同色實線，顏色、線寬、三種狀態都沿用 directLinkStyle），只在線的中點多畫一個
 // 空心小圈當記號，不佔用虛線（虛線在全站只代表間接關聯）。
-// 後端述詞：subjectOfProject（技術 → 專案，GitHub 同步寫的方向）與反向的 projectAbout。
+// 後端述詞：圖譜 API 只回 subjectOfProject（技術 → 專案，GitHub 同步寫的方向）；
+// projectAbout 是預防反向命名而加的，目前 API 不會回。
 // 3D 版（GraphPoc3D.vue）畫不了線中點的圈，這次不區分「關於」與「使用」。
 export const ABOUT_PREDICATES: readonly string[] = ['subjectOfProject', 'projectAbout']
 
@@ -50,11 +51,13 @@ export function isAboutLink(predicate: string | null | undefined): boolean {
 }
 
 const ABOUT_MARKER_RADIUS = 3
-const ABOUT_MARKER_LINE_WIDTH = 1.5
 
-// 中點圈：描邊顏色直接用該條線的顏色（hover／選取時跟著變 accent，淡出時跟著淡出），
+// 中點圈：描邊的顏色與寬度直接用該條線的（hover／選取時跟著變 accent 與 2.2，淡出時跟著淡出），
 // 填色是畫布底色，把圈裡面的線蓋掉才是空心。
-export function aboutMarkerStyle(opts: { lineColor: string; canvasBg: string }): {
+export function aboutMarkerStyle(opts: {
+  line: { color: string; width: number }
+  canvasBg: string
+}): {
   radius: number
   lineWidth: number
   stroke: string
@@ -62,8 +65,41 @@ export function aboutMarkerStyle(opts: { lineColor: string; canvasBg: string }):
 } {
   return {
     radius: ABOUT_MARKER_RADIUS,
-    lineWidth: ABOUT_MARKER_LINE_WIDTH,
-    stroke: opts.lineColor,
+    lineWidth: opts.line.width,
+    stroke: opts.line.color,
     fill: opts.canvasBg,
   }
+}
+
+// force-graph 的 linkCanvasObjectMode：只有直接關係裡的「關於」連線在線之後多畫一個圈，其餘不畫。
+export function aboutLinkCanvasMode(l: {
+  derived?: boolean
+  predicate?: string | null
+}): 'after' | undefined {
+  return !l.derived && isAboutLink(l.predicate) ? 'after' : undefined
+}
+
+type MarkerEnd = { x?: number; y?: number } | string | number | undefined
+
+// 在線的中點畫空心圈。端點還沒被力導向模擬換成節點物件（仍是 id）時不畫。
+export function drawAboutMarker(
+  ctx: CanvasRenderingContext2D,
+  link: { source?: MarkerEnd; target?: MarkerEnd },
+  style: ReturnType<typeof aboutMarkerStyle>,
+): void {
+  const { source: s, target: t } = link
+  if (typeof s !== 'object' || typeof t !== 'object') return
+  ctx.beginPath()
+  ctx.arc(
+    ((s.x ?? 0) + (t.x ?? 0)) / 2,
+    ((s.y ?? 0) + (t.y ?? 0)) / 2,
+    style.radius,
+    0,
+    2 * Math.PI,
+  )
+  ctx.fillStyle = style.fill
+  ctx.fill()
+  ctx.lineWidth = style.lineWidth
+  ctx.strokeStyle = style.stroke
+  ctx.stroke()
 }
