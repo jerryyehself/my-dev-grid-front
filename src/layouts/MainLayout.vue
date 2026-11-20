@@ -86,7 +86,6 @@
 
     <footer
       class="w-full max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
-      :style="widthStyle"
     >
       {{ FOOTER_TEXT }}
     </footer>

@@ -480,7 +480,7 @@ const publish = () => saveWithStatus(true)
 
     <!-- 動作列 -->
     <div
-      class="border-y border-(--border-shelf) bg-(--bg-folder) -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3"
+      class="border-y border-(--border-shelf) bg-(--bg-folder) -mx-3 min-[360px]:-mx-4 sm:-mx-6 px-3 min-[360px]:px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3"
     >
       <div class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 min-w-0">
         <BaseHint>/articles/</BaseHint>
