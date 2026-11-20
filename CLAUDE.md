@@ -14,9 +14,7 @@
 
 # Git commit/push 授權（2026-09-12 使用者確認）
 
-推送到工作分支、開 PR（草稿或正式）不用問使用者，做完覺得可以收尾了就直接 commit/push、開 PR，不用停下來等確認。合併 PR 的規則看下一節。
-
-例行步驟（commit、推送到工作分支、開 PR、唯讀檢查、安全的重試）不用問；合併的範圍照下面「PR 合併授權」。
+例行步驟（commit、推送到工作分支、開 PR（草稿或正式）、唯讀檢查、安全的重試）不用問使用者，做完覺得可以收尾了就直接做，不用停下來等確認；合併的範圍照下面「PR 合併授權」。
 
 force push、`git reset --hard`、跳過 hook（`--no-verify`）這類本來就該格外小心的動作，一樣預設先跟使用者確認過再做。
 
@@ -60,13 +58,4 @@ agent 不刪遠端分支：repo 開了「合併後自動刪除分支」，已合
   改動即使只是修一個部署錯誤、驗證條件也全過，一樣要先問，不能因為是
   「修 bug」就自動歸類成可以直接合併（2026-09-25 的教訓：PR #81/#82 誤判
   成一般前端實作細節，直接合併了）。
-- **`develop` → `main` 的上線 PR 用 squash 合併**（repo 設定不允許 merge commit，
-  2026-10-02 第一次上線 #90 時確認）。合併完一定要把 `main` 合併回 `develop`
-  （`git merge --no-ff origin/main`，一般推送），不然下次上線的 PR 歷史會對不上。
-  `develop` 設了必要檢查，沒跑過 CI 的 merge commit 直推會被擋：先把它推到
-  `claude/merge-main-vX.Y.Z` 分支、開 PR 到 `develop` 只為了跑 CI，CI 全綠後用
-  `git push origin <同一個 SHA>:refs/heads/develop` 快轉推送；不要在網頁上合併那個 PR，
-  快轉推不上去就停下來問使用者。後端用同一套做法。
-  回滾用 `git revert <squash commit>`。
-- `develop` 有 ruleset 擋刪除與 force push（2026-10-02 使用者設定）：repo 開了
-  「合併後自動刪除分支」，#90 合併後 `develop` 曾被自動刪掉、事後還原。
+- **`develop` → `main` 的上線 PR 用 squash 合併**，合併完一定要把 `main` 合併回 `develop`（一般推送），不然下次上線的 PR 歷史會對不上。回滾用 `git revert <squash commit>`。合回 `develop` 的步驟（`develop` 有必要檢查與保護規則）見 [`docs/release.md`](docs/release.md)。
