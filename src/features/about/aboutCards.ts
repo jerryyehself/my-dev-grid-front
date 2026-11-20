@@ -47,14 +47,14 @@ export const ABOUT_CARDS: AboutCardData[] = [
     id: 'evidence',
     title: '實證導向',
     situation: '決策看證據，有新證據就修正',
-    links: [],
+    links: [{ label: 'Claude Code 協作開發的省 token 機制盤點', to: '/articles/16' }],
     sketch: AboutSketchEvidence,
   },
   {
     id: 'review',
     title: '持續評鑑',
     situation: '定期檢視成果，依現況調整方向',
-    links: [],
+    links: [{ label: '首頁知識網路採用節點連結圖：設計決策紀錄', to: '/articles/14' }],
     sketch: AboutSketchReview,
   },
 ]

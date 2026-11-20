@@ -79,13 +79,19 @@ describe('AboutView', () => {
     wrapper.unmount()
   })
 
-  it('它應該只有「跨域整合」與「需求洞察」兩張卡有「確認詳情」，其他兩張沒有連結也沒有提示文字', () => {
+  it('它應該讓四張卡各有一個「確認詳情」連結，沒有提示文字', () => {
     const wrapper = mountAbout()
 
     expect(wrapper.text()).not.toContain('待定')
     expect(wrapper.text()).not.toContain('示意')
     const withLink = wrapper.findAll('li[id^="about-"]').filter((li) => li.text().includes('確認詳情'))
-    expect(withLink.map((li) => li.attributes('id'))).toEqual(['about-integration', 'about-insight'])
+    expect(withLink.map((li) => li.attributes('id'))).toEqual([
+      'about-integration',
+      'about-insight',
+      'about-evidence',
+      'about-review',
+    ])
+    for (const li of withLink) expect(li.findAll('a')).toHaveLength(1)
 
     // 跨域整合：站內文章，router-link，不開新分頁、沒有 ↗
     const inner = wrapper.get('#about-integration').get('a')
@@ -102,10 +108,16 @@ describe('AboutView', () => {
     expect(a.attributes('target')).toBe('_blank')
     expect(a.attributes('rel')).toBe('noopener noreferrer')
 
-    for (const id of ['evidence', 'review']) {
-      expect(wrapper.get(`#about-${id}`).find('a').exists()).toBe(false)
-      expect(wrapper.get(`#about-${id}`).text()).not.toContain('確認詳情')
-    }
+    // 實證導向、持續評鑑：站內文章，router-link，不開新分頁
+    const evidence = wrapper.get('#about-evidence').get('a')
+    expect(evidence.text()).toBe('Claude Code 協作開發的省 token 機制盤點')
+    expect(evidence.attributes('href')).toBe('/articles/16')
+    expect(evidence.attributes('target')).toBeUndefined()
+
+    const review = wrapper.get('#about-review').get('a')
+    expect(review.text()).toBe('首頁知識網路採用節點連結圖：設計決策紀錄')
+    expect(review.attributes('href')).toBe('/articles/14')
+    expect(review.attributes('target')).toBeUndefined()
     wrapper.unmount()
   })
 
