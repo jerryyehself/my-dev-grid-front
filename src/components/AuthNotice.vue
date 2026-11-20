@@ -47,7 +47,7 @@ onUnmounted(() => clearTimeout(timer))
         >{{ auth.notice.tone === 'error' ? '!' : '✓' }}</span
       >
       <span
-        class="flex-1 text-[14px]"
+        class="flex-1 text-(length:--type-caption-size)"
         :class="auth.notice.tone === 'error' ? 'text-(--text-error)' : 'text-(--text-ink-main)'"
       >
         {{ auth.notice.text }}

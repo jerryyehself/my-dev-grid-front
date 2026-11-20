@@ -179,10 +179,8 @@ describe('router：not-found', () => {
 
 // 文章署名：文章清單的標題下面那一行，放在副標的位置，貼在標題正下方
 describe('router：/articles 的署名', () => {
-  it('它應該把署名放在副標，字句照原樣（全形空白、全形斜線、中間點）', () => {
-    expect(router.resolve('/articles').meta.subtitle).toBe(
-      '主筆\u3000Claude\u3000\uff0f\u3000發想\u30fb審定\u3000站主',
-    )
+  it('它應該把署名放在副標，字句與關於頁、文章結尾是同一句', () => {
+    expect(router.resolve('/articles').meta.subtitle).toBe('由 Claude 撰寫，Jerry Yeh 發想並審定')
   })
 
   it('它應該只有文章清單帶署名，文章內頁與其他頁面的副標不受影響', () => {
@@ -191,3 +189,13 @@ describe('router：/articles 的署名', () => {
   })
 })
 
+
+// 首頁 C 版：主題句就是 H1（HomeView 自己畫），沒有 kicker、沒有副標，通用表頭不再畫一次
+describe('router：首頁表頭', () => {
+  it('它應該隱藏通用表頭、沒有副標，分頁標題用的 title 仍在', () => {
+    const meta = router.resolve('/').meta
+    expect(meta.hideHeader).toBe(true)
+    expect(meta.subtitle).toBeUndefined()
+    expect(meta.title).toBe('IN / ARCHIVE')
+  })
+})

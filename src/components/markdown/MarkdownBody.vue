@@ -23,7 +23,7 @@ import { RouterLink } from 'vue-router'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
-import { extractHeadings } from './headings'
+import { extractHeadings, stripHeadingIds } from './headings'
 import { safeLink } from './safeLink'
 import { buildFootnoteIndex, splitLastChar, stackSidenotes, type FootnoteInfo } from './footnotes'
 
@@ -70,14 +70,22 @@ const scrollRegion = (label: string) => ({ tabindex: 0, role: 'region', 'aria-la
 const codeLabel = (lang?: string | null) => (lang ? `程式碼（${lang}）` : '程式碼')
 const TABLE_LABEL = '表格'
 
-// 文章內文的段距、二級標題與註腳的字級行高，集中命名，改數字只改這一處。
-// 內文本身 16／28 是 `text-base leading-7`，留在各個元素上。
+// 文章內文的字級、行高與段距，數字都在 `assets/css/variables.css` 的 `--article-*` 變數
+//（定案值），這裡只決定「哪個元素用哪一組」。要改數字改 variables.css，不改這裡。
+// Tailwind 靠字串裡完整的 class 名稱掃描，所以每一組都寫成完整的 class，不拼接。
+/** 內文（段落、清單項）16／28 */
+const BODY_TEXT = 'text-(length:--article-body-size) leading-(--article-body-leading)'
 /** 段與段之間空 24px */
-const PARAGRAPH_GAP = 'mb-6'
-/** 二級標題 24／36；三級以下維持原樣 */
-const H2_TEXT = 'text-2xl leading-9'
+const PARAGRAPH_GAP = 'mb-(--article-paragraph-gap)'
+/** 二級標題 24／36 */
+const H2_TEXT = 'text-(length:--article-h2-size) leading-(--article-h2-leading)'
+/** 三級標題 16，靠加粗區分，不加大；四級以下維持原樣 */
+const H3_TEXT = 'text-(length:--article-h3-size)'
 /** 註腳 14／24：文末註釋清單、邊注、窄螢幕展開的註釋框共用 */
-const FOOTNOTE_TEXT = 'text-sm leading-6'
+const FOOTNOTE_TEXT = 'text-(length:--article-footnote-size) leading-(--article-footnote-leading)'
+/** 標籤 13／20，字距 ≤ 0.05em：註釋裡的編號 */
+const LABEL_TEXT =
+  'text-(length:--article-label-size) leading-(--article-label-leading) tracking-(--article-label-tracking)'
 
 /**
  * 這次聚焦是不是鍵盤造成的（:focus-visible）。滑鼠點按鈕也會讓按鈕取得焦點，
@@ -92,7 +100,7 @@ function isFocusVisible(target: EventTarget | null): boolean {
   }
 }
 
-const tree = computed(() => processor.parse(props.source) as unknown as MdNode)
+const tree = computed(() => processor.parse(stripHeadingIds(props.source).source) as unknown as MdNode)
 
 /** 這篇的所有標題，依文件順序。父層要拿去做目錄,所以 expose 出去。 */
 const headings = computed(() => extractHeadings(props.source))
@@ -267,7 +275,7 @@ function render(node: MdNode): VNode[] {
       return [
         h(
           'p',
-          { class: `text-base leading-7 ${PARAGRAPH_GAP} text-(--text-ink-body) text-left sm:text-justify` },
+          { class: `${BODY_TEXT} ${PARAGRAPH_GAP} text-(--text-ink-body) text-left sm:text-justify` },
           kids(node),
         ),
       ]
@@ -281,7 +289,7 @@ function render(node: MdNode): VNode[] {
       // 粗體標題，深度越深字越小，但都維持同一個形狀，不另外發明第二套標題語彙。
       // 以前前面有 accent 色的 `//`：那是程式碼註解的造型，放在圖譜、本體論這類技術頁合理，
       // 放在長文閱讀裡是雜訊（2026-09-29 拿掉，文章列表與首頁文章列同步拿掉）。
-      const size = node.depth === 2 ? H2_TEXT : node.depth === 3 ? 'text-[15px]' : 'text-sm'
+      const size = node.depth === 2 ? H2_TEXT : node.depth === 3 ? H3_TEXT : 'text-sm'
       // id 從 headings 依序取，不在這裡自己算 slug——目錄跟這裡必須是同一份，
       // 分開算會漂移，而且症狀是「點目錄沒反應」，不會有任何錯誤訊息
       const slug = headings.value[headingCursor++]?.slug
@@ -291,11 +299,11 @@ function render(node: MdNode): VNode[] {
           'h3',
           {
             id: slug,
-            // 導覽列（sticky，64px）+ MainLayout 捲動追蹤列（捲動超過 50px 才出現的
+            // 導覽列（sticky，桌機 64px、手機 56px；下面的總高度以桌機計）+ MainLayout 捲動追蹤列（捲動超過 50px 才出現的
             // 第二層 sticky，45px）疊起來共 109px，捲到錨點時要留出兩層的總高度，
             // 不然標題會卡在追蹤列底下、只露出一半——scroll-mt-24（96px）當初只算了
             // 導覽列那一層，沒算到追蹤列，2026-09-25 使用者實測抓到這個落差才補上。
-            class: `${size} font-bold text-(--text-ink-main) mt-8 mb-2.5 scroll-mt-32`,
+            class: `${size} ${node.depth === 2 ? 'font-serif ' : ''}font-bold text-(--text-ink-main) mt-8 mb-2.5 scroll-mt-32`,
           },
           kids(node),
         ),
@@ -324,7 +332,7 @@ function render(node: MdNode): VNode[] {
           'code',
           {
             class:
-              'font-mono text-[13px] [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5',
+              'font-mono text-(length:--type-caption-size) [overflow-wrap:anywhere] bg-(--bg-folder) text-(--text-ink-main) rounded-[2px] px-1.5 py-0.5',
           },
           node.value ?? '',
         ),
@@ -340,7 +348,7 @@ function render(node: MdNode): VNode[] {
             {
               'data-lang': node.lang ?? undefined,
               ...scrollRegion(codeLabel(node.lang)),
-              class: `block my-1.5 p-2.5 overflow-x-auto whitespace-pre font-mono text-[12.5px] leading-6 text-left text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] ${SCROLL_REGION_FOCUS}`,
+              class: `block my-1.5 p-2.5 overflow-x-auto whitespace-pre font-mono text-(length:--type-caption-size) leading-6 text-left text-(--text-ink-body) bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] ${SCROLL_REGION_FOCUS}`,
             },
             node.value ?? '',
           ),
@@ -353,7 +361,7 @@ function render(node: MdNode): VNode[] {
           'pre',
           {
             ...scrollRegion(codeLabel(node.lang)),
-            class: `font-mono text-[12.5px] leading-6 bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] p-3.5 overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}`,
+            class: `font-mono text-(length:--type-caption-size) leading-6 bg-(--bg-folder) border border-(--border-shelf) rounded-[5px] p-3.5 overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}`,
           },
           [h('code', { 'data-lang': node.lang ?? undefined }, node.value ?? '')],
         ),
@@ -437,7 +445,7 @@ function render(node: MdNode): VNode[] {
       // 萬一直接遇到（孤立的 listItem），也用同一個形狀，標記退成圓點（任務項目由核取方塊當標記）
       if (noteDepth > 0) return [noteListItem(node, isTask(node) ? null : '•')]
       return [
-        h('li', { class: 'text-base leading-7 text-(--text-ink-body)' }, itemContent(node)),
+        h('li', { class: `${BODY_TEXT} text-(--text-ink-body)` }, itemContent(node)),
       ]
     }
 
@@ -489,7 +497,7 @@ function render(node: MdNode): VNode[] {
       if (noteDepth > 0) {
         return [
           h('span', { ...scrollRegion(TABLE_LABEL), class: `block my-1.5 overflow-x-auto ${SCROLL_REGION_FOCUS}` }, [
-            h('span', { role: 'table', class: 'table w-full border-collapse text-[12.5px]' }, [
+            h('span', { role: 'table', class: 'table w-full border-collapse text-(length:--type-label-size)' }, [
               head
                 ? h(
                     'span',
@@ -508,7 +516,7 @@ function render(node: MdNode): VNode[] {
       }
       return [
         h('div', { ...scrollRegion(TABLE_LABEL), class: `overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}` }, [
-          h('table', { class: 'w-full border-collapse text-[13.5px]' }, [
+          h('table', { class: 'w-full border-collapse text-(length:--type-caption-size)' }, [
             head ? h('thead', {}, renderRow(head, node.align, true)) : null,
             h(
               'tbody',
@@ -701,7 +709,8 @@ function renderFootnoteRef(
   // 註釋元素（note）留在這個 span 外面：它是區塊或絕對定位，不能繼承 nowrap。
   const marker = h('span', { class: 'whitespace-nowrap' }, [
     lead,
-    h('sup', {}, [
+    // 內文裡的上標編號用標籤字級 13px（行高仍是 sup 的 0，不撐開行距）
+    h('sup', { class: 'text-(length:--article-label-size)' }, [
       h(
         'button',
         {
@@ -764,7 +773,7 @@ function renderFootnoteRef(
     [
       h(
         'span',
-        { class: 'inline-block min-w-[18px] mr-2 font-bold text-(--text-ink-main)' },
+        { class: `inline-block min-w-[18px] mr-2 ${LABEL_TEXT} font-bold text-(--text-ink-main)` },
         String(n),
       ),
       ...noteBody(info.definition),
@@ -802,7 +811,7 @@ function renderEndNotes(): VNode[] {
           'ol',
           {
             class:
-              `list-decimal pl-6 space-y-1.5 ${FOOTNOTE_TEXT} text-(--text-ink-body) marker:text-(--text-accent)`,
+              `list-decimal pl-6 space-y-1.5 ${FOOTNOTE_TEXT} text-(--text-ink-body) marker:text-(length:--article-label-size) marker:text-(--text-accent)`,
           },
           list.map((info) =>
             h('li', { id: `${uid}-fn-${info.number}`, class: 'pl-1 scroll-mt-32' }, [

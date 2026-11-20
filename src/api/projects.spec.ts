@@ -66,6 +66,7 @@ describe('fetchProjects', () => {
           { name: 'TypeScript', version: null, category: '' },
         ],
         started: '2026.06',
+        createdDate: '2026-06-15',
         repo: 'my-dev-grid-front',
       },
     ])

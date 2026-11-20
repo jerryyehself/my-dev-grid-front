@@ -45,6 +45,8 @@ const choices = reactive<Record<string, RowChoice>>({})
 
 const submitting = ref(false)
 const submitError = ref<ImportError | null>(null)
+/** 後端已退回的那份請求（JSON）；選擇沒變、清單沒重讀就再送，必然得到同樣的 409／422，所以先擋下 */
+const rejectedRequestKey = ref<string | null>(null)
 const result = ref<ImportResponse | null>(null)
 
 type Filter = 'actionable' | 'all'
@@ -54,6 +56,7 @@ async function load() {
   loading.value = true
   loadError.value = null
   submitError.value = null
+  rejectedRequestKey.value = null
   try {
     // 站上文章只用來顯示標題與提供連結選項，失敗不擋清單
     const [next, existing] = await Promise.all([
@@ -115,13 +118,27 @@ const problemTexts = computed(() => {
   const byPath = new Map(items.value.map((i) => [i.path, i.title ?? i.key ?? i.path]))
   return problems.value.map((p) => describeProblem(p, (path) => byPath.get(path) ?? path))
 })
+// 目前選擇組成的請求；選擇有問題、還沒選時是 null
+const requestKey = computed(() =>
+  listing.value && count.value > 0 && problems.value.length === 0
+    ? JSON.stringify(buildImportRequest(listing.value, choices))
+    : null,
+)
 // 重新整理清單進行中不能送出：此時畫面上的選擇與清單版本即將被換掉
 const canSubmit = computed(
-  () => count.value > 0 && problems.value.length === 0 && !submitting.value && !loading.value,
+  () =>
+    count.value > 0 &&
+    problems.value.length === 0 &&
+    !submitting.value &&
+    !loading.value &&
+    requestKey.value !== rejectedRequestKey.value,
 )
 // 這幾種失敗都是「整批沒寫入或不確定有沒有寫入」，重新讀清單再選一次是對的出路；
 // 來源暫時不能用（unavailable）重讀也不會好，所以不給
 const REFRESHABLE_KINDS: ImportError['kind'][] = ['stale', 'validation', 'network']
+// 其中只有 409（清單過期）和 422（選擇沒通過驗證）是「同一份請求再送一次必定同樣失敗」；
+// 連不上後端可能只是一時的，重送是安全的，不擋
+const REJECTED_KINDS: ImportError['kind'][] = ['stale', 'validation']
 
 async function submit() {
   if (!listing.value || !canSubmit.value) return
@@ -132,6 +149,7 @@ async function submit() {
     result.value = await importArticleSources(buildImportRequest(listing.value, choices))
   } catch (e) {
     submitError.value = describeImportError(e)
+    if (REJECTED_KINDS.includes(submitError.value.kind)) rejectedRequestKey.value = requestKey.value
     return
   } finally {
     submitting.value = false
@@ -155,7 +173,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div class="flex flex-col gap-[7px]">
         <BaseEyebrow class="!tracking-[0.2em]">Import Articles</BaseEyebrow>
-        <h1 class="font-serif text-[26px] sm:text-[30px] font-extrabold tracking-[-0.02em] text-(--text-ink-main)">
+        <h1 class="font-serif text-[26px] sm:text-[30px] font-bold tracking-[-0.02em] text-(--text-ink-main)">
           匯入文章
         </h1>
       </div>
@@ -167,7 +185,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       </div>
     </div>
 
-    <p class="m-0 text-[13px] leading-[1.8] text-(--text-ink-body)">
+    <p class="m-0 text-(length:--type-label-size) leading-[1.8] text-(--text-ink-body)">
       列出來源裡標了 <code class="font-mono">import: true</code> 的 Markdown 檔。新增的文章一律是草稿；整批一起寫入，任何一篇不行就全部不寫。
     </p>
 
@@ -182,12 +200,12 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       >
         <h2 id="import-result" class="m-0 text-[15px] font-bold text-(--text-ink-main)">
           已匯入 {{ result.data.length }} 篇
-          <span class="text-[13px] font-normal text-(--text-ink-body)">
+          <span class="text-(length:--type-label-size) font-normal text-(--text-ink-body)">
             （新增 {{ resultCounts.create }}、更新 {{ resultCounts.update }}、連結 {{ resultCounts.link }}）
           </span>
         </h2>
         <ul class="m-0 p-0 list-none flex flex-col gap-2">
-          <li v-for="row in result.data" :key="row.key" class="flex flex-col gap-0.5 text-[13px]">
+          <li v-for="row in result.data" :key="row.key" class="flex flex-col gap-0.5 text-(length:--type-label-size)">
             <div class="flex flex-wrap items-baseline gap-x-2">
               <span class="font-mono text-[11px] tracking-[0.08em] text-(--text-ink-muted)">{{ ACTION_LABEL[row.action] }}</span>
               <router-link
@@ -254,7 +272,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       </ul>
       <p
         v-else
-        class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-5 py-10 text-center text-[13px] text-(--text-ink-muted)"
+        class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-5 py-10 text-center text-(length:--type-label-size) text-(--text-ink-muted)"
       >
         來源裡沒有標了 import: true 的 Markdown 檔。
       </p>
@@ -262,7 +280,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       <!-- 送出列 -->
       <div class="flex flex-col gap-3 border-t border-(--border-shelf) pt-4">
         <ul v-if="count > 0 && problemTexts.length" class="m-0 p-0 list-none flex flex-col gap-1" data-test="problems">
-          <li v-for="text in problemTexts" :key="text" class="text-[13px] text-(--text-error)">{{ text }}</li>
+          <li v-for="text in problemTexts" :key="text" class="text-(length:--type-label-size) text-(--text-error)">{{ text }}</li>
         </ul>
 
         <div v-if="submitError" role="alert" class="flex flex-col items-start gap-2" data-test="submit-error">
@@ -273,7 +291,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
         </div>
 
         <div class="flex items-center justify-between gap-3">
-          <span class="text-[13px] text-(--text-ink-body)">已選 {{ count }} 項</span>
+          <span class="text-(length:--type-label-size) text-(--text-ink-body)">已選 {{ count }} 項</span>
           <button
             type="button"
             :disabled="!canSubmit"

@@ -36,6 +36,7 @@ const { selectedTags, filterGroups, toggleTag, clearFilter, filteredProjects } =
 // 「看這個專案」帶 ?implementation=<id>（見 graphNodeLink.ts）。一進來就選那一筆；
 // 以前一律連到 /projects，點 isbn-scanner 卻看到清單第一筆的 idea-trigger。
 // 以前網址上是 PROJ-YYYY-NN 顯示編號，編號拿掉後那種舊連結對不到專案，退回選第一筆。
+// 已知限制，見 docs/tech-debt.md「舊的 PROJ 編號連結退回選最新專案」。
 const route = useRoute()
 const queryId = (key: string) => (typeof route.query[key] === 'string' ? (route.query[key] as string) : '')
 const linkedId = queryId('project') || queryId('implementation')
@@ -86,12 +87,12 @@ watch([selectedId, filteredProjects], async () => {
 
 <template>
   <div class="w-full">
-    <div v-if="loading" class="py-16 text-center text-[11px] font-mono text-(--text-ink-body)/40 tracking-widest">
+    <div v-if="loading" class="py-16 text-center text-(length:--type-label-size) text-(--text-ink-body)/40">
       {{ LOADING_PROJECTS_TEXT }}
     </div>
 
     <div v-else-if="error" class="py-16 flex flex-col items-center gap-4 text-center">
-      <p class="text-[11px] font-mono text-(--text-accent) tracking-widest">載入失敗</p>
+      <p class="text-(length:--type-label-size) text-(--text-error)">載入失敗</p>
       <p class="text-sm text-(--text-ink-body)">{{ error }}</p>
       <BaseButton variant="primary" @click="load">重試</BaseButton>
     </div>

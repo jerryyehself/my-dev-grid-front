@@ -12,7 +12,7 @@ import {
   type DetailNode,
   type GraphDetailIndex,
 } from './graphDetail'
-import { TYPE_LABEL } from './graphTypes'
+import { nodeKindLabel } from './graphTypes'
 
 // /graph 點節點／點連線之後的詳情卡（2D、3D 共用同一張）。內容排成表格：選了節點就列出它的
 // 直接關係（依關係分組），選了連線就列起點／關係／終點。表格裡的節點名稱都是按鈕，按了改選那個
@@ -101,14 +101,14 @@ const NODE_BTN =
 // 名稱本身比整行還長時才在名稱裡折（overflow-wrap:anywhere 仍在）
 const NODE_BTN_STACKED = NODE_BTN.replace(/^inline /, 'inline-block max-w-full align-baseline ')
 // 表格的欄名、列名：中文標籤 13px（D-68 字級下限）
-const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
+const TH = 'text-left align-top font-normal text-(length:--type-label-size) tracking-[0.05em]'
 </script>
 
 <template>
   <!-- [&_p]:m-0：頁面外層的 .global-page-wrapper 給每個 <p>、<h2> 文件排版的上下距離（base.css），
        卡片裡的短標籤、句子不要那些距離，間距由這裡自己決定 -->
   <div
-    class="relative text-[14px] leading-relaxed border border-(--border-shelf) rounded-xl px-4 py-3 bg-(--bg-paper-light) [&_p]:m-0 [&_p]:text-left"
+    class="relative text-(length:--type-caption-size) leading-relaxed border border-(--border-shelf) rounded-xl px-4 py-3 bg-(--bg-paper-light) [&_p]:m-0 [&_p]:text-left"
   >
     <button
       type="button"
@@ -121,13 +121,13 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
 
     <!-- ───── 選了節點：標題＋連結，下面是它的直接關係表 ───── -->
     <template v-if="nodeSel">
-      <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">
-        {{ TYPE_LABEL[nodeSel.domainType] }}
+      <p class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent)">
+        {{ nodeKindLabel(nodeSel) }}
       </p>
       <h2
         ref="title"
         tabindex="-1"
-        class="block m-0 mt-0.5 pr-8 text-[15.5px] font-bold leading-snug tracking-normal text-(--text-ink-main) [overflow-wrap:anywhere] focus:outline-none"
+        class="block m-0 mt-0.5 pr-8 text-(length:--type-body-size) font-bold leading-snug tracking-normal text-(--text-ink-main) [overflow-wrap:anywhere] focus:outline-none"
       >
         {{ nodeSel.label }}
       </h2>
@@ -160,7 +160,7 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
         <!-- 直接關係：上下堆疊（D-88，畫稿 C）。每組一個 dt（類別或「版本」）＋一個 dd（名稱用頓號接），
              手機上不用兩欄；名稱是 inline-block，只在名稱之間折行，不會從連字號中間斷開 -->
         <template v-if="directCount > 0">
-          <p class="mt-2 text-[14px] leading-relaxed text-(--text-ink-muted)">
+          <p class="mt-2 text-(length:--type-caption-size) leading-relaxed text-(--text-ink-muted)">
             共 {{ directCount }} 條直接關係
           </p>
           <dl class="mt-2 grid gap-2.5 m-0">
@@ -182,15 +182,15 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
             </div>
           </dl>
         </template>
-        <p v-else class="mt-1 text-(--text-ink-muted)">沒有直接關係。</p>
+        <p v-else class="mt-1 text-(length:--type-caption-size) text-(--text-ink-muted)">沒有直接關係。</p>
 
         <!-- 間接關聯：只在顯示設定打開「間接關聯」時列出，跟直接關係分開一張表 -->
         <template v-if="indirect">
           <table v-if="indirect.length" class="mt-4 w-full border-collapse table-fixed">
             <caption class="text-left pb-1">
-              <span class="block text-[13px] tracking-[0.05em] text-(--text-accent)">間接關聯</span>
+              <span class="block text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent)">間接關聯</span>
               <span class="block text-(--text-ink-muted)"
-                >跟這一項連到相同對象的同類項目。</span
+                >跟這個條目連到相同對象的同類條目。</span
               >
             </caption>
             <colgroup>
@@ -226,14 +226,14 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
               </tr>
             </tbody>
           </table>
-          <p v-else class="mt-4 text-(--text-ink-muted)">沒有間接關聯。</p>
+          <p v-else class="mt-4 text-(length:--type-caption-size) text-(--text-ink-muted)">沒有間接關聯。</p>
         </template>
       </template>
     </template>
 
     <!-- ───── 選了間接關聯的虛線：兩端＋兩邊都連到的節點 ───── -->
     <template v-else-if="linkSel?.indirectVia && ends">
-      <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">間接關聯</p>
+      <p class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent)">間接關聯</p>
       <table class="mt-1 w-full border-collapse table-fixed">
         <colgroup>
           <col class="w-[6.5em]" />
@@ -247,8 +247,8 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
                 <template v-if="end">
                   <button type="button" :class="NODE_BTN" @click="pick(end.id)">
                     {{ end.label }}</button
-                  ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-                    TYPE_LABEL[end.domainType]
+                  ><span class="ml-2 text-(length:--type-label-size) text-(--text-ink-body)">{{
+                    nodeKindLabel(end)
                   }}</span>
                 </template>
               </span>
@@ -274,29 +274,29 @@ const TH = 'text-left align-top font-normal text-[13px] tracking-[0.05em]'
 
     <!-- ───── 選了直接關係的實線：一行「主詞 類別　動詞 →　受詞 類別」（D-88，畫稿 E2′）───── -->
     <template v-else-if="ends">
-      <p class="text-[13px] tracking-[0.05em] text-(--text-accent)">直接關係</p>
+      <p class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent)">直接關係</p>
       <p
         v-if="direct"
-        class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[14px] leading-relaxed"
+        class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-(length:--type-caption-size) leading-relaxed"
       >
         <span
           ><button type="button" :class="NODE_BTN" @click="pick(direct.subject.id)">
             {{ direct.subject.label }}</button
-          ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-            TYPE_LABEL[direct.subject.domainType]
+          ><span class="ml-2 text-(length:--type-label-size) text-(--text-ink-body)">{{
+            nodeKindLabel(direct.subject)
           }}</span></span
         >
         <span class="font-bold text-(--text-ink-main)">{{ direct.verb }} →</span>
         <span
           ><button type="button" :class="NODE_BTN" @click="pick(direct.object.id)">
             {{ direct.object.label }}</button
-          ><span class="ml-2 text-[13px] text-(--text-ink-body)">{{
-            TYPE_LABEL[direct.object.domainType]
+          ><span class="ml-2 text-(length:--type-label-size) text-(--text-ink-body)">{{
+            nodeKindLabel(direct.object)
           }}</span></span
         >
       </p>
       <!-- 索引還沒載入：查不到類別，也就不知道誰是主詞，只照邊的方向列兩端名稱 -->
-      <p v-else class="mt-2 text-[14px] leading-relaxed">
+      <p v-else class="mt-2 text-(length:--type-caption-size) leading-relaxed">
         {{ ends.sourceLabel }} → {{ ends.targetLabel }}
       </p>
     </template>

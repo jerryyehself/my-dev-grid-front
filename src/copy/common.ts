@@ -16,8 +16,23 @@ export const NAV_LABELS = {
   about: 'ABOUT',
 } as const
 
+/** 導覽列各項的中文名（手機選單中英並列用，例如「ARTICLES 文章」）；同一個目的地全站只用一個中文名，「實作」照 copy-language 的定案 */
+export const NAV_LABELS_ZH = {
+  home: '首頁',
+  articles: '文章',
+  projects: '實作',
+  graph: '圖譜',
+  about: '關於',
+} as const
+
+/** 主題切換：明亮模式＝淺色、暗黑模式＝深色 */
+export const THEME_TOGGLE_LABEL = '顯示模式'
+export const THEME_LIGHT_ON_TEXT = '明亮模式'
+export const THEME_LIGHT_OFF_TEXT = '暗黑模式'
+
 /** 手機版導覽選單按鈕的 aria-label */
 export const NAV_MENU_ARIA_LABEL = '開啟導覽選單'
+export const NAV_MENU_CLOSE_ARIA_LABEL = '關閉導覽選單'
 
 /** 頁尾 */
 export const FOOTER_TEXT = '© 2026 Jerry Yeh'
@@ -36,7 +51,7 @@ export const PROJECTS_NO_MATCH_TEXT = '沒有符合篩選條件的專案。'
 export const ARTICLES_EMPTY_TEXT = '目前沒有已發布的文章。'
 
 /**
- * 文章署名：文章清單的頁面標題下面，以及每篇文章的結尾，都用這一句。
- * 空白是全形（U+3000）、斜線是全形（U+FF0F），照原樣，不要改成半形。
+ * 署名：關於頁、文章清單的頁面標題下面、每篇文章的結尾，三處都用這一句。
+ * 改字只改這裡。
  */
-export const ARTICLE_BYLINE = '主筆　Claude　／　發想・審定　站主'
+export const BYLINE = '由 Claude 撰寫，Jerry Yeh 發想並審定'

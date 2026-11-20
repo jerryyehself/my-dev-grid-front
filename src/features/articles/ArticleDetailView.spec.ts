@@ -6,6 +6,7 @@ import ArticleDetailView from './ArticleDetailView.vue'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { ApiHttpError } from '@/api/client'
 import type { ArticleDto } from '@/api/articles'
+import { resolveType } from '@/test/cssTokens'
 
 function article(id: number, title: string, creationDate: string, body = `${title} 的內文`): ArticleDto {
   return {
@@ -90,8 +91,7 @@ describe('ArticleDetailView', () => {
     expect(wrapper.find('.max-w-\\[40em\\]').exists()).toBe(true)
     expect(wrapper.find('.max-w-prose').exists()).toBe(false)
     for (const el of [wrapper.find('.max-w-\\[40em\\] p'), wrapper.find('.max-w-\\[40em\\] li')]) {
-      expect(el.classes()).toContain('text-base')
-      expect(el.classes()).toContain('leading-7')
+      expect(resolveType(el.classes())).toMatchObject({ size: 16, leading: 28 })
       expect(el.classes()).not.toContain('leading-[1.6]')
     }
   })
@@ -103,13 +103,14 @@ describe('ArticleDetailView', () => {
     })
     const wrapper = await mountAt(4)
 
-    expect(wrapper.find('h1').classes()).toEqual(expect.arrayContaining(['text-4xl', 'leading-12']))
-    // 二級標題在頁面裡是 h3（h1 是文章標題），三級以下維持原樣
+    expect(resolveType(wrapper.find('h1').classes())).toMatchObject({ size: 36, leading: 48 })
+    // 二級標題在頁面裡是 h3（h1 是文章標題），三級標題 16 加粗
     const [h2, h3] = wrapper.findAll('.max-w-\\[40em\\] h3[id]')
-    expect(h2!.classes()).toEqual(expect.arrayContaining(['text-2xl', 'leading-9']))
-    expect(h3!.classes()).not.toContain('text-2xl')
+    expect(resolveType(h2!.classes())).toMatchObject({ size: 24, leading: 36 })
+    expect(resolveType(h3!.classes()).size).toBe(16)
+    expect(h3!.classes()).toContain('font-bold')
     for (const p of wrapper.findAll('.max-w-\\[40em\\] p').filter((p) => p.text().startsWith('段落'))) {
-      expect(p.classes()).toContain('mb-6')
+      expect(resolveType(p.classes()).marginBottom).toBe(24)
     }
   })
 
@@ -121,8 +122,26 @@ describe('ArticleDetailView', () => {
     const wrapper = await mountAt(4)
 
     const list = wrapper.find('section ol')
-    expect(list.classes()).toEqual(expect.arrayContaining(['text-sm', 'leading-6']))
+    expect(resolveType(list.classes())).toMatchObject({ size: 14, leading: 24 })
     expect(list.classes()).not.toContain('leading-[1.5]')
+  })
+
+  it('它應該把日期與分類設成標籤 13／20，字距不超過 0.05em（不再是 11px、0.24em）', async () => {
+    fetchArticleOrDemo.mockResolvedValue({
+      article: {
+        ...article(4, 'D 標籤', '2026-08-01', '內文'),
+        techniques: [{ id: 1, title: 'Vue', relation_id: 1 }],
+      },
+      loadError: null,
+    })
+    const wrapper = await mountAt(4)
+
+    const label = wrapper.findAll('div').find((d) => d.text().includes('Vue') && d.text().includes('2026-08-01') && d.classes().includes('uppercase'))!
+    const t = resolveType(label.classes())
+    expect([t.size, t.leading]).toEqual([13, 20])
+    expect(parseFloat(t.tracking!)).toBeLessThanOrEqual(0.05)
+    expect(label.classes().join(' ')).not.toContain('tracking-[0.24em]')
+    expect(label.classes()).not.toContain('text-[11px]')
   })
 
   it('它應該把註腳渲染成註釋清單，並收起的目錄（窄螢幕用）與左欄目錄指向同一組標題', async () => {
@@ -213,7 +232,7 @@ describe('ArticleDetailView', () => {
   })
 
   describe('署名', () => {
-    const BYLINE = '主筆\u3000Claude\u3000\uff0f\u3000發想\u30fb審定\u3000站主'
+    const BYLINE = '由 Claude 撰寫，Jerry Yeh 發想並審定'
 
     it('它應該在每篇文章的結尾顯示署名一次，在正文與註釋後面、上一篇／下一篇前面', async () => {
       fetchArticleOrDemo.mockResolvedValue({

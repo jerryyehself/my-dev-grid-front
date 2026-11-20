@@ -12,10 +12,13 @@
 
 /* 📚 1. 淺色主題 */
 :root,
-.theme-library {
+.theme-light {
     /* 📄 紙張底色 */
     --bg-paper-light: #f6f5f2;
     --bg-paper-dark: #e4ebf5;
+    /* 整頁底色（純色）：只是別名，沒有新色值。淺色用卡紙底；
+       深色用 --bg-paper-dark（見 .theme-dark），拿掉暗角漸層之後面板（--bg-folder）對它有 1.3:1 */
+    --bg-page: var(--bg-paper-light);
 
     /* 導覽列與頁尾（藏青書脊） */
     --bg-nav-footer: #162541;
@@ -25,8 +28,6 @@
     /* 🎛️ 導覽列毛玻璃（跟配色無關的控制值） */
     --nav-bg-opacity: 0.65;
     /* 調整此數值控制透明度 (0.0 到 1.0) */
-    --nav-blur: 12px;
-    /* 調整此數值控制毛玻璃模糊度 (0px 代表關閉) */
 
     /* ✒️ 文字與線條 */
     --text-ink-main: #202839;
@@ -35,6 +36,8 @@
     --text-accent: #922e39;
     /* 酒紅：淺色主題的強調色 */
     --border-shelf: rgba(22, 37, 65, 0.14);
+    /* 導覽列上的外框（登入鈕、主題切換鈕）：導覽列兩個主題都是藏青底，所以暗色不用覆寫。值同暗色的 --border-shelf */
+    --border-on-nav: rgba(179, 134, 55, 0.2);
     --bg-folder: #eaeff8;
     /* 淡藏青卡片底 */
     --bg-active-row: rgba(146, 46, 57, 0.08);
@@ -46,7 +49,7 @@
        14% 約 1.25:1（設計稿量測）；另開 token 是因為 --bg-active-row 還有別處在用，不能連帶變濃 */
     --list-surface: var(--bg-paper-light);
     /* 列表面板的不透明表面（專案頁左欄）。淺色沿用卡片底；深色改用 --bg-folder，因為
-       --bg-paper-light 剛好等於 body 暗角漸層的邊緣色，面板會隱形。只是別名，沒有新色值 */
+       --bg-paper-light 跟深色整頁底色（--bg-page）只差 1.15:1，面板幾乎隱形（--bg-folder 有 1.3:1）。只是別名，沒有新色值 */
     --focus-ring: rgba(146, 46, 57, 0.16);
     /* 輸入框聚焦時的外暈 */
 
@@ -87,17 +90,17 @@
     --text-error: #c70d12;
 }
 
-/* 🕯️ 2. 深色主題（class 名稱沿用 .theme-terminal，useTheme 與測試都靠它） */
-.theme-terminal {
+/* 🕯️ 2. 深色主題（.theme-dark，useTheme、theme-init.js 與測試都靠這個 class） */
+.theme-dark {
     --bg-paper-light: #1d232d;
     --bg-paper-dark: #0d1529;
+    --bg-page: var(--bg-paper-dark);
 
     --bg-nav-footer: #040a1a;
     --text-nav-footer: #cec9c3;
     --text-nav-hover: #b38637;
 
     --nav-bg-opacity: 0.95;
-    --nav-blur: 0px;
 
     --text-ink-main: #e8edf6;
     --text-ink-body: #c8ced9;
@@ -132,4 +135,61 @@
     --text-on-selected: #0d1529;
 
     --text-error: #e57d71;
+}
+
+/* 全站字級 token（--type-*，全站七級字級）。用 rem：使用者調瀏覽器字級時跟著縮放。
+   元件讀這些變數，不寫死 px。下面文章頁的 --article-* 數字跟同級相同，但測試要求它們是字面值，
+   所以不改成 var()，由 typeScale.spec.ts 守兩邊不會漂開。
+   例外不收進七級：字標（TheNavbar 的 20／26）、SVG 與畫布裡的字、圖示字元、後台表單的 10px。
+   關於頁（features/about）依設計定案不收進這張表，保留自己的字級，只有職稱那行用展示字。 */
+:root {
+    --type-display-size: 2.75rem; /* 44px，第 1 級：展示（首頁主題句、404 標題） */
+    --type-display-leading: 3.5rem; /* 56px */
+    --type-title-size: 2.25rem; /* 36px，第 2 級：標題（文章、實作詳情的標題） */
+    --type-title-leading: 3rem; /* 48px */
+    --type-heading-size: 1.5rem; /* 24px，第 3 級：標題二（二級標題、頁標） */
+    --type-heading-leading: 2.25rem; /* 36px，會換行的標題 */
+    --type-page-title-leading: 2rem; /* 32px，單行頁標 */
+    --type-body-size: 1rem; /* 16px，第 4 級：內文 */
+    --type-body-leading: 1.75rem; /* 28px，長文 */
+    --type-ui-leading: 1.5rem; /* 24px，介面 */
+    --type-caption-size: 0.875rem; /* 14px，第 5 級：說明（完整句子、腳註、程式碼區塊） */
+    --type-caption-leading: 1.5rem; /* 24px，多行 */
+    --type-label-size: 0.8125rem; /* 13px，第 6 級：標籤（中文短標籤） */
+    --type-label-leading: 1.25rem; /* 20px */
+    --type-label-tracking: 0.05em;
+    --type-mono-size: 0.75rem; /* 12px，第 7 級：等寬（只放拉丁字母與數字） */
+    --type-mono-leading: 1rem; /* 16px */
+}
+
+/* 展示級是全站唯一會隨螢幕縮的字級 */
+@media (max-width: 600px) {
+    :root {
+        --type-display-size: 2.25rem; /* 36px */
+        --type-display-leading: 2.75rem; /* 44px */
+    }
+}
+
+/* ==========================================================================
+   文章內頁的字級與間距（定案值）。只管文章頁（標題、內文、二級／三級標題、註腳、標籤），
+   其他頁的行高不動。兩個主題共用，所以放在主題區塊外面。
+   用 rem：使用者調整瀏覽器字級時跟著縮放。要改數字只改這裡，元件讀這些變數，不寫死。
+   依據：標題 36／48 與二級標題 24／36 的行高用 1.33／1.5 倍（赫蹏對中文標題的做法）；
+   段距 24 = 一整行再少一點；註腳是多行連續文字，14／24；標籤（日期、分類、註腳編號）13／20，
+   字距 ≤ 0.05em（中文標籤字距拉寬只會把字拉開）。
+   ========================================================================== */
+:root {
+    --article-title-size: 2.25rem; /* 36px */
+    --article-title-leading: 3rem; /* 48px */
+    --article-body-size: 1rem; /* 16px */
+    --article-body-leading: 1.75rem; /* 28px */
+    --article-h2-size: 1.5rem; /* 24px */
+    --article-h2-leading: 2.25rem; /* 36px */
+    --article-h3-size: 1rem; /* 16px，加粗，不加大 */
+    --article-paragraph-gap: 1.5rem; /* 24px */
+    --article-footnote-size: 0.875rem; /* 14px */
+    --article-footnote-leading: 1.5rem; /* 24px */
+    --article-label-size: 0.8125rem; /* 13px */
+    --article-label-leading: 1.25rem; /* 20px */
+    --article-label-tracking: 0.05em;
 }

@@ -34,6 +34,6 @@ withDefaults(
       ]"
       >{{ value }}</span
     >
-    <span class="mt-0.5 block text-[11px] tracking-wide text-(--text-ink-muted)">{{ label }}</span>
+    <span class="mt-0.5 block text-(length:--type-label-size) tracking-wide text-(--text-ink-muted)">{{ label }}</span>
   </div>
 </template>

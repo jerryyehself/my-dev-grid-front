@@ -1,7 +1,7 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
-import { ARTICLE_BYLINE } from '@/copy/common'
+import { BYLINE } from '@/copy/common'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,7 +33,9 @@ const router = createRouter({
       meta: {
         tag: 'Home',
         title: 'IN / ARCHIVE',
-        subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
+        // 首頁沒有 kicker 也沒有副標：主題句就是 H1，由 HomeView 自己畫，
+        // 通用表頭不再畫一次。title 仍留著給分頁標題與捲動追蹤列用
+        hideHeader: true,
       },
     },
     {
@@ -42,13 +44,13 @@ const router = createRouter({
       component: () => import('@/features/about/AboutView.vue'),
       meta: {
         tag: 'About',
-        title: '私人藏書，公開目錄',
+        title: '關於',
         subtitle: '文章、技術與專案的目錄，條目之間以雙向關係連結',
-        // About 頁自己畫了一個滿版橫幅當作大標題，跟 MainLayout 的通用表頭是同一件事，
-        // 兩個都顯示會重複兩次，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
+        // About 頁自己畫了頁首（名字、職涯句、按鈕與線稿），跟 MainLayout 的通用表頭是同一件事，
+        // 兩個都顯示會重複，所以這頁把通用表頭關掉，只留捲動追蹤列用同一組文字
         hideHeader: true,
-        // 整頁由滿版色帶組成（照片橫幅到 AUTHOR 色帶），主內容區上下都不留白，
-        // 第一段貼齊導覽列、最後一段貼齊頁尾。只有這頁需要，其他 hideHeader 頁面仍要上留白
+        // 內容欄寬度與上下留白由頁面自己決定（1120 寬、頁首上留白 64），不套 MainLayout 的欄寬與
+        // .global-page-wrapper 的文件排版預設值。只有這頁需要，其他 hideHeader 頁面仍要上留白
         fullBleed: true,
       },
     },
@@ -59,8 +61,6 @@ const router = createRouter({
       meta: {
         tag: 'Projects',
         title: 'Production Artifacts',
-        // mockup 設計是 1120px，比全站預設的 1024px 寬，主從式版面才有足夠的呼吸空間
-        contentWidth: '1120px',
       },
     },
     {
@@ -86,7 +86,7 @@ const router = createRouter({
         tag: 'Articles',
         title: 'Articles',
         // 標題下面那一行是文章署名，不是頁面說明；放在副標的位置，才會貼在標題正下方
-        subtitle: ARTICLE_BYLINE,
+        subtitle: BYLINE,
       },
     },
     {
@@ -133,7 +133,6 @@ const router = createRouter({
         title: '新增文章',
         subtitle: '內文用 Markdown',
         hideHeader: true,
-        contentWidth: '1120px',
         requiresAuth: true,
       },
     },
@@ -148,7 +147,7 @@ const router = createRouter({
         tag: 'ARTICLES',
         title: '',
         hideHeader: true,
-        // 註腳邊注要在正文右邊留一欄（≥1240px 時再加左欄目錄），1024px 放不下，欄寬的算法見 ArticleDetailView
+        // 註腳邊注要在正文右邊留一欄（≥1240px 時再加左欄目錄），全站預設的 1120px 放不下，欄寬的算法見 ArticleDetailView
         contentWidth: '1216px',
       },
     },
@@ -162,8 +161,6 @@ const router = createRouter({
         subtitle: '內文用 Markdown，腳註用 [^n] 標記',
         // 編輯頁自己畫了表頭與動作列，通用表頭會把同一組標題再顯示一次
         hideHeader: true,
-        // 主從式版面：主欄加 340px 側欄，1024px 會擠到側欄沒有呼吸空間
-        contentWidth: '1120px',
         requiresAuth: true,
       },
     },

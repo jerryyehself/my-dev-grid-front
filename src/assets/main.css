@@ -1,9 +1,24 @@
 @import 'tailwindcss';
 
+/* 展示字 Cactus Classical Serif（SIL OFL 1.1，授權檔在 src/assets/fonts/），自己架的 woff2 子集：
+   只含三處用到的 51 個字，不是完整字型，沒收的字會自動退到後備字型。
+   原字型只有一個字重（400）。font-weight 宣告成 400 700，是讓元素設 700 時不會被瀏覽器假粗體；
+   後備的 Noto Serif TC 則照元素字重（700）顯示，所以字體沒載到時標題字重仍是 700。 */
+@font-face {
+  font-family: 'Cactus Classical Serif';
+  src: url('./fonts/CactusClassicalSerif-display.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* 標題用 Noto Serif TC、字標用 Libre Caslon Text（D-60，取代 Fraunces——它沒有中文字形，
    中文標題其實一直是各裝置的系統字）。字體本身在 index.html 載入。
    --font-wordmark 只給「IN / ARCHIVE」字標用，Tailwind 會自動產生 font-wordmark utility */
 @theme {
+  /* 展示字（只用在首頁大標、404 大標、關於頁職稱）：Cactus Classical Serif 的子集，後備 Noto Serif TC，
+     再退到 --font-serif 原本的堆疊。字體檔與授權見 src/assets/fonts/、子集做法見 design/fonts/ */
+  --font-display: 'Cactus Classical Serif', 'Noto Serif TC', Georgia, 'Times New Roman', serif;
   --font-serif: 'Noto Serif TC', Georgia, 'Times New Roman', serif;
   --font-wordmark: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
 }

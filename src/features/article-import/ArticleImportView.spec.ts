@@ -14,6 +14,7 @@ import {
   NEW_ITEM,
   RENAMED_NEW_ITEM,
   RENAMED_OLD_ITEM,
+  SITE_VERSION,
   WARNING_ITEM,
   listingOf,
 } from './articleImportFixtures'
@@ -308,9 +309,35 @@ describe('ArticleImportView conflict 覆蓋確認', () => {
           expected_blob_sha: CONFLICT_ITEM.blob_sha,
           action: 'update',
           overwrite_site_edits: true,
+          expected_site_version: SITE_VERSION,
         },
       ],
     })
+  })
+
+  it('它應該在清單沒給 site_version 時擋住覆蓋、說明原因，也不呼叫後端', async () => {
+    const noVersion = { ...CONFLICT_ITEM, site_version: null }
+    const w = await mountView([noVersion])
+    await pick(w, '兩邊都改過的筆記', '更新')
+    await row(w, '兩邊都改過的筆記').get('[role="switch"]').trigger('click')
+
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+    expect(w.get('[data-test="problems"]').text()).toContain('缺少站上版本')
+    await submitButton(w).trigger('click')
+    expect(importArticleSources).not.toHaveBeenCalled()
+  })
+
+  it('它應該不替其他動作帶 expected_site_version', async () => {
+    vi.mocked(importArticleSources).mockResolvedValue({ commit_sha: COMMIT, message: 'ok', data: [] })
+    const w = await mountView()
+    await pick(w, '新的筆記', '新增為草稿')
+    await pick(w, '有更新的筆記', '更新')
+    await submitButton(w).trigger('click')
+    await flushPromises()
+
+    const sent = vi.mocked(importArticleSources).mock.calls[0]![0]
+    expect(sent.items).toHaveLength(2)
+    for (const item of sent.items) expect(item).not.toHaveProperty('expected_site_version')
   })
 
   it('它應該在改回「不處理」之後不再要求確認', async () => {
@@ -531,6 +558,61 @@ describe('ArticleImportView 匯入失敗', () => {
     expect(box.findAll('button').map((b) => b.text())).toEqual(['重新整理清單'])
   })
 
+  it('它應該在 409 說站上內容於清單載入後又改過時，用固定說明取代後端原文，並維持提供「重新整理清單」', async () => {
+    const w = await failWith(
+      new ApiRequestError(409, '/article-sources/import', 'POST', {
+        reason: 'conflict',
+        errors: {
+          'items.0.expected_site_version': [
+            '站上的標題、日期或內文在列出清單之後又改過，請重新整理清單，確認後再決定要不要覆蓋。',
+          ],
+        },
+      }),
+    )
+    const box = w.get('[data-test="submit-error"]')
+    expect(box.get('p').text()).toBe(
+      '站上的標題、日期或內文在清單載入之後又改過。沒有任何文章被寫入。請重新整理清單，確認站上現在的內容後，再決定要不要覆蓋。',
+    )
+    expect(box.findAll('button').map((b) => b.text())).toEqual(['重新整理清單'])
+  })
+
+  it('它應該在覆蓋被 409 退回後擋下同一份選擇，重新整理清單後才能再送', async () => {
+    vi.mocked(importArticleSources).mockRejectedValue(
+      new ApiRequestError(409, '/article-sources/import', 'POST', {
+        reason: 'conflict',
+        errors: { 'items.0.expected_site_version': ['站上又改過。'] },
+      }),
+    )
+    const w = await mountView()
+    await pick(w, '兩邊都改過的筆記', '更新')
+    await row(w, '兩邊都改過的筆記').get('[role="switch"]').trigger('click')
+    await submitButton(w).trigger('click')
+    await flushPromises()
+
+    expect(w.get('[data-test="submit-error"]').text()).toContain('清單載入之後又改過')
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+    await submitButton(w).trigger('click')
+    expect(importArticleSources).toHaveBeenCalledTimes(1)
+
+    // 重新整理後清單帶新的 site_version；重新選、重新確認覆蓋，送出的是新版本
+    const newer = 'e'.repeat(64)
+    vi.mocked(fetchArticleSources).mockResolvedValue(listingOf([{ ...CONFLICT_ITEM, site_version: newer }]))
+    vi.mocked(importArticleSources).mockResolvedValue({ commit_sha: COMMIT, message: 'ok', data: [] })
+    await w.get('[data-test="submit-error"]').findAll('button')[0]!.trigger('click')
+    await flushPromises()
+    expect(w.find('[data-test="submit-error"]').exists()).toBe(false)
+    await pick(w, '兩邊都改過的筆記', '更新')
+    await row(w, '兩邊都改過的筆記').get('[role="switch"]').trigger('click')
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+    await submitButton(w).trigger('click')
+    await flushPromises()
+    expect(importArticleSources).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(importArticleSources).mock.calls[1]![0].items[0]).toMatchObject({
+      overwrite_site_edits: true,
+      expected_site_version: newer,
+    })
+  })
+
   it.each([
     [503, 'not_configured', '尚未設定文章來源。'],
     [503, 'github_rate_limited', 'GitHub 的請求次數已達上限，請稍後再試。'],
@@ -567,6 +649,42 @@ describe('ArticleImportView 匯入失敗', () => {
   it('它應該在 500 這類沒有分類的失敗時不提供「重新整理清單」', async () => {
     const w = await failWith(new ApiRequestError(500, '/article-sources/import', 'POST'))
     expect(w.get('[data-test="submit-error"]').findAll('button')).toHaveLength(0)
+  })
+
+  it.each([
+    { name: '409', error: new ApiRequestError(409, '/article-sources/import', 'POST', { reason: 'stale' }) },
+    { name: '422', error: new ApiValidationError({ 'items.0.documentation_id': '要連結的文章不存在或已刪除。' }) },
+  ])('它應該在 $name 被退回後擋下同一份選擇，改選或重新整理清單才能再送', async ({ error }) => {
+    const w = await failWith(error)
+    expect(importArticleSources).toHaveBeenCalledTimes(1)
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+    await submitButton(w).trigger('click')
+    expect(importArticleSources).toHaveBeenCalledTimes(1)
+
+    // 改選一列：請求不同了，可以再送
+    await pick(w, '有更新的筆記', '更新')
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+    // 改回原本的選擇：又是被退回過的同一份，再次擋下
+    await pick(w, '有更新的筆記', '不處理')
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+
+    // 重新整理清單：擋下的記錄清掉，原本那份選擇重新選了可以送
+    await w.findAll('button').find((b) => b.text() === '重新整理清單')!.trigger('click')
+    await flushPromises()
+    await pick(w, '新的筆記', '新增為草稿')
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+  })
+
+  it.each([
+    { name: '連不上後端', error: new TypeError('Failed to fetch') },
+    { name: '500', error: new ApiRequestError(500, '/article-sources/import', 'POST') },
+    { name: '503', error: new ApiRequestError(503, '/article-sources/import', 'POST', { reason: 'github_rate_limited' }) },
+  ])('它應該在 $name 失敗後不擋同一份選擇（可能只是暫時的）', async ({ error }) => {
+    const w = await failWith(error)
+    expect(submitButton(w).attributes('disabled')).toBeUndefined()
+    await submitButton(w).trigger('click')
+    await flushPromises()
+    expect(importArticleSources).toHaveBeenCalledTimes(2)
   })
 
   it('它應該在失敗後允許再送出一次（不卡在送出中）', async () => {

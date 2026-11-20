@@ -4,7 +4,6 @@ import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import ForceGraph3D, { type ForceGraph3DInstance, type NodeObject, type LinkObject } from '3d-force-graph'
 import * as THREE from 'three'
 import { fetchGraphPocData, type GraphPocNode, type GraphPocLink, type GraphPocSelection } from './graphPocData'
-import { STALE_ALPHA_FACTOR, STALE_FOCUS_BASE_ALPHA, STALE_LINK_WIDTH, isStaleLink } from './staleEdge'
 import { useTheme } from '@/composables/useTheme'
 import { LOADING_GRAPH_TEXT } from '@/copy/common'
 
@@ -212,21 +211,14 @@ onMounted(async () => {
     })
     .linkColor((l) => {
       // 同類別、跨類別都是直接關係，一種顏色、一種粗細（見 GraphPoc2D 的同一段說明）
-      // 過期邊的規則是相乘（見 staleEdge.ts）：3D 線條顏色不吃 alpha，用 blendTowardBg 的
-      // 保留比例代替透明度，同一個狀態的保留比例再乘 STALE_ALPHA_FACTOR
-      const stale = isStaleLink(l)
-      const factor = stale ? STALE_ALPHA_FACTOR : 1
+      // 3D 線條顏色不吃 alpha，淡化用 blendTowardBg 的保留比例代替透明度
       const base = css('--edge-real')
       if (hoveredNodeId) {
-        if (!linkTouchesHovered(l)) return blendTowardBg(base, 0.12 * factor)
-        return stale
-          ? blendTowardBg(css('--text-accent'), STALE_FOCUS_BASE_ALPHA * factor)
-          : css('--text-accent')
+        return linkTouchesHovered(l) ? css('--text-accent') : blendTowardBg(base, 0.12)
       }
-      return stale ? blendTowardBg(base, factor) : base
+      return base
     })
     .linkWidth((l) => {
-      if (isStaleLink(l)) return STALE_LINK_WIDTH
       if (hoveredNodeId && linkTouchesHovered(l)) return 2.2
       return 1
     })
@@ -321,7 +313,7 @@ onUnmounted(() => {
       class="absolute inset-0 flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
       :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
     >
-      <span class="text-[13px] text-(--text-ink-body)/70">節點排列中…</span>
+      <span class="text-(length:--type-label-size) text-(--text-ink-body)/70">節點排列中…</span>
     </div>
   </div>
 </template>

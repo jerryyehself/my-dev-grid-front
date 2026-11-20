@@ -12,42 +12,67 @@ async function freshThemeToggle() {
 
 describe('ThemeToggle', () => {
   beforeEach(() => {
-    document.documentElement.classList.remove('theme-terminal')
+    document.documentElement.classList.remove('theme-dark')
     localStorage.clear()
   })
 
   afterEach(() => {
-    document.documentElement.classList.remove('theme-terminal')
+    document.documentElement.classList.remove('theme-dark')
     localStorage.clear()
   })
 
-  it('它應該預設顯示「☀ 淺色」（目前是 library 主題）', async () => {
+  it('它應該預設是明亮模式（light）：「明亮模式」被按下、「暗黑模式」沒有', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
-    expect(wrapper.text()).toContain('☀')
-    expect(wrapper.text()).toContain('淺色')
+    const on = wrapper.findAll('button')[0]!
+    const off = wrapper.findAll('button')[1]!
+    expect(on.text()).toBe('明亮模式')
+    expect(off.text()).toBe('暗黑模式')
+    expect(on.attributes('aria-pressed')).toBe('true')
+    expect(off.attributes('aria-pressed')).toBe('false')
   })
 
-  it('它應該在點擊後切換主題，圖示與文字跟著變成「☽ 深色」', async () => {
+  it('它應該用 group 包起來並帶上名稱，讓螢幕閱讀器讀得出這是顯示模式切換', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
-    await wrapper.find('button').trigger('click')
-
-    expect(wrapper.text()).toContain('☽')
-    expect(wrapper.text()).toContain('深色')
-    expect(document.documentElement.classList.contains('theme-terminal')).toBe(true)
+    const group = wrapper.find('[role="group"]')
+    expect(group.attributes('aria-label')).toBe('顯示模式')
   })
 
-  it('它應該隨主題切換更新 aria-pressed（深色主題＝pressed）', async () => {
+  it('它應該在點「暗黑模式」後切成 dark、掛上 theme-dark、aria-pressed 跟著換', async () => {
     const ThemeToggle = await freshThemeToggle()
     const wrapper = mount(ThemeToggle)
 
-    expect(wrapper.find('button').attributes('aria-pressed')).toBe('false')
+    await wrapper.findAll('button')[1]!.trigger('click')
 
-    await wrapper.find('button').trigger('click')
+    const on = wrapper.findAll('button')[0]!
+    const off = wrapper.findAll('button')[1]!
+    expect(on.attributes('aria-pressed')).toBe('false')
+    expect(off.attributes('aria-pressed')).toBe('true')
+    expect(document.documentElement.classList.contains('theme-dark')).toBe(true)
+    expect(localStorage.getItem('theme')).toBe('dark')
+  })
 
-    expect(wrapper.find('button').attributes('aria-pressed')).toBe('true')
+  it('它應該在點「明亮模式」後切回 light、拿掉 theme-dark', async () => {
+    document.documentElement.classList.add('theme-dark')
+    const ThemeToggle = await freshThemeToggle()
+    const wrapper = mount(ThemeToggle)
+
+    await wrapper.findAll('button')[0]!.trigger('click')
+
+    expect(document.documentElement.classList.contains('theme-dark')).toBe(false)
+    expect(localStorage.getItem('theme')).toBe('light')
+  })
+
+  it('它應該在已是目前主題時再點同一顆不改變狀態', async () => {
+    const ThemeToggle = await freshThemeToggle()
+    const wrapper = mount(ThemeToggle)
+
+    await wrapper.findAll('button')[0]!.trigger('click')
+
+    expect(wrapper.findAll('button')[0]!.attributes('aria-pressed')).toBe('true')
+    expect(localStorage.getItem('theme')).toBeNull()
   })
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, reactive, ref, useId, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, useId, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import ForceGraph from 'force-graph'
 import { forceCollide, forceX, forceY } from 'd3-force'
@@ -9,12 +9,23 @@ import { edgeRelation, edgeRelationText, type EdgeRelation } from './graphRelati
 import type { GraphDto, GraphNodeType, GraphPathDto } from '@/api/graph'
 import type { GraphPocSelection } from './graphPocData'
 import { useTheme } from '@/composables/useTheme'
-import { directLinkStyle, isStaleLink } from './staleEdge'
-import { TYPE_LABEL, endpointId, type SimLink, type SimNode } from './graphTypes'
+import {
+  aboutLinkCanvasMode,
+  aboutMarkerStyle,
+  directLinkStyle,
+  drawAboutMarker,
+  isAboutLink,
+} from './linkStyle'
+import { nodeKindLabel, endpointId, type SimLink, type SimNode } from './graphTypes'
 import { recencyScore, viridis, withAlpha } from './colorScale'
 import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './derivedEdges'
 import { typeClusterForce } from './clusterForce'
-import { controlsBottomInset, fitTransformWithInset, type FitItem } from './fitView'
+import {
+  controlsBottomInset,
+  fitTransformInBand,
+  fitTransformWithInset,
+  type FitItem,
+} from './fitView'
 import { LABEL_MAX_WIDTH_PX, placeLabels, truncateLabel, type LabelCandidate } from './labels'
 import GraphDisplaySettings from './GraphDisplaySettings.vue'
 import GraphLegend from './GraphLegend.vue'
@@ -76,6 +87,12 @@ const props = withDefaults(
     details?: 'popover' | 'emit'
     /** 路徑查詢結果（/graph 專用）：路徑上的節點與關係提亮，其餘淡化，鏡頭帶過去 */
     highlightPath?: GraphPathDto | null
+    /**
+     * 首頁版本：圖例帶各類數量與「目前路線」（有路線亮起時）；「?」打開的是「閱讀方式」面板
+     * （節點大小、圓框、操作、往 /graph 的連結），不是純操作說明；路線亮起時鏡頭不拉近到路線，
+     * 整張圖的形狀留在畫面上（首頁要的是形狀，路線只是在圖上亮起來）。
+     */
+    homeMode?: boolean
   }>(),
   // 同類聚集 0.08 的由來（2026-10-02 拿真實 60 節點資料、4 個亂數種子平均調過）：指標是
   // 「各類別節點到自己類別重心的平均距離 ÷ 全部節點到整體重心的平均距離」（越小越成團）跟
@@ -94,6 +111,7 @@ const props = withDefaults(
     label: '知識圖譜',
     details: 'popover',
     highlightPath: null,
+    homeMode: false,
   },
 )
 
@@ -113,6 +131,20 @@ const typeFilter = reactive<Record<GraphNodeType, boolean>>({
 // defineModel 沒綁時就是元件自己的狀態，行為跟原本的 ref 一樣。
 const showIndirect = defineModel<boolean>('showIndirect', { default: false })
 const indirectCount = ref(0)
+// 首頁圖例的各類數量（跟著傳進來的資料算，不另外打 API）
+const legendCounts = computed(() =>
+  props.homeMode
+    ? {
+        documentation: props.data.nodes.filter((n) => n.type === 'documentation').length,
+        technique: props.data.nodes.filter((n) => n.type === 'technique').length,
+        implementation: props.data.nodes.filter((n) => n.type === 'implementation').length,
+        edges: props.data.edges.length,
+      }
+    : null,
+)
+const routeLit = computed(() => props.homeMode && !!props.highlightPath?.found)
+// 圖上沒有任何「關於」連線時，圖例不列「關於」
+const hasAboutLink = computed(() => props.data.edges.some((e) => isAboutLink(e.predicate)))
 const settingsOpen = ref(false)
 const helpOpen = ref(false)
 const isMac = isMacLike()
@@ -137,7 +169,7 @@ function css(varName: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
 }
 function isDark(): boolean {
-  return document.documentElement.classList.contains('theme-terminal')
+  return document.documentElement.classList.contains('theme-dark')
 }
 function typeColor(type: GraphNodeType): string {
   return css(`--node-${type === 'documentation' ? 'doc' : type === 'technique' ? 'tech' : 'impl'}`)
@@ -223,6 +255,11 @@ let pathEdgeKeys: Set<string> | null = null
 function linkKey(a: string, b: string): string {
   return a < b ? `${a}|${b}` : `${b}|${a}`
 }
+// 框景範圍：有路徑結果時只框路徑上的節點（/graph）；首頁版本不拉近，框整張圖
+function pathFitFilter(): ((n: SimNode) => boolean) | undefined {
+  if (!pathNodeIds || props.homeMode) return undefined
+  return (n) => pathNodeIds?.has(n.id) ?? false
+}
 function isPathEdge(l: SimLink): boolean {
   return (
     !l.derived &&
@@ -253,12 +290,11 @@ function derivedStrength(l: SimLink): number {
 // 同時開著時取聯集：連到被篩掉那層的邊，就算碰到選取節點也一樣淡化。
 // 沒有 hover／固定選取時：推導邊用 --accent-secondary（淺色黃銅、深色玫瑰）加虛線，跟灰色
 // 實線的直接關係分開；透明度再依 derivedStrength() 分級，共用鄰居越多越明顯。
-// 直接關係（含過期邊）的顏色與線寬由 staleEdge.ts 的 directLinkStyle 決定，推導邊在下面另外算
+// 直接關係的顏色與線寬由 linkStyle.ts 的 directLinkStyle 決定，推導邊在下面另外算
 function directLinkStyleOf(l: SimLink) {
   return directLinkStyle({
     edgeReal: css('--edge-real'),
     accent: css('--text-accent'),
-    stale: isStaleLink(l),
     hasFocus: !!(pathNodeIds || focusId()),
     touchesFocus: linkTouchesFocus(l),
     filterDimmed: isLinkFilterDimmed(l),
@@ -381,8 +417,7 @@ function clampAllNodes() {
 // 不算進框景，免得滑過節點時鏡頭跟著跳。
 const FIT_PADDING_PX = 16
 // 只框部分節點（路徑查詢）時最多放大 2 倍：路徑常常只有三四個節點，放到最大會看不到周圍
-function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
-  if (!graph) return
+function fitItemsOf(filter?: (n: SimNode) => boolean): FitItem[] {
   const items: FitItem[] = simNodes
     .filter((n) => n.x != null && n.y != null && (!filter || filter(n)))
     .map((n) => ({
@@ -397,6 +432,11 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
     for (const t of Object.values(layerTargetsCache))
       items.push({ x: t.cx, y: t.cy, r: t.r, labelW: 0, labelH: 0 })
   }
+  return items
+}
+function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
+  if (!graph) return
+  const items = fitItemsOf(filter)
   // 窄畫布的控制按鈕橫排在右下角，底邊讓出按鈕列的高度，框景後最下面的節點不會被蓋住
   const pad = filter ? 48 : FIT_PADDING_PX
   const fit = fitTransformWithInset(
@@ -406,6 +446,37 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
     pad,
     controlsBottomInset(viewW, pad),
     filter ? 2 : 3,
+  )
+  if (!fit) return
+  graph.centerAt(fit.cx, fit.cy, durationMs)
+  graph.zoom(fit.k, durationMs)
+}
+
+// 首頁版本：路線亮起時，把鏡頭移到路線在「視窗內看得到的那一段畫布」裡完整看得到的位置。畫布有
+// 一部分在視窗底邊以下（首頁第一屏的下半被切掉），換一條路線後終點節點可能落在那裡。倍率不超過
+// 整張圖的框景倍率（不需要比整張圖更近），放不下才縮小。
+function revealRoute(durationMs = 0) {
+  if (!graph || !stage.value || !pathNodeIds) return
+  const wholeK = fitTransformWithInset(
+    fitItemsOf(),
+    viewW,
+    viewH,
+    FIT_PADDING_PX,
+    controlsBottomInset(viewW, FIT_PADDING_PX),
+  )?.k
+  const rect = stage.value.getBoundingClientRect()
+  const bandTop = Math.max(0, -rect.top)
+  const bandBottom = Math.min(viewH, window.innerHeight - rect.top)
+  // 視窗只露出一小截（或畫布整個在視窗外）時退回整個畫布，不然橫帶太矮、節點會縮成一點
+  const useBand = bandBottom - bandTop >= 120
+  const fit = fitTransformInBand(
+    fitItemsOf((n) => pathNodeIds?.has(n.id) ?? false),
+    viewW,
+    viewH,
+    useBand ? bandTop : 0,
+    useBand ? bandBottom - bandTop : viewH,
+    48,
+    wholeK ?? 2,
   )
   if (!fit) return
   graph.centerAt(fit.cx, fit.cy, durationMs)
@@ -442,7 +513,7 @@ function openPopover(kind: 'node' | 'link', obj: SimNode | SimLink, ev: MouseEve
   popover.edge = null
   if (kind === 'node') {
     const n = obj as SimNode
-    popover.kind = TYPE_LABEL[n.domainType]
+    popover.kind = nodeKindLabel(n)
     popover.title = n.label
     popover.rows = [`共 ${n.degree} 條直接關係`]
     if (n.createdAt) popover.rows.push(`GitHub 上建立於 ${n.createdAt}`)
@@ -560,7 +631,6 @@ async function boot() {
     target: e.target,
     predicate: e.predicate,
     label: e.label,
-    stale: e.stale === true,
   })) as SimLink[]
   // 同類別節點透過共同鄰居推導出來的關聯（見 derivedEdges.ts 檔頭註解）
   const derivedLinks: SimLink[] = computeDerivedEdges(simNodes, simLinks)
@@ -601,7 +671,7 @@ async function boot() {
     // 滑過的提示框（完整名稱，畫布上的名稱可能被截斷）。觸控不顯示：手指離開後提示框會一直
     // 留在原地，而且點下去內容卡／詳情卡本來就有完整名稱。
     .nodeLabel((n) =>
-      lastPointerType === 'touch' ? '' : `${TYPE_LABEL[n.domainType]} · ${n.label}`,
+      lastPointerType === 'touch' ? '' : `${nodeKindLabel(n)} · ${n.label}`,
     )
     // 三層各自的範圍畫成底圖（節點/邊之前先畫，才不會蓋到前景）：畫一圈該類別
     // 自己顏色的虛線圓框。原本還有一條貫穿三層中心的黃銅色虛線（「Z 軸」），2026-10-01
@@ -672,8 +742,7 @@ async function boot() {
       ctx.fill()
     })
     .linkColor((l) => linkDisplayColor(l))
-    // 真實邊寬度 1.5：三層疊圖之後線條密度變高，太細會糊成一片。
-    // 過期邊較細（1），見 staleEdge.ts 的 directLinkStyle
+    // 真實邊寬度 1.5：三層疊圖之後線條密度變高，太細會糊成一片，見 linkStyle.ts 的 directLinkStyle
     .linkWidth((l) =>
       l.derived
         ? linkTouchesFocus(l) && !isLinkFilterDimmed(l)
@@ -684,6 +753,15 @@ async function boot() {
     // 推導邊用虛線跟真實邊區分開來——這是唯一負責「這條線是不是資料庫真實關聯」
     // 這件事的視覺線索，顏色/寬度只負責亮不亮。
     .linkLineDash((l) => (l.derived ? [5, 4] : null))
+    // 「關於」連線在線中點多畫一個空心小圈（樣式見 linkStyle.ts）；其餘連線不畫。
+    .linkCanvasObjectMode((l) => aboutLinkCanvasMode(l))
+    .linkCanvasObject((l, ctx) =>
+      drawAboutMarker(
+        ctx,
+        l,
+        aboutMarkerStyle({ line: directLinkStyleOf(l), canvasBg: css('--canvas-bg') }),
+      ),
+    )
     .linkVisibility((l) => !l.derived || showIndirect.value)
     .linkLabel((l) => {
       if (lastPointerType === 'touch') return ''
@@ -767,8 +845,8 @@ async function boot() {
     .onEngineStop(() => {
       if (!settling.value) return
       clampAllNodes()
-      if (pathNodeIds) fitView(0, (n) => pathNodeIds?.has(n.id) ?? false)
-      else fitView()
+      fitView(0, pathFitFilter())
+      if (props.homeMode) revealRoute(0)
       settling.value = false
     })
   graph.d3Force('charge')?.strength(-130)
@@ -1028,7 +1106,7 @@ function toggleHelp() {
 }
 function closeHelp() {
   helpOpen.value = false
-  stage.value?.focus()
+  stage.value?.focus({ preventScroll: true })
 }
 function clearSelection() {
   const had = pinnedNodeId != null || popover.open
@@ -1095,7 +1173,11 @@ watch(
       pathNodeIds = new Set(path.nodes.map((n) => n.id))
       pathEdgeKeys = new Set(path.edges.map((e) => linkKey(e.source, e.target)))
       // 找到路徑就把鏡頭帶過去，只框路徑上的節點。還沒收斂前交給第一次框景處理。
-      if (!settling.value) fitView(400, (n) => pathNodeIds?.has(n.id) ?? false)
+      if (!settling.value) {
+        // 等路線卡換完內容（高度可能不同，畫布會跟著被推動）再量視窗內看得到的範圍
+        if (props.homeMode) void nextTick(() => revealRoute(400))
+        else fitView(400, (n) => pathNodeIds?.has(n.id) ?? false)
+      }
     }
     forceRedraw()
   },
@@ -1114,7 +1196,13 @@ onUnmounted(() => {
 
 <template>
   <div class="flex flex-col gap-2.5">
-    <GraphLegend :color-mode="colorMode" :show-indirect="showIndirect" />
+    <GraphLegend
+      :color-mode="colorMode"
+      :show-indirect="showIndirect"
+      :counts="legendCounts"
+      :route-lit="routeLit"
+      :has-about="hasAboutLink"
+    />
 
     <!-- 畫布區塊：可以用 Tab 移到這裡（tabindex=0），有焦點時鍵盤快捷鍵才有效（WCAG 2.1.4）。
          滑鼠點圖也會把焦點移過來，但 :focus-visible 只在鍵盤操作時畫外框。
@@ -1148,7 +1236,8 @@ onUnmounted(() => {
       @pointerleave="onPointerLeave"
     >
       <span :id="descId" class="sr-only"
-        >按問號鍵看操作說明。加號、減號縮放，方向鍵移動，0 全部置中。</span
+        >按問號鍵看{{ props.homeMode ? '閱讀方式' : '操作說明' }}。加號、減號縮放，方向鍵移動，0
+        全部置中。</span
       >
       <div ref="container" class="w-full h-full" />
 
@@ -1156,7 +1245,7 @@ onUnmounted(() => {
         class="kg-settling absolute inset-0 z-[5] flex items-end justify-center pb-5 backdrop-blur-sm bg-(--bg-paper-light)/50 transition-opacity duration-700"
         :class="settling ? 'opacity-100' : 'opacity-0 pointer-events-none'"
       >
-        <span class="text-[13px] text-(--text-ink-body)/70"> 節點排列中… </span>
+        <span class="text-(length:--type-label-size) text-(--text-ink-body)/70"> 節點排列中… </span>
       </div>
 
       <div
@@ -1177,44 +1266,44 @@ onUnmounted(() => {
         >
           ×
         </button>
-        <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-1">
+        <div class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) mb-1">
           {{ popover.kind }}
         </div>
         <!-- 連線：一行「名稱 類別 動詞 → 名稱 類別」，放不下就在動詞前換行，「動詞 → 名稱」
              不拆開（模擬讀者審查：動詞停在行尾像句子被截斷）。名稱不能點，用墨色粗體 -->
         <h3
           v-if="popover.edge"
-          class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1 text-[15.5px] leading-[1.35] font-bold text-(--text-ink-main) [overflow-wrap:anywhere]"
+          class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1 text-(length:--type-body-size) leading-[1.35] font-bold text-(--text-ink-main) [overflow-wrap:anywhere]"
         >
           <span class="min-w-0"
             >{{ popover.edge.subject.label
-            }}<span class="ml-1.5 text-[13px] font-normal text-(--text-ink-body)">{{
-              TYPE_LABEL[popover.edge.subject.domainType]
+            }}<span class="ml-1.5 text-(length:--type-label-size) font-normal text-(--text-ink-body)">{{
+              nodeKindLabel(popover.edge.subject)
             }}</span></span
           >
           <span class="min-w-0"
-            ><span class="whitespace-nowrap text-[14px] font-normal"
+            ><span class="whitespace-nowrap text-(length:--type-caption-size) font-normal"
               >{{ popover.edge.verb }} →&nbsp;</span
             >{{ popover.edge.object.label
-            }}<span class="ml-1.5 text-[13px] font-normal text-(--text-ink-body)">{{
-              TYPE_LABEL[popover.edge.object.domainType]
+            }}<span class="ml-1.5 text-(length:--type-label-size) font-normal text-(--text-ink-body)">{{
+              nodeKindLabel(popover.edge.object)
             }}</span></span
           >
         </h3>
-        <h3 v-else class="text-[15.5px] font-bold text-(--text-ink-main) mb-2 leading-tight">
+        <h3 v-else class="text-(length:--type-body-size) font-bold text-(--text-ink-main) mb-2 leading-tight">
           {{ popover.title }}
         </h3>
         <div
           v-for="(row, i) in popover.rows"
           :key="i"
-          class="text-[12.5px] text-(--text-ink-body) mb-0.5"
+          class="text-(length:--type-label-size) text-(--text-ink-body) mb-0.5"
         >
           {{ row }}
         </div>
         <RouterLink
           v-if="popover.link?.kind === 'internal'"
           :to="popover.link.to"
-          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-(length:--type-caption-size) text-(--text-accent) hover:underline"
           >{{ popover.link.text }}</RouterLink
         >
         <a
@@ -1222,7 +1311,7 @@ onUnmounted(() => {
           :href="popover.link.href"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-[14px] text-(--text-accent) hover:underline"
+          class="inline-flex items-center min-h-11 -mb-2 pr-3 text-(length:--type-caption-size) text-(--text-accent) hover:underline"
           >{{ popover.link.text }}</a
         >
         <!-- 文章節點才有，而且只給登入的人看（ArticleEditLink 內建 AuthOnly）。跟上面的「閱讀」
@@ -1232,7 +1321,7 @@ onUnmounted(() => {
           :article-id="popover.articleId"
           :title="popover.title"
           label="編輯這篇"
-          class="inline-flex items-center min-h-11 -mb-2 pl-1 text-[14px] text-(--text-ink-muted) hover:text-(--text-accent) hover:underline"
+          class="inline-flex items-center min-h-11 -mb-2 pl-1 text-(length:--type-caption-size) text-(--text-ink-muted) hover:text-(--text-accent) hover:underline"
         />
       </div>
 
@@ -1245,7 +1334,7 @@ onUnmounted(() => {
       >
         <span
           v-if="hint"
-          class="rounded-lg bg-(--text-ink-main)/90 px-4 py-2 text-[14px] text-(--bg-paper-light)"
+          class="rounded-lg bg-(--text-ink-main)/90 px-4 py-2 text-(length:--type-caption-size) text-(--bg-paper-light)"
           >{{ hint }}</span
         >
       </div>
@@ -1265,13 +1354,19 @@ onUnmounted(() => {
         class="absolute z-20 right-3 bottom-3"
         :disabled="settling"
         :help-open="helpOpen"
+        :help-label="props.homeMode ? '閱讀方式' : '操作說明'"
         @zoom-in="zoomBy(1.4)"
         @zoom-out="zoomBy(1 / 1.4)"
         @fit="fitView(400)"
         @help="toggleHelp"
       />
 
-      <GraphShortcutsHelp :open="helpOpen" :is-mac="isMac" @close="closeHelp" />
+      <GraphShortcutsHelp
+        :open="helpOpen"
+        :is-mac="isMac"
+        :reading="props.homeMode ? { layered: props.layout === 'layered' } : null"
+        @close="closeHelp"
+      />
     </div>
   </div>
 </template>

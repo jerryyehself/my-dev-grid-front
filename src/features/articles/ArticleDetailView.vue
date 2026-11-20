@@ -14,7 +14,7 @@
       <AuthOnly>
         <router-link
           :to="{ name: 'article-editor', params: { id: article.id } }"
-          class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -26,16 +26,18 @@
     </div>
 
     <div class="border-b border-(--border-shelf) pb-6 mb-8">
-      <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-accent) font-bold mb-3">
+      <!-- 日期與分類是標籤：13／20，字距 0.05em（variables.css 的 --article-label-*）。
+           以前 11px、字距 0.24em 是給大寫拉丁字母設計的，標籤常是中文，字距拉寬只會把字拉開 -->
+      <div class="flex flex-wrap items-center gap-2 text-(length:--article-label-size) leading-(--article-label-leading) tracking-(--article-label-tracking) font-mono uppercase text-(--text-accent) font-bold mb-3">
         <span v-if="tags.length">{{ tags.join(' / ') }}</span>
         <span class="text-(--text-ink-muted) font-normal">{{ displayDate(article) }}</span>
       </div>
 
-      <!-- 跟 MainLayout 的頁面標題同一套：--font-serif（Noto Serif TC）900（D-60）。這頁藏了通用表頭、
+      <!-- 跟 MainLayout 的頁面標題同一套：--font-serif（Noto Serif TC）700（D-60；全站襯線標題字重 700）。這頁藏了通用表頭、
            自己畫標題，所以 D-60 換字型時沒跟到，全站只剩這裡是無襯線；編輯頁的標題輸入框本來就是襯線，
            不改的話編輯時看到的跟發布後不一樣。不加負字距：中文粗襯線字距收緊會糊在一起。
-           36／48：標題常折成兩行，行高 1.33 倍讓兩行不黏在一起 -->
-      <h1 class="font-serif font-black text-4xl leading-12 text-(--text-ink-main)">
+           36／48（--article-title-*）：標題常折成兩行，行高 1.33 倍讓兩行不黏在一起 -->
+      <h1 class="font-serif font-bold text-(length:--article-title-size) leading-(--article-title-leading) text-(--text-ink-main)">
         {{ article.title }}
       </h1>
     </div>
@@ -55,7 +57,7 @@
         :style="{ top: `${STICKY_TOP_PX}px` }"
       >
         <div v-if="headings.length">
-          <div class="text-[13px] tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
+          <div class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) mb-2.5">
             本文結構
           </div>
           <!-- slug 從 extractHeadings 來，跟 MarkdownBody 渲染標題時用的是同一份，
@@ -66,7 +68,7 @@
               <a
                 :href="`#${heading.slug}`"
                 class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
-                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
+                :class="heading.depth >= 3 ? 'pl-3 text-(length:--type-label-size) opacity-80' : ''"
               >
                 {{ heading.text }}
               </a>
@@ -77,7 +79,7 @@
         <ArticleRelatedProjects v-if="article.implementations.length" :projects="article.implementations" />
       </div>
 
-      <!-- 正文欄寬上限 40em（16px 下 640px，中文約 40 字一行）。內文是 16px／行高 28px（leading-7），
+      <!-- 正文欄寬上限 40em（16px 下 640px，中文約 40 字一行）。內文是 16px／行高 28px（--article-body-*），
            見 MarkdownBody -->
       <div class="max-w-[40em]">
         <details
@@ -97,7 +99,7 @@
               <a
                 :href="`#${heading.slug}`"
                 class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
-                :class="heading.depth >= 3 ? 'pl-3 text-[13px] opacity-80' : ''"
+                :class="heading.depth >= 3 ? 'pl-3 text-(length:--type-label-size) opacity-80' : ''"
               >
                 {{ heading.text }}
               </a>
@@ -110,7 +112,7 @@
         <!-- 署名：文章結尾、上一篇／下一篇的上面。文章清單的標題下面是同一句（router 的 meta.subtitle）。
              mb-0 text-left：蓋掉 .global-page-wrapper p 的下距與桌機的兩端對齊 -->
         <p class="mt-10 mb-0 border-t border-(--border-shelf) pt-4 text-sm text-left text-(--text-ink-muted)">
-          {{ ARTICLE_BYLINE }}
+          {{ BYLINE }}
         </p>
 
         <div v-if="previousArticle || nextArticle" class="flex flex-col sm:flex-row gap-3 border-t border-(--border-shelf) pt-6 mt-8">
@@ -119,7 +121,7 @@
             :to="{ name: 'article-detail', params: { id: previousArticle.id } }"
             class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors hover:border-(--text-accent)/40"
           >
-            <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+            <div class="text-(length:--type-mono-size) font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               &lt;&lt; PREV
             </div>
             <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
@@ -132,7 +134,7 @@
             :to="{ name: 'article-detail', params: { id: nextArticle.id } }"
             class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors hover:border-(--text-accent)/40"
           >
-            <div class="text-[11px] font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
+            <div class="text-(length:--type-mono-size) font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               NEXT &gt;&gt;
             </div>
             <div class="mt-1.5 text-sm font-semibold text-(--text-ink-main)">
@@ -181,7 +183,7 @@ import MarkdownBody from '@/components/markdown/MarkdownBody.vue'
 import { extractHeadings } from '@/components/markdown/headings'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { pageTitleOverride } from '@/siteMeta'
-import { ARTICLE_BYLINE, LOADING_TEXT } from '@/copy/common'
+import { BYLINE, LOADING_TEXT } from '@/copy/common'
 
 const route = useRoute()
 const articleId = computed(() => Number(route.params.id))

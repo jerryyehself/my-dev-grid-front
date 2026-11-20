@@ -5,10 +5,15 @@
 // 左邊浮出名稱跟快捷鍵（觸控裝置沒有 hover，名稱靠 aria-label 與「?」說明面板）。
 // 窄畫布（寬度 < 640px，手機）改成沿右下角橫排：縱向一欄有 ~176px 高，會蓋住右側一整排節點；
 // 橫排只佔底邊 44px 高。用容器查詢（畫布 .kg-stage 是 @container）判斷畫布寬度，不看視窗寬度。
-defineProps<{
-  disabled?: boolean
-  helpOpen: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    disabled?: boolean
+    helpOpen: boolean
+    /** 「?」鈕的名稱：/graph 是「操作說明」，首頁打開的是「閱讀方式」面板，名稱要跟面板標題一致 */
+    helpLabel?: string
+  }>(),
+  { helpLabel: '操作說明' },
+)
 defineEmits<{ zoomIn: []; zoomOut: []; fit: []; help: [] }>()
 </script>
 
@@ -21,7 +26,7 @@ defineEmits<{ zoomIn: []; zoomOut: []; fit: []; help: [] }>()
         { key: 'zoomIn', label: '放大', kbd: '+', shortcut: '+' },
         { key: 'zoomOut', label: '縮小', kbd: '−', shortcut: '-' },
         { key: 'fit', label: '全部置中', kbd: '0', shortcut: '0' },
-        { key: 'help', label: '操作說明', kbd: '?', shortcut: '?' },
+        { key: 'help', label: props.helpLabel, kbd: '?', shortcut: '?' },
       ] as const"
       :key="btn.key"
       type="button"
@@ -71,10 +76,10 @@ defineEmits<{ zoomIn: []; zoomOut: []; fit: []; help: [] }>()
 
       <span
         aria-hidden="true"
-        class="pointer-events-none absolute right-0 bottom-full mb-2 @min-[640px]:right-full @min-[640px]:bottom-auto @min-[640px]:mb-0 @min-[640px]:mr-2 @min-[640px]:top-1/2 @min-[640px]:-translate-y-1/2 hidden group-hover:flex group-focus-visible:flex items-center gap-1.5 whitespace-nowrap rounded-md bg-(--text-ink-main) px-2 py-1 text-[13px] text-(--bg-paper-light)"
+        class="pointer-events-none absolute right-0 bottom-full mb-2 @min-[640px]:right-full @min-[640px]:bottom-auto @min-[640px]:mb-0 @min-[640px]:mr-2 @min-[640px]:top-1/2 @min-[640px]:-translate-y-1/2 hidden group-hover:flex group-focus-visible:flex items-center gap-1.5 whitespace-nowrap rounded-md bg-(--text-ink-main) px-2 py-1 text-(length:--type-label-size) text-(--bg-paper-light)"
       >
         {{ btn.label }}
-        <kbd class="font-mono text-[12px] rounded border border-current/40 px-1 leading-tight">{{
+        <kbd class="font-mono text-(length:--type-mono-size) rounded border border-current/40 px-1 leading-tight">{{
           btn.kbd
         }}</kbd>
       </span>

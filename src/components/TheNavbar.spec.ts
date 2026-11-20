@@ -32,12 +32,12 @@ async function mountNavbar(initialPath = '/') {
 
 describe('TheNavbar', () => {
   beforeEach(() => {
-    document.documentElement.classList.remove('theme-terminal')
+    document.documentElement.classList.remove('theme-dark')
     localStorage.clear()
   })
 
   afterEach(() => {
-    document.documentElement.classList.remove('theme-terminal')
+    document.documentElement.classList.remove('theme-dark')
     localStorage.clear()
   })
 
@@ -96,5 +96,82 @@ describe('TheNavbar', () => {
     await wrapper.vm.$nextTick()
 
     expect(menuButton.attributes('aria-expanded')).toBe('false')
+  })
+
+  it('它應該在手機選單展開後中英並列（例如「ARTICLES 文章」），實作類用「實作」', async () => {
+    const wrapper = await mountNavbar('/')
+
+    await wrapper.find('button[aria-label="開啟導覽選單"]').trigger('click')
+
+    const menuText = wrapper
+      .findAll('a')
+      .map((a) => a.text().replace(/\s+/g, ''))
+    expect(menuText).toContain('HOME首頁')
+    expect(menuText).toContain('ARTICLES文章')
+    expect(menuText).toContain('PROJECTS實作')
+    expect(menuText).toContain('GRAPH圖譜')
+    expect(menuText).toContain('ABOUT關於')
+  })
+
+  it('它應該把手機版的主題鈕放在漢堡旁邊，而不是藏進選單（選單沒展開也找得到）', async () => {
+    const wrapper = await mountNavbar('/')
+
+    const mobileCluster = wrapper.find('div.md\\:hidden.flex.items-center')
+    expect(mobileCluster.find('[role="group"]').exists()).toBe(true)
+    expect(mobileCluster.find('button[aria-label="開啟導覽選單"]').exists()).toBe(true)
+  })
+
+  describe('手機選單的無障礙行為', () => {
+    async function mountAttached() {
+      const router = makeRouter()
+      router.push('/')
+      await router.isReady()
+      return mount(TheNavbar, { attachTo: document.body, global: { plugins: [router, createPinia()] } })
+    }
+
+    it('它應該在展開時把 aria-label 換成「關閉導覽選單」，收起後換回來', async () => {
+      const wrapper = await mountNavbar('/')
+      const button = wrapper.find('button[aria-label="開啟導覽選單"]')
+      expect(button.attributes('aria-expanded')).toBe('false')
+
+      await button.trigger('click')
+      expect(button.attributes('aria-label')).toBe('關閉導覽選單')
+      expect(button.attributes('aria-expanded')).toBe('true')
+
+      await button.trigger('click')
+      expect(button.attributes('aria-label')).toBe('開啟導覽選單')
+      expect(button.attributes('aria-expanded')).toBe('false')
+    })
+
+    it('它應該在展開後把焦點移進選單', async () => {
+      const wrapper = await mountAttached()
+      await wrapper.find('button[aria-label="開啟導覽選單"]').trigger('click')
+      await wrapper.vm.$nextTick()
+
+      const first = wrapper.find('[data-test="mobile-menu"] a')
+      expect(document.activeElement).toBe(first.element)
+      wrapper.unmount()
+    })
+
+    it('它應該在按 Escape 後收起選單，焦點回到漢堡按鈕', async () => {
+      const wrapper = await mountAttached()
+      const button = wrapper.find('button[aria-label="開啟導覽選單"]')
+      await button.trigger('click')
+      await wrapper.vm.$nextTick()
+
+      await wrapper.find('[data-test="mobile-menu"] a').trigger('keydown', { key: 'Escape' })
+
+      expect(button.attributes('aria-expanded')).toBe('false')
+      expect(document.activeElement).toBe(button.element)
+      wrapper.unmount()
+    })
+
+    it('它應該在選單沒展開時按 Escape 不搶焦點', async () => {
+      const wrapper = await mountAttached()
+      const button = wrapper.find('button[aria-label="開啟導覽選單"]')
+      await wrapper.find('nav').trigger('keydown', { key: 'Escape' })
+      expect(document.activeElement).not.toBe(button.element)
+      wrapper.unmount()
+    })
   })
 })

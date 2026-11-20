@@ -1,7 +1,18 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import AboutView from './AboutView.vue'
+import { BYLINE } from '@/copy/common'
+
+// CONTACT_EMAIL 是模組層級常數：用 hoisted 的物件讓每個 case 換值，其餘設定照原樣
+const config = vi.hoisted(() => ({ email: '' }))
+vi.mock('./aboutConfig', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./aboutConfig')>()
+  const mocked = { ...actual }
+  // 每次讀取都回傳目前的 config.email，case 之間換值不用重新載入模組
+  Object.defineProperty(mocked, 'CONTACT_EMAIL', { get: () => config.email, enumerable: true })
+  return mocked
+})
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -18,45 +29,111 @@ function visitorText(wrapper: VueWrapper): string {
   return [wrapper.text(), ...attrs].filter(Boolean).join('\n')
 }
 
-const switchToBackward = (wrapper: VueWrapper) =>
-  wrapper
-    .findAll('button')
-    .find((b) => b.text() === '從技術看')!
-    .trigger('click')
-
 describe('AboutView', () => {
-  it('它應該不出現第一人稱「我」，兩個示範方向都一樣', async () => {
+  beforeEach(() => {
+    config.email = ''
+  })
+
+  it('它應該顯示名字、職涯句與工作模式四張卡片', () => {
     const wrapper = mountAbout()
+
+    expect(wrapper.get('h1').text()).toBe('Jerry Yeh')
+    expect(wrapper.text()).toContain('圖書資訊學出身，兩年程式教學、三年後端工程師。')
+    expect(wrapper.get('h2').text()).toBe('工作模式與理念')
+    expect(wrapper.findAll('h3').map((h) => h.text())).toEqual([
+      '跨域整合',
+      '需求洞察',
+      '實證導向',
+      '持續評鑑',
+    ])
+    wrapper.unmount()
+  })
+
+  it('它應該在名字下面顯示共用的署名句，且整頁只出現一次', () => {
+    const wrapper = mountAbout()
+
+    expect(BYLINE).toBe('由 Claude 撰寫，Jerry Yeh 發想並審定')
+    expect(wrapper.text().split(BYLINE)).toHaveLength(2)
+    const byline = wrapper.findAll('p').find((p) => p.text() === BYLINE)!
+    expect(byline.element.previousElementSibling?.tagName).toBe('P')
+    expect(byline.element.parentElement?.querySelector('h1')).not.toBeNull()
+    wrapper.unmount()
+  })
+
+  it('它應該在信箱留空時不畫電子郵件按鈕，只留 GitHub', () => {
+    const wrapper = mountAbout()
+
+    expect(wrapper.text()).not.toContain('電子郵件')
+    expect(wrapper.find('a[href^="mailto:"]').exists()).toBe(false)
+    expect(wrapper.find('a[href="https://github.com/jerryyehself"]').text()).toBe('GitHub')
+    wrapper.unmount()
+  })
+
+  it('它應該在填了信箱後畫出電子郵件按鈕，連到 mailto', () => {
+    config.email = 'someone@example.test'
+    const wrapper = mountAbout()
+
+    const mail = wrapper.get('a[href^="mailto:"]')
+    expect(mail.attributes('href')).toBe('mailto:someone@example.test')
+    expect(mail.text()).toBe('電子郵件')
+    wrapper.unmount()
+  })
+
+  it('它應該讓四張卡各有一個「確認詳情」連結，沒有提示文字', () => {
+    const wrapper = mountAbout()
+
+    expect(wrapper.text()).not.toContain('待定')
+    expect(wrapper.text()).not.toContain('示意')
+    const withLink = wrapper.findAll('li[id^="about-"]').filter((li) => li.text().includes('確認詳情'))
+    expect(withLink.map((li) => li.attributes('id'))).toEqual([
+      'about-integration',
+      'about-insight',
+      'about-evidence',
+      'about-review',
+    ])
+    for (const li of withLink) expect(li.findAll('a')).toHaveLength(1)
+
+    // 跨域整合：站內文章，router-link，不開新分頁、沒有 ↗
+    const inner = wrapper.get('#about-integration').get('a')
+    expect(inner.text()).toBe('文章列表與內頁放哪些資訊：讀者資訊行為研究整理')
+    expect(inner.attributes('href')).toBe('/articles/17')
+    expect(inner.attributes('target')).toBeUndefined()
+    expect(inner.attributes('rel')).toBeUndefined()
+    expect(inner.text()).not.toContain('↗')
+
+    // 需求洞察：站外論文，開新分頁
+    const a = wrapper.get('#about-insight').get('a')
+    expect(a.text()).toContain('小說讀者資訊尋找心智模型與FRBR之比較研究')
+    expect(a.attributes('href')).toBe('https://www.airitilibrary.com/Article/Detail/U0002-2307202123134400')
+    expect(a.attributes('target')).toBe('_blank')
+    expect(a.attributes('rel')).toBe('noopener noreferrer')
+
+    // 實證導向、持續評鑑：站內文章，router-link，不開新分頁
+    const evidence = wrapper.get('#about-evidence').get('a')
+    expect(evidence.text()).toBe('Claude Code 協作開發的省 token 機制盤點')
+    expect(evidence.attributes('href')).toBe('/articles/16')
+    expect(evidence.attributes('target')).toBeUndefined()
+
+    const review = wrapper.get('#about-review').get('a')
+    expect(review.text()).toBe('首頁知識網路採用節點連結圖：設計決策紀錄')
+    expect(review.attributes('href')).toBe('/articles/14')
+    expect(review.attributes('target')).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it('它應該為頁首與四張卡片各畫一張有文字說明的線稿', () => {
+    const wrapper = mountAbout()
+
+    const svgs = wrapper.findAll('svg[role="img"]')
+    expect(svgs).toHaveLength(5)
+    for (const svg of svgs) expect(svg.attributes('aria-label')).toBeTruthy()
+    wrapper.unmount()
+  })
+
+  it('它應該不出現第一人稱「我」', () => {
+    const wrapper = mountAbout()
+
     expect(visitorText(wrapper)).not.toContain('我')
-
-    await switchToBackward(wrapper)
-    expect(visitorText(wrapper)).not.toContain('我')
-    wrapper.unmount()
-  })
-
-  it('它應該用 Vue 官方文件與 Vue 示範雙向關係，不出現「這篇文章」與「Vue 3」', async () => {
-    const wrapper = mountAbout()
-    expect(wrapper.text()).toContain('從 Vue 官方文件，找到它說明的技術：Vue。')
-
-    await switchToBackward(wrapper)
-    expect(wrapper.text()).toContain('從 Vue 反查，列出說明它的文件和使用它的專案。')
-
-    expect(wrapper.text()).not.toContain('這篇文章')
-    expect(wrapper.text()).not.toMatch(/Vue\s*3/)
-    wrapper.unmount()
-  })
-
-  it('它應該不再說文章是「自己寫的」', () => {
-    const wrapper = mountAbout()
-    expect(wrapper.text()).not.toContain('自己寫')
-    expect(wrapper.text()).toContain('收錄文章、用過的技術、做過的專案，以及這些技術的官方文件。')
-    wrapper.unmount()
-  })
-
-  it('它應該在 COLOPHON 只寫分工，不列 plugin', () => {
-    const wrapper = mountAbout()
-    expect(wrapper.text()).not.toMatch(/plugin/i)
-    expect(wrapper.text()).not.toContain('主 session')
     wrapper.unmount()
   })
 })
