@@ -61,8 +61,6 @@ const router = createRouter({
       meta: {
         tag: 'Projects',
         title: 'Production Artifacts',
-        // mockup 設計是 1120px，比全站預設的 1024px 寬，主從式版面才有足夠的呼吸空間
-        contentWidth: '1120px',
       },
     },
     {
@@ -135,7 +133,6 @@ const router = createRouter({
         title: '新增文章',
         subtitle: '內文用 Markdown',
         hideHeader: true,
-        contentWidth: '1120px',
         requiresAuth: true,
       },
     },
@@ -150,7 +147,7 @@ const router = createRouter({
         tag: 'ARTICLES',
         title: '',
         hideHeader: true,
-        // 註腳邊注要在正文右邊留一欄（≥1240px 時再加左欄目錄），1024px 放不下，欄寬的算法見 ArticleDetailView
+        // 註腳邊注要在正文右邊留一欄（≥1240px 時再加左欄目錄），全站預設的 1120px 放不下，欄寬的算法見 ArticleDetailView
         contentWidth: '1216px',
       },
     },
@@ -164,8 +161,6 @@ const router = createRouter({
         subtitle: '內文用 Markdown，腳註用 [^n] 標記',
         // 編輯頁自己畫了表頭與動作列，通用表頭會把同一組標題再顯示一次
         hideHeader: true,
-        // 主從式版面：主欄加 340px 側欄，1024px 會擠到側欄沒有呼吸空間
-        contentWidth: '1120px',
         requiresAuth: true,
       },
     },

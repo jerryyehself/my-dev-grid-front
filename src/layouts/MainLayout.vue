@@ -38,7 +38,7 @@
     <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走
          hideHeader 的頁面（例如 About）自己畫了滿版橫幅當標題，這裡就不重複畫一次 -->
     <header v-if="!props.hideHeader" class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
-      <div class="w-full max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
+      <div class="w-full max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
         <div
           v-if="$slots.tag"
           class="flex-shrink-0 font-mono text-(length:--type-mono-size) tracking-[0.2em] uppercase font-bold text-(--text-accent)"
@@ -73,7 +73,7 @@
         props.fullBleed
           ? ''
           : [
-              'max-w-5xl mx-auto px-4 sm:px-6 pb-8',
+              'max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 pb-8',
               props.hideHeader ? 'pt-6 sm:pt-8' : 'pt-3 sm:pt-4',
             ]
       "
@@ -85,8 +85,7 @@
     </main>
 
     <footer
-      class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
-      :style="widthStyle"
+      class="w-full max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
     >
       {{ FOOTER_TEXT }}
     </footer>
@@ -98,8 +97,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TheNavbar from '@/components/TheNavbar.vue'
 import { FOOTER_TEXT } from '@/copy/common'
 
-// 大部分頁面共用 max-w-5xl（1024px）；個別頁面如果設計稿要更寬/更窄，
-// 透過 route.meta.contentWidth 覆蓋，不用整站改寬度。
+// 全站共用一條內容欄：max-w 1120px（含內距）、內距 12／16／24（<360／<640／≥640），
+// 跟導覽列內列、捲動追蹤列同一組數字，各頁左右緣才會對齊字標。
+// 個別頁面真的需要更寬（例如文章內頁要留邊注欄的 1216），才用 route.meta.contentWidth 覆蓋。
 const props = defineProps<{ contentWidth?: string; hideHeader?: boolean; fullBleed?: boolean }>()
 const widthStyle = computed(() => (props.contentWidth ? { maxWidth: props.contentWidth } : undefined))
 
