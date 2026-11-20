@@ -28,7 +28,7 @@ export const ABOUT_CARDS: AboutCardData[] = [
     id: 'integration',
     title: '跨域整合',
     situation: '把圖資與教學的成熟方法，轉化成系統設計',
-    links: [],
+    links: [{ label: '文章列表與內頁放哪些資訊：讀者資訊行為研究整理', to: '/articles/17' }],
     sketch: AboutSketchIntegration,
   },
   {

@@ -19,7 +19,7 @@
       </p>
       <!-- 沒有連結就整塊不畫，不放「待補」之類的提示字 -->
       <div v-if="card.links.length" class="mt-3 pb-5 sm:col-start-1">
-        <p class="m-0 text-sm font-normal tracking-[0.04em] text-(--text-ink-muted)">確認詳情</p>
+        <p class="m-0 text-sm font-normal leading-[1.75] tracking-[0.04em] text-(--text-ink-muted)">確認詳情</p>
         <ul class="mt-0.5 p-0 list-none">
           <li
             v-for="link in card.links"
@@ -61,5 +61,5 @@ defineProps<{ card: AboutCardData }>()
 const isExternal = (to: string) => /^https?:\/\//i.test(to)
 
 const linkClass =
-  'inline-block py-2.5 text-balance text-base font-normal leading-[1.45] text-(--text-accent) underline decoration-1 underline-offset-[5px] decoration-[color-mix(in_srgb,currentColor_35%,transparent)] hover:decoration-current'
+  'inline-block min-h-10 py-2 text-balance text-base font-normal leading-[1.45] text-(--text-accent) underline decoration-1 underline-offset-[5px] decoration-[color-mix(in_srgb,currentColor_35%,transparent)] hover:decoration-current'
 </script>

@@ -79,20 +79,32 @@ describe('AboutView', () => {
     wrapper.unmount()
   })
 
-  it('它應該只有「需求洞察」卡有「確認詳情」（連到碩士論文），其他三張沒有連結也沒有提示文字', () => {
+  it('它應該只有「跨域整合」與「需求洞察」兩張卡有「確認詳情」，其他兩張沒有連結也沒有提示文字', () => {
     const wrapper = mountAbout()
 
     expect(wrapper.text()).not.toContain('待定')
     expect(wrapper.text()).not.toContain('示意')
     const withLink = wrapper.findAll('li[id^="about-"]').filter((li) => li.text().includes('確認詳情'))
-    expect(withLink.map((li) => li.attributes('id'))).toEqual(['about-insight'])
-    const a = withLink[0]!.get('a')
+    expect(withLink.map((li) => li.attributes('id'))).toEqual(['about-integration', 'about-insight'])
+
+    // 跨域整合：站內文章，router-link，不開新分頁、沒有 ↗
+    const inner = wrapper.get('#about-integration').get('a')
+    expect(inner.text()).toBe('文章列表與內頁放哪些資訊：讀者資訊行為研究整理')
+    expect(inner.attributes('href')).toBe('/articles/17')
+    expect(inner.attributes('target')).toBeUndefined()
+    expect(inner.attributes('rel')).toBeUndefined()
+    expect(inner.text()).not.toContain('↗')
+
+    // 需求洞察：站外論文，開新分頁
+    const a = wrapper.get('#about-insight').get('a')
     expect(a.text()).toContain('小說讀者資訊尋找心智模型與FRBR之比較研究')
     expect(a.attributes('href')).toBe('https://www.airitilibrary.com/Article/Detail/U0002-2307202123134400')
     expect(a.attributes('target')).toBe('_blank')
     expect(a.attributes('rel')).toBe('noopener noreferrer')
-    for (const id of ['integration', 'evidence', 'review']) {
+
+    for (const id of ['evidence', 'review']) {
       expect(wrapper.get(`#about-${id}`).find('a').exists()).toBe(false)
+      expect(wrapper.get(`#about-${id}`).text()).not.toContain('確認詳情')
     }
     wrapper.unmount()
   })
