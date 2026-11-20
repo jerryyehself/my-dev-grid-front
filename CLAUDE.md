@@ -30,6 +30,7 @@ agent 不刪遠端分支：repo 開了「合併後自動刪除分支」，已合
 - CI 全部通過（lint/type-check/build/test 等各項 check）
 - `mergeable_state` 是 `clean`（沒有衝突）
 - 沒有未處理的 review comment（有 comment 但已經回應/解決的不算）
+- 依改動路徑與行數分級需要品質審查的 PR，要有對應目前 head 的審查 PASS（D-172）；合併前的檢查會擋沒有 PASS 的合併
 
 範圍條件：
 - 合進 `develop`：只有碰到 CI/CD 設定（`.github/workflows/*`）、Cloudflare 部署設定（`wrangler.jsonc`、`public/_redirects`、`public/_headers`）、環境變數/密鑰，才要先問；其他改動（文件、樣式/排版、測試檔案、元件實作、功能）驗證條件都過就直接合併。
