@@ -1,5 +1,5 @@
 // 文章心智圖的資料格式。前端只吃這一份 JSON，後端怎麼產生（程式、半自動、作者手改）都是同一種。
-// 格式與層次規則定案在 daily-claude-summary#562（最多 2 層：中心 → 分枝 → 概念）。
+// 層次規則：最多 2 層（中心 → 分枝 → 概念）。
 
 export const MINDMAP_STRENGTHS = ['primary', 'secondary'] as const
 export const MINDMAP_LINK_ORIGINS = ['ontology', 'graph', 'author', 'cooccurrence'] as const
