@@ -173,8 +173,10 @@ describe('OntologyScopeEditView 範圍說明字數上限（後端 comment max:25
   }
 
   it('它應該顯示範圍說明上限為 255 字', async () => {
-    const { wrapper } = await mountView(true)
-    expect(wrapper.text()).toContain('上限 255 字')
+    // 新增模式的範圍說明提示是「必填 · 上限 N 字」；註釋欄是「選填 · …」，
+    // 不會誤中，所以這條只有範圍說明的上限寫對才會過。
+    const { wrapper } = await mountView(false)
+    expect(wrapper.text()).toContain('必填 · 上限 255 字')
   })
 
   it('它應該把 233 字（種子資料最長的說明）算在上限內，並允許儲存', async () => {
