@@ -61,6 +61,9 @@ interface MdNode {
 
 const processor = unified().use(remarkParse).use(remarkGfm)
 
+// 內文容器（template 最外層）有 [overflow-wrap:anywhere]：來源清單的長網址沒有斷點，
+// 會把文章欄撐出視窗（窄螢幕橫向捲動）。表格不吃這條，外層另加 [overflow-wrap:normal]：
+// anywhere 會把欄寬的最小值壓到一個字，欄位被擠窄，原本可橫向捲動的表格變成逐字換行。
 // 會橫向捲動的程式碼區塊與表格：Safari 不讓鍵盤聚焦到捲動區域（Chrome、Firefox 會），
 // 要加 tabindex="0" 才能用方向鍵捲；可聚焦的元素要有名字，所以配 role="region"＋aria-label。
 // 只有鍵盤操作時（:focus-visible）才畫外框，滑鼠點到不會出現。
@@ -496,7 +499,7 @@ function render(node: MdNode): VNode[] {
       // 外層是可橫向捲動的區塊，邊注只有 232px，欄位多的表格不會把版面撐開
       if (noteDepth > 0) {
         return [
-          h('span', { ...scrollRegion(TABLE_LABEL), class: `block my-1.5 overflow-x-auto ${SCROLL_REGION_FOCUS}` }, [
+          h('span', { ...scrollRegion(TABLE_LABEL), class: `block my-1.5 overflow-x-auto [overflow-wrap:normal] ${SCROLL_REGION_FOCUS}` }, [
             h('span', { role: 'table', class: 'table w-full border-collapse text-(length:--type-label-size)' }, [
               head
                 ? h(
@@ -515,7 +518,7 @@ function render(node: MdNode): VNode[] {
         ]
       }
       return [
-        h('div', { ...scrollRegion(TABLE_LABEL), class: `overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}` }, [
+        h('div', { ...scrollRegion(TABLE_LABEL), class: `overflow-x-auto my-4 [overflow-wrap:normal] ${SCROLL_REGION_FOCUS}` }, [
           h('table', { class: 'w-full border-collapse text-(length:--type-caption-size)' }, [
             head ? h('thead', {}, renderRow(head, node.align, true)) : null,
             h(
@@ -973,7 +976,7 @@ export default {}
 </script>
 
 <template>
-  <div ref="rootEl" class="markdown-body relative">
+  <div ref="rootEl" class="markdown-body relative [overflow-wrap:anywhere]">
     <component :is="Rendered" />
   </div>
 </template>
