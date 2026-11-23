@@ -1,4 +1,4 @@
-import { apiGet, describeLoadError } from './client'
+import { apiGet, apiPut, describeLoadError } from './client'
 import { techniqueLabel } from './techniqueLabel'
 
 /** 專案用到的一個技術。版本是後端獨立的一筆技術（title 相同、version 填主版號，2026-09-30） */
@@ -26,6 +26,9 @@ export interface Project {
   createdDate?: string
   repo: string
   role?: string
+  /** 是否公開。後端只在登入時才回這個欄位，沒登入是 undefined（沒登入的人本來就只看得到公開的專案）；
+   *  2026-10-04 以前的示範資料快照也沒有。 */
+  isVisible?: boolean
 }
 
 interface ScopeDto {
@@ -46,6 +49,8 @@ interface ImplementationDto {
   description: string | null
   git_repo_created_at: string | null
   maintain_status: boolean | null
+  /** 只有登入時才有（見後端 ImplementationResource） */
+  is_visible?: boolean
   techniques: TechniqueDto[]
 }
 
@@ -115,6 +120,7 @@ const toProject = (raw: ImplementationDto, scopeNames: Map<number, string>): Pro
     started: toStartedYm(raw.git_repo_created_at),
     createdDate: raw.git_repo_created_at ? raw.git_repo_created_at.slice(0, 10) : '',
     repo: raw.title,
+    isVisible: raw.is_visible,
   }
 }
 
@@ -131,6 +137,17 @@ export async function fetchProjects(): Promise<Project[]> {
   })
 
   return sorted.map((raw) => toProject(raw, scopeNames))
+}
+
+/**
+ * 切換專案公開與否（後台專案一區的開關）。後端的 PUT 把 `type`、`title` 當必填
+ * （UpdateImplementationRequest），只送 `is_visible` 會 422，所以連同現值一起帶：
+ * `type` 是 project 分類的 id、`title` 是這筆目前的標題，兩個值都沒有被改，實際改的只有 `is_visible`。
+ * 沒帶的欄位（描述、網址、關聯的文件與技術…）後端不會動。
+ */
+export async function setProjectVisibility(project: Pick<Project, 'id' | 'title'>, isVisible: boolean): Promise<void> {
+  const type = await getProjectScopeId()
+  await apiPut(`/implementations/${project.id}`, { type, title: project.title, is_visible: isVisible })
 }
 
 // 2026-10-04 從正式環境的 /scopes、/implementations 經 fetchProjects() 存下來的快照（16 個專案，
