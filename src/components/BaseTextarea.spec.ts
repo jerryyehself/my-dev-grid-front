@@ -15,14 +15,14 @@ describe('BaseTextarea 的字數（規格缺口 G3）', () => {
   })
 
   it('它應該用字元數而不是 UTF-16 長度——擴展漢字與 emoji 不會被多算', () => {
-    // 後端 Laravel 的 max:100 走 mb_strlen,數的是字元數。
-    // 用 .length 的話這兩個字會被算成 4,畫面顯示 4/100 而後端認為是 2,
+    // 後端 Laravel 的 max:255 走 mb_strlen,數的是字元數。
+    // 用 .length 的話這兩個字會被算成 4,畫面顯示 4/255 而後端認為是 2,
     // 於是使用者會在「還沒到上限」的時候拿到 422,而且看不出哪裡錯。
     const wrapper = mountWith('𠮷🙂')
     expect(wrapper.props('modelValue')).toHaveLength(4)
 
-    const counted = mountWith('𠮷🙂', 100)
-    expect(counted.text()).toContain('2 / 100')
+    const counted = mountWith('𠮷🙂', 255)
+    expect(counted.text()).toContain('2 / 255')
   })
 
   it('它應該在超過上限時講出超出幾個字，不只是變顏色', () => {
@@ -35,15 +35,15 @@ describe('BaseTextarea 的字數（規格缺口 G3）', () => {
   })
 
   it('它應該在沒超過上限時不標成 aria-invalid', () => {
-    const wrapper = mountWith('三個字', 100)
-    expect(wrapper.text()).toContain('3 / 100')
+    const wrapper = mountWith('三個字', 255)
+    expect(wrapper.text()).toContain('3 / 255')
     expect(wrapper.text()).not.toContain('超出')
     expect(wrapper.find('textarea').attributes('aria-invalid')).toBeUndefined()
   })
 
   it('它應該刻意不設原生 maxlength——寧可讓人打超過再自己刪', () => {
     // 原生 maxlength 會讓貼上的長文被默默截斷,而且不給任何提示。
-    const wrapper = mountWith('', 100)
+    const wrapper = mountWith('', 255)
     expect(wrapper.find('textarea').attributes('maxlength')).toBeUndefined()
   })
 
