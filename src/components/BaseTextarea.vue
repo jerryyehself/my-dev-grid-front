@@ -16,9 +16,9 @@
 // 而且畫面不會報錯,只是字級悄悄變了。inheritAttrs:false + v-bind="$attrs" 綁回
 // textarea 是為了這個,不是樣板噪音。
 //
-// **刻意不設原生 `maxlength`:** 後端 `comment` 是 `max:100`,超過回 422。原生
-// maxlength 會讓使用者打到第 100 個字就無聲地打不進去——貼上一段 120 字的說明時
-// 會被默默截斷成 100,而且不會有任何提示。寧可讓他打超過、看見超出的量,
+// **刻意不設原生 `maxlength`:** 後端 `comment` 是 `max:255`,超過回 422。原生
+// maxlength 會讓使用者打到第 255 個字就無聲地打不進去——貼上一段 300 字的說明時
+// 會被默默截斷成 255,而且不會有任何提示。寧可讓他打超過、看見超出的量,
 // 自己決定要刪哪裡。這是 Norman 講的「讓錯誤看得見且可復原」,不是「讓錯誤不可能發生」。
 import { computed } from 'vue'
 import BaseHint from './BaseHint.vue'
@@ -36,7 +36,7 @@ const model = defineModel<string>({ required: true })
  *
  * `'字'.length` 對 BMP 內的中文是 1,但 emoji 與擴展漢字(U+20000 以上,這個專案的
  * 內容真的可能出現)是 2 個 UTF-16 code unit,`.length` 會多算一倍。後端 Laravel 的
- * `max:100` 走 `mb_strlen`,數的是字元數——兩邊要一致,不然畫面顯示 98/100
+ * `max:255` 走 `mb_strlen`,數的是字元數——兩邊要一致,不然畫面顯示 253/255
  * 而後端回 422,使用者完全看不出哪裡錯了。
  */
 const used = computed(() => [...model.value].length)
