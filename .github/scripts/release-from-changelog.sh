@@ -6,7 +6,7 @@
 #     日期還是「待上線」或其他非日期文字的段落不算，跳過。
 #   - 每個還沒有 tag `vX.Y.Z` 的已上線版本，目標 commit 取 HEAD first-parent 歷史上
 #     「最早讓 CHANGELOG.md 出現這一行標題」的那個 commit
-#     （main 是 squash merge 的線性歷史，等於該版本上線的那個 release PR）。
+#     （main 每次上線只留一個 commit，見 docs/release.md §3，所以等於該版本上線的那個 release PR）。
 #   - Release notes = 該版本段落內容（標題之後，到下一個 `## [` 標題
 #     或第一行 `[x.y.z]: ` 連結參照為止），去掉頭尾空行。
 #   - 依 semver 由小到大建立；只有 CHANGELOG 裡最高的已上線版本標成 latest。
