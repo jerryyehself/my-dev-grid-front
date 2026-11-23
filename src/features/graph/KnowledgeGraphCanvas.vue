@@ -755,11 +755,12 @@ async function boot() {
     .linkLineDash((l) => (l.derived ? [5, 4] : null))
     // 「關於」連線在線中點多畫一個空心小圈（樣式見 linkStyle.ts）；其餘連線不畫。
     .linkCanvasObjectMode((l) => aboutLinkCanvasMode(l))
-    .linkCanvasObject((l, ctx) =>
+    .linkCanvasObject((l, ctx, globalScale) =>
       drawAboutMarker(
         ctx,
         l,
         aboutMarkerStyle({ line: directLinkStyleOf(l), canvasBg: css('--canvas-bg') }),
+        globalScale,
       ),
     )
     .linkVisibility((l) => !l.derived || showIndirect.value)
