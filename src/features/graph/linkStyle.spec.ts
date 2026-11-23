@@ -152,6 +152,19 @@ describe('drawAboutMarker', () => {
     expect(calls.at(-1)).toBe('stroke:#922e39:2.2')
   })
 
+  it.each([0.25, 1, 4])('它應該在 globalScale 為 %s 時畫出同樣大小的螢幕半徑與描邊', (scale) => {
+    const { ctx, raw } = fakeCtx()
+    drawAboutMarker(
+      ctx,
+      link,
+      aboutMarkerStyle({ line: directLinkStyle(base), canvasBg: bg }),
+      scale,
+    )
+    const radius = Number((raw.arc.mock.calls[0] as unknown[])[2])
+    expect(radius * scale).toBeCloseTo(3)
+    expect(raw.lineWidth * scale).toBeCloseTo(1.5)
+  })
+
   it('它應該在端點缺座標時以 0 計算', () => {
     const { ctx, raw } = fakeCtx()
     drawAboutMarker(
