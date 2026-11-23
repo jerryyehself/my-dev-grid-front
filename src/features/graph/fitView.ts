@@ -107,6 +107,9 @@ export function controlsBottomInset(viewW: number, pad: number): number {
  * 在視窗底邊以下，路線的節點落在那裡就看不到。maxK 是不能放大超過的倍率（通常是整張圖的框景倍率，
  * 路線只是在圖上亮起來，不需要比整張圖更近）；放不下就縮小。
  * 回傳的 cx、cy 是要交給 centerAt（對準畫布正中央）的世界座標，節點組的中心會落在橫帶中央。
+ * 橫帶只限制垂直方向，水平方向不需要追著節點組走：呼叫端傳 fixedCx（通常是整張圖框景的 cx）時，
+ * 水平中心固定在那裡。整張圖已經塞得進畫布寬度，倍率只會更小，節點組一定還在畫布內；不固定的話
+ * 路線落在圖的哪一側，整張圖就被拉向哪一側，手機上圖會偏離畫布中心。
  */
 export function fitTransformInBand(
   items: FitItem[],
@@ -116,9 +119,10 @@ export function fitTransformInBand(
   bandHeight: number,
   pad: number,
   maxK: number,
+  fixedCx?: number,
 ): FitResult | null {
   const fit = fitTransform(items, viewW, bandHeight, pad, maxK)
   if (!fit) return null
   const bandCenterY = bandTop + bandHeight / 2
-  return { ...fit, cy: fit.cy - (bandCenterY - viewH / 2) / fit.k }
+  return { ...fit, cx: fixedCx ?? fit.cx, cy: fit.cy - (bandCenterY - viewH / 2) / fit.k }
 }
