@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchProjects, fetchProjectsOrDemo, toProjectTechniques } from './projects'
+import { fetchProjects, fetchProjectsOrDemo, setProjectVisibility, toProjectTechniques } from './projects'
+import { ApiRequestError, ApiValidationError } from './client'
 import projectsDemoFixture from '@/data/projectsDemoFixture.json'
 
 const mockFetch = vi.fn()
@@ -128,6 +129,75 @@ describe('fetchProjects', () => {
       ['2', '2020.01'],
       ['1', ''],
     ])
+  })
+})
+
+describe('fetchProjects 的 isVisible', () => {
+  it.each([
+    { name: '登入時回 false', extra: { is_visible: false }, expected: false },
+    { name: '登入時回 true', extra: { is_visible: true }, expected: true },
+    { name: '沒登入時後端不回這個欄位', extra: {}, expected: undefined },
+  ])('它應該在$name時讓 isVisible 是 $expected', async ({ extra, expected }) => {
+    mockScopesAndImplementations([
+      { id: 1, title: 'a', description: null, git_repo_created_at: null, maintain_status: null, techniques: [], ...extra },
+    ])
+
+    const projects = await fetchProjects()
+
+    expect(projects[0]!.isVisible).toBe(expected)
+  })
+})
+
+describe('setProjectVisibility', () => {
+  function putCall() {
+    return mockFetch.mock.calls.find(([, init]) => init?.method === 'PUT')
+  }
+
+  it('它應該對 PUT /implementations/{id} 送出 is_visible，並帶上必填的 type（project 分類 id）與目前的 title', async () => {
+    mockFetch.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.includes('/scopes')) return jsonResponse({ data: [{ id: 12, name: 'project' }] })
+      if (init?.method === 'PUT') return jsonResponse({ data: {}, message: 'Implementation updated.' })
+      throw new Error(`unexpected url: ${url}`)
+    })
+
+    await setProjectVisibility({ id: '7', title: 'my-dev-grid-front' }, false)
+
+    const [url, init] = putCall()!
+    expect(url).toMatch(/\/implementations\/7$/)
+    expect(JSON.parse(init.body)).toEqual({ type: 12, title: 'my-dev-grid-front', is_visible: false })
+  })
+
+  it('它應該在切回公開時送 is_visible: true', async () => {
+    mockFetch.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.includes('/scopes')) return jsonResponse({ data: [{ id: 12, name: 'project' }] })
+      if (init?.method === 'PUT') return jsonResponse({ data: {} })
+      throw new Error(`unexpected url: ${url}`)
+    })
+
+    await setProjectVisibility({ id: '7', title: 'x' }, true)
+
+    expect(JSON.parse(putCall()![1].body).is_visible).toBe(true)
+  })
+
+  it('它應該在後端回 403 時丟 ApiRequestError（帶狀態碼）', async () => {
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.includes('/scopes')) return jsonResponse({ data: [{ id: 12, name: 'project' }] })
+      return { ok: false, status: 403, json: async () => ({ message: 'This action is unauthorized.' }) }
+    })
+
+    await expect(setProjectVisibility({ id: '7', title: 'x' }, false)).rejects.toMatchObject({
+      constructor: ApiRequestError,
+      status: 403,
+    })
+  })
+
+  it('它應該在後端回 422 時丟 ApiValidationError', async () => {
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.includes('/scopes')) return jsonResponse({ data: [{ id: 12, name: 'project' }] })
+      return { ok: false, status: 422, json: async () => ({ errors: { title: ['The title field is required.'] } }) }
+    })
+
+    await expect(setProjectVisibility({ id: '7', title: '' }, false)).rejects.toBeInstanceOf(ApiValidationError)
   })
 })
 
