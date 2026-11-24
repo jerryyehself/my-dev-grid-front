@@ -18,11 +18,11 @@ import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import { ARTICLES_EMPTY_TEXT, ARTICLES_LOAD_FAILED_TEXT, LOADING_TEXT } from '@/copy/common'
-import { hasArticleMindmap } from '@/features/article-mindmap/articleMindmapSource'
+import { hasArticleMindmap } from './mindmap/articleMindmapSource'
 
 // 標題懸停心智圖（只有有心智圖的文章才有）。元件與資料都延遲載入：沒滑到這些標題就不下載
 const ArticleMindmapHoverTip = defineAsyncComponent(
-  () => import('@/features/article-mindmap/ArticleMindmapHoverTip.vue'),
+  () => import('./mindmap/ArticleMindmapHoverTip.vue'),
 )
 
 const ready = ref(false)

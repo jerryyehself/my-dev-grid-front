@@ -5,7 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import ArticlesView from './ArticlesView.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 import type { ArticleDto } from '@/api/articles'
-import { loadArticleMindmap } from '@/features/article-mindmap/articleMindmapSource'
+import { loadArticleMindmap } from './mindmap/articleMindmapSource'
 
 // 文章清單每篇的「編輯」只給登入的人看：訪客看到的清單不能多出任何寫入入口（AuthOnly.vue）。
 
@@ -86,7 +86,7 @@ describe('ArticlesView 的標題懸停心智圖', () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(hover: hover)' ? canHover : false }))
     // 先把心智圖資料與延遲載入的元件載好，觸發後 flushPromises 等得到
     await loadArticleMindmap(MINDMAP_ID)
-    await import('@/features/article-mindmap/ArticleMindmapHoverTip.vue')
+    await import('./mindmap/ArticleMindmapHoverTip.vue')
   })
 
   afterEach(() => {

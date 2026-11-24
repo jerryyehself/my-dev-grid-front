@@ -7,8 +7,8 @@ import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { ApiHttpError } from '@/api/client'
 import type { ArticleDto } from '@/api/articles'
 import { resolveType } from '@/test/cssTokens'
-import mindmapFixture from '@/features/article-mindmap/articleMindmapFixture.json'
-import { loadArticleMindmap } from '@/features/article-mindmap/articleMindmapSource'
+import mindmapFixture from './mindmap/articleMindmapFixture.json'
+import { loadArticleMindmap } from './mindmap/articleMindmapSource'
 
 function article(id: number, title: string, creationDate: string, body = `${title} 的內文`): ArticleDto {
   return {

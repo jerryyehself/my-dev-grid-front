@@ -189,10 +189,10 @@ import { extractHeadings } from '@/components/markdown/headings'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { pageTitleOverride } from '@/siteMeta'
 import { BYLINE, LOADING_TEXT } from '@/copy/common'
-import { hasArticleMindmap } from '@/features/article-mindmap/articleMindmapSource'
+import { hasArticleMindmap } from './mindmap/articleMindmapSource'
 
 const ArticleMindmapPanel = defineAsyncComponent(
-  () => import('@/features/article-mindmap/ArticleMindmapPanel.vue'),
+  () => import('./mindmap/ArticleMindmapPanel.vue'),
 )
 
 const route = useRoute()
