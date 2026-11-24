@@ -1,13 +1,13 @@
 <script setup lang="ts">
 // 文章內頁的心智圖（站主定案：C 左右對稱、最多 2 層、次要節點預設收合、橫向關係開關預設關、
-// 點詞看出處並跳到段落、有 res_id 的詞連到圖譜、手機改大綱樹、延遲載入）。
+// 點詞看出處並跳到段落、手機改大綱樹、延遲載入）。
+// 有 res_id 的詞連到圖譜原本也定了，但目前不畫（見 mindmapUnits.ts）。
 // 放在前言之後、第一個二級標題之前（由 ArticleDetailView 透過 MarkdownBody 的插槽放進去）。
 //
 // 這篇沒有心智圖、資料載入失敗或不合格式：整塊不畫，連標題都沒有。
-// 寬度 ≥640px 畫 SVG 圖；更窄改成大綱樹（ArticleMindmapOutline）。兩份用 CSS 二選一，
-// 隱藏的那份不進無障礙樹；展開狀態與橫向關係開關兩邊共用。
+// 能懸停、指標精準的裝置（桌機）畫 SVG 圖，不管視窗多窄（窄的時候圖等比縮小）；觸控裝置改成大綱樹
+// （ArticleMindmapOutline）。看裝置不看寬度，條件見 useFinePointer.ts。展開狀態與橫向關係開關兩邊共用。
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
-import { RouterLink } from 'vue-router'
 import BaseSwitch from '@/components/BaseSwitch.vue'
 import ArticleMindmapDiagram from './ArticleMindmapDiagram.vue'
 import ArticleMindmapOutline from './ArticleMindmapOutline.vue'
@@ -17,8 +17,9 @@ import type { ArticleMindmap, MindmapNode } from './articleMindmapTypes'
 import { DETAIL_METRICS, layoutMindmap, type PositionedLabel } from './mindmapLayout'
 import { branchesOf, buildDetailSpec, centerOf, linkLineLabel } from './mindmapTree'
 import { measureLabelWidth } from './measureLabel'
-import { MINDMAP_GRAPH_ROUTE, unitLinksOf, type MindmapHeading } from './mindmapUnits'
+import { unitLinksOf, type MindmapHeading } from './mindmapUnits'
 import { useMindmapFonts } from './useMindmapFonts'
+import { useFinePointer } from './useFinePointer'
 
 const props = defineProps<{
   articleId: number
@@ -33,6 +34,8 @@ const POPOVER_WIDTH = 240
 
 const mindmap = shallowRef<ArticleMindmap | null>(null)
 const fontsVersion = useMindmapFonts()
+/** true 畫 SVG 圖、false 畫大綱樹 */
+const finePointer = useFinePointer()
 
 watch(
   () => props.articleId,
@@ -56,10 +59,16 @@ const expandable = computed(() => branchList.value.filter((b) => b.secondaries.l
 const hasSecondaries = computed(() => (mindmap.value?.nodes ?? []).some((n) => n.strength === 'secondary'))
 const allExpanded = computed(() => expandable.value.every((id) => expanded.value.has(id)) && expanded.value.size > 0)
 
-function toggleAll() {
-  if (!mindmap.value) return
-  expanded.value = allExpanded.value ? new Set() : new Set([...expandable.value, mindmap.value.center])
-}
+/**
+ * 工具列的「次要概念」開關：開＝全部分枝的次要都展開（含本身是次要的分枝），關＝全部收合。
+ * 圖裡每個分枝的「＋N 次要」可以單獨展開；全部都展開了，開關也就顯示成開。
+ */
+const showSecondaries = computed({
+  get: () => allExpanded.value,
+  set: (on: boolean) => {
+    expanded.value = on && mindmap.value ? new Set([...expandable.value, mindmap.value.center]) : new Set()
+  },
+})
 
 function toggleBranch(branchId: string) {
   const next = new Set(expanded.value)
@@ -79,16 +88,15 @@ const detail = computed(() => {
 const title = computed(() => (mindmap.value ? `文章心智圖：${centerOf(mindmap.value).label}` : ''))
 const branchLabels = computed(() => new Map(branchList.value.map((b) => [b.node.id, b.node.label])))
 
-/** 可以點開的詞：有出處（對得上內文段落）或連得到圖譜 */
+/** 可以點開的詞：有出處（對得上內文段落） */
 const clickable = computed(() => {
   const ids = new Set<string>()
   for (const n of mindmap.value?.nodes ?? []) {
-    if (n.res_id !== null || unitLinksOf(n, props.headings).length > 0) ids.add(n.id)
+    if (unitLinksOf(n, props.headings).length > 0) ids.add(n.id)
   }
   return ids
 })
 
-const hasGraphLinks = computed(() => (mindmap.value?.nodes ?? []).some((n) => n.res_id !== null))
 const hasTypedLinks = computed(() => (mindmap.value?.links ?? []).some((l) => l.type !== null))
 const hasUntypedLinks = computed(() => (mindmap.value?.links ?? []).some((l) => l.type === null))
 
@@ -157,9 +165,6 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPoin
 watch([expanded, showLinks], () => {
   selectedId.value = null
 })
-
-const TOOLBAR_BUTTON_CLASS =
-  'inline-flex items-center h-7 px-2.5 rounded-[4px] border border-[color-mix(in_srgb,var(--text-ink-main)_35%,transparent)] bg-transparent text-(length:--type-label-size) leading-5 text-(--text-ink-body) cursor-pointer hover:border-[color-mix(in_srgb,var(--text-ink-main)_65%,transparent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)'
 </script>
 
 <template>
@@ -173,22 +178,20 @@ const TOOLBAR_BUTTON_CLASS =
       文章心智圖
     </h3>
     <div class="relative rounded-[6px] border border-(--border-shelf) bg-(--canvas-bg)">
+      <!-- 兩個開關都只是顯示或隱藏圖的某一部分，所以用同一種控制項（站主 2026-11-25），預設都關 -->
       <div
-        class="flex flex-wrap items-center justify-between sm:justify-start gap-2 min-h-11 sm:min-h-10 px-2.5 py-1.5 sm:py-0 border-b border-(--border-shelf)"
+        v-if="hasSecondaries || mindmap.links.length > 0"
+        :class="[
+          'flex flex-wrap items-center gap-x-4 gap-y-1 px-2.5 border-b border-(--border-shelf)',
+          finePointer ? 'min-h-10' : 'min-h-11 py-1.5',
+        ]"
       >
-        <button
-          v-if="hasSecondaries"
-          type="button"
-          :class="TOOLBAR_BUTTON_CLASS"
-          @click="toggleAll"
-        >
-          {{ allExpanded ? '收合次要' : '展開次要' }}
-        </button>
+        <BaseSwitch v-if="hasSecondaries" v-model="showSecondaries" label="次要概念" />
         <BaseSwitch v-if="mindmap.links.length > 0" v-model="showLinks" label="橫向關係" />
       </div>
 
       <!-- 桌機：SVG 圖 -->
-      <div ref="canvasEl" class="relative hidden sm:block">
+      <div v-if="finePointer" ref="canvasEl" class="relative">
         <ArticleMindmapDiagram
           :layout="detail.layout"
           :title="title"
@@ -214,19 +217,12 @@ const TOOLBAR_BUTTON_CLASS =
         >
           <div class="text-sm font-bold text-(--text-ink-main)">{{ selectedNode.label }}</div>
           <ArticleMindmapUnitList v-if="selectedUnits.length > 0" :units="selectedUnits" @navigate="closePopover(false)" />
-          <RouterLink
-            v-if="selectedNode.res_id !== null"
-            :to="MINDMAP_GRAPH_ROUTE"
-            class="block mt-1 pt-1 border-t border-(--border-shelf) font-semibold text-(--text-accent) hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--text-accent)"
-          >
-            ↗ 前往圖譜
-          </RouterLink>
         </div>
       </div>
 
-      <!-- 手機：大綱樹 -->
+      <!-- 觸控裝置：大綱樹 -->
       <ArticleMindmapOutline
-        class="sm:hidden"
+        v-else
         :mindmap="mindmap"
         :headings="headings"
         :expanded="expanded"
@@ -234,22 +230,21 @@ const TOOLBAR_BUTTON_CLASS =
         @toggle-secondaries="toggleBranch"
       />
 
+      <!-- 說明列只在橫向關係打開時才有內容（線的畫法），沒有內容就整列不畫 -->
       <div
+        v-if="showLinks && (hasTypedLinks || hasUntypedLinks || (finePointer && detail.hiddenLinkCount > 0))"
         class="flex flex-wrap items-center gap-x-4 gap-y-0.5 min-h-12 px-3 py-1.5 border-t border-(--border-shelf) text-xs leading-[18px] text-(--text-ink-muted)"
       >
-        <span>點詞跳到文章段落</span>
-        <span v-if="hasGraphLinks"><span class="font-bold text-(--text-accent)" aria-hidden="true">↗</span> 連到圖譜</span>
-        <template v-if="showLinks">
-          <span v-if="hasTypedLinks" class="inline-flex items-center gap-1">
-            <svg width="26" height="8" aria-hidden="true"><line x1="0" x2="26" y1="4" y2="4" stroke-width="1.5" class="stroke-(--text-accent)" /></svg>
-            <span class="sm:hidden">有類型</span><span class="hidden sm:inline">有類型的橫向關係</span>
-          </span>
-          <span v-if="hasUntypedLinks" class="inline-flex items-center gap-1">
-            <svg width="26" height="8" aria-hidden="true"><line x1="0" x2="26" y1="4" y2="4" stroke-width="1.5" stroke-dasharray="5 4" class="stroke-(--accent-secondary)" /></svg>
-            只是常一起出現
-          </span>
-          <span v-if="detail.hiddenLinkCount > 0" class="hidden sm:inline">另有 {{ detail.hiddenLinkCount }} 條連到收合的節點</span>
-        </template>
+        <span v-if="hasTypedLinks" class="inline-flex items-center gap-1">
+          <svg width="26" height="8" aria-hidden="true"><line x1="0" x2="26" y1="4" y2="4" stroke-width="1.5" class="stroke-(--text-accent)" /></svg>
+          {{ finePointer ? '有類型的橫向關係' : '有類型' }}
+        </span>
+        <span v-if="hasUntypedLinks" class="inline-flex items-center gap-1">
+          <svg width="26" height="8" aria-hidden="true"><line x1="0" x2="26" y1="4" y2="4" stroke-width="1.5" stroke-dasharray="5 4" class="stroke-(--accent-secondary)" /></svg>
+          只是常一起出現
+        </span>
+        <!-- 大綱樹的關係是文字，不受另一端收合影響，只有圖才有「連到收合的節點」 -->
+        <span v-if="finePointer && detail.hiddenLinkCount > 0">另有 {{ detail.hiddenLinkCount }} 條連到收合的節點</span>
       </div>
     </div>
   </section>

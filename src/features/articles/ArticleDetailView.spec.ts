@@ -49,8 +49,6 @@ async function mountAt(id: number) {
       { path: '/articles', name: 'articles', component: Stub },
       { path: '/articles/:id', name: 'article-detail', component: ArticleDetailView },
       { path: '/articles/:id/edit', name: 'article-editor', component: Stub },
-      // 心智圖裡有 res_id 的詞連到圖譜頁
-      { path: '/graph', name: 'graph', component: Stub },
     ],
   })
   router.push(`/articles/${id}`)

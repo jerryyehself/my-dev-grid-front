@@ -15,8 +15,6 @@ export interface MindmapLabelSpec {
   id: string
   label: string
   kind: MindmapLabelKind
-  /** 有 res_id、畫 ↗ 連到圖譜 */
-  graph: boolean
 }
 
 export interface MindmapBranchSpec extends MindmapLabelSpec {
@@ -87,10 +85,6 @@ export const DETAIL_METRICS: MindmapMetrics = {
   underline: { center: 2, branch: 1.4, primary: 1.25, secondary: 1, chip: 1 },
 }
 
-/** ↗ 跟詞之間的距離（px），與 ↗ 本身大約的寬度（em） */
-export const GRAPH_MARK_GAP = 3
-const GRAPH_MARK_EM = 0.9
-
 export interface PositionedLabel extends MindmapLabelSpec {
   side: MindmapSide
   /** 文字的錨點 x（右側是左端、左側是右端、中心是中點） */
@@ -129,9 +123,7 @@ interface TreeDatum {
 }
 
 function labelWidth(spec: MindmapLabelSpec, metrics: MindmapMetrics, measure: MeasureLabel): number {
-  const font = metrics.font[spec.kind]
-  const text = measure(spec.label, font)
-  return spec.graph ? text + GRAPH_MARK_GAP + GRAPH_MARK_EM * font.size : text
+  return measure(spec.label, metrics.font[spec.kind])
 }
 
 function curve(x1: number, y1: number, x2: number, y2: number): string {

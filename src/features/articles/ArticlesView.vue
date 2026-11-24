@@ -19,6 +19,7 @@ import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import { ARTICLES_EMPTY_TEXT, ARTICLES_LOAD_FAILED_TEXT, LOADING_TEXT } from '@/copy/common'
 import { hasArticleMindmap } from './mindmap/articleMindmapSource'
+import { matchesFinePointer } from './mindmap/useFinePointer'
 
 // 標題懸停心智圖（只有有心智圖的文章才有）。元件與資料都延遲載入：沒滑到這些標題就不下載
 const ArticleMindmapHoverTip = defineAsyncComponent(
@@ -86,8 +87,8 @@ function titleAnchor(event: Event): HTMLElement | null {
 
 function onTitleTextEnter(articleId: number, event: MouseEvent) {
   if (!hasArticleMindmap(articleId)) return
-  // 觸控裝置點一下也會送 mouseenter；沒有懸停能力的裝置不顯示
-  if (typeof window.matchMedia === 'function' && !window.matchMedia('(hover: hover)').matches) return
+  // 觸控裝置點一下也會送 mouseenter；不是能懸停、指標精準的裝置就不顯示（跟內頁分圖與大綱樹同一個條件）
+  if (!matchesFinePointer()) return
   const anchor = titleAnchor(event)
   if (!anchor) return
   tipDismissed.value = false

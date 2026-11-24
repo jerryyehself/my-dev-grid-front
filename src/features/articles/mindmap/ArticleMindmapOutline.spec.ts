@@ -4,12 +4,12 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import fixture from './articleMindmapFixture.json'
 import type { ArticleMindmap } from './articleMindmapTypes'
 import ArticleMindmapOutline from './ArticleMindmapOutline.vue'
+import { extractHeadings } from '@/components/markdown/headings'
+import productionBody from './articleMindmapFixtureBody.md?raw'
 
 const mindmap = fixture as ArticleMindmap
-const headings = [...new Set(mindmap.nodes.flatMap((n) => n.units.map((u) => u.unit_id)))].map((slug) => ({
-  slug,
-  text: `標題 ${slug}`,
-}))
+// 內文標題：正式環境那篇的快照
+const headings = extractHeadings(productionBody)
 
 function mountOutline(props: Partial<{ expanded: Set<string>; showLinks: boolean }> = {}) {
   const Stub = { template: '<div />' }
@@ -67,18 +67,22 @@ describe('ArticleMindmapOutline', () => {
     const wrapper = mountOutline()
     await branchButton(wrapper, '目前結論').trigger('click')
     await wrapper.findAll('button').find((b) => b.text() === 'force-graph')!.trigger('click')
-    expect(wrapper.text()).toContain('出現在 4 段，點一下跳過去')
-    expect(wrapper.find('a[href="#參考文獻"]').exists()).toBe(true)
+    expect(wrapper.findAll('a[href^="#"]').map((a) => a.attributes('href'))).toEqual([
+      '#採用的設計',
+      '#繪製方式',
+      '#結論',
+      '#參考文獻',
+    ])
+    // 不另外寫「點一下跳過去」
+    expect(wrapper.text()).not.toContain('跳過去')
   })
 
-  it('它應該只在有 res_id 的詞旁邊放連到圖譜的按鈕', async () => {
+  it('它應該不放任何連到圖譜的按鈕，有 res_id 的詞也一樣（圖譜頁的行為要先改）', async () => {
     const wrapper = mountOutline()
     await branchButton(wrapper, '目前結論').trigger('click')
-    // 按鈕跟它的詞在同一列：列的文字就是那個詞
-    const rows = wrapper.findAll('a[href="/graph"]').map((a) => a.element.parentElement?.textContent?.replace('↗', '').trim())
-    expect(rows).toEqual([expect.stringContaining('知識視覺化'), 'force-graph'])
-    // 圖譜頁不會選中那個詞，名稱只說打開圖譜
-    expect(wrapper.findAll('a[href="/graph"]').map((a) => a.attributes('aria-label'))).toEqual(['前往圖譜', '前往圖譜'])
+    expect(wrapper.text()).toContain('force-graph')
+    expect(wrapper.find('a[href="/graph"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('↗')
   })
 
   it('它應該在橫向關係打開時在詞底下寫出關係，關著時不寫', async () => {

@@ -119,11 +119,8 @@ describe('buildHoverSpec', () => {
     expect(ids(spec.left)).toEqual(['n25', 'n24', 'n20'])
   })
 
-  it('它應該不畫橫向線，也不畫 ↗（提示框裡不能點）', () => {
-    const spec = buildHoverSpec(mindmap)
-    expect(spec.links).toEqual([])
-    expect(spec.center.graph).toBe(false)
-    expect([...spec.right, ...spec.left].some((l) => l.graph)).toBe(false)
+  it('它應該不畫橫向線', () => {
+    expect(buildHoverSpec(mindmap).links).toEqual([])
   })
 
   it('它應該在沒有概念時只剩中心', () => {
@@ -165,13 +162,6 @@ describe('buildDetailSpec', () => {
     expect(ids(open.left)).toEqual(ids(collapsed.left))
   })
 
-  it('它應該只在有 res_id 的詞上畫 ↗', () => {
-    const { spec } = buildDetailSpec(mindmap, none, linkLineLabel, false)
-    const graphIds = [spec.center, ...[...spec.right, ...spec.left].flatMap((b) => [b, ...b.children])]
-      .filter((l) => l.graph)
-      .map((l) => l.id)
-    expect(graphIds.sort()).toEqual(['n0', 'n24'])
-  })
 
   it('它應該在開關關著時不帶任何橫向線', () => {
     const result = buildDetailSpec(mindmap, none, linkLineLabel, false)

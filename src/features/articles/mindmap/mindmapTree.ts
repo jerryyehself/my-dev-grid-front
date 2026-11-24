@@ -57,8 +57,8 @@ export function assignSides<T>(items: T[], rows: (item: T) => number): { right: 
   return { right: items.slice(0, best), left: items.slice(best).reverse() }
 }
 
-function labelOf(node: MindmapNode, kind: MindmapLabelSpec['kind'], graph: boolean): MindmapLabelSpec {
-  return { id: node.id, label: node.label, kind, graph: graph && node.res_id !== null }
+function labelOf(node: MindmapNode, kind: MindmapLabelSpec['kind']): MindmapLabelSpec {
+  return { id: node.id, label: node.label, kind }
 }
 
 /** 清單懸停最少、最多放幾個概念（站主 2026-11-25 定案：6–8 個） */
@@ -88,15 +88,15 @@ export function hoverConceptsOf(mindmap: ArticleMindmap): MindmapNode[] {
 /**
  * 清單懸停：兩階，中心直接接權重最高的幾個主要概念，不放分枝（站主 2026-11-25 定案：
  * 「背景、方法論」這類分枝每篇都差不多，看不出文章的差別）。概念照資料順序從右上順時針分到左右兩邊。
- * 沒有橫向線、沒有 ↗（提示框裡不能點）。
+ * 沒有橫向線。
  */
 export function buildHoverSpec(mindmap: ArticleMindmap): MindmapTreeSpec {
   const concepts = hoverConceptsOf(mindmap).map<MindmapBranchSpec>((c) => ({
-    ...labelOf(c, 'primary', false),
+    ...labelOf(c, 'primary'),
     children: [],
   }))
   const { right, left } = assignSides(concepts, () => 1)
-  return { center: labelOf(centerOf(mindmap), 'center', false), right, left, links: [] }
+  return { center: labelOf(centerOf(mindmap), 'center'), right, left, links: [] }
 }
 
 export const CHIP_PREFIX = 'chip:'
@@ -121,22 +121,21 @@ export function buildDetailSpec(
   const { right, left } = assignSides(all, (b) => b.primaries.length + b.secondaries.length + 1)
   const toSpec = (b: MindmapBranch): MindmapBranchSpec => {
     const open = expanded.has(b.node.id)
-    const children = b.primaries.map((c) => labelOf(c, 'primary', true))
-    if (open) children.push(...b.secondaries.map((c) => labelOf(c, 'secondary', true)))
+    const children = b.primaries.map((c) => labelOf(c, 'primary'))
+    if (open) children.push(...b.secondaries.map((c) => labelOf(c, 'secondary')))
     if (b.secondaries.length > 0) {
       children.push({
         id: `${CHIP_PREFIX}${b.node.id}`,
         label: chipLabel(b.secondaries.length, open),
         kind: 'chip',
-        graph: false,
       })
     }
-    return { ...labelOf(b.node, 'branch', true), children }
+    return { ...labelOf(b.node, 'branch'), children }
   }
   const showSecondaryBranches = expanded.has(mindmap.center)
   const visibleBranch = (b: MindmapBranch) => b.node.strength === 'primary' || showSecondaryBranches
   const spec: MindmapTreeSpec = {
-    center: labelOf(centerOf(mindmap), 'center', true),
+    center: labelOf(centerOf(mindmap), 'center'),
     right: right.filter(visibleBranch).map(toSpec),
     left: left.filter(visibleBranch).map(toSpec),
     links: [],

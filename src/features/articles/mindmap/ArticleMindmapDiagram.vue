@@ -87,7 +87,7 @@ function underlineWidth(label: PositionedLabel): number {
 
 function ariaLabel(label: PositionedLabel): string {
   if (isChip(label)) return `${label.label}：${props.branchLabels.get(branchOfChip(label)) ?? ''}`
-  return label.graph ? `${label.label}（可連到圖譜）` : label.label
+  return label.label
 }
 
 function activate(label: PositionedLabel) {
@@ -130,9 +130,7 @@ function activate(label: PositionedLabel) {
       dominant-baseline="central"
       font-size="12"
       :class="['fill-(--text-accent) font-semibold [paint-order:stroke] stroke-4', haloClass]"
-    >
-      {{ link.label }}
-    </text>
+    >{{ link.label }}</text>
 
     <template v-for="label in layout.labels" :key="label.id">
       <g
@@ -173,9 +171,7 @@ function activate(label: PositionedLabel) {
           dominant-baseline="central"
           :font-size="label.fontSize"
           :class="textClass(label)"
-        >
-          {{ label.label }}<tspan v-if="label.graph" dx="3" class="fill-(--text-accent) font-bold" aria-hidden="true">↗</tspan>
-        </text>
+        >{{ label.label }}</text>
       </g>
       <g v-else :data-node-id="label.id">
         <line
@@ -193,9 +189,7 @@ function activate(label: PositionedLabel) {
           dominant-baseline="central"
           :font-size="label.fontSize"
           :class="textClass(label)"
-        >
-          {{ label.label }}<tspan v-if="label.graph" dx="3" class="fill-(--text-accent) font-bold" aria-hidden="true">↗</tspan>
-        </text>
+        >{{ label.label }}</text>
       </g>
     </template>
   </svg>

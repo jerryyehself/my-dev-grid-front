@@ -3,14 +3,13 @@
 // 圖形類的視覺在窄螢幕另做一個版本）。照線框：
 // - 預設連分枝都收合，只露出中心與分枝；390 寬全部展開要 900px 高，會把文章推得太遠。
 // - 每列至少 44px 高才好點。
-// - 點詞在原地展開出處；有 res_id 的詞右邊有 ↗ 連到圖譜。
+// - 點詞在原地展開出處。
 // - 橫向關係開著時，詞底下多一行小字說明連到哪個詞（文字不受另一端收合影響）。
 import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
 import ArticleMindmapUnitList from './ArticleMindmapUnitList.vue'
 import type { ArticleMindmap, MindmapLink, MindmapNode } from './articleMindmapTypes'
 import { branchesOf, centerOf, chipLabel, linkPhrase } from './mindmapTree'
-import { MINDMAP_GRAPH_ROUTE, unitLinksOf, type MindmapHeading } from './mindmapUnits'
+import { unitLinksOf, type MindmapHeading } from './mindmapUnits'
 
 const props = defineProps<{
   mindmap: ArticleMindmap
@@ -62,9 +61,6 @@ function relationsOf(node: MindmapNode): { key: string; link: MindmapLink; text:
 function countText(primaries: number, secondaries: number): string {
   return secondaries > 0 ? `${primaries} 個，次要 ${secondaries}` : `${primaries} 個`
 }
-
-const GRAPH_BUTTON_CLASS =
-  'shrink-0 -my-2 -mr-2 w-11 h-11 inline-flex items-center justify-center text-(--text-accent) font-bold focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-(--text-accent) rounded-[6px]'
 </script>
 
 <template>
@@ -72,14 +68,6 @@ const GRAPH_BUTTON_CLASS =
     <li class="flex items-center gap-2.5 min-h-11 px-3">
       <span class="font-serif font-bold text-[15px] text-(--text-ink-main)">{{ center.label }}</span>
       <span class="flex-1 text-(length:--type-label-size) text-(--text-ink-muted)">文章主題</span>
-      <RouterLink
-        v-if="center.res_id !== null"
-        :to="MINDMAP_GRAPH_ROUTE"
-        :class="GRAPH_BUTTON_CLASS"
-        aria-label="前往圖譜"
-      >
-        <span class="w-7 h-7 inline-flex items-center justify-center rounded-[4px] border border-[color-mix(in_srgb,var(--text-accent)_55%,transparent)]" aria-hidden="true">↗</span>
-      </RouterLink>
     </li>
     <li v-for="branch in branches" :key="branch.node.id">
       <button
@@ -142,14 +130,6 @@ const GRAPH_BUTTON_CLASS =
             >
               {{ node.label }}
             </span>
-            <RouterLink
-              v-if="node.res_id !== null"
-              :to="MINDMAP_GRAPH_ROUTE"
-              :class="GRAPH_BUTTON_CLASS"
-              aria-label="前往圖譜"
-            >
-              <span class="w-7 h-7 inline-flex items-center justify-center rounded-[4px] border border-[color-mix(in_srgb,var(--text-accent)_55%,transparent)]" aria-hidden="true">↗</span>
-            </RouterLink>
           </div>
           <ArticleMindmapUnitList
             v-if="openUnits === node.id"

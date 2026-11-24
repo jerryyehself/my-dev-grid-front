@@ -1,12 +1,8 @@
-import type { RouteLocationRaw } from 'vue-router'
 import type { MindmapNode } from './articleMindmapTypes'
 
-/**
- * 有 res_id 的詞連到圖譜頁。圖譜頁目前沒有「打開就選中某個節點」的網址，res_id 的編號也還沒帶類型
- * （圖譜節點 id 是「類型-編號」，編號跨類型會重複），所以先連到圖譜頁本身；兩件事都定了再帶上節點。
- * 連結文字因此只寫「前往圖譜」，不寫「在圖譜中看某個詞」：落地後圖譜不會選中那個詞，不能這樣承諾。
- */
-export const MINDMAP_GRAPH_ROUTE: RouteLocationRaw = { name: 'graph' }
+// 連到圖譜：資料留著 res_id，但目前不畫任何連到圖譜的連結（站主 2026-11-25：圖譜頁的行為要先改）。
+// 圖譜頁沒有「打開就選中某個節點」的網址，res_id 也還沒帶類型（圖譜節點 id 是「類型-編號」，
+// 編號跨類型會重複）；這兩件事定了再接回來。
 
 /** 內文標題（extractHeadings 的結果），只用得到 slug 與文字 */
 export interface MindmapHeading {

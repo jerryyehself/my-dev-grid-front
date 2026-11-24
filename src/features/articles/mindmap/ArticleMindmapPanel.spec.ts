@@ -6,6 +6,7 @@ import ArticleMindmapPanel from './ArticleMindmapPanel.vue'
 import * as source from './articleMindmapSource'
 import { extractHeadings } from '@/components/markdown/headings'
 import productionBody from './articleMindmapFixtureBody.md?raw'
+import { FINE_POINTER_QUERY } from './useFinePointer'
 
 // 內文標題：正式環境那篇的快照，slug 跟文章頁算出來的一樣
 const headings = extractHeadings(productionBody)
@@ -54,18 +55,31 @@ describe('ArticleMindmapPanel', () => {
     expect(wrapper.find('section').exists()).toBe(false)
   })
 
-  it('它應該畫出標題、工具列與桌機圖，預設次要收合、橫向關係關', async () => {
+  const switchNamed = (wrapper: Awaited<ReturnType<typeof mountPanel>>, name: string) =>
+    wrapper.findAll('[role="switch"]').find((s) => s.text() === name)!
+
+  it('它應該畫出標題、兩個開關與桌機圖，預設次要收合、橫向關係關', async () => {
     const wrapper = await mountPanel()
     // 跟內文的段落標題同一級（h3），不能是 h2，不然整篇的段落會掛在它底下
     expect(wrapper.get('h3').text()).toBe('文章心智圖')
     expect(wrapper.find('h2').exists()).toBe(false)
-    expect(wrapper.find('button[type="button"]').text()).toBe('展開次要')
-    expect(wrapper.get('[role="switch"]').attributes('aria-checked')).toBe('false')
+    // 兩個都是開關（同一種控制項），預設都關
+    expect(wrapper.findAll('[role="switch"]').map((s) => [s.text(), s.attributes('aria-checked')])).toEqual([
+      ['次要概念', 'false'],
+      ['橫向關係', 'false'],
+    ])
     const text = svgText(wrapper)
     expect(text).toContain('節點-連結圖')
     expect(text).toContain('＋4 次要')
     expect(text).not.toContain('格狀熱度圖')
     expect(wrapper.findAll('[data-testid="mindmap-cross-link"]')).toHaveLength(0)
+  })
+
+  it('它應該在橫向關係關著時不畫說明列（沒有內容）', async () => {
+    const wrapper = await mountPanel()
+    expect(wrapper.text()).not.toContain('點詞跳到文章段落')
+    expect(wrapper.text()).not.toContain('只是常一起出現')
+    expect(wrapper.find('.border-t').exists()).toBe(false)
   })
 
   it('它應該在點「＋N 次要」時只展開那個分枝', async () => {
@@ -78,6 +92,8 @@ describe('ArticleMindmapPanel', () => {
     expect(text).toContain('－ 收合次要')
     expect(text).not.toContain('資料缺口') // 背景的次要仍收合
     expect(wrapper.get('[data-node-id="chip:n3"]').attributes('aria-expanded')).toBe('true')
+    // 只展開一個分枝，「次要概念」開關仍是關
+    expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('false')
   })
 
   it('它應該用鍵盤（Enter）也能展開「＋N 次要」', async () => {
@@ -86,43 +102,54 @@ describe('ArticleMindmapPanel', () => {
     expect(svgText(wrapper)).toContain('資料缺口')
   })
 
-  it('它應該用工具列的鈕全部展開、再全部收合', async () => {
+  it('它應該用「次要概念」開關全部展開、再全部收合', async () => {
     const wrapper = await mountPanel()
-    await wrapper.get('button[type="button"]').trigger('click')
-    expect(wrapper.get('button[type="button"]').text()).toBe('收合次要')
+    await switchNamed(wrapper, '次要概念').trigger('click')
+    expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('true')
     const text = svgText(wrapper)
     for (const label of ['資料缺口', '格狀熱度圖', '漸進揭露', '虛線潛在關聯']) expect(text).toContain(label)
-    await wrapper.get('button[type="button"]').trigger('click')
+    await switchNamed(wrapper, '次要概念').trigger('click')
+    expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('false')
     expect(svgText(wrapper)).not.toContain('格狀熱度圖')
   })
 
-  it('它應該在打開橫向關係後畫出兩端都看得到的線，並寫出另有幾條連到收合的節點', async () => {
+  it('它應該在每個分枝都用「＋N 次要」展開後，讓「次要概念」開關顯示成開', async () => {
     const wrapper = await mountPanel()
-    await wrapper.get('[role="switch"]').trigger('click')
+    for (const id of ['n1', 'n2', 'n3', 'n4', 'n5']) await wrapper.get(`[data-node-id="chip:${id}"]`).trigger('click')
+    expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('true')
+  })
+
+  it('它應該在打開橫向關係後畫出兩端都看得到的線，說明列寫出線的畫法與另有幾條連到收合的節點', async () => {
+    const wrapper = await mountPanel()
+    await switchNamed(wrapper, '橫向關係').trigger('click')
     expect(wrapper.findAll('[data-testid="mindmap-cross-link"]')).toHaveLength(3)
     expect(wrapper.text()).toContain('另有 4 條連到收合的節點')
     // 有類型（實線）與只是常一起出現（虛線）都有
     expect(wrapper.text()).toContain('有類型的橫向關係')
     expect(wrapper.text()).toContain('只是常一起出現')
+    expect(wrapper.text()).not.toContain('點詞跳到文章段落')
   })
 
-  it('它應該在點詞時打開出處的彈出框，段落連到內文錨點，有 res_id 的連到圖譜', async () => {
+  it('它應該在點詞時打開出處的彈出框，段落照文章順序連到內文錨點', async () => {
     const wrapper = await mountPanel()
     await wrapper.get('[data-node-id="n24"][role="button"]').trigger('click')
     const dialog = wrapper.get('[role="dialog"]')
     expect(dialog.attributes('aria-label')).toBe('force-graph')
-    expect(dialog.text()).toContain('出現在 4 段，點一下跳過去')
     const hrefs = dialog.findAll('a[href^="#"]').map((a) => a.attributes('href'))
-    // 照文章裡的順序
     expect(hrefs).toEqual(['#採用的設計', '#繪製方式', '#結論', '#參考文獻'])
-    expect(dialog.get('a[href="/graph"]').text()).toBe('↗ 前往圖譜')
+    // 不另外寫「點一下跳過去」
+    expect(dialog.text()).not.toContain('跳過去')
     expect(document.activeElement).toBe(dialog.element)
   })
 
-  it('它應該在沒有 res_id 的詞不放圖譜連結', async () => {
+  it('它應該在任何地方都不放連到圖譜的連結或 ↗（圖譜頁的行為要先改）', async () => {
     const wrapper = await mountPanel()
-    await wrapper.get('[data-node-id="n25"][role="button"]').trigger('click')
-    expect(wrapper.get('[role="dialog"]').find('a[href="/graph"]').exists()).toBe(false)
+    await switchNamed(wrapper, '橫向關係').trigger('click')
+    // force-graph 有 res_id
+    await wrapper.get('[data-node-id="n24"][role="button"]').trigger('click')
+    expect(wrapper.find('a[href="/graph"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('↗')
+    expect(wrapper.text()).not.toContain('圖譜')
   })
 
   it('它應該在按 Esc 時關掉彈出框，焦點回到那個詞', async () => {
@@ -152,16 +179,16 @@ describe('ArticleMindmapPanel', () => {
     expect(wrapper.find('[data-node-id="n9"]').exists()).toBe(true)
   })
 
-  it('它應該讓對不上內文段落、也沒有 res_id 的詞不能點', async () => {
+  it('它應該讓對不上內文段落的詞都不能點，有 res_id 也一樣', async () => {
     const router = makeRouter()
     const wrapper = mount(ArticleMindmapPanel, {
       props: { articleId: fixture.article_id, headings: [] },
       global: { plugins: [router] },
     })
     await flushPromises()
-    // 沒有任何標題：只剩有 res_id 的中心與 force-graph 可以點
+    // 沒有任何標題：沒有一個詞可以點，只剩「＋N 次要」
     const buttons = wrapper.findAll('g[role="button"]').map((g) => g.attributes('data-node-id'))
-    expect(buttons.filter((id) => !id?.startsWith('chip:')).sort()).toEqual(['n0', 'n24'])
+    expect(buttons.filter((id) => !id?.startsWith('chip:'))).toEqual([])
   })
 
   it('它應該在換文章時丟掉晚回來的舊結果', async () => {
@@ -181,5 +208,59 @@ describe('ArticleMindmapPanel', () => {
     await flushPromises()
     expect(spy).toHaveBeenCalledTimes(2)
     expect(wrapper.find('section').exists()).toBe(false)
+  })
+})
+
+describe('ArticleMindmapPanel 依裝置選圖或大綱樹', () => {
+  /** 假的 matchMedia：只有「能懸停、指標精準」照給的值，其他查詢（例如寬度）一律不成立 */
+  function stubPointer(fine: boolean) {
+    const listeners: ((e: { matches: boolean }) => void)[] = []
+    const mql = {
+      matches: fine,
+      addEventListener: (...[, fn]: [string, (e: { matches: boolean }) => void]) => listeners.push(fn),
+      removeEventListener: () => {},
+    }
+    vi.stubGlobal('matchMedia', (query: string) => (query === FINE_POINTER_QUERY ? mql : { matches: false }))
+    return (next: boolean) => {
+      mql.matches = next
+      listeners.forEach((fn) => fn({ matches: next }))
+    }
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('它應該在能懸停、指標精準的裝置畫圖，跟視窗寬度無關（寬度查詢一律不成立也一樣）', async () => {
+    stubPointer(true)
+    const wrapper = await mountPanel()
+    expect(wrapper.find('svg[role="group"]').exists()).toBe(true)
+    expect(wrapper.find('ul').exists()).toBe(false)
+  })
+
+  it('它應該在觸控裝置畫大綱樹，不畫圖', async () => {
+    stubPointer(false)
+    const wrapper = await mountPanel()
+    expect(wrapper.find('svg[role="group"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('文章主題')
+    // 兩個開關一樣在
+    expect(wrapper.findAll('[role="switch"]').map((s) => s.text())).toEqual(['次要概念', '橫向關係'])
+  })
+
+  it('它應該在裝置切換（例如平板接上滑鼠）時跟著換', async () => {
+    const change = stubPointer(false)
+    const wrapper = await mountPanel()
+    change(true)
+    await flushPromises()
+    expect(wrapper.find('svg[role="group"]').exists()).toBe(true)
+  })
+
+  it('它應該在大綱樹的說明列不寫「另有 N 條連到收合的節點」（文字關係不受收合影響）', async () => {
+    stubPointer(false)
+    const wrapper = await mountPanel()
+    await wrapper.findAll('[role="switch"]').find((s) => s.text() === '橫向關係')!.trigger('click')
+    expect(wrapper.text()).toContain('只是常一起出現')
+    expect(wrapper.text()).toContain('有類型')
+    expect(wrapper.text()).not.toContain('連到收合的節點')
   })
 })

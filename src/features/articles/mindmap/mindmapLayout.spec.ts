@@ -19,7 +19,6 @@ const label = (id: string, kind: MindmapLabelSpec['kind'] = 'primary', text = id
   id,
   label: text,
   kind,
-  graph: false,
 })
 const branch = (id: string, children: string[]): MindmapBranchSpec => ({
   ...label(id, 'branch'),
@@ -116,16 +115,9 @@ describe('layoutMindmap', () => {
     expect(new Set(right.map((x) => x.x1)).size).toBe(1)
   })
 
-  it('它應該在 ↗ 的詞把 ↗ 算進寬度', () => {
-    const plain = byId(layoutMindmap(spec, DETAIL_METRICS, measure)).get('x1')!
-    const withMark = byId(
-      layoutMindmap(
-        { ...spec, right: [{ ...branch('b1', []), children: [{ ...label('x1'), graph: true }] }] },
-        DETAIL_METRICS,
-        measure,
-      ),
-    ).get('x1')!
-    expect(withMark.x2 - withMark.x1).toBeGreaterThan(plain.x2 - plain.x1)
+  it('它應該讓詞的底線寬度等於量到的字寬', () => {
+    const x1 = byId(layoutMindmap(spec, DETAIL_METRICS, measure)).get('x1')!
+    expect(x1.x2 - x1.x1).toBe(measure('x1'))
   })
 })
 
