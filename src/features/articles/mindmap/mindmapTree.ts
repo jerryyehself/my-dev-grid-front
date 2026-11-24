@@ -61,15 +61,41 @@ function labelOf(node: MindmapNode, kind: MindmapLabelSpec['kind'], graph: boole
   return { id: node.id, label: node.label, kind, graph: graph && node.res_id !== null }
 }
 
-/** 清單懸停：只放中心、主要的分枝與主要概念，沒有橫向線、沒有 ↗（提示框裡不能點）。 */
-export function buildHoverSpec(mindmap: ArticleMindmap): MindmapTreeSpec {
-  const branches = branchesOf(mindmap)
+/** 清單懸停最少、最多放幾個概念（站主 2026-11-25 定案：6–8 個） */
+export const HOVER_CONCEPT_MIN = 6
+export const HOVER_CONCEPT_MAX = 8
+
+/**
+ * 清單懸停要放的概念：主要分枝底下的主要概念，依 weight 由高到低取。
+ * 先取 HOVER_CONCEPT_MIN 個；後面的跟第 MIN 個 weight 一樣時一併帶上（不在同分的地方硬切），
+ * 最多 HOVER_CONCEPT_MAX 個。weight 一樣時照資料順序（作者的順序）。不足 MIN 個就全部放。
+ * 回傳的順序是資料順序，同一個分枝的概念排在一起。
+ */
+export function hoverConceptsOf(mindmap: ArticleMindmap): MindmapNode[] {
+  const pool = branchesOf(mindmap)
     .filter((b) => b.node.strength === 'primary')
-    .map<MindmapBranchSpec>((b) => ({
-      ...labelOf(b.node, 'branch', false),
-      children: b.primaries.map((c) => labelOf(c, 'primary', false)),
-    }))
-  const { right, left } = assignSides(branches, (b) => b.children.length)
+    .flatMap((b) => b.primaries)
+  const order = new Map(mindmap.nodes.map((n, i) => [n.id, i]))
+  const ranked = [...pool].sort((a, b) => b.weight - a.weight || order.get(a.id)! - order.get(b.id)!)
+  let count = Math.min(HOVER_CONCEPT_MIN, ranked.length)
+  while (count < Math.min(HOVER_CONCEPT_MAX, ranked.length) && ranked[count]!.weight === ranked[count - 1]!.weight) {
+    count++
+  }
+  const chosen = new Set(ranked.slice(0, count).map((n) => n.id))
+  return pool.filter((n) => chosen.has(n.id))
+}
+
+/**
+ * 清單懸停：兩階，中心直接接權重最高的幾個主要概念，不放分枝（站主 2026-11-25 定案：
+ * 「背景、方法論」這類分枝每篇都差不多，看不出文章的差別）。概念照資料順序從右上順時針分到左右兩邊。
+ * 沒有橫向線、沒有 ↗（提示框裡不能點）。
+ */
+export function buildHoverSpec(mindmap: ArticleMindmap): MindmapTreeSpec {
+  const concepts = hoverConceptsOf(mindmap).map<MindmapBranchSpec>((c) => ({
+    ...labelOf(c, 'primary', false),
+    children: [],
+  }))
+  const { right, left } = assignSides(concepts, () => 1)
   return { center: labelOf(centerOf(mindmap), 'center', false), right, left, links: [] }
 }
 

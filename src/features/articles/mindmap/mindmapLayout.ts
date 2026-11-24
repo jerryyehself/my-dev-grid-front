@@ -55,7 +55,7 @@ export interface MindmapMetrics {
   underline: Record<MindmapLabelKind, number>
 }
 
-/** 清單懸停（2b）：中心與分枝 15px、概念 14px，概念間距 32、分組多 14、欄距 30。 */
+/** 清單懸停：中心 15px、概念 14px（兩階，不放分枝；branch 字級留著沒用到），概念間距 32、欄距 30。 */
 export const HOVER_METRICS: MindmapMetrics = {
   font: {
     center: { size: 15, weight: 700, serif: true },

@@ -103,9 +103,17 @@ describe('layoutMindmap', () => {
     expect(layout.viewBox[2]).toBeGreaterThan(10)
   })
 
-  it('它應該讓清單懸停的 fixture 高約 230（線框的值）', () => {
+  it('它應該讓清單懸停的兩階圖只有一欄概念，高度由較多的那一邊決定', () => {
     const layout = layoutMindmap(buildHoverSpec(mindmap), HOVER_METRICS, measure, 638)
-    expect(layout.viewBox[3]).toBeCloseTo(230, 0)
+    const l = byId(layout)
+    // 右邊 4 個概念：底線從 -48 到 48，每列 32；最上面的字頂在 -48 - 14×1.3；上下各留 28
+    expect(l.get('n6')!.y).toBe(-48)
+    expect(l.get('n19')!.y).toBe(48)
+    expect(layout.viewBox[3]).toBeCloseTo(48 + 48 + 14 * 1.3 + 2 * 28)
+    // 兩階：每個概念都直接連到中心，同一邊的概念對齊在中心外側一個欄距的地方
+    expect(layout.edges).toHaveLength(7)
+    const right = layout.labels.filter((x) => x.side === 'right')
+    expect(new Set(right.map((x) => x.x1)).size).toBe(1)
   })
 
   it('它應該在 ↗ 的詞把 ↗ 算進寬度', () => {

@@ -1,9 +1,11 @@
 <script setup lang="ts">
-// 文章清單的標題懸停心智圖（站主 2026-11-24 定案）：
+// 文章清單的標題懸停心智圖（站主 2026-11-24 定案，2026-11-25 改成兩階）：
 // - 只在游標停在標題文字上、或鍵盤 Tab 到標題時出現（由 ArticlesView 控制何時掛上這個元件）。
 // - 預設往上展開，這樣看圖的同時下面的摘要還看得到；往上會被視窗頂端（含黏在上面的導覽列）
 //   擋住時才改往下。
-// - 640px 寬、中心與分枝 15px、概念 14px，只放主要概念，沒有橫向線、沒有工具列。
+// - 兩階：中心直接接權重最高的 6–8 個主要概念，不放分枝（怎麼挑見 mindmapTree.ts 的 hoverConceptsOf）。
+//   讓讀者點進去之前，搭配摘要先看出這篇談了哪些概念。
+// - 640px 寬、中心 15px、概念 14px，沒有橫向線、沒有工具列。一個概念都沒有就不顯示。
 // - 指標穿透（pointer-events: none）：圖裡沒有可以點的東西，游標移過去也不會擋到別篇。
 // - 手機（窄於 md）不顯示：手機沒有懸停，點標題直接進文章，內頁有完整的圖。
 // 外框沿用卡片底 --bg-folder、--edge-real 細框、圓角 6、--node-shadow 陰影（線框值）。
@@ -37,7 +39,10 @@ const fontsVersion = useMindmapFonts()
 const layout = computed(() => {
   void fontsVersion.value
   if (!mindmap.value) return null
-  return layoutMindmap(buildHoverSpec(mindmap.value), HOVER_METRICS, measureLabelWidth, SVG_WIDTH)
+  const spec = buildHoverSpec(mindmap.value)
+  // 只剩中心的圖看不出這篇談什麼，不如不顯示
+  if (spec.right.length + spec.left.length === 0) return null
+  return layoutMindmap(spec, HOVER_METRICS, measureLabelWidth, SVG_WIDTH)
 })
 
 const title = computed(() => (mindmap.value ? `文章心智圖：${centerOf(mindmap.value).label}` : ''))

@@ -2,7 +2,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import fixture from './articleMindmapFixture.json'
 import ArticleMindmapHoverTip from './ArticleMindmapHoverTip.vue'
+import * as source from './articleMindmapSource'
 import { loadArticleMindmap } from './articleMindmapSource'
+import type { ArticleMindmap } from './articleMindmapTypes'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 
 /** 標題元素：jsdom 沒有排版，位置自己給 */
@@ -29,7 +31,7 @@ afterEach(() => {
 })
 
 describe('ArticleMindmapHoverTip', () => {
-  it('它應該畫出只有主要概念的心智圖，沒有橫向線', async () => {
+  it('它應該畫出兩階的心智圖：中心接主要概念，沒有分枝、沒有橫向線', async () => {
     const wrapper = await mountTip(anchorAt(800))
     const tip = wrapper.get('[role="tooltip"]')
     expect(tip.attributes('id')).toBe('tip-1')
@@ -37,6 +39,11 @@ describe('ArticleMindmapHoverTip', () => {
     expect(tip.get('svg').attributes('aria-label')).toBe('文章心智圖：知識視覺化')
     expect(tip.text()).toContain('節點-連結圖')
     expect(tip.text()).not.toContain('格狀熱度圖')
+    // 分枝不放（「背景、方法論」每篇都差不多）
+    for (const branch of ['背景', '方法論', '候選圖形類型', '關鍵轉折', '目前結論']) {
+      expect(tip.findAll('text').map((t) => t.text())).not.toContain(branch)
+    }
+    expect(tip.findAll('[data-node-id]')).toHaveLength(8) // 中心 + 7 個概念
     expect(tip.find('[data-testid="mindmap-cross-link"]').exists()).toBe(false)
     expect(tip.find('[role="button"]').exists()).toBe(false)
     expect(tip.text()).not.toContain('↗')
@@ -75,6 +82,17 @@ describe('ArticleMindmapHoverTip', () => {
 
   it('它應該在文章沒有心智圖時什麼都不畫', async () => {
     const wrapper = await mountTip(anchorAt(800), fixture.article_id + 1)
+    expect(wrapper.find('[role="tooltip"]').exists()).toBe(false)
+  })
+
+  it('它應該在心智圖沒有任何主要概念時什麼都不畫（只剩中心看不出這篇談什麼）', async () => {
+    const onlyBranches = {
+      ...fixture,
+      nodes: fixture.nodes.filter((n) => n.id === 'n0' || n.parent === 'n0'),
+      links: [],
+    } as ArticleMindmap
+    vi.spyOn(source, 'loadArticleMindmap').mockResolvedValue(onlyBranches)
+    const wrapper = await mountTip(anchorAt(800))
     expect(wrapper.find('[role="tooltip"]').exists()).toBe(false)
   })
 })

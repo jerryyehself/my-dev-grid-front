@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import fixture from './articleMindmapFixture.json'
-import type { ArticleMindmap, MindmapLink } from './articleMindmapTypes'
+import type { ArticleMindmap, MindmapLink, MindmapNode } from './articleMindmapTypes'
 import {
   assignSides,
   branchesOf,
   buildDetailSpec,
   buildHoverSpec,
+  hoverConceptsOf,
   chipLabel,
   linkLineLabel,
   linkPhrase,
@@ -43,30 +44,92 @@ describe('assignSides', () => {
   })
 })
 
+/** 造一份只有一個分枝的心智圖，概念的 weight 照給的順序 */
+function withConcepts(weights: number[], extra: Partial<Record<number, Partial<MindmapNode>>> = {}): ArticleMindmap {
+  const nodes: MindmapNode[] = [
+    { id: 'c', parent: null, label: '中心', res_id: null, strength: 'primary', weight: 1, units: [] },
+    { id: 'b', parent: 'c', label: '分枝', res_id: null, strength: 'primary', weight: 0.9, units: [] },
+    ...weights.map<MindmapNode>((w, i) => ({
+      id: `k${i}`,
+      parent: 'b',
+      label: `概念${i}`,
+      res_id: null,
+      strength: 'primary',
+      weight: w,
+      units: [],
+      ...extra[i],
+    })),
+  ]
+  return { article_id: 1, center: 'c', nodes, links: [], status: 'draft' }
+}
+
+describe('hoverConceptsOf', () => {
+  it.each([
+    { name: '沒有概念', weights: [], picked: [] },
+    { name: '不足 6 個時全部放', weights: [0.5, 0.4, 0.3], picked: [0, 1, 2] },
+    { name: '剛好 6 個', weights: [0.6, 0.5, 0.4, 0.3, 0.2, 0.1], picked: [0, 1, 2, 3, 4, 5] },
+    { name: '7 個不同分時取前 6', weights: [0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1], picked: [0, 1, 2, 3, 4, 5] },
+    // 第 6 名是 0.2，第 7 名也是 0.2：同分一併帶上
+    { name: '跟第 6 名同分的一併帶上', weights: [0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.2, 0.1], picked: [0, 1, 2, 3, 4, 5, 6] },
+    // 同分的有 5 個，最多到 8 個，超過的照資料順序切
+    { name: '同分超過上限時照資料順序切在 8 個', weights: [0.9, 0.8, 0.7, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], picked: [0, 1, 2, 3, 4, 5, 6, 7] },
+    // 回傳的是資料順序，不是分數順序
+    { name: '回傳照資料順序', weights: [0.1, 0.9, 0.2, 0.8, 0.3, 0.7, 0.4], picked: [1, 2, 3, 4, 5, 6] },
+  ])('它應該在$name時取 $picked', ({ weights, picked }) => {
+    expect(ids(hoverConceptsOf(withConcepts(weights)))).toEqual(picked.map((i) => `k${i}`))
+  })
+
+  it('它應該只取主要概念，次要概念分數再高也不放', () => {
+    const data = withConcepts([0.9, 0.1], { 0: { strength: 'secondary' } })
+    expect(ids(hoverConceptsOf(data))).toEqual(['k1'])
+  })
+
+  it('它應該略過本身是次要的分枝底下的概念', () => {
+    const data = withConcepts([0.9])
+    data.nodes[1] = { ...data.nodes[1]!, strength: 'secondary' }
+    expect(hoverConceptsOf(data)).toEqual([])
+  })
+
+  it('它應該在文章 14 的 fixture 取 7 個（第 6、7 名同為 0.62）', () => {
+    expect(hoverConceptsOf(mindmap).map((n) => n.label)).toEqual([
+      '雙重受眾',
+      '三種實體型別',
+      '節點-連結圖',
+      '結構洞',
+      'ISOTYPE 點群聚合',
+      'force-graph',
+      'degree 驅動大小',
+    ])
+  })
+})
+
 describe('buildHoverSpec', () => {
-  it('它應該只放主要概念，分成右邊「背景／方法論／候選圖形類型」、左邊「目前結論／關鍵轉折」', () => {
+  it('它應該是兩階：中心直接接概念，不放分枝', () => {
     const spec = buildHoverSpec(mindmap)
-    expect(ids(spec.right)).toEqual(['n1', 'n2', 'n3'])
-    expect(ids(spec.left)).toEqual(['n5', 'n4'])
-    const all = [...spec.right, ...spec.left].flatMap((b) => b.children)
-    expect(all.every((c) => c.kind === 'primary')).toBe(true)
-    expect(all).toHaveLength(10)
+    const items = [...spec.right, ...spec.left]
+    expect(items.every((i) => i.kind === 'primary' && i.children.length === 0)).toBe(true)
+    const branchIds = branchesOf(mindmap).map((b) => b.node.id)
+    expect(items.some((i) => branchIds.includes(i.id))).toBe(false)
+  })
+
+  it('它應該把概念照資料順序從右上順時針分到左右兩邊', () => {
+    const spec = buildHoverSpec(mindmap)
+    // 7 個：右邊 4 個由上往下，左邊 3 個由上往下（資料順序的最後一個在左上）
+    expect(ids(spec.right)).toEqual(['n6', 'n7', 'n13', 'n19'])
+    expect(ids(spec.left)).toEqual(['n25', 'n24', 'n20'])
   })
 
   it('它應該不畫橫向線，也不畫 ↗（提示框裡不能點）', () => {
     const spec = buildHoverSpec(mindmap)
     expect(spec.links).toEqual([])
     expect(spec.center.graph).toBe(false)
-    expect([...spec.right, ...spec.left].flatMap((b) => [b, ...b.children]).some((l) => l.graph)).toBe(false)
+    expect([...spec.right, ...spec.left].some((l) => l.graph)).toBe(false)
   })
 
-  it('它應該略過本身是次要的分枝', () => {
-    const data: ArticleMindmap = {
-      ...mindmap,
-      nodes: mindmap.nodes.map((n) => (n.id === 'n2' ? { ...n, strength: 'secondary' as const } : n)),
-    }
-    const spec = buildHoverSpec(data)
-    expect([...ids(spec.right), ...ids(spec.left)]).not.toContain('n2')
+  it('它應該在沒有概念時只剩中心', () => {
+    const spec = buildHoverSpec(withConcepts([]))
+    expect(spec.right).toEqual([])
+    expect(spec.left).toEqual([])
   })
 })
 
