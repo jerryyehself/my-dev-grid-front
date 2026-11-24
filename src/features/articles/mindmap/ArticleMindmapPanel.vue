@@ -218,7 +218,7 @@ const TOOLBAR_BUTTON_CLASS =
             :to="MINDMAP_GRAPH_ROUTE"
             class="block mt-1 pt-1 border-t border-(--border-shelf) font-semibold text-(--text-accent) hover:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-(--text-accent)"
           >
-            ↗ 在圖譜中看「{{ selectedNode.label }}」
+            ↗ 前往圖譜
           </RouterLink>
         </div>
       </div>

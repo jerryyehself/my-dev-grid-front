@@ -76,7 +76,7 @@ const GRAPH_BUTTON_CLASS =
         v-if="center.res_id !== null"
         :to="MINDMAP_GRAPH_ROUTE"
         :class="GRAPH_BUTTON_CLASS"
-        :aria-label="`在圖譜中看「${center.label}」`"
+        aria-label="前往圖譜"
       >
         <span class="w-7 h-7 inline-flex items-center justify-center rounded-[4px] border border-[color-mix(in_srgb,var(--text-accent)_55%,transparent)]" aria-hidden="true">↗</span>
       </RouterLink>
@@ -146,7 +146,7 @@ const GRAPH_BUTTON_CLASS =
               v-if="node.res_id !== null"
               :to="MINDMAP_GRAPH_ROUTE"
               :class="GRAPH_BUTTON_CLASS"
-              :aria-label="`在圖譜中看「${node.label}」`"
+              aria-label="前往圖譜"
             >
               <span class="w-7 h-7 inline-flex items-center justify-center rounded-[4px] border border-[color-mix(in_srgb,var(--text-accent)_55%,transparent)]" aria-hidden="true">↗</span>
             </RouterLink>

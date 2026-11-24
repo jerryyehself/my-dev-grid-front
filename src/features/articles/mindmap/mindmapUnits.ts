@@ -4,6 +4,7 @@ import type { MindmapNode } from './articleMindmapTypes'
 /**
  * 有 res_id 的詞連到圖譜頁。圖譜頁目前沒有「打開就選中某個節點」的網址，res_id 的編號也還沒帶類型
  * （圖譜節點 id 是「類型-編號」，編號跨類型會重複），所以先連到圖譜頁本身；兩件事都定了再帶上節點。
+ * 連結文字因此只寫「前往圖譜」，不寫「在圖譜中看某個詞」：落地後圖譜不會選中那個詞，不能這樣承諾。
  */
 export const MINDMAP_GRAPH_ROUTE: RouteLocationRaw = { name: 'graph' }
 

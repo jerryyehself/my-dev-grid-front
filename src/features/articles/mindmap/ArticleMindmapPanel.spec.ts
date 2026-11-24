@@ -113,7 +113,7 @@ describe('ArticleMindmapPanel', () => {
     const hrefs = dialog.findAll('a[href^="#"]').map((a) => a.attributes('href'))
     // 照文章裡的順序
     expect(hrefs).toEqual(['#採用的設計', '#繪製方式', '#結論', '#參考文獻'])
-    expect(dialog.get('a[href="/graph"]').text()).toBe('↗ 在圖譜中看「force-graph」')
+    expect(dialog.get('a[href="/graph"]').text()).toBe('↗ 前往圖譜')
     expect(document.activeElement).toBe(dialog.element)
   })
 
