@@ -27,6 +27,8 @@ const props = defineProps<{
   linkUnavailable: boolean
   /** 後端說判斷不出這一版是否比站上上次匯入的新，更新前要使用者確認。 */
   unverified?: boolean
+  /** 同時站上內容又改過：確認後再送也會被退回，不開放確認，只提醒重新整理清單。 */
+  refreshOnly?: boolean
 }>()
 
 const choice = defineModel<RowChoice>({ required: true })
@@ -65,6 +67,8 @@ const confirmUnverified = computed<boolean>({
   },
 })
 const needsConfirm = computed(() => props.unverified === true && action.value === 'update')
+// refreshOnly 的列沒有 unverified 標記（view 只標可以確認的），但不論有沒有，都不能開放確認
+const needsRefresh = computed(() => props.refreshOnly === true && action.value === 'update')
 
 const displayTitle = computed(() => props.item.title ?? props.item.key ?? props.item.path)
 const isConflict = computed(() => props.item.status === 'conflict')
@@ -141,10 +145,13 @@ const badgeClass = computed(
       </div>
 
       <BaseSwitch v-if="isConflict && action === 'update'" v-model="overwrite" label="覆蓋站上的修改" />
-      <BaseSwitch v-if="needsConfirm" v-model="confirmUnverified" label="仍要用這一版更新" />
+      <BaseSwitch v-if="needsConfirm && !needsRefresh" v-model="confirmUnverified" label="仍要用這一版更新" />
     </div>
 
-    <p v-if="needsConfirm" class="m-0 text-(length:--type-label-size) text-(--text-error)" data-test="unverified-note">
+    <p v-if="needsRefresh" class="m-0 text-(length:--type-label-size) text-(--text-error)" data-test="refresh-only-note">
+      站上的內容在清單載入之後又改過，這一版也無法確認是否比站上上次匯入的新。請先重新整理清單，再決定要不要更新。
+    </p>
+    <p v-else-if="needsConfirm" class="m-0 text-(length:--type-label-size) text-(--text-error)" data-test="unverified-note">
       無法確認來源這一版是否比站上上次匯入的新（來源的歷史可能被改寫過）。確認後，會用這一版更新。
     </p>
 

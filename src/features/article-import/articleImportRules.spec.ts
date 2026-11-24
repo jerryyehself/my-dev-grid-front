@@ -666,6 +666,39 @@ describe('describeImportError（匯入）', () => {
       )
     })
 
+    it('它應該在同一項又判斷不出新舊、又站上內容改過時只給重新整理清單，不開放確認', () => {
+      const error = inImport(
+        new ApiRequestError(
+          409,
+          url,
+          'POST',
+          body({
+            errors: {
+              'items.1.confirm_unverified_base': [CONFIRM_MESSAGE],
+              'items.1.expected_site_version': ['站上又改過。'],
+              'items.0.documentation_id': ['這篇文章已經連結到其他來源檔案。'],
+            },
+          }),
+        ),
+      )
+      expect(error.kind).toBe('stale')
+      expect(error.unverified).toBeUndefined()
+      expect(error.refreshOnly).toEqual([1])
+      expect(error.message).toBe(
+        '站上的標題、日期或內文在清單載入之後又改過。這篇文章已經連結到其他來源檔案。沒有任何文章被寫入。請重新整理清單，確認站上現在的內容後，再決定要不要覆蓋。',
+      )
+      expect(error.message).not.toContain('請確認要用這一版更新')
+      expect(error.message).not.toContain('confirm_unverified_base')
+    })
+
+    it('它應該在站上改過的是另一項（索引不同）時，仍照原樣給確認', () => {
+      const error = inImport(
+        new ApiRequestError(409, url, 'POST', body({ errors: { 'items.1.confirm_unverified_base': [CONFIRM_MESSAGE], 'items.2.expected_site_version': ['x'] } })),
+      )
+      expect(error.kind).toBe('unverified')
+      expect(error.refreshOnly).toBeUndefined()
+    })
+
     it.each([
       { label: '沒有 unverified_commits', extra: { unverified_commits: undefined } },
       { label: 'unverified_commits 是空陣列', extra: { unverified_commits: [] } },
