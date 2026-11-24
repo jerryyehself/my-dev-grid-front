@@ -25,6 +25,8 @@ const props = defineProps<{
   linkOptions: SelectOption[]
   /** 站上文章清單載入失敗，沒辦法選要連結的文章。 */
   linkUnavailable: boolean
+  /** 後端說判斷不出這一版是否比站上上次匯入的新，更新前要使用者確認。 */
+  unverified?: boolean
 }>()
 
 const choice = defineModel<RowChoice>({ required: true })
@@ -55,6 +57,14 @@ const overwrite = computed<boolean>({
     choice.value = { ...choice.value, overwrite: value }
   },
 })
+
+const confirmUnverified = computed<boolean>({
+  get: () => choice.value.confirmUnverified,
+  set: (value) => {
+    choice.value = { ...choice.value, confirmUnverified: value }
+  },
+})
+const needsConfirm = computed(() => props.unverified === true && action.value === 'update')
 
 const displayTitle = computed(() => props.item.title ?? props.item.key ?? props.item.path)
 const isConflict = computed(() => props.item.status === 'conflict')
@@ -131,7 +141,12 @@ const badgeClass = computed(
       </div>
 
       <BaseSwitch v-if="isConflict && action === 'update'" v-model="overwrite" label="覆蓋站上的修改" />
+      <BaseSwitch v-if="needsConfirm" v-model="confirmUnverified" label="仍要用這一版更新" />
     </div>
+
+    <p v-if="needsConfirm" class="m-0 text-(length:--type-label-size) text-(--text-error)" data-test="unverified-note">
+      無法確認來源這一版是否比站上上次匯入的新（來源的歷史可能被改寫過）。確認後，會用這一版更新。
+    </p>
 
     <p v-if="isConflict && action === 'update'" class="m-0 text-(length:--type-label-size) text-(--text-ink-body)">
       站上的標題、日期或內文可能在上次匯入之後改過，更新會用來源的內容覆蓋。
