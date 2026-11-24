@@ -126,3 +126,38 @@ export function fitTransformInBand(
   const bandCenterY = bandTop + bandHeight / 2
   return { ...fit, cx: fixedCx ?? fit.cx, cy: fit.cy - (bandCenterY - viewH / 2) / fit.k }
 }
+
+/** 視窗露出的畫布高度低於這個值，就不再用橫帶框路線（橫帶太矮，節點會縮成一點） */
+export const MIN_REVEAL_BAND_PX = 120
+
+/**
+ * 首頁路線亮起時的鏡頭（revealRoute 用）。bandTop～bandBottom 是視窗內看得到的那一段畫布（畫布座標）。
+ * - 看得到的高度夠（>= MIN_REVEAL_BAND_PX）：只在這段橫帶裡框路線節點，倍率不超過整張圖的框景倍率，
+ *   水平中心固定在整張圖的框景中心。
+ * - 視窗只露出一小截、或畫布整個在視窗外：不需要追著路線走，整張圖本來就都在畫布內，直接用整張圖的
+ *   框景。以前這裡退回「整個畫布」再把路線置中，整張圖會被拉向路線所在的那一側，上下左右都偏離畫布中心。
+ */
+export function fitRouteReveal(
+  allItems: FitItem[],
+  routeItems: FitItem[],
+  viewW: number,
+  viewH: number,
+  bandTop: number,
+  bandBottom: number,
+  pad: number,
+  bottomInset: number,
+  routePad = 48,
+): FitResult | null {
+  const whole = fitTransformWithInset(allItems, viewW, viewH, pad, bottomInset)
+  if (bandBottom - bandTop < MIN_REVEAL_BAND_PX) return whole
+  return fitTransformInBand(
+    routeItems,
+    viewW,
+    viewH,
+    bandTop,
+    bandBottom - bandTop,
+    routePad,
+    whole?.k ?? 2,
+    whole?.cx,
+  )
+}

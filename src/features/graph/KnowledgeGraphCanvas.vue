@@ -22,7 +22,7 @@ import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './der
 import { typeClusterForce } from './clusterForce'
 import {
   controlsBottomInset,
-  fitTransformInBand,
+  fitRouteReveal,
   fitTransformWithInset,
   type FitItem,
 } from './fitView'
@@ -454,31 +454,20 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
 
 // 首頁版本：路線亮起時，把鏡頭移到路線在「視窗內看得到的那一段畫布」裡完整看得到的位置。畫布有
 // 一部分在視窗底邊以下（首頁第一屏的下半被切掉），換一條路線後終點節點可能落在那裡。倍率不超過
-// 整張圖的框景倍率（不需要比整張圖更近），放不下才縮小。水平方向不動，圖維持在畫布中央。
+// 整張圖的框景倍率（不需要比整張圖更近），放不下才縮小；水平方向不動，圖維持在畫布中央。視窗只露出
+// 一小截（或畫布整個在視窗外）時不追路線，整張圖維持框景位置（細節見 fitRouteReveal）。
 function revealRoute(durationMs = 0) {
   if (!graph || !stage.value || !pathNodeIds) return
-  const whole = fitTransformWithInset(
-    fitItemsOf(),
-    viewW,
-    viewH,
-    FIT_PADDING_PX,
-    controlsBottomInset(viewW, FIT_PADDING_PX),
-  )
   const rect = stage.value.getBoundingClientRect()
-  const bandTop = Math.max(0, -rect.top)
-  const bandBottom = Math.min(viewH, window.innerHeight - rect.top)
-  // 視窗只露出一小截（或畫布整個在視窗外）時退回整個畫布，不然橫帶太矮、節點會縮成一點
-  const useBand = bandBottom - bandTop >= 120
-  const fit = fitTransformInBand(
+  const fit = fitRouteReveal(
+    fitItemsOf(),
     fitItemsOf((n) => pathNodeIds?.has(n.id) ?? false),
     viewW,
     viewH,
-    useBand ? bandTop : 0,
-    useBand ? bandBottom - bandTop : viewH,
-    48,
-    whole?.k ?? 2,
-    // 水平中心維持整張圖的框景中心：只有垂直方向需要追著路線走（見 fitTransformInBand）
-    whole?.cx,
+    Math.max(0, -rect.top),
+    Math.min(viewH, window.innerHeight - rect.top),
+    FIT_PADDING_PX,
+    controlsBottomInset(viewW, FIT_PADDING_PX),
   )
   if (!fit) return
   graph.centerAt(fit.cx, fit.cy, durationMs)
