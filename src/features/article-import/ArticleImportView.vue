@@ -58,6 +58,8 @@ const rejectedRequestKey = ref<string | null>(null)
 const result = ref<ImportResponse | null>(null)
 /** 後端說判斷不出來源版本新舊的項目（列識別 → 要帶回的 commit_sha）。重新讀清單就清掉。 */
 const unverified = reactive<UnverifiedBases>({})
+/** 判斷不出新舊、站上內容又改過的列（列識別）：確認也過不了，只能重新整理清單，不開放確認。重新讀清單就清掉。 */
+const refreshOnlyRows = reactive<Record<string, true>>({})
 /** 結果不明（斷線、5xx）的那份請求：核對完之前整頁不能再送出，選擇不同也一樣，因為看不出上一批有沒有寫入。 */
 const pendingRequest = ref<ImportRequest | null>(null)
 /** 核對上一批的結論；手動重新整理或再次送出時收掉。 */
@@ -72,6 +74,7 @@ async function load() {
   submitError.value = null
   rejectedRequestKey.value = null
   for (const key of Object.keys(unverified)) delete unverified[key]
+  for (const key of Object.keys(refreshOnlyRows)) delete refreshOnlyRows[key]
   try {
     // 站上文章只用來顯示標題與提供連結選項，失敗不擋清單
     const [next, existing] = await Promise.all([
@@ -189,6 +192,10 @@ async function submit() {
     submitError.value = error
     if (REJECTED_KINDS.includes(error.kind)) rejectedRequestKey.value = sentKey
     if (error.kind === 'unverified') markUnverified(error.unverified ?? [], rowIds)
+    for (const index of error.refreshOnly ?? []) {
+      const id = rowIds[index]
+      if (id !== undefined) refreshOnlyRows[id] = true
+    }
     if (error.kind === 'uncertain') pendingRequest.value = request
     return
   } finally {
@@ -299,9 +306,9 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
           </ul>
         </template>
         <template v-else-if="reconcileOutcome.kind === 'not_applied'">
-          <h2 id="reconcile-title" class="m-0 text-[15px] font-bold text-(--text-ink-main)">上一批沒有寫入</h2>
+          <h2 id="reconcile-title" class="m-0 text-[15px] font-bold text-(--text-ink-main)">上一批看起來沒有寫入</h2>
           <p class="m-0 text-(length:--type-label-size) leading-[1.8] text-(--text-ink-body)">
-            清單上的狀態跟送出前一樣，重新選擇後可以再送出。
+            清單上的狀態跟送出前一樣，但上一次的請求也可能還沒處理完。再重新整理一次、確認沒有變動後，可以重新選擇再送出。
           </p>
         </template>
         <template v-else>
@@ -355,6 +362,7 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
           :link-options="linkOptions"
           :link-unavailable="articles === null"
           :unverified="rowId(item) in unverified"
+          :refresh-only="rowId(item) in refreshOnlyRows"
           @update:model-value="(value) => (choices[rowId(item)] = value)"
         />
       </ul>

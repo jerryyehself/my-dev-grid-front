@@ -767,7 +767,7 @@ describe('ArticleImportView 結果不明（斷線、5xx）', () => {
     expect(w.get('[aria-live="polite"]').text()).toContain('上一批已經寫入')
   })
 
-  it('它應該在核對得出上一批沒有寫入時說可以重新選擇，並解除鎖定', async () => {
+  it('它應該在核對得出上一批看起來沒有寫入時說可以重新選擇（不下定論），並解除鎖定', async () => {
     const w = await sendNew(new ApiRequestError(500, url, 'POST'))
     await refreshButtons(w, '重新整理清單並核對')[0]!.trigger('click')
     await flushPromises()
@@ -775,7 +775,9 @@ describe('ArticleImportView 結果不明（斷線、5xx）', () => {
     expect(fetchArticleSources).toHaveBeenCalledTimes(2)
     const box = w.get('[data-test="reconcile"]')
     expect(box.attributes('data-reconcile')).toBe('not_applied')
-    expect(box.text()).toContain('上一批沒有寫入')
+    expect(box.text()).toContain('上一批看起來沒有寫入')
+    expect(box.text()).not.toMatch(/上一批沒有寫入/)
+    expect(box.text()).toContain('清單上的狀態跟送出前一樣')
 
     await pick(w, '新的筆記', '新增為草稿')
     expect(submitButton(w).attributes('disabled')).toBeUndefined()
@@ -964,6 +966,42 @@ describe('ArticleImportView 判斷不出來源版本新舊（409 unverified_comm
     expect(importArticleSources).toHaveBeenCalledTimes(3)
     expect(importCall(2).items[0]).toMatchObject({ overwrite_site_edits: true, expected_site_version: newer })
     expect(importCall(2).items[0]).not.toHaveProperty('confirm_unverified_base')
+  })
+
+  it('它應該在同一項又判斷不出新舊、又站上內容改過時只給重新整理清單，不開放確認', async () => {
+    vi.mocked(importArticleSources).mockRejectedValueOnce(
+      new ApiRequestError(409, url, 'POST', {
+        reason: 'conflict',
+        errors: {
+          'items.0.confirm_unverified_base': ['無法確認。'],
+          'items.0.expected_site_version': ['站上又改過。'],
+        },
+        unverified_commits: [{ index: 0, commit_sha: SHA_A }],
+      } as never),
+    )
+    const w = await mountView([CONFLICT_ITEM])
+    await pick(w, '兩邊都改過的筆記', '更新')
+    await row(w, '兩邊都改過的筆記').get('[role="switch"]').trigger('click') // 覆蓋站上的修改
+    await submitButton(w).trigger('click')
+    await flushPromises()
+
+    const box = w.get('[data-test="submit-error"]')
+    expect(box.text()).toContain('站上的標題、日期或內文在清單載入之後又改過')
+    expect(box.text()).toContain('請重新整理清單')
+    expect(box.text()).not.toContain('請確認要用這一版更新')
+    expect(box.find('[data-test="unverified-list"]').exists()).toBe(false)
+    // 那一列只提醒重新整理，沒有確認開關，也不是「確認後會用這一版更新」的說明
+    const r = row(w, '兩邊都改過的筆記')
+    expect(r.find('[data-test="refresh-only-note"]').text()).toContain('請先重新整理清單')
+    expect(r.find('[data-test="unverified-note"]').exists()).toBe(false)
+    expect(confirmSwitch(w, '兩邊都改過的筆記')).toBeUndefined()
+    // 同一份請求不能原樣再送
+    expect(submitButton(w).attributes('disabled')).toBeDefined()
+
+    // 重新整理之後提醒收掉
+    await box.findAll('button')[0]!.trigger('click')
+    await flushPromises()
+    expect(w.find('[data-test="refresh-only-note"]').exists()).toBe(false)
   })
 
   it('它應該在兩輪都成功時送出三個值並顯示結果', async () => {

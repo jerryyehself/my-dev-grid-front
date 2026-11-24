@@ -281,6 +281,11 @@ export interface ImportError {
   message: string
   /** 只有 kind 是 unverified 時有。 */
   unverified?: UnverifiedCommit[]
+  /**
+   * 只有 kind 是 stale 時可能有：同時「判斷不出新舊」又「站上內容改過」的項目索引。
+   * 這種項目確認後再送必定被 expected_site_version 退回，所以不開放確認，只留重新整理清單這條出路。
+   */
+  refreshOnly?: number[]
 }
 
 /** 這個例外是列清單（GET）還是送出匯入（POST）丟的：同樣的斷線，列清單沒有寫入的疑慮，匯入有。 */
@@ -292,7 +297,7 @@ function reasonText(reason: string | null, status: number): string {
 }
 
 /** 後端 409 errors 裡「站上內容在列出清單之後又改過」的 key：items.N.expected_site_version，或要覆蓋卻沒帶同意的 items.N.overwrite_site_edits。 */
-const SITE_VERSION_ERROR_KEY = /^items\.\d+\.(expected_site_version|overwrite_site_edits)$/
+const SITE_VERSION_ERROR_KEY = /^items\.(\d+)\.(expected_site_version|overwrite_site_edits)$/
 
 /** 後端 409 errors 裡「判斷不出來源版本新舊、要確認」的 key（items.N.confirm_unverified_base）。 */
 const UNVERIFIED_ERROR_KEY = /^items\.\d+\.confirm_unverified_base$/
@@ -365,6 +370,28 @@ export function describeImportError(e: unknown, context: ImportErrorContext): Im
       const errorKeys = typeof e.body?.errors === 'object' && e.body.errors !== null ? Object.keys(e.body.errors) : []
       const siteEdited = errorKeys.some((key) => SITE_VERSION_ERROR_KEY.test(key))
       const unverified = errorKeys.some((key) => UNVERIFIED_ERROR_KEY.test(key)) ? parseUnverifiedCommits(e.body) : []
+      const siteEditedIndexes = new Set(
+        errorKeys.flatMap((key) => {
+          const match = SITE_VERSION_ERROR_KEY.exec(key)
+          return match ? [Number(match[1])] : []
+        }),
+      )
+      const refreshOnly = unverified.map((c) => c.index).filter((index) => siteEditedIndexes.has(index))
+      if (refreshOnly.length > 0) {
+        // 判斷不出新舊、站上內容又改過：確認後再送也會被 expected_site_version 退回，重新整理清單後確認會清掉，
+        // 所以不開放確認，訊息只留重新整理清單這條出路
+        const others = uniqueErrorMessages(
+          e.body?.errors,
+          (key) => !UNVERIFIED_ERROR_KEY.test(key) && !SITE_VERSION_ERROR_KEY.test(key),
+        )
+          .map(asSentence)
+          .join('')
+        return {
+          kind: 'stale',
+          message: `${SITE_EDITED_TEXT}${others}沒有任何文章被寫入。請重新整理清單，確認站上現在的內容後，再決定要不要覆蓋。`,
+          refreshOnly,
+        }
+      }
       if (unverified.length > 0) {
         // 要確認的項目另外標在清單上；其他項目的原因照舊列出。站上內容改過的項目出路是重讀清單，一起提醒
         const others = uniqueErrorMessages(
