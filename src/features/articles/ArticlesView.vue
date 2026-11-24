@@ -7,7 +7,7 @@
 // （techniques／implementations 的 title）當篩選依據。
 // summary：D-57，不是獨立欄位，取 body 第一段（見 excerptOf）。
 // 只列 status===1（已發布）——草稿不該出現在訪客看得到的清單。
-import { ref, computed } from 'vue'
+import { ref, computed, defineAsyncComponent, onBeforeUnmount, onWatcherCleanup, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { displayDate, fetchArticlesOrDemo, sortArticlesByDateDesc, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
@@ -18,6 +18,12 @@ import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import { ARTICLES_EMPTY_TEXT, ARTICLES_LOAD_FAILED_TEXT, LOADING_TEXT } from '@/copy/common'
+import { hasArticleMindmap } from '@/features/article-mindmap/articleMindmapSource'
+
+// 標題懸停心智圖（只有有心智圖的文章才有）。元件與資料都延遲載入：沒滑到這些標題就不下載
+const ArticleMindmapHoverTip = defineAsyncComponent(
+  () => import('@/features/article-mindmap/ArticleMindmapHoverTip.vue'),
+)
 
 const ready = ref(false)
 const loadError = ref(false)
@@ -54,6 +60,79 @@ function summaryOf(a: ArticleDto): string {
 // 不套大寫與寬字距
 const EDIT_LINK_CLASS =
   'relative z-10 ml-auto font-sans normal-case text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out'
+
+// --- 標題懸停心智圖 ---
+// 只在游標停在標題「文字」上，或鍵盤 Tab 到標題時出現（站主 2026-11-24 定案）。標題連結的 ::after 撐滿整列，
+// 所以懸停掛在連結裡包著文字的 <span> 上：游標在整列其他地方（::after 的範圍）時，
+// 事件的目標是 <a> 本身，不是這個 <span>，不會觸發。<span> 要 relative z-[1]：::after 是定位元素，
+// 會疊在沒定位的文字上面，不墊高的話游標停在字上也只碰得到 ::after。<span> 仍在連結裡，點了一樣開文章。
+// 滑鼠與焦點分開記：滑鼠移開時，焦點還在標題上就繼續顯示。Esc 收起，直到下一次移入或聚焦。
+interface MindmapTipState {
+  articleId: number
+  anchor: HTMLElement
+}
+const hoverTip = ref<MindmapTipState | null>(null)
+const focusTip = ref<MindmapTipState | null>(null)
+const tipDismissed = ref(false)
+const activeTip = computed(() => (tipDismissed.value ? null : (focusTip.value ?? hoverTip.value)))
+
+function mindmapTipId(articleId: number): string {
+  return `article-mindmap-tip-${articleId}`
+}
+
+function titleAnchor(event: Event): HTMLElement | null {
+  return (event.currentTarget as HTMLElement | null)?.closest('h3') ?? null
+}
+
+function onTitleTextEnter(articleId: number, event: MouseEvent) {
+  if (!hasArticleMindmap(articleId)) return
+  // 觸控裝置點一下也會送 mouseenter；沒有懸停能力的裝置不顯示
+  if (typeof window.matchMedia === 'function' && !window.matchMedia('(hover: hover)').matches) return
+  const anchor = titleAnchor(event)
+  if (!anchor) return
+  tipDismissed.value = false
+  hoverTip.value = { articleId, anchor }
+}
+
+function onTitleTextLeave(articleId: number) {
+  if (hoverTip.value?.articleId === articleId) hoverTip.value = null
+}
+
+/** 只有鍵盤聚焦（:focus-visible）才算；滑鼠點下去也會聚焦，但那時已經在開文章了 */
+function isKeyboardFocus(el: HTMLElement): boolean {
+  try {
+    return el.matches(':focus-visible')
+  } catch {
+    // 不認得 :focus-visible 的瀏覽器：當作鍵盤聚焦，寧可多顯示也不要鍵盤使用者看不到
+    return true
+  }
+}
+
+function onTitleFocus(articleId: number, event: FocusEvent) {
+  if (!hasArticleMindmap(articleId)) return
+  const link = event.currentTarget as HTMLElement | null
+  if (!link || !isKeyboardFocus(link)) return
+  const anchor = titleAnchor(event)
+  if (!anchor) return
+  tipDismissed.value = false
+  focusTip.value = { articleId, anchor }
+}
+
+function onTitleBlur(articleId: number) {
+  if (focusTip.value?.articleId === articleId) focusTip.value = null
+}
+
+function onTipKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') tipDismissed.value = true
+}
+
+// 提示框開著時才聽 Esc（游標停在標題上時，焦點不一定在標題連結上）
+watch(activeTip, (tip) => {
+  if (!tip) return
+  window.addEventListener('keydown', onTipKeydown)
+  onWatcherCleanup(() => window.removeEventListener('keydown', onTipKeydown))
+})
+onBeforeUnmount(() => window.removeEventListener('keydown', onTipKeydown))
 
 const viewMode = ref<'timeline' | 'folder'>('timeline')
 const VIEW_MODES = [
@@ -168,10 +247,19 @@ const folderArticles = computed(() => {
             <RouterLink
               :to="{ name: 'article-detail', params: { id: article.id } }"
               class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+              :aria-describedby="activeTip?.articleId === article.id ? mindmapTipId(article.id) : undefined"
+              @focus="onTitleFocus(article.id, $event)"
+              @blur="onTitleBlur(article.id)"
             >
-              {{ article.title }}
+              <span class="relative z-[1]" @mouseenter="onTitleTextEnter(article.id, $event)" @mouseleave="onTitleTextLeave(article.id)">{{ article.title }}</span>
             </RouterLink>
           </h3>
+          <ArticleMindmapHoverTip
+            v-if="activeTip?.articleId === article.id"
+            :article-id="article.id"
+            :anchor="activeTip.anchor"
+            :tip-id="mindmapTipId(article.id)"
+          />
           <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left sm:text-justify max-w-[620px]">
             {{ summaryOf(article) }}
           </p>
@@ -225,10 +313,19 @@ const folderArticles = computed(() => {
             <RouterLink
               :to="{ name: 'article-detail', params: { id: article.id } }"
               class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+              :aria-describedby="activeTip?.articleId === article.id ? mindmapTipId(article.id) : undefined"
+              @focus="onTitleFocus(article.id, $event)"
+              @blur="onTitleBlur(article.id)"
             >
-              {{ article.title }}
+              <span class="relative z-[1]" @mouseenter="onTitleTextEnter(article.id, $event)" @mouseleave="onTitleTextLeave(article.id)">{{ article.title }}</span>
             </RouterLink>
           </h3>
+          <ArticleMindmapHoverTip
+            v-if="activeTip?.articleId === article.id"
+            :article-id="article.id"
+            :anchor="activeTip.anchor"
+            :tip-id="mindmapTipId(article.id)"
+          />
           <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left sm:text-justify max-w-[700px]">
             {{ summaryOf(article) }}
           </p>

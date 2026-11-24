@@ -107,7 +107,12 @@
           </ol>
         </details>
 
-        <MarkdownBody :source="article.body ?? ''" sidenotes />
+        <MarkdownBody :source="article.body ?? ''" sidenotes>
+          <!-- 文章心智圖：導言後面、第一個二級標題前面。只有有心智圖的文章才掛，元件與資料都延遲載入 -->
+          <template v-if="hasArticleMindmap(article.id)" #afterLead>
+            <ArticleMindmapPanel :article-id="article.id" :headings="headings" />
+          </template>
+        </MarkdownBody>
 
         <!-- 署名：文章結尾、上一篇／下一篇的上面。文章清單的標題下面是同一句（router 的 meta.subtitle）。
              mb-0 text-left：蓋掉 .global-page-wrapper p 的下距與桌機的兩端對齊 -->
@@ -165,7 +170,7 @@
 // （techniques→標籤、implementations→Related Projects）。
 // margins（邊註）：後端沒有對應欄位（已知的技術債），
 // 這裡直接不顯示，不假裝有資料可以讀。
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, defineAsyncComponent, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   displayDate,
@@ -184,6 +189,11 @@ import { extractHeadings } from '@/components/markdown/headings'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { pageTitleOverride } from '@/siteMeta'
 import { BYLINE, LOADING_TEXT } from '@/copy/common'
+import { hasArticleMindmap } from '@/features/article-mindmap/articleMindmapSource'
+
+const ArticleMindmapPanel = defineAsyncComponent(
+  () => import('@/features/article-mindmap/ArticleMindmapPanel.vue'),
+)
 
 const route = useRoute()
 const articleId = computed(() => Number(route.params.id))
