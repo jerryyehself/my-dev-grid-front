@@ -164,13 +164,14 @@ const TOOLBAR_BUTTON_CLASS =
 
 <template>
   <section v-if="mindmap && detail" class="mb-(--article-paragraph-gap)" aria-labelledby="article-mindmap-heading">
-    <!-- mt-0／tracking-normal／block：蓋掉 .global-page-wrapper h2 的上距、負字距與 flex -->
-    <h2
+    <!-- h3：內文的段落標題都是 h3（MarkdownBody），用 h2 會讓整篇的段落在標題清單裡變成這一節底下的子節。
+         字樣照線框：15px 襯線粗體、行高 24、下距 10 -->
+    <h3
       id="article-mindmap-heading"
       class="mt-0 mb-2.5 block font-serif font-bold text-[15px] leading-6 tracking-normal text-(--text-ink-main)"
     >
       文章心智圖
-    </h2>
+    </h3>
     <div class="relative rounded-[6px] border border-(--border-shelf) bg-(--canvas-bg)">
       <div
         class="flex flex-wrap items-center justify-between sm:justify-start gap-2 min-h-11 sm:min-h-10 px-2.5 py-1.5 sm:py-0 border-b border-(--border-shelf)"

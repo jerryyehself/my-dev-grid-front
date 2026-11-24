@@ -56,7 +56,9 @@ describe('ArticleMindmapPanel', () => {
 
   it('它應該畫出標題、工具列與桌機圖，預設次要收合、橫向關係關', async () => {
     const wrapper = await mountPanel()
-    expect(wrapper.find('h2').text()).toBe('文章心智圖')
+    // 跟內文的段落標題同一級（h3），不能是 h2，不然整篇的段落會掛在它底下
+    expect(wrapper.get('h3').text()).toBe('文章心智圖')
+    expect(wrapper.find('h2').exists()).toBe(false)
     expect(wrapper.find('button[type="button"]').text()).toBe('展開次要')
     expect(wrapper.get('[role="switch"]').attributes('aria-checked')).toBe('false')
     const text = svgText(wrapper)
