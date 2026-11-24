@@ -275,7 +275,7 @@ describe('ArticleDetailView', () => {
 
 describe('ArticleDetailView 的文章心智圖', () => {
   const MINDMAP_ID = mindmapFixture.article_id
-  const BODY = '導言第一段。\n\n## 1. 背景與動機\n\n內文。\n\n## 2. 決策方法論\n\n內文。'
+  const BODY = '導言第一段。\n\n## 資料條件\n\n內文。\n\n## 採用的設計\n\n內文。'
 
   beforeEach(async () => {
     setActivePinia(createPinia())
@@ -300,7 +300,7 @@ describe('ArticleDetailView 的文章心智圖', () => {
     const html = wrapper.html()
     const lead = html.indexOf('導言第一段')
     const map = html.indexOf('id="article-mindmap-heading"')
-    const firstH2 = html.indexOf('id="1-背景與動機"')
+    const firstH2 = html.indexOf('id="資料條件"')
     expect(lead).toBeGreaterThan(-1)
     expect(map).toBeGreaterThan(lead)
     expect(firstH2).toBeGreaterThan(map)
@@ -309,8 +309,8 @@ describe('ArticleDetailView 的文章心智圖', () => {
   it('它應該讓心智圖的出處連到內文標題的錨點', async () => {
     const wrapper = await mountWith(MINDMAP_ID)
     await wrapper.get('[data-node-id="n1"][role="button"]').trigger('click')
-    expect(wrapper.get('[role="dialog"] a[href^="#"]').attributes('href')).toBe('#1-背景與動機')
-    expect(wrapper.find('[id="1-背景與動機"]').exists()).toBe(true)
+    expect(wrapper.get('[role="dialog"] a[href^="#"]').attributes('href')).toBe('#資料條件')
+    expect(wrapper.find('[id="資料條件"]').exists()).toBe(true)
   })
 
   it('它應該在沒有心智圖的文章完全不畫', async () => {

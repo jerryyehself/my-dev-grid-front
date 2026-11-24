@@ -4,27 +4,11 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import fixture from './articleMindmapFixture.json'
 import ArticleMindmapPanel from './ArticleMindmapPanel.vue'
 import * as source from './articleMindmapSource'
+import { extractHeadings } from '@/components/markdown/headings'
+import productionBody from './articleMindmapFixtureBody.md?raw'
 
-// 內文標題：那篇文章的段落標題（照文章順序），slug 跟 extractHeadings 算出來的一樣
-const headings = [
-  '1-背景與動機',
-  '2-決策方法論',
-  '3-考慮過的圖形類型比較',
-  '4-討論過程的關鍵轉折依時間順序',
-  '41-起點google-maps-地標式-tooltip-互動模式',
-  '42-地圖群島隱喻整條被推翻',
-  '43-誠實但不能因此就變保守',
-  '44-受眾模型修正後又降權',
-  '45-節點身分修正',
-  '46-引入結構洞社會網絡分析理論',
-  '47-星圖隱喻提出又否決',
-  '48-isotype-點群聚合收斂',
-  '49-賣點敘事建議',
-  '410-v1-手刻-svg-v2-改用專案既有套件',
-  '5-相關文獻',
-  '6-整個討論過程的心智圖',
-  '7-目前結論與待辦',
-].map((slug) => ({ slug, text: `標題 ${slug}` }))
+// 內文標題：正式環境那篇的快照，slug 跟文章頁算出來的一樣
+const headings = extractHeadings(productionBody)
 
 function makeRouter() {
   const Stub = { template: '<div />' }
@@ -125,9 +109,10 @@ describe('ArticleMindmapPanel', () => {
     await wrapper.get('[data-node-id="n24"][role="button"]').trigger('click')
     const dialog = wrapper.get('[role="dialog"]')
     expect(dialog.attributes('aria-label')).toBe('force-graph')
-    expect(dialog.text()).toContain('出現在 3 段，點一下跳過去')
+    expect(dialog.text()).toContain('出現在 4 段，點一下跳過去')
     const hrefs = dialog.findAll('a[href^="#"]').map((a) => a.attributes('href'))
-    expect(hrefs).toEqual(['#410-v1-手刻-svg-v2-改用專案既有套件', '#5-相關文獻', '#7-目前結論與待辦'])
+    // 照文章裡的順序
+    expect(hrefs).toEqual(['#採用的設計', '#繪製方式', '#結論', '#參考文獻'])
     expect(dialog.get('a[href="/graph"]').text()).toBe('↗ 在圖譜中看「force-graph」')
     expect(document.activeElement).toBe(dialog.element)
   })
@@ -156,6 +141,13 @@ describe('ArticleMindmapPanel', () => {
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }))
     await flushPromises()
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+  })
+
+  it('它應該讓改寫後的內文沒談到的詞（先查證再動工）只是文字，不能點', async () => {
+    const wrapper = await mountPanel()
+    expect(svgText(wrapper)).toContain('先查證再動工')
+    expect(wrapper.find('[data-node-id="n9"][role="button"]').exists()).toBe(false)
+    expect(wrapper.find('[data-node-id="n9"]').exists()).toBe(true)
   })
 
   it('它應該讓對不上內文段落、也沒有 res_id 的詞不能點', async () => {

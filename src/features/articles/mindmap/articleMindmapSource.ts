@@ -3,6 +3,10 @@
 //
 // 哪些文章有心智圖是同步判斷（清單上每一篇都要問，不能為了問一下就把資料載進來）；
 // 資料本身用動態 import 延遲載入，沒有心智圖的文章、沒滑到標題的清單都不會下載它。
+//
+// fixture 的出處（unit_id）對的是正式環境那篇的內文（快照在 articleMindmapFixtureBody.md，
+// articleMindmapFixture.spec.ts 守著）。後端種子資料裡的那篇是改寫前的原稿，標題不一樣，
+// 所以本機開發時那篇的心智圖照樣畫得出來，但每個詞都沒有出處可以點（只剩連到圖譜的詞能點），這是預期的。
 import type { ArticleMindmap } from './articleMindmapTypes'
 import { isArticleMindmap } from './articleMindmapValidate'
 

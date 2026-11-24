@@ -67,8 +67,8 @@ describe('ArticleMindmapOutline', () => {
     const wrapper = mountOutline()
     await branchButton(wrapper, '目前結論').trigger('click')
     await wrapper.findAll('button').find((b) => b.text() === 'force-graph')!.trigger('click')
-    expect(wrapper.text()).toContain('出現在 3 段，點一下跳過去')
-    expect(wrapper.find('a[href="#5-相關文獻"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('出現在 4 段，點一下跳過去')
+    expect(wrapper.find('a[href="#參考文獻"]').exists()).toBe(true)
   })
 
   it('它應該只在有 res_id 的詞旁邊放連到圖譜的按鈕', async () => {
