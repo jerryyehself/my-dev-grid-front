@@ -121,11 +121,32 @@ describe('ArticlesView 的標題懸停心智圖', () => {
     expect(titleLink(wrapper, '有心智圖的那篇').attributes('aria-describedby')).toBeUndefined()
   })
 
-  it('它應該在游標停在整列其他地方（連結本身、不是文字）時不顯示', async () => {
+  it('它應該在游標停在整列其他地方（連結本身、整列、日期、摘要）時不顯示，只有標題文字會', async () => {
     const wrapper = await mountView()
-    await titleLink(wrapper, '有心智圖的那篇').trigger('mouseenter')
+    const text = titleText(wrapper, '有心智圖的那篇')
+    const row = text.element.closest('article')!
+    // 整列裡除了標題文字以外的每個元素：連結本身（::after 撐滿整列的那個）、h3、article、日期列、摘要。
+    // 懸停如果掛在連結或整列上（mouseenter），或用會冒泡的 mouseover 掛在外層，這裡就會跳出提示框
+    const others = [row, ...Array.from(row.querySelectorAll('*'))].filter(
+      (el) => el !== text.element && !text.element.contains(el),
+    )
+    expect(others.map((el) => el.tagName)).toEqual(expect.arrayContaining(['ARTICLE', 'H3', 'A', 'P']))
+    for (const el of others) {
+      el.dispatchEvent(new MouseEvent('mouseenter'))
+      el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+    }
     await settle()
     expect(wrapper.find('[role="tooltip"]').exists()).toBe(false)
+
+    // 對照：同一列的標題文字會觸發（上面沒出現不是因為這篇本來就不會出現）
+    await text.trigger('mouseenter')
+    await vi.waitFor(async () => {
+      await flushPromises()
+      expect(wrapper.find('[role="tooltip"]').exists()).toBe(true)
+    })
+    // 游標實際停在字上時碰得到 <span>，靠它疊在連結的 ::after 上面（relative z-[1]）；
+    // jsdom 沒有排版量不到，這部分在瀏覽器實測
+    expect(text.classes()).toEqual(expect.arrayContaining(['relative', 'z-[1]']))
   })
 
   it('它應該在沒有心智圖的文章不顯示', async () => {
