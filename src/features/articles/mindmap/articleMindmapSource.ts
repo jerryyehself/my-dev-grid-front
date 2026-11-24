@@ -1,5 +1,7 @@
-// 文章心智圖的資料從哪裡來。後端還沒產生心智圖（詞表與作者整理流程排在下一輪），
-// 目前只有一篇整理成 fixture。之後接上 API 時只換這個檔案，元件不用動。
+// 文章心智圖的資料從哪裡來。正式站的資料之後由後端的工具產生，在那之前正式站不顯示任何心智圖。
+// 目前只有一篇整理成 fixture，只在本機開發（vite dev）與測試時用；
+// 正式 build 裡沒有任何文章有心智圖，fixture 也不會被打包。
+// 之後接上 API 時只換這個檔案，元件不用動。
 //
 // 哪些文章有心智圖是同步判斷（清單上每一篇都要問，不能為了問一下就把資料載進來）；
 // 資料本身用動態 import 延遲載入，沒有心智圖的文章、沒滑到標題的清單都不會下載它。
@@ -10,8 +12,15 @@
 import type { ArticleMindmap } from './articleMindmapTypes'
 import { isArticleMindmap } from './articleMindmapValidate'
 
-/** 有心智圖的文章 id。要跟 fixture 的 article_id 一致（articleMindmapSource.spec.ts 守著）。 */
-export const MINDMAP_ARTICLE_IDS: ReadonlySet<number> = new Set([14])
+/** fixture 那篇的 id（要跟 fixture 的 article_id 一致，articleMindmapSource.spec.ts 守著） */
+const FIXTURE_ARTICLE_ID = 14
+
+/** 有心智圖的文章 id：開發與測試時是 fixture 那篇，正式 build 是空的。 */
+export function mindmapArticleIds(dev: boolean): ReadonlySet<number> {
+  return new Set(dev ? [FIXTURE_ARTICLE_ID] : [])
+}
+
+export const MINDMAP_ARTICLE_IDS: ReadonlySet<number> = mindmapArticleIds(import.meta.env.DEV)
 
 export function hasArticleMindmap(articleId: number): boolean {
   return MINDMAP_ARTICLE_IDS.has(articleId)
@@ -44,4 +53,7 @@ export function createMindmapLoader(
   }
 }
 
-export const loadArticleMindmap = createMindmapLoader(async () => (await import('./articleMindmapFixture.json')).default)
+// import.meta.env.DEV 在正式 build 會被換成 false，整個動態 import 跟著被刪掉，fixture 不會變成分塊
+export const loadArticleMindmap = createMindmapLoader(
+  import.meta.env.DEV ? async () => (await import('./articleMindmapFixture.json')).default : async () => null,
+)

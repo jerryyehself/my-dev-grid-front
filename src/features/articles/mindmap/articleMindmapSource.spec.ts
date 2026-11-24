@@ -5,10 +5,22 @@ import {
   createMindmapLoader,
   hasArticleMindmap,
   loadArticleMindmap,
+  mindmapArticleIds,
 } from './articleMindmapSource'
 
+describe('mindmapArticleIds', () => {
+  it('它應該在正式 build 是空的', () => {
+    expect([...mindmapArticleIds(false)]).toEqual([])
+  })
+
+  it('它應該在開發與測試時是 fixture 那篇', () => {
+    expect([...mindmapArticleIds(true)]).toEqual([fixture.article_id])
+  })
+})
+
 describe('hasArticleMindmap', () => {
-  it('它應該跟 fixture 的 article_id 一致', () => {
+  it('它應該在測試（DEV）時跟 fixture 的 article_id 一致', () => {
+    expect(import.meta.env.DEV).toBe(true)
     expect([...MINDMAP_ARTICLE_IDS]).toEqual([fixture.article_id])
   })
 
