@@ -58,6 +58,8 @@ export interface ImportRequestItem {
   overwrite_site_edits?: boolean
   /** 覆蓋站上的修改時必帶：清單項目的 site_version。站上在列出清單之後又改過，後端回 409。 */
   expected_site_version?: string
+  /** 只有 update 會帶：後端回 409 說判斷不出來源版本的新舊之後，原樣帶回它給的 commit_sha 表示確認過。 */
+  confirm_unverified_base?: string
 }
 
 export interface ImportRequest {
