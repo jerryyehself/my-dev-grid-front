@@ -1246,13 +1246,16 @@ onUnmounted(() => {
         <span class="text-(length:--type-label-size) text-(--text-ink-body)/70"> 節點排列中… </span>
       </div>
 
+      <!-- 節點／連線的彈出卡：一直掛著、用 class 切開合。開 panel-open、收 panel-close，同一條 ease-control；
+           只動 opacity 與 translate（Tailwind v4 的 translate-y-* 是獨立的 translate 屬性，transition 要列 translate）。
+           位置（left／top）不做過渡，換到別的節點時卡片直接出現在新位置 -->
       <div
         ref="popoverEl"
-        class="popover absolute min-w-[220px] max-w-[280px] rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] transition-[opacity,transform] duration-150 z-10"
+        class="popover absolute min-w-[220px] max-w-[280px] rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_14%,transparent)] transition-[opacity,translate] ease-control z-10"
         :class="
           popover.open
-            ? 'opacity-100 translate-y-0 pointer-events-auto'
-            : 'opacity-0 translate-y-1.5 pointer-events-none'
+            ? 'opacity-100 translate-y-0 pointer-events-auto duration-panel-open'
+            : 'opacity-0 translate-y-1.5 pointer-events-none duration-panel-close'
         "
         :style="{ left: popover.left + 'px', top: popover.top + 'px' }"
       >
@@ -1323,10 +1326,11 @@ onUnmounted(() => {
         />
       </div>
 
-      <!-- 合作式手勢的提示：不擋操作（pointer-events-none），幾秒後自己消失 -->
+      <!-- 合作式手勢的提示：不擋操作（pointer-events-none），幾秒後自己消失。淡入 panel-open、淡出 panel-close；
+           停留多久由 hintTimer 決定，跟動畫時長無關 -->
       <div
-        class="pointer-events-none absolute inset-x-0 z-[15] flex justify-center transition-opacity duration-200"
-        :class="hint ? 'opacity-100' : 'opacity-0'"
+        class="pointer-events-none absolute inset-x-0 z-[15] flex justify-center transition-opacity"
+        :class="hint ? 'opacity-100 duration-panel-open' : 'opacity-0 duration-panel-close'"
         :style="{ top: `${hintTop ?? 0}px` }"
         aria-live="polite"
       >

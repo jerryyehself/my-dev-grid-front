@@ -58,102 +58,105 @@ const KEYS: { keys: string[]; text: string }[] = [
          不會撐成一大片空白），最高到畫布頂端，放不下時內容區自己捲動。
        - 寬畫布：放在控制按鈕左邊，鍵盤一欄、滑鼠＋觸控一欄，460px 高的畫布裡不用捲就看得完；
          高度上限是畫布高度扣掉上下邊距，真的放不下時內容區捲動。 -->
-  <div
-    v-if="open"
-    role="dialog"
-    aria-modal="false"
-    aria-labelledby="kg-help-title"
-    :class="
-      reading
-        ? 'inset-x-3 bottom-3 max-h-[calc(100%-1.5rem)]'
-        : 'inset-x-3 bottom-[4.25rem] max-h-[calc(100%-5rem)]'
-    "
-    class="absolute z-30 @min-[640px]:inset-x-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
-  >
-    <div class="shrink-0 flex items-center justify-between gap-2 pl-4 pr-1.5 pt-1.5">
-      <h3 id="kg-help-title" class="text-(length:--type-body-size) font-bold text-(--text-ink-main)">
-        {{ reading ? '閱讀方式' : '操作說明' }}
-      </h3>
-      <button
-        ref="closeBtn"
-        type="button"
-        class="w-11 h-11 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) text-lg leading-none cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent)"
-        :aria-label="reading ? '關閉' : '關閉操作說明'"
-        @click="$emit('close')"
-      >
-        ×
-      </button>
-    </div>
-
-    <!-- 內容區：放不下時自己捲動（tabindex 讓鍵盤使用者也捲得到）。只有觸控、沒有滑鼠的裝置
-         （hover: none 且 pointer: coarse）只顯示「觸控」一段——鍵盤、滑鼠的說明對它沒用；
-         有滑鼠或觸控板的裝置照常三段都顯示 -->
-    <div class="relative min-h-0 flex flex-col">
-      <div
-        ref="body"
-        tabindex="0"
-        class="min-h-0 overflow-y-auto px-4 pb-3.5 pt-1 grid gap-3 @min-[640px]:grid-cols-2 @min-[640px]:gap-x-6 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent) rounded-b-xl"
-        @scroll.passive="updateMoreBelow"
-      >
-        <!-- 首頁的閱讀方式：用 div 不用 p（全站 .global-page-wrapper p 有段落下邊距） -->
-        <section v-if="reading" class="@min-[640px]:col-span-2 flex flex-col gap-1 text-(length:--type-caption-size)">
-          <div>節點的大小反映關係的多寡。</div>
-          <!-- 只有三層疊圖才有圓框；節點落在重疊處是因為三個圓框錯開疊放，不是因為彼此相關，要明講 -->
-          <div v-if="reading.layered">
-            圓框：三大類各自的範圍，錯開疊放；落在重疊處不代表彼此有關。
-          </div>
-          <RouterLink
-            to="/graph"
-            class="inline-flex items-center min-h-11 text-(--text-accent) hover:underline"
-            >查詢更多路線 →</RouterLink
-          >
-        </section>
-        <h4 v-if="reading" class="@min-[640px]:col-span-2 text-(length:--type-caption-size) font-bold text-(--text-ink-main) -mb-1">
-          操作
-        </h4>
-
-        <section class="@min-[640px]:row-span-2 [@media(hover:none)_and_(pointer:coarse)]:hidden">
-          <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">
-            鍵盤（先點一下圖，或用 Tab 移到圖上）
-          </h4>
-          <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-(length:--type-caption-size)">
-            <template v-for="row in KEYS" :key="row.text">
-              <dt class="flex gap-1">
-                <kbd
-                  v-for="k in row.keys"
-                  :key="k"
-                  class="min-w-6 whitespace-nowrap text-center font-mono text-(length:--type-mono-size) rounded border border-(--border-shelf) bg-(--bg-folder) px-1 py-px"
-                  >{{ k }}</kbd
-                >
-              </dt>
-              <dd>{{ row.text }}</dd>
-            </template>
-          </dl>
-        </section>
-
-        <section class="[@media(hover:none)_and_(pointer:coarse)]:hidden">
-          <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">滑鼠</h4>
-          <ul class="text-(length:--type-caption-size) flex flex-col gap-0.5">
-            <li>按住 {{ isMac ? '⌘' : 'Ctrl' }} 再滾動滾輪：縮放</li>
-            <li>拖曳空白處：移動畫面</li>
-            <li>拖曳節點：調整位置</li>
-            <li>點節點：固定亮起它的關係；點空白處或再點一次：取消</li>
-          </ul>
-        </section>
-
-        <section class="[@media(pointer:coarse)]:order-first">
-          <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">觸控</h4>
-          <ul class="text-(length:--type-caption-size) flex flex-col gap-0.5">
-            <li>一指：捲動頁面、點選節點</li>
-            <li>兩指：移動畫面、縮放</li>
-          </ul>
-        </section>
+  <!-- 開合用 panel-open／panel-close（main.css 的 .panel-up-*）：面板貼著畫布底邊，所以從下方升上來 -->
+  <Transition name="panel-up">
+    <div
+      v-if="open"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="kg-help-title"
+      :class="
+        reading
+          ? 'inset-x-3 bottom-3 max-h-[calc(100%-1.5rem)]'
+          : 'inset-x-3 bottom-[4.25rem] max-h-[calc(100%-5rem)]'
+      "
+      class="absolute z-30 @min-[640px]:inset-x-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
+    >
+      <div class="shrink-0 flex items-center justify-between gap-2 pl-4 pr-1.5 pt-1.5">
+        <h3 id="kg-help-title" class="text-(length:--type-body-size) font-bold text-(--text-ink-main)">
+          {{ reading ? '閱讀方式' : '操作說明' }}
+        </h3>
+        <button
+          ref="closeBtn"
+          type="button"
+          class="w-11 h-11 flex items-center justify-center rounded-lg text-(--text-ink-muted) hover:text-(--text-ink-body) text-lg leading-none cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent)"
+          :aria-label="reading ? '關閉' : '關閉操作說明'"
+          @click="$emit('close')"
+        >
+          ×
+        </button>
       </div>
-      <div
-        aria-hidden="true"
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-10 rounded-b-xl bg-linear-to-t from-(--bg-paper-light) to-transparent transition-opacity"
-        :class="moreBelow ? 'opacity-100 duration-hover-in' : 'opacity-0 duration-hover-out'"
-      ></div>
+
+      <!-- 內容區：放不下時自己捲動（tabindex 讓鍵盤使用者也捲得到）。只有觸控、沒有滑鼠的裝置
+           （hover: none 且 pointer: coarse）只顯示「觸控」一段——鍵盤、滑鼠的說明對它沒用；
+           有滑鼠或觸控板的裝置照常三段都顯示 -->
+      <div class="relative min-h-0 flex flex-col">
+        <div
+          ref="body"
+          tabindex="0"
+          class="min-h-0 overflow-y-auto px-4 pb-3.5 pt-1 grid gap-3 @min-[640px]:grid-cols-2 @min-[640px]:gap-x-6 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent) rounded-b-xl"
+          @scroll.passive="updateMoreBelow"
+        >
+          <!-- 首頁的閱讀方式：用 div 不用 p（全站 .global-page-wrapper p 有段落下邊距） -->
+          <section v-if="reading" class="@min-[640px]:col-span-2 flex flex-col gap-1 text-(length:--type-caption-size)">
+            <div>節點的大小反映關係的多寡。</div>
+            <!-- 只有三層疊圖才有圓框；節點落在重疊處是因為三個圓框錯開疊放，不是因為彼此相關，要明講 -->
+            <div v-if="reading.layered">
+              圓框：三大類各自的範圍，錯開疊放；落在重疊處不代表彼此有關。
+            </div>
+            <RouterLink
+              to="/graph"
+              class="inline-flex items-center min-h-11 text-(--text-accent) hover:underline"
+              >查詢更多路線 →</RouterLink
+            >
+          </section>
+          <h4 v-if="reading" class="@min-[640px]:col-span-2 text-(length:--type-caption-size) font-bold text-(--text-ink-main) -mb-1">
+            操作
+          </h4>
+
+          <section class="@min-[640px]:row-span-2 [@media(hover:none)_and_(pointer:coarse)]:hidden">
+            <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">
+              鍵盤（先點一下圖，或用 Tab 移到圖上）
+            </h4>
+            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-(length:--type-caption-size)">
+              <template v-for="row in KEYS" :key="row.text">
+                <dt class="flex gap-1">
+                  <kbd
+                    v-for="k in row.keys"
+                    :key="k"
+                    class="min-w-6 whitespace-nowrap text-center font-mono text-(length:--type-mono-size) rounded border border-(--border-shelf) bg-(--bg-folder) px-1 py-px"
+                    >{{ k }}</kbd
+                  >
+                </dt>
+                <dd>{{ row.text }}</dd>
+              </template>
+            </dl>
+          </section>
+
+          <section class="[@media(hover:none)_and_(pointer:coarse)]:hidden">
+            <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">滑鼠</h4>
+            <ul class="text-(length:--type-caption-size) flex flex-col gap-0.5">
+              <li>按住 {{ isMac ? '⌘' : 'Ctrl' }} 再滾動滾輪：縮放</li>
+              <li>拖曳空白處：移動畫面</li>
+              <li>拖曳節點：調整位置</li>
+              <li>點節點：固定亮起它的關係；點空白處或再點一次：取消</li>
+            </ul>
+          </section>
+
+          <section class="[@media(pointer:coarse)]:order-first">
+            <h4 class="text-(length:--type-label-size) text-(--text-ink-muted) mb-1">觸控</h4>
+            <ul class="text-(length:--type-caption-size) flex flex-col gap-0.5">
+              <li>一指：捲動頁面、點選節點</li>
+              <li>兩指：移動畫面、縮放</li>
+            </ul>
+          </section>
+        </div>
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-x-0 bottom-0 h-10 rounded-b-xl bg-linear-to-t from-(--bg-paper-light) to-transparent transition-opacity"
+          :class="moreBelow ? 'opacity-100 duration-hover-in' : 'opacity-0 duration-hover-out'"
+        ></div>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
