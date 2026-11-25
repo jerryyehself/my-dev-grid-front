@@ -3,6 +3,7 @@ import { computed, nextTick, ref } from 'vue'
 import BaseTag from '@/components/BaseTag.vue'
 import type { Project } from '@/api/projects'
 import { techniqueLabel } from '@/api/techniqueLabel'
+import { useListReflow } from '@/composables/useListReflow'
 import { orderedTechniques, type ProjectsFilterGroupData } from './useProjectsFilter'
 import { PROJECTS_EMPTY_TEXT, PROJECTS_NO_MATCH_TEXT } from '@/copy/common'
 
@@ -43,6 +44,8 @@ const selectedTechniqueTags = computed(() =>
 )
 
 const listBox = ref<HTMLElement>()
+// 篩選讓清單變動時：留下的滑到新位置、離開的淡出、新出現的淡入（見 useListReflow）
+useListReflow(listBox, () => props.projects)
 defineExpose({
   revealSelected: () => listBox.value?.querySelector<HTMLElement>('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' }),
 })
@@ -117,10 +120,11 @@ defineExpose({
     <div v-else class="grid grid-cols-1 overflow-hidden rounded-xl border border-(--border-shelf) bg-(--bg-paper-light)">
       <!-- 高度刻意切在第四筆的一半（262px，每筆約 75px），露出半筆讓人看得出盒子可以往下捲；
            剛好整數筆時讀者以為清單只有四筆（2026-10-01 模擬讀者審查） -->
-      <div ref="listBox" class="max-h-[262px] overflow-y-auto border-b border-(--border-shelf)">
+      <div ref="listBox" class="relative max-h-[262px] overflow-y-auto border-b border-(--border-shelf)">
         <button
           v-for="proj in projects"
           :key="proj.id"
+          :data-flip-key="proj.id"
           type="button"
           :aria-current="selected?.id === proj.id ? 'true' : undefined"
           class="w-full cursor-pointer border-b border-l-[3px] border-(--border-shelf) px-4.5 py-4 text-left transition-colors duration-hover-out hover:duration-hover-in last:border-b-0"

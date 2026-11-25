@@ -3,6 +3,7 @@ import { nextTick, onMounted, ref, watch } from 'vue'
 import type { YearGroup } from './groupProjectsByYear'
 import { stuckYearHeaders } from './stuckYearHeaders'
 import { useScrollFade } from './useScrollFade'
+import { useListReflow } from '@/composables/useListReflow'
 
 // 桌機版左欄的專案列表：依開始年份分組，每組一個年份標頭（捲動時卡在上緣），一列一個專案。
 // 設計稿：列高 48（上下 12＋行高 24）、沒有列分隔線；選中列是平面底色＋標題加粗。
@@ -22,6 +23,15 @@ const stuck = ref<Set<string>>(new Set())
 
 // 只淡出底部：頂端有年份標頭在提示「上面還有」，頂端再淡出會把標頭一起淡掉
 const { atBottom, update: updateFade } = useScrollFade(scroller, [() => props.groups])
+
+// 篩選讓清單變動時：留下的專案滑到新位置、離開的淡出、新出現的淡入（見 useListReflow）。
+// 動畫進行中留下的列帶著 transform，會暫時撐大 scrollHeight，結束後要重算底部淡出遮罩與卡住的標頭
+useListReflow(scroller, () => props.groups, {
+  onFinish: () => {
+    updateFade()
+    updateStuck()
+  },
+})
 
 function updateStuck() {
   const root = scroller.value
@@ -71,7 +81,7 @@ defineExpose({ revealSelected })
 <template>
   <div
     ref="scroller"
-    class="projects-year-list min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
+    class="projects-year-list relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
     :class="{ 'is-fade-bottom': !atBottom }"
     @scroll.passive="onScroll"
   >
@@ -87,7 +97,7 @@ defineExpose({ revealSelected })
         {{ group.year || UNKNOWN_YEAR_LABEL }}
       </h3>
       <ul class="m-0 list-none p-0">
-        <li v-for="project in group.projects" :key="project.id">
+        <li v-for="project in group.projects" :key="project.id" :data-flip-key="project.id">
           <button
             type="button"
             :aria-current="selectedId === project.id ? 'true' : undefined"
