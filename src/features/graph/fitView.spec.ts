@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   controlsBottomInset,
   fitTransform,
+  fitRouteReveal,
   fitTransformInBand,
   fitTransformWithInset,
   screenExtent,
@@ -110,5 +111,87 @@ describe('fitTransformInBand', () => {
 
   it('它應該在沒有節點時回 null', () => {
     expect(fitTransformInBand([], W, H, 0, 300, 48, 3)).toBeNull()
+  })
+
+  it('它應該在給 fixedCx 時固定水平中心，只讓垂直方向追著節點組走', () => {
+    // 路線的節點全擠在整張圖的左側：沒固定時 cx 會跟著節點組走，整張圖被拉向右邊
+    const routeItems = [node(-300, -150), node(-250, 60)]
+    const free = fitTransformInBand(routeItems, W, H, 0, 330, 48, 0.5)!
+    const fixed = fitTransformInBand(routeItems, W, H, 0, 330, 48, 0.5, 40)!
+
+    expect(free.cx).toBeCloseTo(-275, 0)
+    expect(fixed.cx).toBe(40)
+    // 垂直方向不受 fixedCx 影響
+    expect(fixed.cy).toBeCloseTo(free.cy, 6)
+    expect(fixed.k).toBeCloseTo(free.k, 6)
+  })
+
+  it('它應該在固定水平中心後，節點仍落在畫布寬度內（整張圖放得進去，路線只會更小）', () => {
+    const all = [node(-300, -150), node(300, 200), node(-250, 60)]
+    const wholeFit = fitTransform(all, 360, 360, 16)!
+    const route = [node(-300, -150), node(-250, 60)]
+    const fit = fitTransformInBand(route, 360, 360, 0, 200, 48, wholeFit.k, wholeFit.cx)!
+
+    expect(fit.k).toBeLessThanOrEqual(wholeFit.k + 1e-9)
+    for (const it of route) {
+      const x = (it.x - fit.cx) * fit.k + 360 / 2
+      expect(x - it.r * fit.k).toBeGreaterThanOrEqual(0)
+      expect(x + it.r * fit.k).toBeLessThanOrEqual(360)
+    }
+  })
+
+  it('它應該在沒給 fixedCx 時維持原本的行為（cx 是節點組的中心）', () => {
+    const fit = fitTransformInBand(items, W, H, 0, 330, 48, 3)!
+
+    expect(fit.cx).toBeCloseTo(fitTransform(items, W, 330, 48, 3)!.cx, 6)
+  })
+})
+
+describe('fitRouteReveal', () => {
+  const W = 360
+  const H = 360
+  const PAD = 16
+  const INSET = 46
+  const all = [node(-300, -200), node(300, 200), node(-250, 60), node(280, -150)]
+  // 路線的節點全在整張圖的左上
+  const route = [node(-300, -200), node(-250, 60)]
+  const whole = fitTransformWithInset(all, W, H, PAD, INSET)!
+
+  it('它應該在視窗露出的高度不夠時直接用整張圖的框景，不追著路線走', () => {
+    // 畫布整個在視窗外：bandBottom - bandTop = 0；只露出 100px 也一樣（< 120）
+    for (const [top, bottom] of [
+      [0, 0],
+      [0, 100],
+      [250, 360],
+    ] as const) {
+      const fit = fitRouteReveal(all, route, W, H, top, bottom, PAD, INSET)!
+      expect(fit.k).toBeCloseTo(whole.k, 9)
+      expect(fit.cx).toBeCloseTo(whole.cx, 9)
+      expect(fit.cy).toBeCloseTo(whole.cy, 9)
+    }
+  })
+
+  it('它應該在橫帶夠高時只動垂直方向：cx 維持整張圖的框景中心，倍率不超過整張圖', () => {
+    const fit = fitRouteReveal(all, route, W, H, 0, 200, PAD, INSET)!
+
+    expect(fit.cx).toBeCloseTo(whole.cx, 9)
+    expect(fit.k).toBeLessThanOrEqual(whole.k + 1e-9)
+    expect(fit.cy).not.toBeCloseTo(whole.cy, 3)
+  })
+
+  it('它應該在橫帶剛好 120px 時還用橫帶（邊界）', () => {
+    const fit = fitRouteReveal(all, route, W, H, 0, 120, PAD, INSET)!
+
+    expect(fit.cx).toBeCloseTo(whole.cx, 9)
+    expect(fit.cy).not.toBeCloseTo(whole.cy, 3)
+  })
+
+  it('它應該在沒有路線節點時：橫帶不夠高回整張圖，夠高回 null', () => {
+    expect(fitRouteReveal(all, [], W, H, 0, 50, PAD, INSET)).toEqual(whole)
+    expect(fitRouteReveal(all, [], W, H, 0, 300, PAD, INSET)).toBeNull()
+  })
+
+  it('它應該在整張圖也沒有節點時回 null', () => {
+    expect(fitRouteReveal([], [], W, H, 0, 50, PAD, INSET)).toBeNull()
   })
 })

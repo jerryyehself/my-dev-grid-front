@@ -55,3 +55,20 @@ export function placeLabels(candidates: LabelCandidate[]): Set<string> {
   }
   return shown
 }
+
+/**
+ * 名稱擺放的優先序（大的先擺，先擺的不會被後來的蓋掉）：強制顯示 3 > 有名稱的文件 2 >
+ * 其他常駐（實作、樞紐技術）1 > 其餘 0。文件筆數少、每個標題都有意義，但關係數通常比實作少，
+ * 只照關係數排的話名稱會被實作的名稱擠掉，讀者看到一顆沒名字的文件節點。
+ * 「未公開」條目（subtype 空）名稱只是佔位，不特別提前。
+ */
+export function labelRank(n: {
+  forced: boolean
+  domainType: string
+  subtype?: string | null
+  alwaysLabeled: boolean
+}): number {
+  if (n.forced) return 3
+  if (n.domainType === 'documentation' && n.subtype) return 2
+  return n.alwaysLabeled ? 1 : 0
+}

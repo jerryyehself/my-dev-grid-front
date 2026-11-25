@@ -76,8 +76,8 @@
 ## 分支與部署
 
 - `main` 接 Cloudflare 的正式部署，push 到 `main` 就會更新正式站。
-- `develop` 是整合分支。feature 分支從 `develop` 分出、PR 對 `develop`。要上線時才由 `develop` 開 PR 進 `main`，用 squash 合併（repo 不允許 merge commit），合併後要把 `main` 合併回 `develop`（`git merge --no-ff origin/main`），細節見 `CLAUDE.md`。
-- CI（`.github/workflows/ci.yml`）在兩個分支的 PR 都會跑 lint／type-check／test／build。
+- `develop` 是整合分支。feature 分支從 `develop` 分出、PR 對 `develop`。上線、合回 `develop` 與退版的流程見 [`docs/release.md`](docs/release.md)。
+- CI（`.github/workflows/ci.yml`）在開往 `main`、`develop`、`release/**` 的 PR 都會跑 lint／type-check／test／build。
 - Cloudflare 也會替每個分支建一份預覽部署。SPA 的路由 fallback 設在 `wrangler.jsonc` 的 `assets.not_found_handling`，不要用 `public/_redirects`（會觸發無限迴圈，原因見檔案裡的註解）。
 
 ## 更新紀錄

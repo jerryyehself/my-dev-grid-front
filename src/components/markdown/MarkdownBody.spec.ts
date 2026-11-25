@@ -142,6 +142,18 @@ describe('MarkdownBody', () => {
       }).toEqual({ tabindex: '0', role: 'region', label: '表格' })
     })
 
+    // jsdom 不算版面，量不到橫向捲動；真實的 scrollWidth 前後數字在 PR 說明。這裡只守住規則本身，
+    // 免得以後有人把容器的斷行規則拿掉（長網址撐破窄螢幕）或誤讓表格也吃到（欄寬被壓成一個字）
+    it('它應該讓內文容器可在任意位置斷行（長網址），表格捲動容器除外（含註釋裡的表格）', async () => {
+      const w = await mountMd('[長網址](https://example.com/a/b)\n\n| a | b |\n|---|---|\n| 1 | 2 |\n')
+      expect(w.classes()).toContain('[overflow-wrap:anywhere]')
+      expect(w.get('table').element.parentElement!.classList.contains('[overflow-wrap:normal]')).toBe(true)
+
+      const n = await mountMd('句子[^1]。\n\n[^1]: 說明：\n\n    | 欄 | 值 |\n    |---|---|\n    | 甲 | 1 |')
+      const scroller = n.get('[id*="fnnote"] [role="table"]').element.parentElement!
+      expect(scroller.classList.contains('[overflow-wrap:normal]')).toBe(true)
+    })
+
     it('它應該只在鍵盤聚焦時畫外框（用 :focus-visible，不是 :focus）', async () => {
       const w = await mountMd('```js\nx\n```')
       const classes = w.get('pre').classes()

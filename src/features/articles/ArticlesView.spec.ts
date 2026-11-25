@@ -60,6 +60,24 @@ async function mountView() {
 const editHrefs = (wrapper: Awaited<ReturnType<typeof mountView>>) =>
   wrapper.findAll('a').map((a) => a.attributes('href')).filter((h) => h?.endsWith('/edit'))
 
+describe('ArticlesView 的摘要', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it.each(['timeline', 'folder'])('它應該在%s排列讓摘要靠左、不兩端對齊（中英混排的字距會被拉開）', async (mode) => {
+    const wrapper = await mountView()
+    if (mode === 'folder') await wrapper.findAll('button').find((b) => b.text() === '分類夾')!.trigger('click')
+    const summaries = wrapper.findAll('article p')
+
+    expect(summaries.length).toBeGreaterThan(0)
+    for (const p of summaries) {
+      expect(p.classes()).toContain('text-left')
+      expect(p.classes().join(' ')).not.toContain('justify')
+    }
+  })
+})
+
 describe('ArticlesView 的編輯連結', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

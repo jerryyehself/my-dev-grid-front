@@ -34,7 +34,9 @@ agent 不刪遠端分支：repo 開了「合併後自動刪除分支」，已合
 
 範圍條件：
 - 合進 `develop`：只有碰到 CI/CD 設定（`.github/workflows/*`）、Cloudflare 部署設定（`wrangler.jsonc`、`public/_redirects`、`public/_headers`）、環境變數/密鑰，才要先問；其他改動（文件、樣式/排版、測試檔案、元件實作、功能）驗證條件都過就直接合併。
-- 合進 `main`（上線）：一律先問。
+- 合進 `main`（上線、嚴重安全修補）：一律先問，流程見 [`docs/release.md`](docs/release.md)。
+
+「先問」的範圍明確包含 `wrangler.jsonc`、`public/_redirects`、`public/_headers` 這類 Cloudflare 部署設定檔：這類改動即使只是修一個部署錯誤、驗證條件也全過，一樣要先問，不能因為是「修 bug」就自動歸類成可以直接合併（2026-09-25 的教訓：PR #81/#82 誤判成一般前端實作細節，直接合併了）。
 
 誰開的 PR：
 - 自己開的 PR，照上面的條件處理。
@@ -45,18 +47,4 @@ agent 不刪遠端分支：repo 開了「合併後自動刪除分支」，已合
 
 # 分支策略（2026-09-25 使用者確認）
 
-`main` 接了 Cloudflare 的正式環境部署（push 到 `main` 會真的觸發正式站更新），
-`develop` 是開發用的整合分支。之後的開發流程：
-
-- Feature 分支從 `develop` 分出來，PR 對象是 `develop`，不是 `main`。
-- `develop` 累積到一個階段、確認要上線了，才由 `develop` 開 PR 合併進 `main`，
-  觸發正式部署——這個「要不要上線」的決定要先問使用者，不能因為 `develop`
-  這邊 CI 全過就直接推進 `main`。
-- CI（`.github/workflows/ci.yml`）的觸發分支同時包含 `main` 和 `develop`，
-  兩邊開 PR 都看得到 lint/type-check/test/build 檢查。
-- 上面「PR 合併授權」的範圍條件，明確包含
-  `wrangler.jsonc`、`public/_redirects`、`public/_headers` 這類 Cloudflare 部署設定檔——這類
-  改動即使只是修一個部署錯誤、驗證條件也全過，一樣要先問，不能因為是
-  「修 bug」就自動歸類成可以直接合併（2026-09-25 的教訓：PR #81/#82 誤判
-  成一般前端實作細節，直接合併了）。
-- **`develop` → `main` 的上線 PR 用 squash 合併**，合併完一定要把 `main` 合併回 `develop`（一般推送），不然下次上線的 PR 歷史會對不上。回滾用 `git revert <squash commit>`。合回 `develop` 的步驟（`develop` 有必要檢查與保護規則）見 [`docs/release.md`](docs/release.md)。
+`main` 接 Cloudflare 的正式環境部署（push 到 `main` 就會更新正式站），`develop` 是開發用的整合分支。平常的 PR 從 `develop` 分出、對 `develop`。上線、合回 `develop`、嚴重安全問題的修補、Dependabot 與退版，動手前讀 [`docs/release.md`](docs/release.md)，那份是上線流程唯一的規則來源。要不要上線一律先問使用者，就算 CI 全過也一樣。

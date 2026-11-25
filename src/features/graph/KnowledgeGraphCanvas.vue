@@ -22,11 +22,11 @@ import { computeDerivedEdges, derivedStrength as derivedStrengthOf } from './der
 import { typeClusterForce } from './clusterForce'
 import {
   controlsBottomInset,
-  fitTransformInBand,
+  fitRouteReveal,
   fitTransformWithInset,
   type FitItem,
 } from './fitView'
-import { LABEL_MAX_WIDTH_PX, placeLabels, truncateLabel, type LabelCandidate } from './labels'
+import { LABEL_MAX_WIDTH_PX, labelRank, placeLabels, truncateLabel, type LabelCandidate } from './labels'
 import GraphDisplaySettings from './GraphDisplaySettings.vue'
 import GraphLegend from './GraphLegend.vue'
 import GraphShortcutsHelp from './GraphShortcutsHelp.vue'
@@ -331,12 +331,18 @@ function isForcedLabel(n: SimNode): boolean {
 }
 
 // 名稱在所有節點畫完之後統一擺放（onRenderFramePost），才能依優先序判斷重疊。
-// 優先序：強制顯示的 → 首頁原本的常駐清單（文件、實作、樞紐技術）→ 關係數多的。
+// 優先序：強制顯示的 → 有名稱的文件 → 首頁原本的常駐清單（實作、樞紐技術）→ 關係數多的（見 labelRank）。
 // 被淡化的節點不畫名稱（強制顯示的除外）。
 function drawLabels(ctx: CanvasRenderingContext2D, globalScale: number) {
   const fontPx = LABEL_FONT_PX / globalScale
   const gap = LABEL_GAP_PX / globalScale
-  const rank = (n: SimNode) => (isForcedLabel(n) ? 2 : shouldLabelNode(n) ? 1 : 0)
+  const rank = (n: SimNode) =>
+    labelRank({
+      forced: isForcedLabel(n),
+      domainType: n.domainType,
+      subtype: n.subtype,
+      alwaysLabeled: shouldLabelNode(n),
+    })
   const ordered = simNodes
     .filter(
       (n) =>
@@ -454,29 +460,20 @@ function fitView(durationMs = 0, filter?: (n: SimNode) => boolean) {
 
 // 首頁版本：路線亮起時，把鏡頭移到路線在「視窗內看得到的那一段畫布」裡完整看得到的位置。畫布有
 // 一部分在視窗底邊以下（首頁第一屏的下半被切掉），換一條路線後終點節點可能落在那裡。倍率不超過
-// 整張圖的框景倍率（不需要比整張圖更近），放不下才縮小。
+// 整張圖的框景倍率（不需要比整張圖更近），放不下才縮小；水平方向不動，圖維持在畫布中央。視窗只露出
+// 一小截（或畫布整個在視窗外）時不追路線，整張圖維持框景位置（細節見 fitRouteReveal）。
 function revealRoute(durationMs = 0) {
   if (!graph || !stage.value || !pathNodeIds) return
-  const wholeK = fitTransformWithInset(
-    fitItemsOf(),
-    viewW,
-    viewH,
-    FIT_PADDING_PX,
-    controlsBottomInset(viewW, FIT_PADDING_PX),
-  )?.k
   const rect = stage.value.getBoundingClientRect()
-  const bandTop = Math.max(0, -rect.top)
-  const bandBottom = Math.min(viewH, window.innerHeight - rect.top)
-  // 視窗只露出一小截（或畫布整個在視窗外）時退回整個畫布，不然橫帶太矮、節點會縮成一點
-  const useBand = bandBottom - bandTop >= 120
-  const fit = fitTransformInBand(
+  const fit = fitRouteReveal(
+    fitItemsOf(),
     fitItemsOf((n) => pathNodeIds?.has(n.id) ?? false),
     viewW,
     viewH,
-    useBand ? bandTop : 0,
-    useBand ? bandBottom - bandTop : viewH,
-    48,
-    wholeK ?? 2,
+    Math.max(0, -rect.top),
+    Math.min(viewH, window.innerHeight - rect.top),
+    FIT_PADDING_PX,
+    controlsBottomInset(viewW, FIT_PADDING_PX),
   )
   if (!fit) return
   graph.centerAt(fit.cx, fit.cy, durationMs)
