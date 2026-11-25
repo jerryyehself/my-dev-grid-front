@@ -40,8 +40,12 @@ const flush = async () => {
 }
 const rootStyle = (name: string, value: string) => document.documentElement.style.setProperty(name, value)
 
+// jsdom 的 clientHeight 一律是 0：換成可調的容器可見高度，離開項目要在可見範圍內才做複本
+let viewportHeight = 200
 beforeEach(() => {
   calls = []
+  viewportHeight = 200
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => viewportHeight)
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
     const key = this.getAttribute('data-flip-key')
     const parent = this.parentElement
@@ -205,5 +209,42 @@ describe('useListReflow', () => {
     await flush()
 
     expect(calls.filter((c) => c.keyframes.some((k) => 'transform' in k))).toEqual([])
+  })
+  it('它應該只替原本在容器可見範圍內的離開項目做複本，畫面外的直接消失（不撐高捲動高度、不白跑動畫）', async () => {
+    viewportHeight = 100 // 可見範圍 0–100：a（0–40）、b（50–90）看得到，c 從 100 開始已經在外面
+    const wrapper = mountList(['a', 'b', 'c', 'd', 'e'])
+    await wrapper.setProps({ keys: ['a'] })
+    await flush()
+
+    const ghosts = calls.filter((c) => c.el.getAttribute('aria-hidden') === 'true')
+    expect(ghosts.map((c) => c.el.textContent)).toEqual(['b'])
+    expect(wrapper.element.querySelectorAll('[aria-hidden="true"]')).toHaveLength(1)
+  })
+
+  it('它應該替只露出一部分（跨過可見範圍下緣）的離開項目做複本', async () => {
+    viewportHeight = 70 // b 在 50–90，下半截被切掉但看得到上半截
+    const wrapper = mountList(['a', 'b', 'c'])
+    await wrapper.setProps({ keys: ['a'] })
+    await flush()
+
+    expect(calls.filter((c) => c.el.getAttribute('aria-hidden') === 'true').map((c) => c.el.textContent)).toEqual(['b'])
+  })
+
+  it('它應該在動畫進行中元件被卸載時把複本清掉、動畫取消', async () => {
+    const wrapper = mountList(['a', 'b', 'c'])
+    await wrapper.setProps({ keys: ['a'] })
+    await flush()
+    const ghosts = calls.filter((c) => c.el.getAttribute('aria-hidden') === 'true').map((c) => c.el as HTMLElement)
+    expect(ghosts.length).toBeGreaterThan(0)
+    const container = wrapper.element
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBe(ghosts.length)
+
+    wrapper.unmount()
+
+    for (const g of ghosts) {
+      expect(g.isConnected).toBe(false)
+      expect(container.contains(g)).toBe(false)
+    }
+    for (const c of calls) expect(c.cancel).toHaveBeenCalled()
   })
 })

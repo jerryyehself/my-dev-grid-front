@@ -62,13 +62,6 @@ const mountHome = async () => {
 beforeEach(() => {
   mockProjects.list = []
   mockGraph.dto = { nodes: [], edges: [] }
-  vi.stubGlobal(
-    'IntersectionObserver',
-    class {
-      observe() {}
-      disconnect() {}
-    },
-  )
 })
 
 describe('HomeView（C 版：路線當主角）', () => {

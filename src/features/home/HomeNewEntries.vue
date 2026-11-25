@@ -41,11 +41,17 @@ function to(e: NewEntry) {
     <h2 class="m-0 shrink-0 text-(length:--type-label-size) tracking-(--type-label-tracking) leading-(--type-label-leading) font-normal text-(--text-ink-muted)">
       最新收錄
     </h2>
-    <ul class="flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible py-0.5 min-w-0" :class="{ 'home-entrance': playEntrance }">
+    <!-- 手機（md 以下）這條橫向捲動，overflow-x:auto 會讓 y 軸也變成 auto，進場時往下 24px 的卡片底部會被切掉。
+         所以 pb 多留 24px（--motion-entrance-rise）給進場位移用，同量的負 mb 把版面拉回原位，不造成位移；
+         多出來的透明邊不攔點擊（pointer-events-none），卡片自己照常點得到。桌機（md 以上）不裁切，維持原樣 -->
+    <ul
+      class="flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible py-0.5 max-md:pb-[calc(2px+var(--motion-entrance-rise))] max-md:-mb-(--motion-entrance-rise) max-md:pointer-events-none min-w-0"
+      :class="{ 'home-entrance': playEntrance }"
+    >
       <li
         v-for="(e, i) in entries"
         :key="`${e.kind}-${e.id}`"
-        class="shrink-0"
+        class="shrink-0 max-md:pointer-events-auto"
         :style="{ '--stagger-index': Math.min(i, STAGGER_MAX_INDEX) }"
       >
         <RouterLink

@@ -103,6 +103,9 @@ export function useListReflow(container: Ref<HTMLElement | undefined>, source: W
     if (closeMs <= 0) return
     for (const [key, old] of before) {
       if (after.has(key)) continue
+      // 原本就在容器可見範圍外的（要捲才看得到）直接消失：複本是絕對定位，放在範圍外會把捲動高度撐大，
+      // 呼叫端依 scrollHeight 算的狀態（例如底部淡出遮罩）會在複本移除後仍停在錯的值，而且看不到的也不用白跑動畫
+      if (old.top + old.height <= 0 || old.top >= root.clientHeight) continue
       // 離開的：用舊元素的複本釘在原本看到的位置淡出，不佔位
       const ghost = old.el.cloneNode(true) as HTMLElement
       ghost.removeAttribute(FLIP_KEY_ATTR)
