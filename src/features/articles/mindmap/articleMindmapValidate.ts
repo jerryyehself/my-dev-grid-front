@@ -23,7 +23,8 @@ function isRatio(v: unknown): boolean {
 /**
  * 檢查一份資料是不是合格的文章心智圖，回傳問題清單；空陣列就是合格。
  * 不合格就一律當壞資料：缺欄位、型別不對、層次超過 2 層、parent 指到不存在的節點、
- * 有環、有多個中心、連線指到不存在的節點，都會被列出來。
+ * 有環、有多個中心、連線指到不存在的節點、text_forms 用在有 res_id 的節點或有空白／重複的寫法，
+ * 都會被列出來。
  */
 export function validateArticleMindmap(data: unknown): string[] {
   if (!isRec(data)) return ['資料不是物件']
@@ -62,6 +63,29 @@ export function validateArticleMindmap(data: unknown): string[] {
     if (!isNonEmptyString(raw.label)) errors.push(`${where}.label 必須是非空字串`)
     if (raw.res_id !== null && !(Number.isInteger(raw.res_id) && (raw.res_id as number) > 0)) {
       errors.push(`${where}.res_id 必須是正整數或 null`)
+    }
+    // 內文寫法（選填）：只給沒有 res_id 的節點；有 res_id 的節點只要出現這個欄位（連空陣列）就算錯
+    if (raw.text_forms !== undefined) {
+      if (raw.res_id !== null) {
+        errors.push(
+          `${where}.text_forms 只能用在沒有 res_id 的節點（有 res_id 的改登記成那個 res 的 nomen）`,
+        )
+      }
+      if (!Array.isArray(raw.text_forms)) {
+        errors.push(`${where}.text_forms 必須是字串陣列`)
+      } else {
+        const seen = new Set<string>()
+        raw.text_forms.forEach((t: unknown, j: number) => {
+          if (!isNonEmptyString(t)) {
+            errors.push(`${where}.text_forms[${j}] 必須是非空字串`)
+            return
+          }
+          // 去掉前後空白再比，免得「CSP」跟「 CSP」被當成兩個
+          const key = t.trim()
+          if (seen.has(key)) errors.push(`${where}.text_forms[${j}] 重複：${key}`)
+          seen.add(key)
+        })
+      }
     }
     if (!(MINDMAP_STRENGTHS as readonly unknown[]).includes(raw.strength)) {
       errors.push(`${where}.strength 必須是 primary 或 secondary`)

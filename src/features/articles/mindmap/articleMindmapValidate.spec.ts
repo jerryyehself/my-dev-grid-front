@@ -47,7 +47,9 @@ describe('articleMindmapFixture', () => {
   })
 
   it('它應該只讓次要節點出現在第 2 層（分枝本身都是主題）', () => {
-    const branchIds = new Set(fixture.nodes.filter((n) => n.parent === fixture.center).map((n) => n.id))
+    const branchIds = new Set(
+      fixture.nodes.filter((n) => n.parent === fixture.center).map((n) => n.id),
+    )
     for (const n of fixture.nodes) {
       if (branchIds.has(n.id) || n.id === fixture.center) expect(n.strength).toBe('primary')
     }
@@ -99,6 +101,43 @@ describe('validateArticleMindmap 擋下壞資料', () => {
     ['res_id 是小數', broken((d) => (node(d, 'n24').res_id = 4.5)), 'res_id'],
     ['res_id 是字串', broken((d) => (node(d, 'n24').res_id = 'technique-48')), 'res_id'],
     ['res_id 缺欄位', broken((d) => delete node(d, 'n24').res_id), 'res_id'],
+    [
+      'text_forms 用在有 res_id 的節點',
+      broken((d) => (node(d, 'n24').text_forms = ['x'])),
+      'text_forms 只能用在沒有 res_id',
+    ],
+    [
+      'text_forms 是空陣列但節點有 res_id',
+      broken((d) => (node(d, 'n24').text_forms = [])),
+      'text_forms 只能用在沒有 res_id',
+    ],
+    [
+      'text_forms 不是陣列',
+      broken((d) => (node(d, 'n6').text_forms = 'CSP')),
+      'text_forms 必須是字串陣列',
+    ],
+    [
+      'text_forms 是 null',
+      broken((d) => (node(d, 'n6').text_forms = null)),
+      'text_forms 必須是字串陣列',
+    ],
+    [
+      'text_forms 有空字串',
+      broken((d) => (node(d, 'n6').text_forms = ['CSP', ''])),
+      'text_forms[1]',
+    ],
+    ['text_forms 只有空白', broken((d) => (node(d, 'n6').text_forms = ['  '])), 'text_forms[0]'],
+    ['text_forms 有非字串', broken((d) => (node(d, 'n6').text_forms = [1])), 'text_forms[0]'],
+    [
+      'text_forms 重複',
+      broken((d) => (node(d, 'n6').text_forms = ['CSP', 'CSP'])),
+      'text_forms[1] 重複',
+    ],
+    [
+      'text_forms 只差前後空白',
+      broken((d) => (node(d, 'n6').text_forms = ['CSP', ' CSP '])),
+      'text_forms[1] 重複',
+    ],
     ['strength 不認得', broken((d) => (node(d, 'n6').strength = 'weak')), 'strength'],
     ['weight 超過 1', broken((d) => (node(d, 'n6').weight = 1.2)), 'weight'],
     ['weight 是 NaN', broken((d) => (node(d, 'n6').weight = Number.NaN)), 'weight'],
@@ -128,6 +167,14 @@ describe('validateArticleMindmap 擋下壞資料', () => {
     expect(errors.length, name).toBeGreaterThan(0)
     expect(errors.join('\n')).toContain(expected)
     expect(isArticleMindmap(data)).toBe(false)
+  })
+
+  it('它應該接受沒有 res_id 的節點帶 text_forms，或不帶這個欄位', () => {
+    const withForms = broken((d) => (node(d, 'n6').text_forms = ['CSP', 'Content-Security-Policy']))
+    expect(node(structuredClone(fixture) as unknown as Doc, 'n6').res_id).toBeNull()
+    expect(validateArticleMindmap(withForms)).toEqual([])
+    expect(validateArticleMindmap(broken((d) => (node(d, 'n6').text_forms = [])))).toEqual([])
+    expect(validateArticleMindmap(fixture)).toEqual([])
   })
 
   it('它應該在沒有橫向關係時接受空的 links', () => {

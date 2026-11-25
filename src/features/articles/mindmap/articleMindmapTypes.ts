@@ -26,6 +26,12 @@ export interface MindmapNode {
   label: string
   /** 對得上圖譜才有，沒有就是 null；有值的節點可連到圖譜。 */
   res_id: number | null
+  /**
+   * 內文寫法：文章內文裡實際出現、但跟 label 不同的寫法（選填）。只給沒有 res_id 的節點用，
+   * 而且每個寫法都必須在這個節點連到的段落裡原樣出現（資料格式驗證看不到內文，由一致性檢查把關）。
+   * 有 res_id 的節點不用這欄，內文寫法改登記成那個 res 的 nomen。
+   */
+  text_forms?: string[]
   /** primary 是主題，secondary 是次要（預設收合）。弱關聯不進這份資料。 */
   strength: MindmapStrength
   /** 0 到 1，決定字級或粗細。 */
