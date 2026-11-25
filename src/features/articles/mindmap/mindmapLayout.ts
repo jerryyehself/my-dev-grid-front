@@ -4,8 +4,12 @@
 //
 // 每個詞是「字在上、底線在下」：y 是底線的位置，線條從上一層底線的外端接到下一層底線的內端。
 // 數字來自定案的線框（清單懸停版、內頁的 C 版型）。
+//
+// 字級固定（線框值），圖太寬時不縮小整張圖，改把長詞折成兩行（wrapLabel.ts），
+// 兩行時兩行字都在底線上方，底線長度跟較寬那行一樣。
 import { hierarchy, tree } from 'd3-hierarchy'
 import type { LabelFont } from './measureLabel'
+import { linesWidth, narrowestTwoLines } from './wrapLabel'
 
 export type MindmapLabelKind = 'center' | 'branch' | 'primary' | 'secondary' | 'chip'
 export type MindmapSide = 'center' | 'left' | 'right'
@@ -96,6 +100,10 @@ export interface PositionedLabel extends MindmapLabelSpec {
   x2: number
   fontSize: number
   anchor: 'start' | 'end' | 'middle'
+  /** 畫出來的字，一行或兩行（長詞折行）；最後一行緊貼底線上方 */
+  lines: string[]
+  /** 兩行時上下兩行的距離 */
+  lineHeight: number
 }
 
 export interface PositionedCrossLink extends MindmapCrossLinkSpec {
@@ -122,8 +130,27 @@ interface TreeDatum {
   children?: TreeDatum[]
 }
 
-function labelWidth(spec: MindmapLabelSpec, metrics: MindmapMetrics, measure: MeasureLabel): number {
-  return measure(spec.label, metrics.font[spec.kind])
+/** 每個詞要畫成哪幾行（id → 行） */
+type LinesById = ReadonlyMap<string, string[]>
+
+/** 行距：字身約 1.3 倍字級 */
+const LINE_HEIGHT_RATIO = 1.3
+
+function lineHeightOf(kind: MindmapLabelKind, metrics: MindmapMetrics): number {
+  return metrics.font[kind].size * LINE_HEIGHT_RATIO
+}
+
+function linesOf(spec: MindmapLabelSpec, lines: LinesById): string[] {
+  return lines.get(spec.id) ?? [spec.label]
+}
+
+function labelWidth(spec: MindmapLabelSpec, metrics: MindmapMetrics, measure: MeasureLabel, lines: LinesById): number {
+  return linesWidth(linesOf(spec, lines), metrics.font[spec.kind], measure)
+}
+
+/** 多出來的行要多佔的高度 */
+function extraHeight(spec: MindmapLabelSpec, metrics: MindmapMetrics, lines: LinesById): number {
+  return (linesOf(spec, lines).length - 1) * lineHeightOf(spec.kind, metrics)
 }
 
 function curve(x1: number, y1: number, x2: number, y2: number): string {
@@ -131,13 +158,14 @@ function curve(x1: number, y1: number, x2: number, y2: number): string {
   return `M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`
 }
 
-/** 字的上緣到底線的距離：字身約 1.3 倍字級 */
+/** 字的上緣：底線往上一個字身（約 1.3 倍字級），兩行再多一個行距 */
 function labelTop(label: PositionedLabel): number {
-  return label.y - label.fontSize * 1.3
+  return label.y - label.fontSize * LINE_HEIGHT_RATIO - (label.lines.length - 1) * label.lineHeight
 }
 
 /**
- * 排一邊（右或左）。tree() 的 nodeSize 給「相鄰兩列的距離」，separation 讓不同分枝的概念多空一點；
+ * 排一邊（右或左）。tree() 的 nodeSize 給「相鄰兩列的距離」，separation 讓不同分枝的概念多空一點，
+ * 折成兩行的詞上面再多空一個行距（字往上長，所以加在它跟上一列之間）；
  * 算完把這一邊上下置中對齊中心。
  */
 function layoutSide(
@@ -146,6 +174,7 @@ function layoutSide(
   centerHalf: number,
   metrics: MindmapMetrics,
   measure: MeasureLabel,
+  lines: LinesById,
 ): { labels: PositionedLabel[]; edges: { id: string; d: string }[] } {
   if (branches.length === 0) return { labels: [], edges: [] }
   const root = hierarchy<TreeDatum>({
@@ -156,9 +185,16 @@ function layoutSide(
     })),
   })
   const groupRatio = (metrics.rowHeight + metrics.groupGap) / metrics.rowHeight
+  // separation 收到的兩個節點在同一層，但哪個在上面 d3 不保證（兩種順序都會傳），
+  // 用 descendants() 的順序判斷：同一層裡越後面越下面
+  const order = new Map(root.descendants().map((n, i) => [n, i]))
   tree<TreeDatum>()
     .nodeSize([metrics.rowHeight, 1])
-    .separation((a, b) => (a.parent === b.parent ? 1 : groupRatio))(root)
+    .separation((a, b) => {
+      const lower = (order.get(a) ?? 0) > (order.get(b) ?? 0) ? a : b
+      const extra = lower.data.spec ? extraHeight(lower.data.spec, metrics, lines) / metrics.rowHeight : 0
+      return (a.parent === b.parent ? 1 : groupRatio) + extra
+    })(root)
 
   const nodes = root.descendants().filter((n) => n.depth > 0)
   const xs = nodes.map((n) => n.x ?? 0)
@@ -166,7 +202,7 @@ function layoutSide(
   const dir = side === 'right' ? 1 : -1
 
   const widths = new Map<string, number>()
-  for (const n of nodes) widths.set(n.data.spec!.id, labelWidth(n.data.spec!, metrics, measure))
+  for (const n of nodes) widths.set(n.data.spec!.id, labelWidth(n.data.spec!, metrics, measure, lines))
 
   const branchStart = centerHalf + metrics.columnGap
   const widestBranch = Math.max(...branches.map((b) => widths.get(b.id) ?? 0))
@@ -190,6 +226,8 @@ function layoutSide(
       x2: Math.max(inner, outer),
       fontSize: metrics.font[spec.kind].size,
       anchor: side === 'right' ? 'start' : 'end',
+      lines: linesOf(spec, lines),
+      lineHeight: lineHeightOf(spec.kind, metrics),
     }
     labels.push(label)
     byId.set(spec.id, label)
@@ -339,17 +377,14 @@ function avoidLabelOverlap(
   })
 }
 
-/**
- * 把整張圖排好。座標以中心底線的中點為原點，viewBox 包住所有詞與線再加 padding；
- * `minWidth` 給了的話，內容較窄時左右補空白讓圖置中（提示框、內頁框都是固定寬）。
- */
-export function layoutMindmap(
+/** 用給定的折行排好整張圖（還沒補到最小寬度） */
+function layoutWithLines(
   spec: MindmapTreeSpec,
   metrics: MindmapMetrics,
   measure: MeasureLabel,
-  minWidth = 0,
+  lines: LinesById,
 ): MindmapLayout {
-  const centerWidth = labelWidth(spec.center, metrics, measure)
+  const centerWidth = labelWidth(spec.center, metrics, measure, lines)
   const half = centerWidth / 2
   const center: PositionedLabel = {
     ...spec.center,
@@ -360,9 +395,11 @@ export function layoutMindmap(
     x2: half,
     fontSize: metrics.font.center.size,
     anchor: 'middle',
+    lines: linesOf(spec.center, lines),
+    lineHeight: lineHeightOf('center', metrics),
   }
-  const right = layoutSide(spec.right, 'right', half, metrics, measure)
-  const left = layoutSide(spec.left, 'left', half, metrics, measure)
+  const right = layoutSide(spec.right, 'right', half, metrics, measure, lines)
+  const left = layoutSide(spec.left, 'left', half, metrics, measure, lines)
   const labels = [center, ...right.labels, ...left.labels]
   const edges = [...right.edges, ...left.edges]
 
@@ -385,16 +422,98 @@ export function layoutMindmap(
   }
 
   const p = metrics.padding
-  let x = minX - p
-  let width = maxX - minX + 2 * p
-  if (width < minWidth) {
-    x -= (minWidth - width) / 2
-    width = minWidth
-  }
   return {
-    viewBox: [x, minY - p, width, maxY - minY + 2 * p],
+    viewBox: [minX - p, minY - p, maxX - minX + 2 * p, maxY - minY + 2 * p],
     labels,
     edges,
     crossLinks,
   }
+}
+
+/** 圖裡所有的詞，依欄分組（中心、右分枝、右概念、左分枝、左概念）；同一欄的詞左右對齊、欄寬由最寬的詞決定 */
+function columnsOf(spec: MindmapTreeSpec): MindmapLabelSpec[][] {
+  const columns: MindmapLabelSpec[][] = [[spec.center]]
+  for (const side of [spec.right, spec.left]) {
+    columns.push(side)
+    columns.push(side.flatMap((b) => b.children))
+  }
+  return columns
+}
+
+/**
+ * 決定哪些詞折成兩行，讓圖寬不超過 maxWidth：
+ * 1. 找一條門檻：一行寬過門檻的詞折成兩行（取最窄的折法）。門檻越低折的詞越多、圖越窄，
+ *    所以從各詞的一行寬裡二分找出「塞得進」的最高門檻，折的詞最少。
+ * 2. 折完再看每一欄：一行寬沒有超過這一欄現在的寬度的詞，折了也不會讓圖變窄，改回一行。
+ * 全部能折的都折了還是太寬（例如視窗很窄），就用全部折好的結果，交給呼叫端處理。
+ */
+function chooseLines(
+  spec: MindmapTreeSpec,
+  metrics: MindmapMetrics,
+  measure: MeasureLabel,
+  maxWidth: number,
+): LinesById {
+  const columns = columnsOf(spec)
+  const all = columns.flat()
+  const oneLine = new Map(all.map((s) => [s.id, measure(s.label, metrics.font[s.kind])]))
+  const twoLines = new Map<string, string[]>()
+  const twoLinesOf = (s: MindmapLabelSpec): string[] => {
+    let cached = twoLines.get(s.id)
+    if (!cached) {
+      cached = narrowestTwoLines(s.label, metrics.font[s.kind], measure)
+      twoLines.set(s.id, cached)
+    }
+    return cached
+  }
+  const linesAt = (threshold: number): Map<string, string[]> =>
+    new Map(all.filter((s) => oneLine.get(s.id)! > threshold).map((s) => [s.id, twoLinesOf(s)]))
+  const widthAt = (lines: LinesById) => layoutWithLines(spec, metrics, measure, lines).viewBox[2]
+
+  const none = new Map<string, string[]>()
+  if (widthAt(none) <= maxWidth) return none
+
+  // 門檻候選：各詞的一行寬（由小到大），加上 0（全部能折的都折）
+  const thresholds = [0, ...new Set(oneLine.values())].sort((a, b) => a - b)
+  let lo = 0
+  let hi = thresholds.length - 1
+  if (widthAt(linesAt(thresholds[lo]!)) > maxWidth) return linesAt(0)
+  // 不變式：thresholds[lo] 塞得進；最大的門檻（= 最寬的詞不折）塞不進，上面已經判斷過
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2)
+    if (widthAt(linesAt(thresholds[mid]!)) <= maxWidth) lo = mid
+    else hi = mid - 1
+  }
+  const chosen = linesAt(thresholds[lo]!)
+
+  const relaxed = new Map(chosen)
+  for (const column of columns) {
+    const columnWidth = Math.max(
+      0,
+      ...column.map((s) => linesWidth(chosen.get(s.id) ?? [s.label], metrics.font[s.kind], measure)),
+    )
+    for (const s of column) {
+      if (oneLine.get(s.id)! <= columnWidth) relaxed.delete(s.id)
+    }
+  }
+  // 改回一行的詞變長，橫向線從詞的外端出去，線上的字可能被推得更外面；真的變寬就不改回
+  return widthAt(relaxed) <= maxWidth ? relaxed : chosen
+}
+
+/**
+ * 把整張圖排好。座標以中心底線的中點為原點，viewBox 包住所有詞與線再加 padding。
+ * - `maxWidth`：圖寬的上限（框的實際寬度）。寬過它就把長詞折成兩行，字級不變。
+ * - `minWidth`：內容較窄時左右補空白讓圖置中（提示框、內頁框都是固定寬）。
+ */
+export function layoutMindmap(
+  spec: MindmapTreeSpec,
+  metrics: MindmapMetrics,
+  measure: MeasureLabel,
+  minWidth = 0,
+  maxWidth = Infinity,
+): MindmapLayout {
+  const lines = chooseLines(spec, metrics, measure, maxWidth)
+  const layout = layoutWithLines(spec, metrics, measure, lines)
+  const [x, y, width, height] = layout.viewBox
+  if (width < minWidth) layout.viewBox = [x - (minWidth - width) / 2, y, minWidth, height]
+  return layout
 }

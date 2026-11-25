@@ -192,6 +192,33 @@ describe('ArticleMindmapPanel', () => {
     expect(buttons.filter((id) => !id?.startsWith('chip:'))).toEqual([])
   })
 
+  it('它應該在量不到圖框寬度時（測試環境）用正文欄寬 638 排', async () => {
+    const wrapper = await mountPanel()
+    expect(wrapper.get('svg[role="group"]').attributes('width')).toBe('638')
+  })
+
+  it('它應該照圖框的實際寬度排：框比圖窄時折長詞讓圖寬等於框寬，字級不變', async () => {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(420)
+    const wrapper = await mountPanel()
+    await flushPromises()
+    const svg = wrapper.get('svg[role="group"]')
+    expect(svg.attributes('width')).toBe('420')
+    expect(svg.findAll('text').some((t) => t.findAll('tspan').length === 2)).toBe(true)
+    for (const t of svg.findAll('g[data-node-id] > text')) expect(Number(t.attributes('font-size'))).toBeGreaterThanOrEqual(13)
+  })
+
+  it('它應該讓折成兩行的詞用完整的詞當名稱（兩行接起來不會少掉空白）', async () => {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(420)
+    const wrapper = await mountPanel()
+    await flushPromises()
+    const twoLine = wrapper.findAll('g[data-node-id] > text').filter((t) => t.findAll('tspan').length === 2)
+    expect(twoLine.length).toBeGreaterThan(0)
+    for (const t of twoLine) {
+      const name = t.attributes('aria-label')!
+      expect(name.replace(/\s/g, '')).toBe(t.text().replace(/\s/g, ''))
+    }
+  })
+
   it('它應該在換文章時丟掉晚回來的舊結果', async () => {
     let resolveOld: (v: null) => void = () => {}
     const spy = vi

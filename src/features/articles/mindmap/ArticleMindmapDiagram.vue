@@ -45,6 +45,16 @@ function textY(label: PositionedLabel): number {
   return label.y - Math.round(label.fontSize * 0.75)
 }
 
+/** 折成兩行時第 i 行的位置：最後一行在 textY，上面一行再往上一個行距 */
+function lineY(label: PositionedLabel, i: number): number {
+  return textY(label) - (label.lines.length - 1 - i) * label.lineHeight
+}
+
+/** 兩行時多出來的高度（點擊範圍與焦點框要往上加） */
+function extraHeight(label: PositionedLabel): number {
+  return (label.lines.length - 1) * label.lineHeight
+}
+
 function isChip(label: PositionedLabel): boolean {
   return label.kind === 'chip'
 }
@@ -149,9 +159,9 @@ function activate(label: PositionedLabel) {
         <!-- 點擊範圍與鍵盤焦點框：比字大一圈，只在鍵盤聚焦時描邊 -->
         <rect
           :x="label.x1 - 4"
-          :y="label.y - label.fontSize * 1.4"
+          :y="label.y - label.fontSize * 1.4 - extraHeight(label)"
           :width="label.x2 - label.x1 + 8"
-          :height="label.fontSize * 1.4 + 5"
+          :height="label.fontSize * 1.4 + 5 + extraHeight(label)"
           rx="3"
           class="fill-transparent stroke-(--text-accent) opacity-0 group-focus-visible:opacity-100"
           stroke-width="2"
@@ -171,7 +181,10 @@ function activate(label: PositionedLabel) {
           dominant-baseline="central"
           :font-size="label.fontSize"
           :class="textClass(label)"
-        >{{ label.label }}</text>
+          :aria-label="label.lines.length > 1 ? label.label : undefined"
+        >
+          <tspan v-for="(line, i) in label.lines" :key="i" :x="label.x" :y="lineY(label, i)">{{ line }}</tspan>
+        </text>
       </g>
       <g v-else :data-node-id="label.id">
         <line
@@ -189,7 +202,10 @@ function activate(label: PositionedLabel) {
           dominant-baseline="central"
           :font-size="label.fontSize"
           :class="textClass(label)"
-        >{{ label.label }}</text>
+          :aria-label="label.lines.length > 1 ? label.label : undefined"
+        >
+          <tspan v-for="(line, i) in label.lines" :key="i" :x="label.x" :y="lineY(label, i)">{{ line }}</tspan>
+        </text>
       </g>
     </template>
   </svg>

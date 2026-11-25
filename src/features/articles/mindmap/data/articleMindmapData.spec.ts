@@ -18,7 +18,14 @@ const bodies = import.meta.glob<string>('./articleMindmap*Body.md', {
 })
 const bodyOf = (id: number) => bodies[`./articleMindmap${id}Body.md`]
 
-const PUBLISHED_IDS = [12, 13, 14, 15, 16, 17]
+const PUBLISHED_IDS = [13, 14, 15, 16, 17]
+/** 有資料與快照、但不上線的文章（理由見 articleMindmapData.ts），資料一樣要檢查 */
+const WITHHELD_IDS = [12]
+const CHECKED_IDS = [...WITHHELD_IDS, ...PUBLISHED_IDS]
+const WITHHELD_DATA: Readonly<Record<number, () => Promise<unknown>>> = {
+  12: async () => (await import('./articleMindmap12.json')).default,
+}
+const dataOf = (id: number) => (ARTICLE_MINDMAP_DATA[id] ?? WITHHELD_DATA[id])!
 
 // ---- 段落切分與字串比對（只給這個測試用，規則跟產生資料時的一致性檢查相同） ----
 // 段落 = 後端切段落的單位：每個 H2／H3 標題行到下一個 H2／H3 標題行之前（H1、H4 以下算在內文裡）。
@@ -167,21 +174,21 @@ const EXPECTED: Record<
 }
 
 describe('ARTICLE_MINDMAP_DATA', () => {
-  it('它應該只有已發布的 6 篇，正式 build 認得的就是這 6 篇', () => {
+  it('它應該只有上線的 5 篇，正式 build 認得的就是這 5 篇（12 有資料但不上線）', () => {
     expect(Object.keys(ARTICLE_MINDMAP_DATA).map(Number)).toEqual(PUBLISHED_IDS)
     expect([...mindmapArticleIds(false)]).toEqual(PUBLISHED_IDS)
-    expect(Object.keys(EXPECTED).map(Number)).toEqual(PUBLISHED_IDS)
+    expect(Object.keys(EXPECTED).map(Number)).toEqual(CHECKED_IDS)
   })
 
   it('它應該每篇都有內文快照，而且快照沒讀錯（有 H2）', () => {
-    expect(Object.keys(bodies)).toHaveLength(PUBLISHED_IDS.length)
-    for (const id of PUBLISHED_IDS) expect(bodyOf(id)).toMatch(/^## /m)
+    expect(Object.keys(bodies)).toHaveLength(CHECKED_IDS.length)
+    for (const id of CHECKED_IDS) expect(bodyOf(id)).toMatch(/^## /m)
   })
 })
 
-describe.each(PUBLISHED_IDS)('文章 %i 的心智圖', (id) => {
+describe.each(CHECKED_IDS)('文章 %i 的心智圖', (id) => {
   const load = async () => {
-    const data = await ARTICLE_MINDMAP_DATA[id]!()
+    const data = await dataOf(id)()
     expect(isArticleMindmap(data)).toBe(true)
     return data as ArticleMindmap
   }
@@ -191,7 +198,7 @@ describe.each(PUBLISHED_IDS)('文章 %i 的心智圖', (id) => {
   const unitBySlug = new Map(units.map((u) => [u.slug, u]))
 
   it('它應該通過格式驗證，而且是這篇的', async () => {
-    const data = await ARTICLE_MINDMAP_DATA[id]!()
+    const data = await dataOf(id)()
     expect(validateArticleMindmap(data)).toEqual([])
     expect((data as ArticleMindmap).article_id).toBe(id)
   })

@@ -8,6 +8,7 @@ import {
   type MindmapBranchSpec,
   type MindmapLabelSpec,
   type MindmapTreeSpec,
+  type PositionedLabel,
 } from './mindmapLayout'
 import { buildDetailSpec, buildHoverSpec, linkLineLabel } from './mindmapTree'
 import { estimateLabelWidth } from './measureLabel'
@@ -239,5 +240,140 @@ describe('layoutMindmap 橫向線上的字不蓋到詞', () => {
     const { spec } = buildDetailSpec(mindmap, new Set(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']), linkLineLabel, true)
     const layout = layoutMindmap(spec, DETAIL_METRICS, real, 638)
     expect(layout.crossLinks.map((c) => c.label)).toContain('依據')
+  })
+})
+
+describe('layoutMindmap 太寬時長詞折成兩行', () => {
+  // measure：每個字 10px（中文一字一個單位，可以在任何兩字之間斷）
+  const wideSpec: MindmapTreeSpec = {
+    center: label('c', 'center', '中心'),
+    right: [
+      {
+        ...label('b1', 'branch', '分枝'),
+        children: [label('long', 'primary', '一二三四五六七八九十'), label('short', 'primary', '短短')],
+      },
+    ],
+    left: [{ ...label('b2', 'branch', '左'), children: [label('x', 'primary', '甲乙')] }],
+    links: [],
+  }
+  const natural = layoutMindmap(wideSpec, DETAIL_METRICS, measure)
+  const naturalWidth = natural.viewBox[2]
+
+  it('它應該在放得下時一個詞都不折，跟沒給上限一樣', () => {
+    const layout = layoutMindmap(wideSpec, DETAIL_METRICS, measure, 0, naturalWidth)
+    expect(layout).toEqual(natural)
+    for (const l of layout.labels) expect(l.lines).toEqual([l.label])
+  })
+
+  it('它應該只折超出的那個長詞，字級不變、圖寬不超過上限', () => {
+    const layout = layoutMindmap(wideSpec, DETAIL_METRICS, measure, 0, naturalWidth - 20)
+    const l = byId(layout)
+    expect(l.get('long')!.lines).toEqual(['一二三四五', '六七八九十'])
+    for (const id of ['c', 'b1', 'short', 'b2', 'x']) expect(l.get(id)!.lines).toHaveLength(1)
+    expect(layout.viewBox[2]).toBeLessThanOrEqual(naturalWidth - 20)
+    for (const x of layout.labels) expect(x.fontSize).toBe(DETAIL_METRICS.font[x.kind].size)
+    // 底線跟較寬那行一樣長
+    expect(l.get('long')!.x2 - l.get('long')!.x1).toBe(50)
+  })
+
+  it('它應該在兩行的詞上面多空一個行距，跟上一列的字不疊', () => {
+    const tall: MindmapTreeSpec = {
+      ...wideSpec,
+      right: [
+        {
+          ...label('b1', 'branch', '分枝'),
+          children: [label('short', 'primary', '短短'), label('long', 'primary', '一二三四五六七八九十')],
+        },
+      ],
+    }
+    const layout = layoutMindmap(tall, DETAIL_METRICS, measure, 0, naturalWidth - 20)
+    const l = byId(layout)
+    const lineHeight = 13 * 1.3
+    expect(l.get('long')!.lines).toHaveLength(2)
+    expect(l.get('long')!.lineHeight).toBeCloseTo(lineHeight)
+    expect(l.get('long')!.y - l.get('short')!.y).toBeCloseTo(DETAIL_METRICS.rowHeight + lineHeight)
+    // 兩行的字頂端還是在上一列的底線下面
+    expect(l.get('long')!.y - 13 * 1.3 - lineHeight).toBeGreaterThan(l.get('short')!.y)
+  })
+
+  it('它應該讓兩行的詞放在第一列時，下一列的距離不變（多的行距只加在它上面）', () => {
+    const layout = layoutMindmap(wideSpec, DETAIL_METRICS, measure, 0, naturalWidth - 20)
+    const l = byId(layout)
+    expect(l.get('short')!.y - l.get('long')!.y).toBe(DETAIL_METRICS.rowHeight)
+    // viewBox 包得住兩行的詞的上緣
+    expect(layout.viewBox[1]).toBeLessThan(l.get('long')!.y - 13 * 1.3 - l.get('long')!.lineHeight)
+  })
+
+  it('它應該在全部折完還放不下時，回傳折到最窄的結果（呼叫端再處理）', () => {
+    const layout = layoutMindmap(wideSpec, DETAIL_METRICS, measure, 0, 100)
+    const l = byId(layout)
+    expect(l.get('long')!.lines).toEqual(['一二三四五', '六七八九十'])
+    expect(l.get('c')!.lines).toEqual(['中', '心'])
+    expect(layout.viewBox[2]).toBeGreaterThan(100)
+  })
+
+  it('它應該在給了相同的上下限時，圖寬剛好等於框寬', () => {
+    const layout = layoutMindmap(wideSpec, DETAIL_METRICS, measure, naturalWidth - 20, naturalWidth - 20)
+    expect(layout.viewBox[2]).toBe(naturalWidth - 20)
+  })
+})
+
+describe('layoutMindmap 正式資料在文章欄寬（638）內', () => {
+  // 測試環境量不到真的字型，用 measureLabel 的估算；瀏覽器裡的實測另外做
+  const real = (text: string, font: { size: number }) => estimateLabelWidth(text, font.size)
+  const datasets = import.meta.glob<ArticleMindmap>('./data/articleMindmap*.json', { import: 'default', eager: true })
+  const byArticle = new Map(Object.values(datasets).map((d) => [d.article_id, d]))
+  const boxOf = (l: PositionedLabel) => ({
+    x1: l.x1,
+    x2: l.x2,
+    y1: l.y - l.fontSize * 1.3 - (l.lines.length - 1) * l.lineHeight,
+    y2: l.y,
+  })
+
+  function check(layout: ReturnType<typeof layoutMindmap>, minSize: number, maxWidth = 638) {
+    expect(layout.viewBox[2]).toBeLessThanOrEqual(maxWidth)
+    for (const l of layout.labels) {
+      expect(l.fontSize).toBeGreaterThanOrEqual(minSize)
+      expect(l.lines.length).toBeLessThanOrEqual(2)
+    }
+    const boxes = layout.labels.map((l) => ({ l, b: boxOf(l) }))
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i]!.b
+        const b = boxes[j]!.b
+        const hit = a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2
+        expect(hit, `「${boxes[i]!.l.label}」疊到「${boxes[j]!.l.label}」`).toBe(false)
+      }
+    }
+  }
+
+  const detailLayout = (id: number, expandAll: boolean) => {
+    const map = byArticle.get(id)!
+    const expanded = new Set(expandAll ? map.nodes.map((n) => n.id) : [])
+    const { spec } = buildDetailSpec(map, expanded, linkLineLabel, true)
+    return layoutMindmap(spec, DETAIL_METRICS, real, 638, 638)
+  }
+
+  it.each([13, 14, 15, 16, 17])('它應該讓文章 %i 的內頁圖（預設）不縮小、字不疊', (id) => {
+    check(detailLayout(id, false), 13)
+  })
+
+  it.each([13, 14, 15, 16])('它應該讓文章 %i 的內頁圖（全部展開）不縮小、字不疊', (id) => {
+    check(detailLayout(id, true), 13)
+  })
+
+  it('它應該讓文章 17 全部展開時折到最窄、字不疊（估算比 638 寬 2px，在估算誤差內）', () => {
+    // 估算把拉丁字母算得比實際字型寬；瀏覽器實測（Chromium、1440 寬）是 630，放得下。
+    // 這篇離上限最近，字型換了可能差幾像素，所以這裡只容許一個字寬以內的差距
+    check(detailLayout(17, true), 13, 638 + 13)
+  })
+
+  it.each([12, 13, 14, 15, 16, 17])('它應該讓文章 %i 的清單懸停圖不縮小、字不疊', (id) => {
+    check(layoutMindmap(buildHoverSpec(byArticle.get(id)!), HOVER_METRICS, real, 638, 638), 14)
+  })
+
+  it('它應該在文章 12 全部折成兩行還是比 638 寬（所以 12 不上線）', () => {
+    const { spec } = buildDetailSpec(byArticle.get(12)!, new Set(), linkLineLabel, false)
+    expect(layoutMindmap(spec, DETAIL_METRICS, real, 638, 638).viewBox[2]).toBeGreaterThan(638)
   })
 })

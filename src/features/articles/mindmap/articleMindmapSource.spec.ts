@@ -10,8 +10,8 @@ import {
 } from './articleMindmapSource'
 
 describe('mindmapArticleIds', () => {
-  it('它應該在正式 build 是已發布、有資料的那 6 篇', () => {
-    expect([...mindmapArticleIds(false)]).toEqual([12, 13, 14, 15, 16, 17])
+  it('它應該在正式 build 是已發布、有資料的那 5 篇', () => {
+    expect([...mindmapArticleIds(false)]).toEqual([13, 14, 15, 16, 17])
   })
 
   it('它應該在開發與測試時是 fixture 那篇', () => {
@@ -86,7 +86,7 @@ describe('fetchPublishedMindmap（正式 build 的資料來源）', () => {
     expect(data.article_id).toBe(17)
   })
 
-  it.each([11, 18, 0, -1, 12.5, Number.NaN])('它應該對沒有資料的文章 %s 回 null', async (id) => {
+  it.each([11, 12, 18, 0, -1, 12.5, Number.NaN])('它應該對沒有上線資料的文章 %s 回 null', async (id) => {
     expect(await fetchPublishedMindmap(id)).toBeNull()
   })
 

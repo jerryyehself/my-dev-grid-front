@@ -5,7 +5,8 @@
 // 放在前言之後、第一個二級標題之前（由 ArticleDetailView 透過 MarkdownBody 的插槽放進去）。
 //
 // 這篇沒有心智圖、資料載入失敗或不合格式：整塊不畫，連標題都沒有。
-// 能懸停、指標精準的裝置（桌機）畫 SVG 圖，不管視窗多窄（窄的時候圖等比縮小）；觸控裝置改成大綱樹
+// 能懸停、指標精準的裝置（桌機）畫 SVG 圖，圖寬照框的實際寬度排，太寬就把長詞折成兩行、字級不變；
+// 視窗窄到折了還是放不下時圖才等比縮小。觸控裝置改成大綱樹
 // （ArticleMindmapOutline）。看裝置不看寬度，條件見 useFinePointer.ts。展開狀態與橫向關係開關兩邊共用。
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import BaseSwitch from '@/components/BaseSwitch.vue'
@@ -27,8 +28,8 @@ const props = defineProps<{
   headings: readonly MindmapHeading[]
 }>()
 
-/** 框寬 640（正文欄寬），扣掉左右框線 */
-const CANVAS_WIDTH = 638
+/** 還量不到框寬時（剛掛上、測試環境）先用的寬度：正文欄寬 640 扣掉左右框線 */
+const FALLBACK_CANVAS_WIDTH = 638
 /** 彈出框寬 */
 const POPOVER_WIDTH = 240
 
@@ -93,11 +94,34 @@ function toggleBranch(branchId: string) {
   openBranchIds.value = next
 }
 
+// --- 圖框的實際寬度：圖寬不超過它（長詞折行），比它窄時左右補空白置中 ---
+const canvasEl = ref<HTMLElement | null>(null)
+const canvasWidth = ref(FALLBACK_CANVAS_WIDTH)
+let resizeObserver: ResizeObserver | null = null
+
+function readCanvasWidth() {
+  const width = canvasEl.value?.clientWidth ?? 0
+  if (width > 0) canvasWidth.value = width
+}
+
+watch(canvasEl, (el) => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
+  if (!el) return
+  readCanvasWidth()
+  if (typeof ResizeObserver === 'function') {
+    resizeObserver = new ResizeObserver(readCanvasWidth)
+    resizeObserver.observe(el)
+  }
+})
+onBeforeUnmount(() => resizeObserver?.disconnect())
+
 const detail = computed(() => {
   void fontsVersion.value
   if (!mindmap.value) return null
   const { spec, hiddenLinkCount } = buildDetailSpec(mindmap.value, expanded.value, linkLineLabel, showLinks.value)
-  return { layout: layoutMindmap(spec, DETAIL_METRICS, measureLabelWidth, CANVAS_WIDTH), hiddenLinkCount }
+  const width = canvasWidth.value
+  return { layout: layoutMindmap(spec, DETAIL_METRICS, measureLabelWidth, width, width), hiddenLinkCount }
 })
 
 const title = computed(() => (mindmap.value ? `文章心智圖：${centerOf(mindmap.value).label}` : ''))
@@ -116,7 +140,6 @@ const hasTypedLinks = computed(() => (mindmap.value?.links ?? []).some((l) => l.
 const hasUntypedLinks = computed(() => (mindmap.value?.links ?? []).some((l) => l.type === null))
 
 // --- 桌機：點詞出現的彈出框 ---
-const canvasEl = ref<HTMLElement | null>(null)
 const popoverEl = ref<HTMLElement | null>(null)
 const popoverPos = ref({ left: 0, top: 0 })
 const selectedNode = computed<MindmapNode | null>(() =>
@@ -176,8 +199,8 @@ function onDocumentPointerDown(event: PointerEvent) {
 onMounted(() => document.addEventListener('pointerdown', onDocumentPointerDown))
 onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointerDown))
 
-// 換了展開狀態或開關，詞的位置會變；換了裝置，圖會整塊卸載重畫。彈出框都不再指著原來的詞
-watch([expanded, showLinks, finePointer], () => {
+// 換了展開狀態、開關或圖框寬度（折行跟著變），詞的位置會變；換了裝置，圖會整塊卸載重畫。彈出框都不再指著原來的詞
+watch([expanded, showLinks, finePointer, canvasWidth], () => {
   selectedId.value = null
 })
 </script>
