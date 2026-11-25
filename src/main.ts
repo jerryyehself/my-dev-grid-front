@@ -6,8 +6,12 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/useAuthStore'
+import { initInputModality } from './composables/useInputModality'
 
 import '@/assets/css/main.css'
+
+// 記住最後一次輸入是鍵盤還是指標：鍵盤觸發的開合不播動畫（見 composables/useInputModality.ts）
+initInputModality()
 
 const app = createApp(App)
 

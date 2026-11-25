@@ -72,6 +72,15 @@
   --default-transition-timing-function: var(--ease-control);
 }
 
+/* 鍵盤觸發的開合（按鍵、Tab 聚焦打開、Esc 關閉）瞬間完成，不播動畫：高頻、鍵盤操作不加動畫。
+   <html data-input> 由 composables/useInputModality.ts 依最後一次輸入來源寫入；
+   所有開合都吃這兩個時長（<Transition name="panel">、panel-up、duration-panel-* class），所以只改這裡。
+   滑鼠與觸控（data-input="pointer"）照舊 200／120ms。 */
+html[data-input='keyboard'] {
+  --transition-duration-panel-open: 0ms;
+  --transition-duration-panel-close: 0ms;
+}
+
 /* 面板開合（下拉、彈出框、詳情卡、提示）：給 Vue 的 <Transition name="panel"> 用。
    打開：從上方 6px 落到定位並淡入，panel-open；收起：往上抬 2px 並淡出，panel-close；同一條 ease-control。
    位移、距離照 docs/demos/motion-demo.html (c)。只動 opacity 與 translate，不動會重新排版的屬性。
