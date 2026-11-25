@@ -215,13 +215,17 @@ const folderArticles = computed(() => {
 
     <template v-else>
     <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
+    <!-- 時間軸／分類夾切換：舊排列先淡出（panel-close）再讓新排列淡入（panel-open），兩種排列不會疊在一起。
+         動畫在 main.css 的 view-swap-*；鍵盤觸發時時長歸零、減少動態時壓成 0.01ms，所以不用另外判斷。
+         只用在列表頁，文章閱讀頁不加 -->
+    <Transition name="view-swap" mode="out-in">
     <!-- 一篇已發布的文章都沒有時，兩種排列都只剩空白；頁面拿掉副標後連一句中文都沒有（D-83），
          補一句空狀態 -->
     <p v-if="timelineGroups.length === 0" class="py-12 text-center text-(length:--type-caption-size) text-(--text-ink-body)">
       {{ ARTICLES_EMPTY_TEXT }}
     </p>
     <!-- 時間軸：依日期線性掃視 -->
-    <div v-else-if="viewMode === 'timeline'" class="relative pl-7">
+    <div v-else-if="viewMode === 'timeline'" key="timeline" class="relative pl-7">
       <div class="absolute left-[5px] top-1.5 bottom-1.5 w-0.5 bg-(--border-shelf)"></div>
 
       <template v-for="group in timelineGroups" :key="group.month">
@@ -280,7 +284,7 @@ const folderArticles = computed(() => {
     <!-- 分類夾：依標籤切換
          手機寬度放不下全部標籤時改成橫向捲動、不換行，避免頁籤換成兩行後
          啟用中的頁籤跟下面卡片的邊框接不起來（換行後只有最後一行貼得到卡片） -->
-    <div v-else>
+    <div v-else key="folder">
       <div
         class="flex mb-[-1px] relative z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
@@ -349,6 +353,7 @@ const folderArticles = computed(() => {
         </div>
       </div>
     </div>
+    </Transition>
     </template>
   </div>
 </template>

@@ -113,3 +113,17 @@ html[data-input='keyboard'] {
   opacity: 0;
   translate: 0 2px;
 }
+
+/* 列表換排列（文章列表的時間軸／分類夾）：舊的先淡出 panel-close，再讓新的淡入 panel-open，
+   Vue 的 <Transition name="view-swap" mode="out-in"> 用；ease-control，只動 opacity。
+   鍵盤觸發時兩個時長歸零（見上面 data-input 那段），減少動態時由 base.css 壓成 0.01ms。 */
+.view-swap-enter-active {
+  transition: opacity var(--transition-duration-panel-open) var(--ease-control);
+}
+.view-swap-leave-active {
+  transition: opacity var(--transition-duration-panel-close) var(--ease-control);
+}
+.view-swap-enter-from,
+.view-swap-leave-to {
+  opacity: 0;
+}

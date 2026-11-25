@@ -265,3 +265,33 @@ describe('ArticlesView 的標題懸停心智圖', () => {
     })
   })
 })
+
+describe('ArticlesView 的排列切換過場', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('它應該把時間軸／分類夾包在 view-swap 的先出後進（out-in）過場裡', async () => {
+    const wrapper = await mountView()
+    const transition = wrapper.findComponent({ name: 'Transition' })
+
+    expect(transition.exists()).toBe(true)
+    expect(transition.attributes('name')).toBe('view-swap')
+    expect(transition.attributes('mode')).toBe('out-in')
+  })
+
+  it('它應該在切換之後只剩新的排列（舊的不會留著疊在一起）', async () => {
+    const wrapper = await mountView()
+    expect(wrapper.find('.pl-7').exists()).toBe(true)
+
+    await wrapper.findAll('button').find((b) => b.text() === '分類夾')!.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.pl-7').exists()).toBe(false)
+    expect(wrapper.findAll('article')).toHaveLength(3)
+
+    await wrapper.findAll('button').find((b) => b.text() === '時間軸')!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.pl-7').exists()).toBe(true)
+  })
+})
