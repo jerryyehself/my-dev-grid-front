@@ -175,6 +175,7 @@ import {
   type ArticleDto,
 } from '@/api/articles'
 import AuthOnly from '@/components/AuthOnly.vue'
+import { adjacentArticles } from './adjacentArticles'
 import ArticleRelatedProjects from './ArticleRelatedProjects.vue'
 import BackToArticlesLink from './BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -207,7 +208,7 @@ async function load() {
       fetchArticlesOrDemo(),
     ])
     article.value = a
-    // 排序要跟文章列表一致（日期由新到舊），上一篇／下一篇才對得上列表看到的順序
+    // 排序要跟文章列表一致（日期由新到舊），上一篇／下一篇才對得上列表看到的順序（方向見 adjacentArticles.ts）
     publishedList.value = sortArticlesByDateDesc(all.filter((item) => item.status === 1))
     fallbackError.value = articleError ?? listError
     ready.value = true
@@ -231,20 +232,8 @@ watchEffect(() => {
   if (article.value) pageTitleOverride.value = article.value.title
 })
 
-const currentIndex = computed(() => {
-  if (!article.value) return -1
-  return publishedList.value.findIndex((item) => item.id === article.value?.id)
-})
-
-const previousArticle = computed(() => {
-  const index = currentIndex.value
-  if (index <= 0) return null
-  return publishedList.value[index - 1]
-})
-
-const nextArticle = computed(() => {
-  const index = currentIndex.value
-  if (index === -1 || index >= publishedList.value.length - 1) return null
-  return publishedList.value[index + 1]
-})
+// 上一篇／下一篇的順序與方向見 adjacentArticles.ts
+const adjacent = computed(() => adjacentArticles(publishedList.value, article.value?.id))
+const previousArticle = computed(() => adjacent.value.previous)
+const nextArticle = computed(() => adjacent.value.next)
 </script>

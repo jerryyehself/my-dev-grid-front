@@ -62,15 +62,24 @@ describe('ArticleDetailView', () => {
     fetchArticleOrDemo.mockReset()
   })
 
-  it('它應該讓上一篇／下一篇跟文章列表一樣依日期由新到舊排列', async () => {
+  it('它應該讓上一篇是日期較早的、下一篇是日期較晚的（跟文章列表同一個日期排序）', async () => {
     fetchArticleOrDemo.mockResolvedValue({ article: LIST[2], loadError: null })
     const wrapper = await mountAt(3)
     const prev = wrapper.findAll('a').find((a) => a.text().includes('PREV'))!
     const next = wrapper.findAll('a').find((a) => a.text().includes('NEXT'))!
 
-    // 列表順序 B、C、A：C 的上一篇是 B（較新），下一篇是 A（較舊）
-    expect(prev.attributes('href')).toBe('/articles/2')
-    expect(next.attributes('href')).toBe('/articles/1')
+    // 日期 A（09-01）、C（10-01）、B（11-01）：C 的上一篇是 A（較早），下一篇是 B（較晚）
+    expect(prev.attributes('href')).toBe('/articles/1')
+    expect(next.attributes('href')).toBe('/articles/2')
+  })
+
+  it('它應該讓最舊的一篇只有下一篇、沒有上一篇', async () => {
+    fetchArticleOrDemo.mockResolvedValue({ article: LIST[0], loadError: null })
+    const wrapper = await mountAt(1)
+    const links = wrapper.findAll('a').map((a) => a.text())
+
+    expect(links.some((t) => t.includes('PREV'))).toBe(false)
+    expect(wrapper.findAll('a').find((a) => a.text().includes('NEXT'))!.attributes('href')).toBe('/articles/3')
   })
 
   it('它應該讓邊欄用共用的 STICKY_TOP_PX 當 sticky 的 top', async () => {
