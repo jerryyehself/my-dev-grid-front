@@ -26,7 +26,7 @@ import {
   fitTransformWithInset,
   type FitItem,
 } from './fitView'
-import { LABEL_MAX_WIDTH_PX, placeLabels, truncateLabel, type LabelCandidate } from './labels'
+import { LABEL_MAX_WIDTH_PX, labelRank, placeLabels, truncateLabel, type LabelCandidate } from './labels'
 import GraphDisplaySettings from './GraphDisplaySettings.vue'
 import GraphLegend from './GraphLegend.vue'
 import GraphShortcutsHelp from './GraphShortcutsHelp.vue'
@@ -331,12 +331,18 @@ function isForcedLabel(n: SimNode): boolean {
 }
 
 // 名稱在所有節點畫完之後統一擺放（onRenderFramePost），才能依優先序判斷重疊。
-// 優先序：強制顯示的 → 首頁原本的常駐清單（文件、實作、樞紐技術）→ 關係數多的。
+// 優先序：強制顯示的 → 有名稱的文件 → 首頁原本的常駐清單（實作、樞紐技術）→ 關係數多的（見 labelRank）。
 // 被淡化的節點不畫名稱（強制顯示的除外）。
 function drawLabels(ctx: CanvasRenderingContext2D, globalScale: number) {
   const fontPx = LABEL_FONT_PX / globalScale
   const gap = LABEL_GAP_PX / globalScale
-  const rank = (n: SimNode) => (isForcedLabel(n) ? 2 : shouldLabelNode(n) ? 1 : 0)
+  const rank = (n: SimNode) =>
+    labelRank({
+      forced: isForcedLabel(n),
+      domainType: n.domainType,
+      subtype: n.subtype,
+      alwaysLabeled: shouldLabelNode(n),
+    })
   const ordered = simNodes
     .filter(
       (n) =>

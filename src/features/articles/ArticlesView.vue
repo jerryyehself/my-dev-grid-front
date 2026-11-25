@@ -172,7 +172,7 @@ const folderArticles = computed(() => {
               {{ article.title }}
             </RouterLink>
           </h3>
-          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left sm:text-justify max-w-[620px]">
+          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left max-w-[620px]">
             {{ summaryOf(article) }}
           </p>
         </article>
@@ -229,7 +229,7 @@ const folderArticles = computed(() => {
               {{ article.title }}
             </RouterLink>
           </h3>
-          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left sm:text-justify max-w-[700px]">
+          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left max-w-[700px]">
             {{ summaryOf(article) }}
           </p>
         </article>
