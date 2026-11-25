@@ -34,39 +34,43 @@ onUnmounted(() => clearTimeout(timer))
     aria-live="polite"
     class="fixed z-50 bottom-4 left-4 right-4 sm:left-auto sm:max-w-sm pointer-events-none"
   >
-    <div
-      v-if="auth.notice"
-      :role="auth.notice.tone === 'error' ? 'alert' : 'status'"
-      class="pointer-events-auto flex items-center gap-3 rounded-[6px] border bg-(--bg-paper-light) pl-4 pr-1 py-1 shadow-lg"
-      :class="auth.notice.tone === 'error' ? 'border-(--text-error)' : 'border-(--border-shelf)'"
-    >
-      <span
-        aria-hidden="true"
-        class="text-[15px] leading-none"
-        :class="auth.notice.tone === 'error' ? 'text-(--text-error)' : 'text-(--accent-brass)'"
-        >{{ auth.notice.tone === 'error' ? '!' : '✓' }}</span
+    <!-- 提示出現／消失用 panel-open／panel-close（main.css 的 .panel-up-*）：貼在畫面底部，從下方升上來。
+         5 秒自動消失的計時跟動畫無關，到時間就開始淡出 -->
+    <Transition name="panel-up">
+      <div
+        v-if="auth.notice"
+        :role="auth.notice.tone === 'error' ? 'alert' : 'status'"
+        class="pointer-events-auto flex items-center gap-3 rounded-[6px] border bg-(--bg-paper-light) pl-4 pr-1 py-1 shadow-lg"
+        :class="auth.notice.tone === 'error' ? 'border-(--text-error)' : 'border-(--border-shelf)'"
       >
-      <span
-        class="flex-1 text-(length:--type-caption-size)"
-        :class="auth.notice.tone === 'error' ? 'text-(--text-error)' : 'text-(--text-ink-main)'"
-      >
-        {{ auth.notice.text }}
-      </span>
-      <button
-        type="button"
-        aria-label="關閉提示"
-        class="inline-flex items-center justify-center w-11 h-11 rounded-[6px] text-(--text-ink-muted) hover:text-(--text-ink-main) focus-visible:outline-2 focus-visible:outline-(--text-accent)"
-        @click="auth.setNotice(null)"
-      >
-        <svg aria-hidden="true" viewBox="0 0 20 20" class="w-4 h-4" fill="none">
-          <path
-            d="M5 5l10 10M15 5L5 15"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
-    </div>
+        <span
+          aria-hidden="true"
+          class="text-[15px] leading-none"
+          :class="auth.notice.tone === 'error' ? 'text-(--text-error)' : 'text-(--accent-brass)'"
+          >{{ auth.notice.tone === 'error' ? '!' : '✓' }}</span
+        >
+        <span
+          class="flex-1 text-(length:--type-caption-size)"
+          :class="auth.notice.tone === 'error' ? 'text-(--text-error)' : 'text-(--text-ink-main)'"
+        >
+          {{ auth.notice.text }}
+        </span>
+        <button
+          type="button"
+          aria-label="關閉提示"
+          class="inline-flex items-center justify-center w-11 h-11 rounded-[6px] text-(--text-ink-muted) hover:text-(--text-ink-main) focus-visible:outline-2 focus-visible:outline-(--text-accent)"
+          @click="auth.setNotice(null)"
+        >
+          <svg aria-hidden="true" viewBox="0 0 20 20" class="w-4 h-4" fill="none">
+            <path
+              d="M5 5l10 10M15 5L5 15"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>

@@ -90,7 +90,7 @@ const rows = computed(() => relations.value ?? [])
       >
         <router-link
           :to="{ name: 'ontology-relation', params: { id: rel.id } }"
-          class="flex min-w-0 flex-1 flex-wrap items-baseline gap-2 text-sm transition-colors hover:text-(--text-accent)"
+          class="flex min-w-0 flex-1 flex-wrap items-baseline gap-2 text-sm transition-colors duration-hover-out hover:duration-hover-in hover:text-(--text-accent)"
         >
           <span class="inline-flex items-center gap-1.5 shrink-0">
             <span class="h-2 w-2 rounded-full" :class="familyDot(scopeCallNumber(rel.subject))" />

@@ -7,6 +7,8 @@ import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { ApiHttpError } from '@/api/client'
 import type { ArticleDto } from '@/api/articles'
 import { resolveType } from '@/test/cssTokens'
+import mindmapFixture from './mindmap/articleMindmapFixture.json'
+import { loadArticleMindmap } from './mindmap/articleMindmapSource'
 
 function article(id: number, title: string, creationDate: string, body = `${title} 的內文`): ArticleDto {
   return {
@@ -62,15 +64,24 @@ describe('ArticleDetailView', () => {
     fetchArticleOrDemo.mockReset()
   })
 
-  it('它應該讓上一篇／下一篇跟文章列表一樣依日期由新到舊排列', async () => {
+  it('它應該讓上一篇是日期較早的、下一篇是日期較晚的（跟文章列表同一個日期排序）', async () => {
     fetchArticleOrDemo.mockResolvedValue({ article: LIST[2], loadError: null })
     const wrapper = await mountAt(3)
     const prev = wrapper.findAll('a').find((a) => a.text().includes('PREV'))!
     const next = wrapper.findAll('a').find((a) => a.text().includes('NEXT'))!
 
-    // 列表順序 B、C、A：C 的上一篇是 B（較新），下一篇是 A（較舊）
-    expect(prev.attributes('href')).toBe('/articles/2')
-    expect(next.attributes('href')).toBe('/articles/1')
+    // 日期 A（09-01）、C（10-01）、B（11-01）：C 的上一篇是 A（較早），下一篇是 B（較晚）
+    expect(prev.attributes('href')).toBe('/articles/1')
+    expect(next.attributes('href')).toBe('/articles/2')
+  })
+
+  it('它應該讓最舊的一篇只有下一篇、沒有上一篇', async () => {
+    fetchArticleOrDemo.mockResolvedValue({ article: LIST[0], loadError: null })
+    const wrapper = await mountAt(1)
+    const links = wrapper.findAll('a').map((a) => a.text())
+
+    expect(links.some((t) => t.includes('PREV'))).toBe(false)
+    expect(wrapper.findAll('a').find((a) => a.text().includes('NEXT'))!.attributes('href')).toBe('/articles/3')
   })
 
   it('它應該讓邊欄用共用的 STICKY_TOP_PX 當 sticky 的 top', async () => {
@@ -266,5 +277,52 @@ describe('ArticleDetailView', () => {
 
       expect(wrapper.text()).not.toContain(BYLINE)
     })
+  })
+})
+
+describe('ArticleDetailView 的文章心智圖', () => {
+  const MINDMAP_ID = mindmapFixture.article_id
+  const BODY = '導言第一段。\n\n## 資料條件\n\n內文。\n\n## 採用的設計\n\n內文。'
+
+  beforeEach(async () => {
+    setActivePinia(createPinia())
+    fetchArticleOrDemo.mockReset()
+    // 先把心智圖的資料載好，掛上去後等得到
+    await loadArticleMindmap(MINDMAP_ID)
+  })
+
+  async function mountWith(id: number) {
+    fetchArticleOrDemo.mockResolvedValue({ article: article(id, '心智圖那篇', '2026-09-02', BODY), loadError: null })
+    const wrapper = await mountAt(id)
+    // 延遲載入的元件要多等幾輪
+    await vi.waitFor(async () => {
+      await flushPromises()
+      if (id === MINDMAP_ID && !wrapper.find('#article-mindmap-heading').exists()) throw new Error('還沒載入')
+    })
+    return wrapper
+  }
+
+  it('它應該在有心智圖的文章，把心智圖放在導言後面、第一個二級標題前面', async () => {
+    const wrapper = await mountWith(MINDMAP_ID)
+    const html = wrapper.html()
+    const lead = html.indexOf('導言第一段')
+    const map = html.indexOf('id="article-mindmap-heading"')
+    const firstH2 = html.indexOf('id="資料條件"')
+    expect(lead).toBeGreaterThan(-1)
+    expect(map).toBeGreaterThan(lead)
+    expect(firstH2).toBeGreaterThan(map)
+  })
+
+  it('它應該讓心智圖的出處連到內文標題的錨點', async () => {
+    const wrapper = await mountWith(MINDMAP_ID)
+    await wrapper.get('[data-node-id="n1"][role="button"]').trigger('click')
+    expect(wrapper.get('[role="dialog"] a[href^="#"]').attributes('href')).toBe('#資料條件')
+    expect(wrapper.find('[id="資料條件"]').exists()).toBe(true)
+  })
+
+  it('它應該在沒有心智圖的文章完全不畫', async () => {
+    const wrapper = await mountWith(MINDMAP_ID + 1)
+    expect(wrapper.find('#article-mindmap-heading').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('文章心智圖')
   })
 })

@@ -2,6 +2,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { BYLINE } from '@/copy/common'
+import { recordNavigation } from './navigationCount'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -321,5 +322,8 @@ router.beforeEach(async (to) => {
     }
   }
 })
+
+// 記下導航次數，首頁分得出「整頁載入的第一個頁面」跟「站內換頁過來」（見 navigationCount.ts）
+router.afterEach(recordNavigation)
 
 export default router

@@ -83,10 +83,13 @@ export function aboutLinkCanvasMode(l: {
 type MarkerEnd = { x?: number; y?: number } | string | number | undefined
 
 // 在線的中點畫空心圈。端點還沒被力導向模擬換成節點物件（仍是 id）時不畫。
+// 半徑與描邊寬是螢幕像素：畫布放大縮小時圖面單位會跟著變，所以除以 globalScale，
+// 縮小到整張圖塞進手機寬度時圈也不會縮到看不見（跟 force-graph 的線寬、節點標籤同樣的做法）。
 export function drawAboutMarker(
   ctx: CanvasRenderingContext2D,
   link: { source?: MarkerEnd; target?: MarkerEnd },
   style: ReturnType<typeof aboutMarkerStyle>,
+  globalScale = 1,
 ): void {
   const { source: s, target: t } = link
   if (typeof s !== 'object' || typeof t !== 'object') return
@@ -94,13 +97,13 @@ export function drawAboutMarker(
   ctx.arc(
     ((s.x ?? 0) + (t.x ?? 0)) / 2,
     ((s.y ?? 0) + (t.y ?? 0)) / 2,
-    style.radius,
+    style.radius / globalScale,
     0,
     2 * Math.PI,
   )
   ctx.fillStyle = style.fill
   ctx.fill()
-  ctx.lineWidth = style.lineWidth
+  ctx.lineWidth = style.lineWidth / globalScale
   ctx.strokeStyle = style.stroke
   ctx.stroke()
 }

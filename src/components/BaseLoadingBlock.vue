@@ -7,6 +7,9 @@
 // 圓角原本 rounded(4px) 與 rounded-xl 兩種混用——4px 在這個站的框線語彙裡
 // 沒有對應（BaseCard 是 rounded-xl，panel 是 6px），統一成 rounded-xl；
 // 字體原本 text-xs 無襯線與 font-mono 兩種，統一成 mono，跟站上其他狀態文字一致。
+//
+// 載入中的框掛 data-loading-placeholder：換頁轉場等新頁的這些佔位框消失才淡入（見
+// layouts/pageTransitionMotion.ts）。載入失敗（tone="error"）不掛，錯誤訊息照常滑進來。
 withDefaults(
   defineProps<{
     /** 佔位高度，直接給 CSS 值，例如 '520px'。 */
@@ -23,6 +26,7 @@ withDefaults(
     class="w-full flex items-center justify-center rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-label-size)"
     :class="tone === 'error' ? 'text-(--text-error)' : 'text-(--text-ink-body)/40'"
     :style="{ height }"
+    :data-loading-placeholder="tone === 'error' ? undefined : ''"
   >
     <slot />
   </div>

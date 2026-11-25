@@ -7,7 +7,7 @@
 // （techniques／implementations 的 title）當篩選依據。
 // summary：D-57，不是獨立欄位，取 body 第一段（見 excerptOf）。
 // 只列 status===1（已發布）——草稿不該出現在訪客看得到的清單。
-import { ref, computed } from 'vue'
+import { ref, computed, defineAsyncComponent, onBeforeUnmount, onWatcherCleanup, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { displayDate, fetchArticlesOrDemo, sortArticlesByDateDesc, type ArticleDto } from '@/api/articles'
 import { excerptOf } from '@/components/markdown/excerpt'
@@ -18,6 +18,13 @@ import BaseSegmented from '@/components/BaseSegmented.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
 import LoadFailedNotice from '@/components/LoadFailedNotice.vue'
 import { ARTICLES_EMPTY_TEXT, ARTICLES_LOAD_FAILED_TEXT, LOADING_TEXT } from '@/copy/common'
+import { hasArticleMindmap } from './mindmap/articleMindmapSource'
+import { matchesFinePointer } from './mindmap/useFinePointer'
+
+// 標題懸停心智圖（只有有心智圖的文章才有）。元件與資料都延遲載入：沒滑到這些標題就不下載
+const ArticleMindmapHoverTip = defineAsyncComponent(
+  () => import('./mindmap/ArticleMindmapHoverTip.vue'),
+)
 
 const ready = ref(false)
 const loadError = ref(false)
@@ -53,7 +60,89 @@ function summaryOf(a: ArticleDto): string {
 // 每篇文章右上角的「編輯」。所在那一列是 mono 大寫小字，這顆是中文，照 D-68 的中文標籤下限用 13px、
 // 不套大寫與寬字距
 const EDIT_LINK_CLASS =
-  'relative z-10 ml-auto font-sans normal-case text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out'
+  'relative z-10 ml-auto font-sans normal-case text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in'
+
+// --- 標題懸停心智圖 ---
+// 只在游標停在標題「文字」上，或鍵盤 Tab 到標題時出現。標題連結的 ::after 撐滿整列，
+// 所以懸停掛在連結裡包著文字的 <span> 上：游標在整列其他地方（::after 的範圍）時，
+// 事件的目標是 <a> 本身，不是這個 <span>，不會觸發。<span> 要 relative z-[1]：::after 是定位元素，
+// 會疊在沒定位的文字上面，不墊高的話游標停在字上也只碰得到 ::after。<span> 仍在連結裡，點了一樣開文章。
+// 滑鼠與焦點分開記：滑鼠移開時，焦點還在標題上就繼續顯示。Esc 收起，直到下一次移入或聚焦。
+interface MindmapTipState {
+  articleId: number
+  anchor: HTMLElement
+}
+const hoverTip = ref<MindmapTipState | null>(null)
+const focusTip = ref<MindmapTipState | null>(null)
+const tipDismissed = ref(false)
+// 滑鼠與鍵盤可以同時各停在不同篇；以最近一次動作為準，另一邊只在這邊沒有時才補上
+const lastTipSource = ref<'hover' | 'focus'>('hover')
+const activeTip = computed(() => {
+  if (tipDismissed.value) return null
+  return lastTipSource.value === 'focus'
+    ? (focusTip.value ?? hoverTip.value)
+    : (hoverTip.value ?? focusTip.value)
+})
+
+function mindmapTipId(articleId: number): string {
+  return `article-mindmap-tip-${articleId}`
+}
+
+function titleAnchor(event: Event): HTMLElement | null {
+  return (event.currentTarget as HTMLElement | null)?.closest('h3') ?? null
+}
+
+function onTitleTextEnter(articleId: number, event: MouseEvent) {
+  if (!hasArticleMindmap(articleId)) return
+  // 觸控裝置點一下也會送 mouseenter；不是能懸停、指標精準的裝置就不顯示（跟內頁分圖與大綱樹同一個條件）
+  if (!matchesFinePointer()) return
+  const anchor = titleAnchor(event)
+  if (!anchor) return
+  tipDismissed.value = false
+  lastTipSource.value = 'hover'
+  hoverTip.value = { articleId, anchor }
+}
+
+function onTitleTextLeave(articleId: number) {
+  if (hoverTip.value?.articleId === articleId) hoverTip.value = null
+}
+
+/** 只有鍵盤聚焦（:focus-visible）才算；滑鼠點下去也會聚焦，但那時已經在開文章了 */
+function isKeyboardFocus(el: HTMLElement): boolean {
+  try {
+    return el.matches(':focus-visible')
+  } catch {
+    // 不認得 :focus-visible 的瀏覽器：當作鍵盤聚焦，寧可多顯示也不要鍵盤使用者看不到
+    return true
+  }
+}
+
+function onTitleFocus(articleId: number, event: FocusEvent) {
+  if (!hasArticleMindmap(articleId)) return
+  const link = event.currentTarget as HTMLElement | null
+  if (!link || !isKeyboardFocus(link)) return
+  const anchor = titleAnchor(event)
+  if (!anchor) return
+  tipDismissed.value = false
+  lastTipSource.value = 'focus'
+  focusTip.value = { articleId, anchor }
+}
+
+function onTitleBlur(articleId: number) {
+  if (focusTip.value?.articleId === articleId) focusTip.value = null
+}
+
+function onTipKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') tipDismissed.value = true
+}
+
+// 提示框開著時才聽 Esc（游標停在標題上時，焦點不一定在標題連結上）
+watch(activeTip, (tip) => {
+  if (!tip) return
+  window.addEventListener('keydown', onTipKeydown)
+  onWatcherCleanup(() => window.removeEventListener('keydown', onTipKeydown))
+})
+onBeforeUnmount(() => window.removeEventListener('keydown', onTipKeydown))
 
 const viewMode = ref<'timeline' | 'folder'>('timeline')
 const VIEW_MODES = [
@@ -104,7 +193,7 @@ const folderArticles = computed(() => {
       <AuthOnly>
         <router-link
           :to="{ name: 'article-manage' }"
-          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
@@ -126,13 +215,17 @@ const folderArticles = computed(() => {
 
     <template v-else>
     <LoadFailedNotice v-if="fallbackError" :message="fallbackError" class="mb-4" />
+    <!-- 時間軸／分類夾切換：舊排列先淡出（panel-close）再讓新排列淡入（panel-open），兩種排列不會疊在一起。
+         動畫在 main.css 的 view-swap-*；鍵盤觸發時時長歸零、減少動態時壓成 0.01ms，所以不用另外判斷。
+         只用在列表頁，文章閱讀頁不加 -->
+    <Transition name="view-swap" mode="out-in">
     <!-- 一篇已發布的文章都沒有時，兩種排列都只剩空白；頁面拿掉副標後連一句中文都沒有（D-83），
          補一句空狀態 -->
     <p v-if="timelineGroups.length === 0" class="py-12 text-center text-(length:--type-caption-size) text-(--text-ink-body)">
       {{ ARTICLES_EMPTY_TEXT }}
     </p>
     <!-- 時間軸：依日期線性掃視 -->
-    <div v-else-if="viewMode === 'timeline'" class="relative pl-7">
+    <div v-else-if="viewMode === 'timeline'" key="timeline" class="relative pl-7">
       <div class="absolute left-[5px] top-1.5 bottom-1.5 w-0.5 bg-(--border-shelf)"></div>
 
       <template v-for="group in timelineGroups" :key="group.month">
@@ -163,16 +256,25 @@ const folderArticles = computed(() => {
           <!-- 標題是真的連結，::after 撐滿整列，整列都點得到：鍵盤能 Tab 到、能開新分頁、能複製網址。
                以前是 <article @click>，只有滑鼠點得到 -->
           <h3
-            class="text-base font-bold text-(--text-ink-main) mb-1.5 group-hover:text-(--text-accent) transition-colors"
+            class="text-base font-bold text-(--text-ink-main) mb-1.5 group-hover:text-(--text-accent) transition-colors duration-hover-out group-hover:duration-hover-in"
           >
             <RouterLink
               :to="{ name: 'article-detail', params: { id: article.id } }"
               class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+              :aria-describedby="activeTip?.articleId === article.id ? mindmapTipId(article.id) : undefined"
+              @focus="onTitleFocus(article.id, $event)"
+              @blur="onTitleBlur(article.id)"
             >
-              {{ article.title }}
+              <span class="relative z-[1]" @mouseenter="onTitleTextEnter(article.id, $event)" @mouseleave="onTitleTextLeave(article.id)">{{ article.title }}</span>
             </RouterLink>
           </h3>
-          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left sm:text-justify max-w-[620px]">
+          <ArticleMindmapHoverTip
+            v-if="activeTip?.articleId === article.id"
+            :article-id="article.id"
+            :anchor="activeTip.anchor"
+            :tip-id="mindmapTipId(article.id)"
+          />
+          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left max-w-[620px]">
             {{ summaryOf(article) }}
           </p>
         </article>
@@ -182,7 +284,7 @@ const folderArticles = computed(() => {
     <!-- 分類夾：依標籤切換
          手機寬度放不下全部標籤時改成橫向捲動、不換行，避免頁籤換成兩行後
          啟用中的頁籤跟下面卡片的邊框接不起來（換行後只有最後一行貼得到卡片） -->
-    <div v-else>
+    <div v-else key="folder">
       <div
         class="flex mb-[-1px] relative z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
@@ -214,7 +316,7 @@ const folderArticles = computed(() => {
         <article
           v-for="article in folderArticles"
           :key="article.id"
-          class="relative p-5 sm:p-6 hover:bg-(--bg-folder) transition-colors"
+          class="relative p-5 sm:p-6 hover:bg-(--bg-folder) transition-colors duration-hover-out hover:duration-hover-in"
         >
           <div class="flex items-center gap-3 mb-2 text-(length:--type-label-size) leading-(--type-label-leading) tracking-[0.05em]">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>
@@ -225,11 +327,20 @@ const folderArticles = computed(() => {
             <RouterLink
               :to="{ name: 'article-detail', params: { id: article.id } }"
               class="after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+              :aria-describedby="activeTip?.articleId === article.id ? mindmapTipId(article.id) : undefined"
+              @focus="onTitleFocus(article.id, $event)"
+              @blur="onTitleBlur(article.id)"
             >
-              {{ article.title }}
+              <span class="relative z-[1]" @mouseenter="onTitleTextEnter(article.id, $event)" @mouseleave="onTitleTextLeave(article.id)">{{ article.title }}</span>
             </RouterLink>
           </h3>
-          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left sm:text-justify max-w-[700px]">
+          <ArticleMindmapHoverTip
+            v-if="activeTip?.articleId === article.id"
+            :article-id="article.id"
+            :anchor="activeTip.anchor"
+            :tip-id="mindmapTipId(article.id)"
+          />
+          <p class="text-(--text-ink-body) text-(length:--type-caption-size) leading-(--type-caption-leading) text-left max-w-[700px]">
             {{ summaryOf(article) }}
           </p>
         </article>
@@ -242,6 +353,7 @@ const folderArticles = computed(() => {
         </div>
       </div>
     </div>
+    </Transition>
     </template>
   </div>
 </template>

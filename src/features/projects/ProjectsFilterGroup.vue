@@ -160,7 +160,7 @@ function onKeydown(e: KeyboardEvent) {
         type="button"
         :aria-pressed="tag.selected"
         :aria-label="`${tag.label}，${tag.count} 個專案`"
-        class="inline-flex h-7 cursor-pointer items-center gap-2 rounded-full border py-0 pr-1 pl-3 text-(length:--type-label-size) leading-5 tracking-[0.04em] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+        class="inline-flex h-7 cursor-pointer items-center gap-2 rounded-full border py-0 pr-1 pl-3 text-(length:--type-label-size) leading-5 tracking-[0.04em] whitespace-nowrap transition-colors duration-hover-out hover:duration-hover-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
         :class="
           tag.selected
             ? 'border-(--bg-selected) bg-(--bg-selected) text-(--text-on-selected)'

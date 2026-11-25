@@ -3,7 +3,9 @@
 // 每一列選要新增、更新或連結既有文章，最後整批一次送出。
 //
 // 後端整批都成功才寫入：任何一篇不行（清單過期、站上狀態變了）就回 409、什麼都不寫，
-// 所以這裡的錯誤處理只有一件事要做好——說清楚「沒有任何文章被寫入」並給「重新整理清單」。
+// 所以這裡的錯誤處理先要做好——說清楚「沒有任何文章被寫入」並給「重新整理清單」。
+// 另外兩種：後端說判斷不出某幾篇的來源版本新舊（409 unverified_commits），使用者逐篇確認後再送；
+// 送出後連不上後端或後端出 5xx 則是「結果不明」，要先重新讀清單、核對上一批有沒有寫入（reconcileImport），才能再送。
 // 版面沿用文章管理頁（單一框線、細線分隔的清單），沒有另外的設計稿。
 import { computed, reactive, ref } from 'vue'
 import { fetchArticles, displayDate, sortArticlesByDateDesc, type ArticleDto } from '@/api/articles'
@@ -17,6 +19,7 @@ import type { SelectOption } from '@/components/BaseSelect.vue'
 import {
   fetchArticleSources,
   importArticleSources,
+  type ImportRequest,
   type ImportResponse,
   type SourceListing,
 } from './articleImportApi'
@@ -29,11 +32,16 @@ import {
   describeImportError,
   describeProblem,
   linkableArticleIds,
+  reconcileImport,
   rowId,
   selectedCount,
+  selectedRowIds,
   selectionProblems,
   type ImportError,
+  type ReconcileOutcome,
   type RowChoice,
+  type UnverifiedBases,
+  type UnverifiedCommit,
 } from './articleImportRules'
 
 const listing = ref<SourceListing | null>(null)
@@ -48,6 +56,14 @@ const submitError = ref<ImportError | null>(null)
 /** 後端已退回的那份請求（JSON）；選擇沒變、清單沒重讀就再送，必然得到同樣的 409／422，所以先擋下 */
 const rejectedRequestKey = ref<string | null>(null)
 const result = ref<ImportResponse | null>(null)
+/** 後端說判斷不出來源版本新舊的項目（列識別 → 要帶回的 commit_sha）。重新讀清單就清掉。 */
+const unverified = reactive<UnverifiedBases>({})
+/** 判斷不出新舊、站上內容又改過的列（列識別）：確認也過不了，只能重新整理清單，不開放確認。重新讀清單就清掉。 */
+const refreshOnlyRows = reactive<Record<string, true>>({})
+/** 結果不明（斷線、5xx）的那份請求：核對完之前整頁不能再送出，選擇不同也一樣，因為看不出上一批有沒有寫入。 */
+const pendingRequest = ref<ImportRequest | null>(null)
+/** 核對上一批的結論；手動重新整理或再次送出時收掉。 */
+const reconcileOutcome = ref<ReconcileOutcome | null>(null)
 
 type Filter = 'actionable' | 'all'
 const filter = ref<Filter>('actionable')
@@ -57,6 +73,8 @@ async function load() {
   loadError.value = null
   submitError.value = null
   rejectedRequestKey.value = null
+  for (const key of Object.keys(unverified)) delete unverified[key]
+  for (const key of Object.keys(refreshOnlyRows)) delete refreshOnlyRows[key]
   try {
     // 站上文章只用來顯示標題與提供連結選項，失敗不擋清單
     const [next, existing] = await Promise.all([
@@ -70,9 +88,14 @@ async function load() {
     articles.value = existing
     for (const key of Object.keys(choices)) delete choices[key]
     for (const item of next.items) choices[rowId(item)] = defaultChoice(item)
+    // 上一批結果不明：用剛讀回的清單核對。讀取失敗時 pendingRequest 留著，整頁維持鎖住
+    if (pendingRequest.value) {
+      reconcileOutcome.value = reconcileImport(pendingRequest.value, next)
+      pendingRequest.value = null
+    }
   } catch (e) {
     listing.value = null
-    loadError.value = describeImportError(e)
+    loadError.value = describeImportError(e, 'list')
   } finally {
     loading.value = false
   }
@@ -82,6 +105,7 @@ load()
 /** 手動重新整理：上一次的匯入結果一起收掉。匯入成功後的自動重讀直接呼叫 load()，結果要留著。 */
 function refresh() {
   result.value = null
+  reconcileOutcome.value = null
   return load()
 }
 
@@ -113,7 +137,7 @@ const linkOptions = computed<SelectOption[]>(() => {
 })
 
 const count = computed(() => (listing.value ? selectedCount(listing.value, choices) : 0))
-const problems = computed(() => (listing.value ? selectionProblems(listing.value, choices) : []))
+const problems = computed(() => (listing.value ? selectionProblems(listing.value, choices, unverified) : []))
 const problemTexts = computed(() => {
   const byPath = new Map(items.value.map((i) => [i.path, i.title ?? i.key ?? i.path]))
   return problems.value.map((p) => describeProblem(p, (path) => byPath.get(path) ?? path))
@@ -121,7 +145,7 @@ const problemTexts = computed(() => {
 // 目前選擇組成的請求；選擇有問題、還沒選時是 null
 const requestKey = computed(() =>
   listing.value && count.value > 0 && problems.value.length === 0
-    ? JSON.stringify(buildImportRequest(listing.value, choices))
+    ? JSON.stringify(buildImportRequest(listing.value, choices, unverified))
     : null,
 )
 // 重新整理清單進行中不能送出：此時畫面上的選擇與清單版本即將被換掉
@@ -131,25 +155,48 @@ const canSubmit = computed(
     problems.value.length === 0 &&
     !submitting.value &&
     !loading.value &&
+    pendingRequest.value === null &&
     requestKey.value !== rejectedRequestKey.value,
 )
-// 這幾種失敗都是「整批沒寫入或不確定有沒有寫入」，重新讀清單再選一次是對的出路；
-// 來源暫時不能用（unavailable）重讀也不會好，所以不給
-const REFRESHABLE_KINDS: ImportError['kind'][] = ['stale', 'validation', 'network']
-// 其中只有 409（清單過期）和 422（選擇沒通過驗證）是「同一份請求再送一次必定同樣失敗」；
-// 連不上後端可能只是一時的，重送是安全的，不擋
-const REJECTED_KINDS: ImportError['kind'][] = ['stale', 'validation']
+// 這幾種失敗都是「整批沒寫入」，重新讀清單再選一次是對的出路；
+// 來源暫時不能用（unavailable）重讀也不會好，所以不給。結果不明（uncertain）另有「重新整理清單並核對」
+const REFRESHABLE_KINDS: ImportError['kind'][] = ['stale', 'validation', 'unverified']
+// 其中 409（清單過期、判斷不出新舊還沒確認）和 422（選擇沒通過驗證）是「同一份請求再送一次必定同樣失敗」；
+// 確認之後請求多了 confirm_unverified_base，就是另一份請求，可以再送
+const REJECTED_KINDS: ImportError['kind'][] = ['stale', 'validation', 'unverified']
+
+/** 這次 409 列出的項目記下 commit_sha；commit_sha 跟上次不同（站上又被匯入了別的版本）的要重新確認。 */
+function markUnverified(commits: UnverifiedCommit[], rowIds: string[]) {
+  for (const { index, commit_sha: sha } of commits) {
+    const id = rowIds[index]
+    if (id === undefined) continue
+    if (unverified[id] !== sha && choices[id]) choices[id] = { ...choices[id], confirmUnverified: false }
+    unverified[id] = sha
+  }
+}
 
 async function submit() {
   if (!listing.value || !canSubmit.value) return
+  // 送出時的請求與各項對應的列：409 用項目索引指出是哪一項，而送出期間使用者還能改選擇
+  const request = buildImportRequest(listing.value, choices, unverified)
+  const rowIds = selectedRowIds(listing.value, choices)
+  const sentKey = requestKey.value
   submitting.value = true
   submitError.value = null
   result.value = null
+  reconcileOutcome.value = null
   try {
-    result.value = await importArticleSources(buildImportRequest(listing.value, choices))
+    result.value = await importArticleSources(request)
   } catch (e) {
-    submitError.value = describeImportError(e)
-    if (REJECTED_KINDS.includes(submitError.value.kind)) rejectedRequestKey.value = requestKey.value
+    const error = describeImportError(e, 'import')
+    submitError.value = error
+    if (REJECTED_KINDS.includes(error.kind)) rejectedRequestKey.value = sentKey
+    if (error.kind === 'unverified') markUnverified(error.unverified ?? [], rowIds)
+    for (const index of error.refreshOnly ?? []) {
+      const id = rowIds[index]
+      if (id !== undefined) refreshOnlyRows[id] = true
+    }
+    if (error.kind === 'uncertain') pendingRequest.value = request
     return
   } finally {
     submitting.value = false
@@ -157,6 +204,11 @@ async function submit() {
   // 寫入成功：清單上的狀態都變了，重新讀一次（結果摘要留在畫面上）
   await load()
 }
+
+// 錯誤區塊列出判斷不出新舊的項目標題，讓人不用在長清單裡找
+const unverifiedTitles = computed(() =>
+  items.value.filter((i) => rowId(i) in unverified).map((i) => i.title ?? i.key ?? i.path),
+)
 
 const resultCounts = computed(() => {
   const tally = { create: 0, update: 0, link: 0 }
@@ -227,6 +279,45 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
           </li>
         </ul>
       </section>
+      <!-- 結果不明之後核對的結論：跟匯入結果同一個 aria-live 區塊，同一套樣式 -->
+      <section
+        v-else-if="reconcileOutcome"
+        class="border border-(--border-shelf) rounded-[6px] bg-(--bg-paper-light) px-4 sm:px-5 py-4 flex flex-col gap-3"
+        aria-labelledby="reconcile-title"
+        :data-reconcile="reconcileOutcome.kind"
+        data-test="reconcile"
+      >
+        <template v-if="reconcileOutcome.kind === 'applied'">
+          <h2 id="reconcile-title" class="m-0 text-[15px] font-bold text-(--text-ink-main)">
+            上一批已經寫入 {{ reconcileOutcome.items.length }} 篇
+          </h2>
+          <p class="m-0 text-(length:--type-label-size) leading-[1.8] text-(--text-ink-body)">
+            清單上這幾篇都已經是送出的那一版，不用重送。
+          </p>
+          <ul class="m-0 p-0 list-none flex flex-col gap-1">
+            <li v-for="item in reconcileOutcome.items" :key="item.key" class="text-(length:--type-label-size)">
+              <router-link
+                :to="{ name: 'article-editor', params: { id: item.documentationId } }"
+                class="font-bold text-(--text-accent) hover:underline"
+              >
+                {{ item.title }}
+              </router-link>
+            </li>
+          </ul>
+        </template>
+        <template v-else-if="reconcileOutcome.kind === 'not_applied'">
+          <h2 id="reconcile-title" class="m-0 text-[15px] font-bold text-(--text-ink-main)">上一批看起來沒有寫入</h2>
+          <p class="m-0 text-(length:--type-label-size) leading-[1.8] text-(--text-ink-body)">
+            清單上的狀態跟送出前一樣，但上一次的請求也可能還沒處理完。再重新整理一次、確認沒有變動後，可以重新選擇再送出。
+          </p>
+        </template>
+        <template v-else>
+          <h2 id="reconcile-title" class="m-0 text-[15px] font-bold text-(--text-ink-main)">看不出上一批有沒有寫入</h2>
+          <p class="m-0 text-(length:--type-label-size) leading-[1.8] text-(--text-ink-body)">
+            清單上的狀態跟送出前對不上（來源可能有新版本，或別處也在匯入）。請逐列檢查狀態，再決定要不要重送。
+          </p>
+        </template>
+      </section>
     </div>
 
     <BaseLoadingBlock v-if="loading && !listing" height="240px">{{ LOADING_TEXT }}</BaseLoadingBlock>
@@ -238,6 +329,9 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
       data-test="load-error"
     >
       <p class="m-0 text-[14px] text-(--text-error)">清單載入失敗。{{ loadError.message }}</p>
+      <p v-if="pendingRequest" class="m-0 text-(length:--type-label-size) text-(--text-ink-body)" data-test="pending-note">
+        上一批送出的結果還沒核對，清單讀回來之後會自動核對；核對之前不能再送出。
+      </p>
       <BaseButton variant="primary" :disabled="loading" @click="refresh">重新整理清單</BaseButton>
     </div>
 
@@ -267,6 +361,8 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
           :site-title="item.documentation_id === null ? null : (titleById.get(item.documentation_id) ?? null)"
           :link-options="linkOptions"
           :link-unavailable="articles === null"
+          :unverified="rowId(item) in unverified"
+          :refresh-only="rowId(item) in refreshOnlyRows"
           @update:model-value="(value) => (choices[rowId(item)] = value)"
         />
       </ul>
@@ -285,8 +381,14 @@ const shortSha = computed(() => listing.value?.commit_sha.slice(0, 7) ?? '')
 
         <div v-if="submitError" role="alert" class="flex flex-col items-start gap-2" data-test="submit-error">
           <p class="m-0 text-[14px] text-(--text-error)">{{ submitError.message }}</p>
+          <ul v-if="submitError.kind === 'unverified' && unverifiedTitles.length" class="m-0 pl-5 text-(length:--type-label-size) text-(--text-error)" data-test="unverified-list">
+            <li v-for="title in unverifiedTitles" :key="title">{{ title }}</li>
+          </ul>
           <BaseButton v-if="REFRESHABLE_KINDS.includes(submitError.kind)" variant="primary" :disabled="loading" @click="refresh">
             重新整理清單
+          </BaseButton>
+          <BaseButton v-else-if="submitError.kind === 'uncertain'" variant="primary" :disabled="loading" @click="refresh">
+            重新整理清單並核對
           </BaseButton>
         </div>
 

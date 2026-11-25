@@ -14,9 +14,7 @@
 
 # Git commit/push 授權（2026-09-12 使用者確認）
 
-推送到工作分支、開 PR（草稿或正式）不用問使用者，做完覺得可以收尾了就直接 commit/push、開 PR，不用停下來等確認。合併 PR 的規則看下一節。
-
-例行步驟（commit、推送到工作分支、開 PR、唯讀檢查、安全的重試）不用問；合併的範圍照下面「PR 合併授權」。
+例行步驟（commit、推送到工作分支、開 PR（草稿或正式）、唯讀檢查、安全的重試）不用問使用者，做完覺得可以收尾了就直接做，不用停下來等確認；合併的範圍照下面「PR 合併授權」。
 
 force push、`git reset --hard`、跳過 hook（`--no-verify`）這類本來就該格外小心的動作，一樣預設先跟使用者確認過再做。
 
@@ -32,10 +30,13 @@ agent 不刪遠端分支：repo 開了「合併後自動刪除分支」，已合
 - CI 全部通過（lint/type-check/build/test 等各項 check）
 - `mergeable_state` 是 `clean`（沒有衝突）
 - 沒有未處理的 review comment（有 comment 但已經回應/解決的不算）
+- 依改動路徑與行數分級需要品質審查的 PR，要有對應目前 head 的審查 PASS（D-172）；合併前的檢查會擋沒有 PASS 的合併
 
 範圍條件：
 - 合進 `develop`：只有碰到 CI/CD 設定（`.github/workflows/*`）、Cloudflare 部署設定（`wrangler.jsonc`、`public/_redirects`、`public/_headers`）、環境變數/密鑰，才要先問；其他改動（文件、樣式/排版、測試檔案、元件實作、功能）驗證條件都過就直接合併。
-- 合進 `main`（上線）：一律先問。
+- 合進 `main`（上線、嚴重安全修補）：一律先問，流程見 [`docs/release.md`](docs/release.md)。
+
+「先問」的範圍明確包含 `wrangler.jsonc`、`public/_redirects`、`public/_headers` 這類 Cloudflare 部署設定檔：這類改動即使只是修一個部署錯誤、驗證條件也全過，一樣要先問，不能因為是「修 bug」就自動歸類成可以直接合併（2026-09-25 的教訓：PR #81/#82 誤判成一般前端實作細節，直接合併了）。
 
 誰開的 PR：
 - 自己開的 PR，照上面的條件處理。
@@ -46,27 +47,4 @@ agent 不刪遠端分支：repo 開了「合併後自動刪除分支」，已合
 
 # 分支策略（2026-09-25 使用者確認）
 
-`main` 接了 Cloudflare 的正式環境部署（push 到 `main` 會真的觸發正式站更新），
-`develop` 是開發用的整合分支。之後的開發流程：
-
-- Feature 分支從 `develop` 分出來，PR 對象是 `develop`，不是 `main`。
-- `develop` 累積到一個階段、確認要上線了，才由 `develop` 開 PR 合併進 `main`，
-  觸發正式部署——這個「要不要上線」的決定要先問使用者，不能因為 `develop`
-  這邊 CI 全過就直接推進 `main`。
-- CI（`.github/workflows/ci.yml`）的觸發分支同時包含 `main` 和 `develop`，
-  兩邊開 PR 都看得到 lint/type-check/test/build 檢查。
-- 上面「PR 合併授權」的範圍條件，明確包含
-  `wrangler.jsonc`、`public/_redirects`、`public/_headers` 這類 Cloudflare 部署設定檔——這類
-  改動即使只是修一個部署錯誤、驗證條件也全過，一樣要先問，不能因為是
-  「修 bug」就自動歸類成可以直接合併（2026-09-25 的教訓：PR #81/#82 誤判
-  成一般前端實作細節，直接合併了）。
-- **`develop` → `main` 的上線 PR 用 squash 合併**（repo 設定不允許 merge commit，
-  2026-10-02 第一次上線 #90 時確認）。合併完一定要把 `main` 合併回 `develop`
-  （`git merge --no-ff origin/main`，一般推送），不然下次上線的 PR 歷史會對不上。
-  `develop` 設了必要檢查，沒跑過 CI 的 merge commit 直推會被擋：先把它推到
-  `claude/merge-main-vX.Y.Z` 分支、開 PR 到 `develop` 只為了跑 CI，CI 全綠後用
-  `git push origin <同一個 SHA>:refs/heads/develop` 快轉推送；不要在網頁上合併那個 PR，
-  快轉推不上去就停下來問使用者。後端用同一套做法。
-  回滾用 `git revert <squash commit>`。
-- `develop` 有 ruleset 擋刪除與 force push（2026-10-02 使用者設定）：repo 開了
-  「合併後自動刪除分支」，#90 合併後 `develop` 曾被自動刪掉、事後還原。
+`main` 接 Cloudflare 的正式環境部署（push 到 `main` 就會更新正式站），`develop` 是開發用的整合分支。平常的 PR 從 `develop` 分出、對 `develop`。上線、合回 `develop`、嚴重安全問題的修補、Dependabot 與退版，動手前讀 [`docs/release.md`](docs/release.md)，那份是上線流程唯一的規則來源。要不要上線一律先問使用者，就算 CI 全過也一樣。

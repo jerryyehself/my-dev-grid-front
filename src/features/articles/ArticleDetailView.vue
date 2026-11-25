@@ -14,7 +14,7 @@
       <AuthOnly>
         <router-link
           :to="{ name: 'article-editor', params: { id: article.id } }"
-          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -67,7 +67,7 @@
             <li v-for="heading in headings" :key="heading.slug">
               <a
                 :href="`#${heading.slug}`"
-                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in leading-snug"
                 :class="heading.depth >= 3 ? 'pl-3 text-(length:--type-label-size) opacity-80' : ''"
               >
                 {{ heading.text }}
@@ -90,7 +90,7 @@
             class="flex items-center justify-between gap-2 min-h-11 px-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-sm font-bold text-(--text-ink-main) rounded-[6px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
           >
             本文結構（{{ headings.length }} 節）
-            <svg class="transition-transform duration-100 group-open:rotate-90" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg class="transition-transform duration-press group-open:rotate-90" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M4 2l4 4-4 4" />
             </svg>
           </summary>
@@ -98,7 +98,7 @@
             <li v-for="heading in headings" :key="heading.slug">
               <a
                 :href="`#${heading.slug}`"
-                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in leading-snug"
                 :class="heading.depth >= 3 ? 'pl-3 text-(length:--type-label-size) opacity-80' : ''"
               >
                 {{ heading.text }}
@@ -107,7 +107,12 @@
           </ol>
         </details>
 
-        <MarkdownBody :source="article.body ?? ''" sidenotes />
+        <MarkdownBody :source="article.body ?? ''" sidenotes>
+          <!-- 文章心智圖：導言後面、第一個二級標題前面。只有有心智圖的文章才掛，元件與資料都延遲載入 -->
+          <template v-if="hasArticleMindmap(article.id)" #afterLead>
+            <ArticleMindmapPanel :article-id="article.id" :headings="headings" />
+          </template>
+        </MarkdownBody>
 
         <!-- 署名：文章結尾、上一篇／下一篇的上面。文章清單的標題下面是同一句（router 的 meta.subtitle）。
              mb-0 text-left：蓋掉 .global-page-wrapper p 的下距與桌機的兩端對齊 -->
@@ -119,7 +124,7 @@
           <router-link
             v-if="previousArticle"
             :to="{ name: 'article-detail', params: { id: previousArticle.id } }"
-            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors hover:border-(--text-accent)/40"
+            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)/40"
           >
             <div class="text-(length:--type-mono-size) font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               &lt;&lt; PREV
@@ -132,7 +137,7 @@
           <router-link
             v-if="nextArticle"
             :to="{ name: 'article-detail', params: { id: nextArticle.id } }"
-            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors hover:border-(--text-accent)/40"
+            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)/40"
           >
             <div class="text-(length:--type-mono-size) font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               NEXT &gt;&gt;
@@ -165,7 +170,7 @@
 // （techniques→標籤、implementations→Related Projects）。
 // margins（邊註）：後端沒有對應欄位（已知的技術債），
 // 這裡直接不顯示，不假裝有資料可以讀。
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, defineAsyncComponent, ref, watch, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   displayDate,
@@ -175,6 +180,7 @@ import {
   type ArticleDto,
 } from '@/api/articles'
 import AuthOnly from '@/components/AuthOnly.vue'
+import { adjacentArticles } from './adjacentArticles'
 import ArticleRelatedProjects from './ArticleRelatedProjects.vue'
 import BackToArticlesLink from './BackToArticlesLink.vue'
 import BaseLoadingBlock from '@/components/BaseLoadingBlock.vue'
@@ -184,6 +190,11 @@ import { extractHeadings } from '@/components/markdown/headings'
 import { STICKY_TOP_PX } from '@/layouts/stickyOffset'
 import { pageTitleOverride } from '@/siteMeta'
 import { BYLINE, LOADING_TEXT } from '@/copy/common'
+import { hasArticleMindmap } from './mindmap/articleMindmapSource'
+
+const ArticleMindmapPanel = defineAsyncComponent(
+  () => import('./mindmap/ArticleMindmapPanel.vue'),
+)
 
 const route = useRoute()
 const articleId = computed(() => Number(route.params.id))
@@ -207,7 +218,7 @@ async function load() {
       fetchArticlesOrDemo(),
     ])
     article.value = a
-    // 排序要跟文章列表一致（日期由新到舊），上一篇／下一篇才對得上列表看到的順序
+    // 排序要跟文章列表一致（日期由新到舊），上一篇／下一篇才對得上列表看到的順序（方向見 adjacentArticles.ts）
     publishedList.value = sortArticlesByDateDesc(all.filter((item) => item.status === 1))
     fallbackError.value = articleError ?? listError
     ready.value = true
@@ -231,20 +242,8 @@ watchEffect(() => {
   if (article.value) pageTitleOverride.value = article.value.title
 })
 
-const currentIndex = computed(() => {
-  if (!article.value) return -1
-  return publishedList.value.findIndex((item) => item.id === article.value?.id)
-})
-
-const previousArticle = computed(() => {
-  const index = currentIndex.value
-  if (index <= 0) return null
-  return publishedList.value[index - 1]
-})
-
-const nextArticle = computed(() => {
-  const index = currentIndex.value
-  if (index === -1 || index >= publishedList.value.length - 1) return null
-  return publishedList.value[index + 1]
-})
+// 上一篇／下一篇的順序與方向見 adjacentArticles.ts
+const adjacent = computed(() => adjacentArticles(publishedList.value, article.value?.id))
+const previousArticle = computed(() => adjacent.value.previous)
+const nextArticle = computed(() => adjacent.value.next)
 </script>

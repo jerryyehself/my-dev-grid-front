@@ -123,13 +123,13 @@ const lockReason = computed(() => {
     >
       <router-link
         :to="{ name: 'ontology-scopes' }"
-        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)"
         >本體論</router-link
       >
       <span>/</span>
       <router-link
         :to="{ name: 'ontology-relations' }"
-        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)"
         >述詞</router-link
       >
       <span>/</span>
@@ -279,7 +279,7 @@ const lockReason = computed(() => {
         <div class="flex gap-1">
           <button
             type="button"
-            class="rounded border border-(--border-shelf) px-2 py-0.5 transition-colors enabled:hover:border-(--text-accent) disabled:opacity-35"
+            class="rounded border border-(--border-shelf) px-2 py-0.5 transition-colors duration-hover-out hover:duration-hover-in enabled:hover:border-(--text-accent) disabled:opacity-35"
             :disabled="edges.current_page <= 1 || edgesLoading"
             @click="loadEdges(edges.current_page - 1)"
           >
@@ -290,7 +290,7 @@ const lockReason = computed(() => {
           >
           <button
             type="button"
-            class="rounded border border-(--border-shelf) px-2 py-0.5 transition-colors enabled:hover:border-(--text-accent) disabled:opacity-35"
+            class="rounded border border-(--border-shelf) px-2 py-0.5 transition-colors duration-hover-out hover:duration-hover-in enabled:hover:border-(--text-accent) disabled:opacity-35"
             :disabled="edges.current_page >= edges.last_page || edgesLoading"
             @click="loadEdges(edges.current_page + 1)"
           >

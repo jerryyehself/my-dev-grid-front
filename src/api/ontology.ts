@@ -293,7 +293,7 @@ export function fetchScopeList(): Promise<ScopeListDto[]> {
  * 從父層推導、不接受傳入。
  *
  * **仍然不一致的一點**（規格 §03 有記）：`comment` 在 `StoreScopeRequest` 是
- * `required|max:100`，在 `UpdateScopeRequest` 只有 `max:100`。所以新增時必填、
+ * `required|max:255`，在 `UpdateScopeRequest` 只有 `max:255`。所以新增時必填、
  * 修改時可以清空。表單依動詞切換必填標示，不要兩邊都當必填——那會擋掉後端允許的操作。
  */
 export interface ScopeWritePayload {

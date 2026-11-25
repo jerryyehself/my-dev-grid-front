@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { h } from 'vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import MarkdownBody from './MarkdownBody.vue'
 import { resolveType } from '@/test/cssTokens'
@@ -139,6 +140,18 @@ describe('MarkdownBody', () => {
         role: scroller.getAttribute('role'),
         label: scroller.getAttribute('aria-label'),
       }).toEqual({ tabindex: '0', role: 'region', label: '表格' })
+    })
+
+    // jsdom 不算版面，量不到橫向捲動；真實的 scrollWidth 前後數字在 PR 說明。這裡只守住規則本身，
+    // 免得以後有人把容器的斷行規則拿掉（長網址撐破窄螢幕）或誤讓表格也吃到（欄寬被壓成一個字）
+    it('它應該讓內文容器可在任意位置斷行（長網址），表格捲動容器除外（含註釋裡的表格）', async () => {
+      const w = await mountMd('[長網址](https://example.com/a/b)\n\n| a | b |\n|---|---|\n| 1 | 2 |\n')
+      expect(w.classes()).toContain('[overflow-wrap:anywhere]')
+      expect(w.get('table').element.parentElement!.classList.contains('[overflow-wrap:normal]')).toBe(true)
+
+      const n = await mountMd('句子[^1]。\n\n[^1]: 說明：\n\n    | 欄 | 值 |\n    |---|---|\n    | 甲 | 1 |')
+      const scroller = n.get('[id*="fnnote"] [role="table"]').element.parentElement!
+      expect(scroller.classList.contains('[overflow-wrap:normal]')).toBe(true)
     })
 
     it('它應該只在鍵盤聚焦時畫外框（用 :focus-visible，不是 :focus）', async () => {
@@ -1481,5 +1494,56 @@ describe('MarkdownBody', () => {
     expect(h.attributes('id')).toBe('bg')
     expect(w.text()).toContain('內文 {#keep}')
     expect(w.text()).toContain('## 碼 {#c}')
+  })
+})
+
+describe('MarkdownBody 的 afterLead 插槽', () => {
+  async function mountWithSlot(source: string) {
+    const router = makeRouter()
+    router.push('/')
+    await router.isReady()
+    return mount(MarkdownBody, {
+      props: { source },
+      slots: { afterLead: () => h('section', { id: 'inserted' }, '插進來的') },
+      global: { plugins: [router] },
+    })
+  }
+
+  /** 根層區塊的順序：插槽內容記成 SLOT，其他記標籤名稱 */
+  const order = (w: Awaited<ReturnType<typeof mountWithSlot>>) =>
+    Array.from(w.get('.markdown-body').element.children).map((el) => (el.id === 'inserted' ? 'SLOT' : el.tagName))
+
+  it('它應該把插槽放在第一個二級標題前面（導言後面）', async () => {
+    const w = await mountWithSlot('導言。\n\n第二段導言。\n\n## 第一節\n\n內文。\n\n## 第二節')
+    const blocks = order(w)
+    expect(blocks.indexOf('SLOT')).toBe(2)
+    expect(w.get('#inserted').element.nextElementSibling?.textContent).toContain('第一節')
+  })
+
+  it('它應該略過三級標題，只看二級標題', async () => {
+    const w = await mountWithSlot('導言。\n\n### 小標\n\n內文。\n\n## 第一節')
+    expect(w.get('#inserted').element.nextElementSibling?.textContent).toContain('第一節')
+  })
+
+  it('它應該在沒有二級標題時放在內文最後', async () => {
+    const w = await mountWithSlot('只有一段。\n\n又一段。')
+    const blocks = order(w)
+    expect(blocks.at(-1)).toBe('SLOT')
+  })
+
+  it('它應該在第一個區塊就是二級標題時放在最前面', async () => {
+    const w = await mountWithSlot('## 第一節\n\n內文。')
+    expect(order(w)[0]).toBe('SLOT')
+  })
+
+  it('它應該讓標題的 id 不因插入而錯開', async () => {
+    const w = await mountWithSlot('導言。\n\n## 第一節\n\n## 第二節')
+    expect(w.findAll('[id]').map((el) => el.attributes('id'))).toEqual(['inserted', '第一節', '第二節'])
+  })
+
+  it('它應該在沒給插槽時照原樣渲染', async () => {
+    const w = await mountMd('導言。\n\n## 第一節')
+    expect(w.find('#inserted').exists()).toBe(false)
+    expect(w.get('.markdown-body').element.children).toHaveLength(2)
   })
 })

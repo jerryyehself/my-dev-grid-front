@@ -87,7 +87,8 @@ watch([selectedId, filteredProjects], async () => {
 
 <template>
   <div class="w-full">
-    <div v-if="loading" class="py-16 text-center text-(length:--type-label-size) text-(--text-ink-body)/40">
+    <!-- data-loading-placeholder：換頁轉場等這個佔位消失才淡入（見 layouts/pageTransitionMotion.ts） -->
+    <div v-if="loading" data-loading-placeholder class="py-16 text-center text-(length:--type-label-size) text-(--text-ink-body)/40">
       {{ LOADING_PROJECTS_TEXT }}
     </div>
 

@@ -8,8 +8,8 @@
  * 換成不同的控制項(`AppTripleEdit.vue` 的 number 對 `AppTripleNew.vue` 的 select),
  * 等於把 API 的不一致往前端推。現在兩個動詞送同一份 `ScopeWritePayload`。
  *
- * **仍然不對稱的一點**:`comment` 在 `StoreScopeRequest` 是 `required|max:100`,
- * 在 `UpdateScopeRequest` 只有 `max:100`。所以必填標示跟著動詞走,不是兩邊都標必填——
+ * **仍然不對稱的一點**:`comment` 在 `StoreScopeRequest` 是 `required|max:255`,
+ * 在 `UpdateScopeRequest` 只有 `max:255`。所以必填標示跟著動詞走,不是兩邊都標必填——
  * 那會擋掉後端其實允許的操作(把既有分類的說明清空)。
  *
  * **寫入路徑**:`store`/`update` 在 `auth:sanctum` 後面,登入(D-56,Sanctum API
@@ -38,8 +38,8 @@ import {
   type ScopeListDto,
 } from '@/api/ontology'
 
-/** 後端 `comment` 是 `max:100`、`note` 是 `max:255`。數字寫在這裡是因為它是**後端的**約束。 */
-const COMMENT_LIMIT = 100
+/** 後端 `comment` 是 `max:255`、`note` 也是 `max:255`。數字寫在這裡是因為它是**後端的**約束。 */
+const COMMENT_LIMIT = 255
 const NOTE_LIMIT = 255
 
 const route = useRoute()
@@ -216,7 +216,7 @@ function cancel() {
     >
       <router-link
         :to="{ name: 'ontology-scopes' }"
-        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)"
         >本體論</router-link
       >
       <span>/</span>

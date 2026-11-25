@@ -40,6 +40,11 @@ const props = withDefaults(
   { sidenotes: false },
 )
 
+const slots = defineSlots<{
+  /** 放在導言（第一個二級標題之前）後面的內容 */
+  afterLead?: () => VNode[]
+}>()
+
 // mdast 的節點形狀。remark 的型別來自 @types/mdast，但我們只需要走訪用得到的欄位，
 // 所以這裡宣告一個夠用的最小介面，不把整棵樹的型別拉進來。
 interface MdNode {
@@ -61,6 +66,9 @@ interface MdNode {
 
 const processor = unified().use(remarkParse).use(remarkGfm)
 
+// 內文容器（template 最外層）有 [overflow-wrap:anywhere]：來源清單的長網址沒有斷點，
+// 會把文章欄撐出視窗（窄螢幕橫向捲動）。表格不吃這條，外層另加 [overflow-wrap:normal]：
+// anywhere 會把欄寬的最小值壓到一個字，欄位被擠窄，原本可橫向捲動的表格變成逐字換行。
 // 會橫向捲動的程式碼區塊與表格：Safari 不讓鍵盤聚焦到捲動區域（Chrome、Firefox 會），
 // 要加 tabindex="0" 才能用方向鍵捲；可聚焦的元素要有名字，所以配 role="region"＋aria-label。
 // 只有鍵盤操作時（:focus-visible）才畫外框，滑鼠點到不會出現。
@@ -262,8 +270,21 @@ function liveFootnote(node: MdNode): FootnoteInfo | undefined {
  */
 function render(node: MdNode): VNode[] {
   switch (node.type) {
-    case 'root':
-      return [...kids(node), ...renderEndNotes()]
+    case 'root': {
+      // afterLead 插槽：放在導言（第一個二級標題之前的段落）後面，文章內頁用來放心智圖。
+      // 沒有二級標題的文章放在內文最後（註釋清單之前）。根節點底下都是區塊，從標題前切開不會切斷行內的東西
+      const afterLead = slots.afterLead?.()
+      if (!afterLead) return [...kids(node), ...renderEndNotes()]
+      const children = node.children ?? []
+      const cut = children.findIndex((c) => c.type === 'heading' && c.depth === 2)
+      const at = cut === -1 ? children.length : cut
+      return [
+        ...kids({ ...node, children: children.slice(0, at) }),
+        ...afterLead,
+        ...kids({ ...node, children: children.slice(at) }),
+        ...renderEndNotes(),
+      ]
+    }
 
     case 'text':
       return [h('span', node.value ?? '')]
@@ -373,7 +394,7 @@ function render(node: MdNode): VNode[] {
       const link = safeLink(node.url)
       if (!link) return kids(node)
       const cls =
-        'text-(--text-accent) underline underline-offset-2 hover:opacity-80 transition-opacity duration-100 ease-out'
+        'text-(--text-accent) underline underline-offset-2 hover:opacity-80 transition-opacity duration-hover-out hover:duration-hover-in'
       // 站內連結用 RouterLink 而不是 <a>:這是走 AST 而不是 v-html 的主要理由之一。
       // v-html 塞出來的 <a href="/articles/x"> 會整頁重載，SPA 的狀態全部重來
       //
@@ -496,7 +517,7 @@ function render(node: MdNode): VNode[] {
       // 外層是可橫向捲動的區塊，邊注只有 232px，欄位多的表格不會把版面撐開
       if (noteDepth > 0) {
         return [
-          h('span', { ...scrollRegion(TABLE_LABEL), class: `block my-1.5 overflow-x-auto ${SCROLL_REGION_FOCUS}` }, [
+          h('span', { ...scrollRegion(TABLE_LABEL), class: `block my-1.5 overflow-x-auto [overflow-wrap:normal] ${SCROLL_REGION_FOCUS}` }, [
             h('span', { role: 'table', class: 'table w-full border-collapse text-(length:--type-label-size)' }, [
               head
                 ? h(
@@ -515,7 +536,7 @@ function render(node: MdNode): VNode[] {
         ]
       }
       return [
-        h('div', { ...scrollRegion(TABLE_LABEL), class: `overflow-x-auto my-4 ${SCROLL_REGION_FOCUS}` }, [
+        h('div', { ...scrollRegion(TABLE_LABEL), class: `overflow-x-auto my-4 [overflow-wrap:normal] ${SCROLL_REGION_FOCUS}` }, [
           h('table', { class: 'w-full border-collapse text-(length:--type-caption-size)' }, [
             head ? h('thead', {}, renderRow(head, node.align, true)) : null,
             h(
@@ -675,7 +696,7 @@ function renderFootnoteRef(
   // 「開著」的狀態用粗體加底線表示（hover 只加底線，兩者看得出差別）
   const active = side ? pinned : open
   const markerClass = [
-    'relative inline px-[1px] py-0 rounded-[2px] leading-none tabular-nums cursor-pointer scroll-mt-36 transition-colors duration-100 ease-out',
+    'relative inline px-[1px] py-0 rounded-[2px] leading-none tabular-nums cursor-pointer scroll-mt-36 transition-colors duration-hover-out hover:duration-hover-in',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)',
     // 加大點擊範圍到約 44px，手指點得到；上標的數字本身只有十來 px 高。
     // 左右各往外 14px，但緊貼著另一個編號的那一側不加（相鄰編號中間沒有空隙，各加 14px 會蓋住鄰居，
@@ -836,7 +857,7 @@ function backLinks(info: FootnoteInfo): VNode[] {
           href: `#${uid}-fnref-${info.number}-${k}`,
           'aria-label': info.refCount > 1 ? `回到內文第 ${k} 處引用` : '回到內文引用',
           class:
-            'ml-2 inline-block px-1 text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out whitespace-nowrap',
+            'ml-2 inline-block px-1 text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in whitespace-nowrap',
         },
         // U+FE0E 要求文字樣式，不然部分系統把 ↩ 畫成彩色 emoji
         info.refCount > 1 ? `↩︎ ${k}` : '↩︎',
@@ -973,7 +994,7 @@ export default {}
 </script>
 
 <template>
-  <div ref="rootEl" class="markdown-body relative">
+  <div ref="rootEl" class="markdown-body relative [overflow-wrap:anywhere]">
     <component :is="Rendered" />
   </div>
 </template>

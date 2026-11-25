@@ -71,7 +71,10 @@ const KEYS: { keys: string[]; text: string }[] = [
     class="absolute z-30 @min-[640px]:inset-x-auto @min-[640px]:right-16 @min-[640px]:bottom-3 @min-[640px]:w-[540px] @min-[640px]:max-h-[calc(100%-1.5rem)] flex flex-col rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] text-(--text-ink-body)"
   >
     <div class="shrink-0 flex items-center justify-between gap-2 pl-4 pr-1.5 pt-1.5">
-      <h3 id="kg-help-title" class="text-(length:--type-body-size) font-bold text-(--text-ink-main)">
+      <h3
+        id="kg-help-title"
+        class="text-(length:--type-body-size) font-bold text-(--text-ink-main)"
+      >
         {{ reading ? '閱讀方式' : '操作說明' }}
       </h3>
       <button
@@ -86,8 +89,8 @@ const KEYS: { keys: string[]; text: string }[] = [
     </div>
 
     <!-- 內容區：放不下時自己捲動（tabindex 讓鍵盤使用者也捲得到）。只有觸控、沒有滑鼠的裝置
-         （hover: none 且 pointer: coarse）只顯示「觸控」一段——鍵盤、滑鼠的說明對它沒用；
-         有滑鼠或觸控板的裝置照常三段都顯示 -->
+           （hover: none 且 pointer: coarse）只顯示「觸控」一段——鍵盤、滑鼠的說明對它沒用；
+           有滑鼠或觸控板的裝置照常三段都顯示 -->
     <div class="relative min-h-0 flex flex-col">
       <div
         ref="body"
@@ -96,7 +99,10 @@ const KEYS: { keys: string[]; text: string }[] = [
         @scroll.passive="updateMoreBelow"
       >
         <!-- 首頁的閱讀方式：用 div 不用 p（全站 .global-page-wrapper p 有段落下邊距） -->
-        <section v-if="reading" class="@min-[640px]:col-span-2 flex flex-col gap-1 text-(length:--type-caption-size)">
+        <section
+          v-if="reading"
+          class="@min-[640px]:col-span-2 flex flex-col gap-1 text-(length:--type-caption-size)"
+        >
           <div>節點的大小反映關係的多寡。</div>
           <!-- 只有三層疊圖才有圓框；節點落在重疊處是因為三個圓框錯開疊放，不是因為彼此相關，要明講 -->
           <div v-if="reading.layered">
@@ -108,7 +114,10 @@ const KEYS: { keys: string[]; text: string }[] = [
             >查詢更多路線 →</RouterLink
           >
         </section>
-        <h4 v-if="reading" class="@min-[640px]:col-span-2 text-(length:--type-caption-size) font-bold text-(--text-ink-main) -mb-1">
+        <h4
+          v-if="reading"
+          class="@min-[640px]:col-span-2 text-(length:--type-caption-size) font-bold text-(--text-ink-main) -mb-1"
+        >
           操作
         </h4>
 
@@ -151,8 +160,8 @@ const KEYS: { keys: string[]; text: string }[] = [
       </div>
       <div
         aria-hidden="true"
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-10 rounded-b-xl bg-linear-to-t from-(--bg-paper-light) to-transparent transition-opacity duration-150"
-        :class="moreBelow ? 'opacity-100' : 'opacity-0'"
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-10 rounded-b-xl bg-linear-to-t from-(--bg-paper-light) to-transparent transition-opacity"
+        :class="moreBelow ? 'opacity-100 duration-hover-in' : 'opacity-0 duration-hover-out'"
       ></div>
     </div>
   </div>

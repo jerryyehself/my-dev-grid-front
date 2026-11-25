@@ -4,13 +4,13 @@
     <TheNavbar />
 
     <!-- 🧭 捲動追蹤列：修正 issue #3 的縮放閃爍。
-         跟下面的大標題是兩個獨立節點，只用 opacity/位移進場，
+         跟下面的大標題是兩個獨立節點，只用 opacity/位移進場（開 panel-open、收 panel-close，同一條 ease-control），
          不對同一個節點同時做字級縮放＋flex-direction 切換（那才是閃爍的根源）。
          v-if（不是純 opacity 切換）是刻意的：sticky 元素即使透明，沒拿掉還是會佔版面高度，
          之前就是這樣在每一頁頁首上方留了一段看不見的空白，怎麼調 header/main 的 padding 都調不掉。 -->
     <Transition
-      enter-active-class="transition-[opacity,translate] duration-200 ease-out"
-      leave-active-class="transition-[opacity,translate] duration-200 ease-out"
+      enter-active-class="transition-[opacity,translate] duration-panel-open ease-control"
+      leave-active-class="transition-[opacity,translate] duration-panel-close ease-control"
       enter-from-class="opacity-0 -translate-y-1"
       leave-to-class="opacity-0 -translate-y-1"
     >
@@ -35,54 +35,69 @@
       </div>
     </Transition>
 
-    <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走
-         hideHeader 的頁面（例如 About）自己畫了滿版橫幅當標題，這裡就不重複畫一次 -->
-    <header v-if="!props.hideHeader" class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
-      <div class="w-full max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
-        <div
-          v-if="$slots.tag"
-          class="flex-shrink-0 font-mono text-(length:--type-mono-size) tracking-[0.2em] uppercase font-bold text-(--text-accent)"
-        >
-          <slot name="tag"></slot>
+    <!-- 換頁轉場（左右軸）：導覽列與捲動追蹤列固定不動，動的是導覽列以下的整頁（表頭＋主內容）。
+         key 只在要播的換頁才變（站內點連結、兩頁都是公開頁且位置不同，見 layouts/pageTransition.ts），
+         不播的換頁 key 不變，頁面照原本的方式就地切換。動畫本身見 layouts/pageTransitionMotion.ts -->
+    <div class="page-stack grow flex flex-col">
+      <Transition
+        :css="false"
+        @before-enter="onPageBeforeEnter"
+        @enter="onPageEnter"
+        @enter-cancelled="onPageEnterCancelled"
+        @leave="onPageLeave"
+      >
+        <div :key="pageSwap.key" class="page-layer grow flex flex-col">
+          <!-- 🏛️ 一般狀態的大標題：永遠維持同一個字級與排列方向，捲動時自然隨內容捲走
+               hideHeader 的頁面（例如 About）自己畫了滿版橫幅當標題，這裡就不重複畫一次 -->
+          <header v-if="!props.hideHeader" class="w-full pt-6 sm:pt-8 pb-3 sm:pb-4">
+            <div class="w-full max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 flex flex-col gap-2" :style="widthStyle">
+              <div
+                v-if="$slots.tag"
+                class="flex-shrink-0 font-mono text-(length:--type-mono-size) tracking-[0.2em] uppercase font-bold text-(--text-accent)"
+              >
+                <slot name="tag"></slot>
+              </div>
+
+              <!-- 頁面標題用 --font-serif（Noto Serif TC 700），跟 About 的章節標題同一套（D-60；全站襯線標題字重 700）。
+                   字級是第 3 級標題二，單行頁標行高 32。
+                   以前這裡沒指定字型，標題吃的是內文的無襯線字，換了 --font-serif 也到不了這裡 -->
+              <h1 class="font-serif !font-bold text-(--text-ink-main) text-(length:--type-heading-size) leading-(--type-page-title-leading)">
+                <slot name="title"></slot>
+              </h1>
+
+              <p v-if="$slots.description" class="text-(--text-ink-muted) text-sm mt-1 !font-normal">
+                <slot name="description"></slot>
+              </p>
+            </div>
+          </header>
+
+          <!-- 📖 主內容區分三種：
+               - fullBleed（About）：整頁由滿版色帶組成，不套內容欄寬度、不留上下白，
+                 也不套 .global-page-wrapper 的文件排版預設值（h2 的上下距離與 flex、段落分散對齊），
+                 那是給文章這類「文件」頁用的，套在設計過的頁面上只會一格一格被覆寫掉
+               - hideHeader（文章內頁、編輯頁、本體論頁…）：頁面自己畫表頭，但不是滿版橫幅，
+                 要補上通用表頭原本的上留白。以前這兩種混在一起都給 pt-0，結果這些頁面的
+                 第一行字直接貼在導覽列底邊
+               - 其他：通用表頭已經留了上白，這裡只補一點 -->
+          <main
+            class="grow w-full"
+            :class="
+              props.fullBleed
+                ? ''
+                : [
+                    'max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 pb-8',
+                    props.hideHeader ? 'pt-6 sm:pt-8' : 'pt-3 sm:pt-4',
+                  ]
+            "
+            :style="props.fullBleed ? undefined : widthStyle"
+          >
+            <article :class="{ 'global-page-wrapper': !props.fullBleed }">
+              <slot name="content"></slot>
+            </article>
+          </main>
         </div>
-
-        <!-- 頁面標題用 --font-serif（Noto Serif TC 700），跟 About 的章節標題同一套（D-60；全站襯線標題字重 700）。
-             字級是第 3 級標題二，單行頁標行高 32。
-             以前這裡沒指定字型，標題吃的是內文的無襯線字，換了 --font-serif 也到不了這裡 -->
-        <h1 class="font-serif !font-bold text-(--text-ink-main) text-(length:--type-heading-size) leading-(--type-page-title-leading)">
-          <slot name="title"></slot>
-        </h1>
-
-        <p v-if="$slots.description" class="text-(--text-ink-muted) text-sm mt-1 !font-normal">
-          <slot name="description"></slot>
-        </p>
-      </div>
-    </header>
-
-    <!-- 📖 主內容區分三種：
-         - fullBleed（About）：整頁由滿版色帶組成，不套內容欄寬度、不留上下白，
-           也不套 .global-page-wrapper 的文件排版預設值（h2 的上下距離與 flex、段落分散對齊），
-           那是給文章這類「文件」頁用的，套在設計過的頁面上只會一格一格被覆寫掉
-         - hideHeader（文章內頁、編輯頁、本體論頁…）：頁面自己畫表頭，但不是滿版橫幅，
-           要補上通用表頭原本的上留白。以前這兩種混在一起都給 pt-0，結果這些頁面的
-           第一行字直接貼在導覽列底邊
-         - 其他：通用表頭已經留了上白，這裡只補一點 -->
-    <main
-      class="grow w-full"
-      :class="
-        props.fullBleed
-          ? ''
-          : [
-              'max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 pb-8',
-              props.hideHeader ? 'pt-6 sm:pt-8' : 'pt-3 sm:pt-4',
-            ]
-      "
-      :style="props.fullBleed ? undefined : widthStyle"
-    >
-      <article :class="{ 'global-page-wrapper': !props.fullBleed }">
-        <slot name="content"></slot>
-      </article>
-    </main>
+      </Transition>
+    </div>
 
     <footer
       class="w-full max-w-[1120px] mx-auto px-3 min-[360px]:px-4 sm:px-6 py-6 border-t border-(--border-shelf) mt-auto text-center text-xs text-(--text-ink-muted) font-mono"
@@ -96,6 +111,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import TheNavbar from '@/components/TheNavbar.vue'
 import { FOOTER_TEXT } from '@/copy/common'
+import { pageSwap } from './pageTransition'
+import { onPageBeforeEnter, onPageEnter, onPageEnterCancelled, onPageLeave } from './pageTransitionMotion'
 
 // 全站共用一條內容欄：max-w 1120px（含內距）、內距 12／16／24（<360／<640／≥640），
 // 跟導覽列內列、捲動追蹤列同一組數字，各頁左右緣才會對齊字標。

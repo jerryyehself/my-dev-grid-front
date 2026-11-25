@@ -30,7 +30,7 @@ const model = defineModel<T>({ required: true })
       type="button"
       :aria-pressed="model === opt.value"
       :class="[
-        `inline-flex items-center justify-center leading-none font-['Courier_Prime',ui-monospace,monospace] font-bold rounded-[6px] border cursor-pointer transition-colors`,
+        `inline-flex items-center justify-center leading-none font-['Courier_Prime',ui-monospace,monospace] font-bold rounded-[6px] border cursor-pointer transition-colors duration-hover-out hover:duration-hover-in`,
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)',
         size === 'md' ? 'min-h-11 px-[18px] text-(length:--type-body-size)' : 'min-h-8 px-3 text-(length:--type-label-size)',
         stretch && 'flex-1',

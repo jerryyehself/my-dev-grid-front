@@ -159,3 +159,51 @@ describe('OntologyScopeEditView 父類已被刪除', () => {
     expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
   })
 })
+
+describe('OntologyScopeEditView 範圍說明字數上限（後端 comment max:255）', () => {
+  // 233 字是 ScopeSeeder 裡最長的一段分類說明（後端測試也用它），上限從 100 改 255 之前會被擋。
+  const seedComment =
+    '本體三大分類之一：`documentation` 資料表的頂層分類，代表可被引用的既有文件／知識來源本身（官方文件、外部文章、AI 對話紀錄等），透過 `DocumentationTechniqueLink`／`DocumentationImplementationLink` 兩個中介表分別連向 Technique、Implementation，並在 `/api/graph`（`GraphController`）輸出為 `documentation` 類型節點。'
+  const saveButton = (w: Wrapper) => w.findAll('button').find((b) => b.text() === '儲存')!
+
+  async function typeComment(text: string) {
+    const { wrapper } = await mountView(true)
+    await wrapper.findAll('textarea')[0]!.setValue(text)
+    return wrapper
+  }
+
+  it('它應該顯示範圍說明上限為 255 字', async () => {
+    // 新增模式的範圍說明提示是「必填 · 上限 N 字」；註釋欄是「選填 · …」，
+    // 不會誤中，所以這條只有範圍說明的上限寫對才會過。
+    const { wrapper } = await mountView(false)
+    expect(wrapper.text()).toContain('必填 · 上限 255 字')
+  })
+
+  it('它應該把 233 字（種子資料最長的說明）算在上限內，並允許儲存', async () => {
+    expect([...seedComment]).toHaveLength(233)
+    const wrapper = await typeComment(seedComment)
+
+    expect(wrapper.text()).toContain('233 / 255')
+    expect(wrapper.text()).not.toContain('超出')
+    expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
+  })
+
+  it('它應該把剛好 255 字算在上限內，並允許儲存', async () => {
+    const wrapper = await typeComment('字'.repeat(255))
+
+    expect(wrapper.text()).toContain('255 / 255')
+    expect(wrapper.text()).not.toContain('超出')
+    expect(saveButton(wrapper).attributes('disabled')).toBeUndefined()
+  })
+
+  it('它應該在 256 字時顯示超出 1 字，並停用儲存鈕', async () => {
+    const wrapper = await typeComment('字'.repeat(256))
+
+    expect(wrapper.text()).toContain('256 / 255')
+    expect(wrapper.text()).toContain('超出 1 字')
+    expect(saveButton(wrapper).attributes('disabled')).toBeDefined()
+
+    await save(wrapper)
+    expect(updateScope).not.toHaveBeenCalled()
+  })
+})

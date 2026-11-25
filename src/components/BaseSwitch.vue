@@ -23,7 +23,7 @@ const model = defineModel<boolean>({ required: true })
     <span
       aria-hidden="true"
       :class="[
-        'relative inline-block w-8 h-[18px] rounded-full border transition-colors',
+        'relative inline-block w-8 h-[18px] rounded-full border transition-colors duration-hover-out group-hover:duration-hover-in',
         model
           ? 'bg-(--bg-selected) border-(--bg-selected)'
           : 'bg-transparent border-[color-mix(in_srgb,var(--text-ink-main)_35%,transparent)] group-hover:border-[color-mix(in_srgb,var(--text-ink-main)_65%,transparent)]',

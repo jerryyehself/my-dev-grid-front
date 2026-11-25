@@ -92,14 +92,14 @@ function familyDot(fullCallNumber: string | undefined): string {
       <span class="inline-block h-2 w-2 rounded-full" :class="familyDot(scope.full_call_number)" />
       <router-link
         :to="{ name: 'ontology-scopes' }"
-        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)"
         >本體論</router-link
       >
       <template v-if="scope.parent">
         <span>/</span>
         <router-link
           :to="{ name: 'ontology-scope', params: { id: scope.parent.id } }"
-          class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+          class="border-b border-(--border-shelf) text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)"
           >{{ scope.parent.name }}</router-link
         >
       </template>
@@ -173,7 +173,7 @@ function familyDot(fullCallNumber: string | undefined): string {
           >
             <router-link
               :to="{ name: 'ontology-scope', params: { id: row.id } }"
-              class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors hover:bg-(--bg-active-row)"
+              class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors duration-hover-out hover:duration-hover-in hover:bg-(--bg-active-row)"
             >
               <span
                 class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"
@@ -207,7 +207,7 @@ function familyDot(fullCallNumber: string | undefined): string {
           >
             <router-link
               :to="{ name: 'ontology-relation', params: { id: relation.id } }"
-              class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors hover:bg-(--bg-active-row)"
+              class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors duration-hover-out hover:duration-hover-in hover:bg-(--bg-active-row)"
             >
               <span
                 class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"
@@ -240,7 +240,7 @@ function familyDot(fullCallNumber: string | undefined): string {
           >
             <router-link
               :to="{ name: 'ontology-relation', params: { id: relation.id } }"
-              class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors hover:bg-(--bg-active-row)"
+              class="flex items-baseline gap-2.5 px-2 py-1.5 text-sm transition-colors duration-hover-out hover:duration-hover-in hover:bg-(--bg-active-row)"
             >
               <span
                 class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"

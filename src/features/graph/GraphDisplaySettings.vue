@@ -94,17 +94,21 @@ function onKeydown(e: KeyboardEvent) {
       class="mt-2 w-[min(340px,calc(100vw-4rem))] rounded-xl border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3.5 shadow-[0_12px_32px_color-mix(in_srgb,var(--bg-nav-footer)_18%,transparent)] flex flex-col gap-3"
     >
       <div class="flex flex-col gap-1.5">
-        <span class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted)">節點顏色</span>
+        <span class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted)"
+          >節點顏色</span
+        >
         <!-- 全站統一的「幾選一」切換（D-66）。下面的「突顯類別」不換：它可以多選，顏色是分類色，有語意 -->
         <BaseSegmented v-model="colorMode" :options="COLOR_MODES" label="節點顏色" />
       </div>
 
       <div class="flex flex-col gap-1.5">
         <!-- 突顯類別（原「顯示層」，2026-10-02 使用者改名）：選了的類別維持清楚、其他變淡，可多選。
-             沒選任何一個＝全部一樣清楚，所以沒選的鈕用一般樣式（透明底、正文字色、類別色點），
-             不是原本那種淡色底淡字——看起來像「全部關掉」，深色主題對比也不夠（讀者審查）。
-             選中＝該類別的實心色底白字。 -->
-        <span class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted)">突顯類別</span>
+               沒選任何一個＝全部一樣清楚，所以沒選的鈕用一般樣式（透明底、正文字色、類別色點），
+               不是原本那種淡色底淡字——看起來像「全部關掉」，深色主題對比也不夠（讀者審查）。
+               選中＝該類別的實心色底白字。 -->
+        <span class="text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted)"
+          >突顯類別</span
+        >
         <div class="flex flex-wrap gap-1.5" role="group" aria-label="突顯類別">
           <button
             v-for="type in TYPES"
@@ -133,15 +137,16 @@ function onKeydown(e: KeyboardEvent) {
       <div class="flex flex-col gap-1">
         <BaseSwitch v-model="showIndirect" label="間接關聯" :aria-describedby="noteId" />
         <!-- 開關的說明：關著的時候說開了會多什麼，開著的時候當虛線的圖例（2026-09-30 模擬讀者審查） -->
-        <p :id="noteId" class="text-(length:--type-label-size) leading-relaxed text-(--text-ink-muted)">
+        <p
+          :id="noteId"
+          class="text-(length:--type-label-size) leading-relaxed text-(--text-ink-muted)"
+        >
           <template v-if="showIndirect">
             共
             {{ indirectCount }}
             條：同類的兩個節點連到相同對象時畫成虛線，共同對象越多，線越明顯。由直接關係推算而來。
           </template>
-          <template v-else
-            >以虛線標出連到相同對象的同類節點，由直接關係推算而來。</template
-          >
+          <template v-else>以虛線標出連到相同對象的同類節點，由直接關係推算而來。</template>
         </p>
       </div>
     </div>
