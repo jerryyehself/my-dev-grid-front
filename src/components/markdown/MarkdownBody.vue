@@ -40,6 +40,11 @@ const props = withDefaults(
   { sidenotes: false },
 )
 
+const slots = defineSlots<{
+  /** 放在導言（第一個二級標題之前）後面的內容 */
+  afterLead?: () => VNode[]
+}>()
+
 // mdast 的節點形狀。remark 的型別來自 @types/mdast，但我們只需要走訪用得到的欄位，
 // 所以這裡宣告一個夠用的最小介面，不把整棵樹的型別拉進來。
 interface MdNode {
@@ -265,8 +270,21 @@ function liveFootnote(node: MdNode): FootnoteInfo | undefined {
  */
 function render(node: MdNode): VNode[] {
   switch (node.type) {
-    case 'root':
-      return [...kids(node), ...renderEndNotes()]
+    case 'root': {
+      // afterLead 插槽：放在導言（第一個二級標題之前的段落）後面，文章內頁用來放心智圖。
+      // 沒有二級標題的文章放在內文最後（註釋清單之前）。根節點底下都是區塊，從標題前切開不會切斷行內的東西
+      const afterLead = slots.afterLead?.()
+      if (!afterLead) return [...kids(node), ...renderEndNotes()]
+      const children = node.children ?? []
+      const cut = children.findIndex((c) => c.type === 'heading' && c.depth === 2)
+      const at = cut === -1 ? children.length : cut
+      return [
+        ...kids({ ...node, children: children.slice(0, at) }),
+        ...afterLead,
+        ...kids({ ...node, children: children.slice(at) }),
+        ...renderEndNotes(),
+      ]
+    }
 
     case 'text':
       return [h('span', node.value ?? '')]

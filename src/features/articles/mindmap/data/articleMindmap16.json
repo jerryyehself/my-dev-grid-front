@@ -1,0 +1,491 @@
+{
+  "article_id": 16,
+  "center": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "parent": null,
+      "label": "多代理協作時怎麼少用 token",
+      "res_id": 47,
+      "strength": "primary",
+      "weight": 1,
+      "units": []
+    },
+    {
+      "id": "n1",
+      "parent": "n0",
+      "label": "上下文大小就是成本",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "使用情境",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n2",
+      "parent": "n1",
+      "label": "每次呼叫重送整段對話",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "使用情境",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "重送"
+      ]
+    },
+    {
+      "id": "n3",
+      "parent": "n1",
+      "label": "提示快取的讀取價",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "使用情境",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "快取讀取"
+      ]
+    },
+    {
+      "id": "n4",
+      "parent": "n1",
+      "label": "主對話派工給子代理",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "使用情境",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "子代理"
+      ]
+    },
+    {
+      "id": "n5",
+      "parent": "n0",
+      "label": "讓 AI 少讀、讀對文件",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "文件與規則",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n6",
+      "parent": "n5",
+      "label": "文件導覽索引",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "文件與規則",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n7",
+      "parent": "n5",
+      "label": "只列規則的快查表",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "文件與規則",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "快查表"
+      ]
+    },
+    {
+      "id": "n8",
+      "parent": "n5",
+      "label": "精簡過的文件會再長回去",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "文件與規則",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "長回"
+      ]
+    },
+    {
+      "id": "n9",
+      "parent": "n5",
+      "label": "詞彙表的 A/B 測試",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "文件與規則",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "詞彙表"
+      ]
+    },
+    {
+      "id": "n10",
+      "parent": "n5",
+      "label": "英文主版文件",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "文件與規則",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n11",
+      "parent": "n0",
+      "label": "壓住主對話的上下文",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "主對話的上下文",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n12",
+      "parent": "n11",
+      "label": "45 萬 token 的交接門檻",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "主對話的上下文",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "交接門檻"
+      ]
+    },
+    {
+      "id": "n13",
+      "parent": "n11",
+      "label": "大量讀取交給子代理",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "主對話的上下文",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n14",
+      "parent": "n11",
+      "label": "子代理回報分級",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "主對話的上下文",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n15",
+      "parent": "n0",
+      "label": "依工作挑模型",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "模型與派工",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n16",
+      "parent": "n15",
+      "label": "查找用 Haiku",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "模型與派工",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "Haiku"
+      ]
+    },
+    {
+      "id": "n17",
+      "parent": "n15",
+      "label": "平行研究",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "模型與派工",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n18",
+      "parent": "n15",
+      "label": "用量百分比擋大型派工",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "模型與派工",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "用量紀錄",
+        "派工閘門"
+      ]
+    },
+    {
+      "id": "n19",
+      "parent": "n0",
+      "label": "讓 AI 行為一致",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "行為一致性",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n20",
+      "parent": "n19",
+      "label": "先查證再採信",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "行為一致性",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n21",
+      "parent": "n19",
+      "label": "能確定違規的規則交給 hook",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "行為一致性",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "hook"
+      ]
+    },
+    {
+      "id": "n22",
+      "parent": "n19",
+      "label": "決策紀錄",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "行為一致性",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n23",
+      "parent": "n0",
+      "label": "停掉與沒採用的做法",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "已停用",
+          "count": 1
+        },
+        {
+          "unit_id": "評估過未採用",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n24",
+      "parent": "n23",
+      "label": "沒人讀的被動留言板",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "已停用",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "被動留言板"
+      ]
+    },
+    {
+      "id": "n25",
+      "parent": "n23",
+      "label": "常駐對話每次重送上下文",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "已停用",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "常駐"
+      ]
+    },
+    {
+      "id": "n26",
+      "parent": "n23",
+      "label": "正式索引典",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "評估過未採用",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n27",
+      "parent": "n23",
+      "label": "讀大檔前的 hook 擋不準",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "評估過未採用",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "讀大檔前"
+      ]
+    }
+  ],
+  "links": [],
+  "status": "draft"
+}

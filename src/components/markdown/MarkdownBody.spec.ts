@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { h } from 'vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import MarkdownBody from './MarkdownBody.vue'
 import { resolveType } from '@/test/cssTokens'
@@ -1493,5 +1494,56 @@ describe('MarkdownBody', () => {
     expect(h.attributes('id')).toBe('bg')
     expect(w.text()).toContain('內文 {#keep}')
     expect(w.text()).toContain('## 碼 {#c}')
+  })
+})
+
+describe('MarkdownBody 的 afterLead 插槽', () => {
+  async function mountWithSlot(source: string) {
+    const router = makeRouter()
+    router.push('/')
+    await router.isReady()
+    return mount(MarkdownBody, {
+      props: { source },
+      slots: { afterLead: () => h('section', { id: 'inserted' }, '插進來的') },
+      global: { plugins: [router] },
+    })
+  }
+
+  /** 根層區塊的順序：插槽內容記成 SLOT，其他記標籤名稱 */
+  const order = (w: Awaited<ReturnType<typeof mountWithSlot>>) =>
+    Array.from(w.get('.markdown-body').element.children).map((el) => (el.id === 'inserted' ? 'SLOT' : el.tagName))
+
+  it('它應該把插槽放在第一個二級標題前面（導言後面）', async () => {
+    const w = await mountWithSlot('導言。\n\n第二段導言。\n\n## 第一節\n\n內文。\n\n## 第二節')
+    const blocks = order(w)
+    expect(blocks.indexOf('SLOT')).toBe(2)
+    expect(w.get('#inserted').element.nextElementSibling?.textContent).toContain('第一節')
+  })
+
+  it('它應該略過三級標題，只看二級標題', async () => {
+    const w = await mountWithSlot('導言。\n\n### 小標\n\n內文。\n\n## 第一節')
+    expect(w.get('#inserted').element.nextElementSibling?.textContent).toContain('第一節')
+  })
+
+  it('它應該在沒有二級標題時放在內文最後', async () => {
+    const w = await mountWithSlot('只有一段。\n\n又一段。')
+    const blocks = order(w)
+    expect(blocks.at(-1)).toBe('SLOT')
+  })
+
+  it('它應該在第一個區塊就是二級標題時放在最前面', async () => {
+    const w = await mountWithSlot('## 第一節\n\n內文。')
+    expect(order(w)[0]).toBe('SLOT')
+  })
+
+  it('它應該讓標題的 id 不因插入而錯開', async () => {
+    const w = await mountWithSlot('導言。\n\n## 第一節\n\n## 第二節')
+    expect(w.findAll('[id]').map((el) => el.attributes('id'))).toEqual(['inserted', '第一節', '第二節'])
+  })
+
+  it('它應該在沒給插槽時照原樣渲染', async () => {
+    const w = await mountMd('導言。\n\n## 第一節')
+    expect(w.find('#inserted').exists()).toBe(false)
+    expect(w.get('.markdown-body').element.children).toHaveLength(2)
   })
 })

@@ -1,0 +1,460 @@
+{
+  "article_id": 14,
+  "center": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "parent": null,
+      "label": "首頁知識網路為什麼用節點連結圖",
+      "res_id": 44,
+      "strength": "primary",
+      "weight": 1,
+      "units": []
+    },
+    {
+      "id": "n1",
+      "parent": "n0",
+      "label": "定案時手上的資料與讀者",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "資料條件",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n2",
+      "parent": "n1",
+      "label": "自己與外部訪客兩種讀者",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "資料條件",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "讀者有兩種"
+      ]
+    },
+    {
+      "id": "n3",
+      "parent": "n1",
+      "label": "文件、技術、實作三大類",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "資料條件",
+          "count": 1
+        },
+        {
+          "unit_id": "採用的設計",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "三大類"
+      ]
+    },
+    {
+      "id": "n4",
+      "parent": "n1",
+      "label": "缺時間與潛在關聯兩項資料",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "資料條件",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "沒有的資料",
+        "缺時間與缺潛在關聯"
+      ]
+    },
+    {
+      "id": "n5",
+      "parent": "n0",
+      "label": "為什麼選節點連結圖",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "採用的設計",
+          "count": 1
+        },
+        {
+          "unit_id": "考慮過的圖形",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n6",
+      "parent": "n5",
+      "label": "隱喻帶進的意義要有資料撐",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "考慮過的圖形",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "隱喻"
+      ]
+    },
+    {
+      "id": "n7",
+      "parent": "n5",
+      "label": "沒採用的四種圖形",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "考慮過的圖形",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "格狀熱度圖",
+        "矩形樹狀圖",
+        "群島",
+        "星座"
+      ]
+    },
+    {
+      "id": "n8",
+      "parent": "n5",
+      "label": "force-graph",
+      "res_id": 48,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "採用的設計",
+          "count": 1
+        },
+        {
+          "unit_id": "繪製方式",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n9",
+      "parent": "n5",
+      "label": "節點大小依關係數",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "採用的設計",
+          "count": 1
+        },
+        {
+          "unit_id": "繪製方式",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "關係數"
+      ]
+    },
+    {
+      "id": "n10",
+      "parent": "n0",
+      "label": "互動與呈現上的取捨",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "其他取捨",
+          "count": 1
+        },
+        {
+          "unit_id": "點擊展開的資訊卡",
+          "count": 1
+        },
+        {
+          "unit_id": "一張圖不分版本",
+          "count": 1
+        },
+        {
+          "unit_id": "裝飾與記憶",
+          "count": 1
+        },
+        {
+          "unit_id": "用計數表示數量",
+          "count": 1
+        },
+        {
+          "unit_id": "潛在關聯與結構洞",
+          "count": 1
+        },
+        {
+          "unit_id": "主打的訴求",
+          "count": 1
+        },
+        {
+          "unit_id": "繪製方式",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n11",
+      "parent": "n10",
+      "label": "點開才出現的資訊卡",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "點擊展開的資訊卡",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "資訊卡"
+      ]
+    },
+    {
+      "id": "n12",
+      "parent": "n10",
+      "label": "先文字後圖形的漸進揭露",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "一張圖不分版本",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "漸進揭露"
+      ]
+    },
+    {
+      "id": "n13",
+      "parent": "n10",
+      "label": "6-7 秒掃描說法站不住",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "一張圖不分版本",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "6-7秒"
+      ]
+    },
+    {
+      "id": "n14",
+      "parent": "n10",
+      "label": "視覺細節要對應真實資料",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "裝飾與記憶",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "記憶度"
+      ]
+    },
+    {
+      "id": "n15",
+      "parent": "n10",
+      "label": "用可數的點表示數量",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "用計數表示數量",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "ISOTYPE"
+      ]
+    },
+    {
+      "id": "n16",
+      "parent": "n10",
+      "label": "結構洞",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "潛在關聯與結構洞",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "structural holes"
+      ]
+    },
+    {
+      "id": "n17",
+      "parent": "n10",
+      "label": "以技術可信度為主的訴求",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "主打的訴求",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "技術可信度"
+      ]
+    },
+    {
+      "id": "n18",
+      "parent": "n0",
+      "label": "定案後被取代的部分",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "後來的改動",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n19",
+      "parent": "n18",
+      "label": "聚合節點改成每筆一個節點",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "採用的設計",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "聚合節點"
+      ]
+    },
+    {
+      "id": "n20",
+      "parent": "n18",
+      "label": "推算的間接關聯",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "後來的改動",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "間接關聯"
+      ]
+    },
+    {
+      "id": "n21",
+      "parent": "n18",
+      "label": "首頁與圖譜頁共用畫布",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "後來的改動",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "畫布元件"
+      ]
+    },
+    {
+      "id": "n22",
+      "parent": "n18",
+      "label": "三大類圓框疊放",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "後來的改動",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "圓框"
+      ]
+    }
+  ],
+  "links": [],
+  "status": "draft"
+}

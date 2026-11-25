@@ -1,0 +1,340 @@
+{
+  "article_id": 15,
+  "center": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "parent": null,
+      "label": "在網站上放技術標誌可以怎麼放",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 1,
+      "units": []
+    },
+    {
+      "id": "n1",
+      "parent": "n0",
+      "label": "各家官方怎麼規定",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "各技術的標誌規定",
+          "count": 1
+        },
+        {
+          "unit_id": "docker指定的商標聲明",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n2",
+      "parent": "n1",
+      "label": "允許用標誌表示用過這項技術",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "各技術的標誌規定",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "個人網站",
+        "用了這項技術"
+      ]
+    },
+    {
+      "id": "n3",
+      "parent": "n1",
+      "label": "禁止修改標誌",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "各技術的標誌規定",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "不能改",
+        "禁止修改"
+      ]
+    },
+    {
+      "id": "n4",
+      "parent": "n1",
+      "label": "Docker 教育用途只准文字名稱",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "各技術的標誌規定",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "文字名稱"
+      ]
+    },
+    {
+      "id": "n5",
+      "parent": "n1",
+      "label": "Docker 指定的商標聲明",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "docker指定的商標聲明",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "商標聲明"
+      ]
+    },
+    {
+      "id": "n6",
+      "parent": "n1",
+      "label": "PHP 標誌的 CC BY-SA 標註",
+      "res_id": 1,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "各技術的標誌規定",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n7",
+      "parent": "n1",
+      "label": "Laravel 商業使用要先授權",
+      "res_id": 8,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "各技術的標誌規定",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n8",
+      "parent": "n0",
+      "label": "圖示庫授權不等於商標授權",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "圖示庫的授權",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n9",
+      "parent": "n8",
+      "label": "Simple Icons 的 CC0",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "圖示庫的授權",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "CC0"
+      ]
+    },
+    {
+      "id": "n10",
+      "parent": "n8",
+      "label": "Devicon 的 MIT 授權",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "圖示庫的授權",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "Devicon"
+      ]
+    },
+    {
+      "id": "n11",
+      "parent": "n8",
+      "label": "著作權與商標分開管",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "圖示庫的授權",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "著作權"
+      ]
+    },
+    {
+      "id": "n12",
+      "parent": "n0",
+      "label": "法律上為什麼可以用",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "法律依據",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n13",
+      "parent": "n12",
+      "label": "商標法第 36 條",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "法律依據",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "第36條"
+      ]
+    },
+    {
+      "id": "n14",
+      "parent": "n12",
+      "label": "nominative fair use",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "法律依據",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n15",
+      "parent": "n12",
+      "label": "不能暗示官方背書",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "法律依據",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "背書"
+      ]
+    },
+    {
+      "id": "n16",
+      "parent": "n0",
+      "label": "最保守的放法",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n17",
+      "parent": "n16",
+      "label": "用官方原檔與原色",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "官方原檔"
+      ]
+    },
+    {
+      "id": "n18",
+      "parent": "n16",
+      "label": "頁尾加商標聲明",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "頁尾"
+      ]
+    }
+  ],
+  "links": [],
+  "status": "draft"
+}
