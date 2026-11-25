@@ -1,3 +1,14 @@
+<script lang="ts">
+// 整個頁面載入（JS 模組存活）期間只播一次：第一次有卡片出現時播，之後站內換頁回首頁、
+// 同頁再點首頁連結都不播。這是首頁唯一的進場時刻（圖譜區塊已不再進場）。
+let entrancePlayed = false
+
+/** 測試用：讓下一次掛載重新算「第一次」 */
+export function resetHomeEntrance() {
+  entrancePlayed = false
+}
+</script>
+
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -9,6 +20,9 @@ import { latestEntries, type NewEntry } from './homeNewEntries'
 // 這一列是入口不是內容：兩個 API 都沒有資料（或載入失敗）時整列不顯示，不佔第一屏。
 // 這裡刻意不用 fetchXxxOrDemo：載入失敗時退回的示範資料不是真的「新收錄」，不能拿來當入口。
 const entries = ref<NewEntry[]>([])
+// 這次掛載要不要播進場：只有整個頁面載入後第一次有卡片時才是 true。
+// 動畫只作用在已經渲染好的卡片上（見下面的 style），卡片的內容與位置不等動畫，沒有 JS 或減少動態時也完整
+const playEntrance = ref(false)
 
 onMounted(async () => {
   const [articles, projects] = await Promise.all([
@@ -16,7 +30,14 @@ onMounted(async () => {
     fetchProjects().catch(() => []),
   ])
   entries.value = latestEntries(articles, projects)
+  if (entries.value.length && !entrancePlayed) {
+    entrancePlayed = true
+    playEntrance.value = true
+  }
 })
+
+// 最多三張錯開（index 0、1、2），第四張起跟第三張一起出現
+const STAGGER_MAX_INDEX = 2
 
 function to(e: NewEntry) {
   return e.kind === 'article'
@@ -30,8 +51,13 @@ function to(e: NewEntry) {
     <h2 class="m-0 shrink-0 text-(length:--type-label-size) tracking-(--type-label-tracking) leading-(--type-label-leading) font-normal text-(--text-ink-muted)">
       最新收錄
     </h2>
-    <ul class="flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible py-0.5 min-w-0">
-      <li v-for="e in entries" :key="`${e.kind}-${e.id}`" class="shrink-0">
+    <ul class="flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible py-0.5 min-w-0" :class="{ 'home-entrance': playEntrance }">
+      <li
+        v-for="(e, i) in entries"
+        :key="`${e.kind}-${e.id}`"
+        class="shrink-0"
+        :style="{ '--stagger-index': Math.min(i, STAGGER_MAX_INDEX) }"
+      >
         <RouterLink
           :to="to(e)"
           :title="e.title"
@@ -50,3 +76,25 @@ function to(e: NewEntry) {
     </ul>
   </section>
 </template>
+
+<style scoped>
+/* 首頁唯一的進場時刻：卡片從下方 24px 升上來並淡入，320ms、ease-enter，每張錯開 80ms（token 見 main.css）。
+   只動 transform 與 opacity。放在 no-preference 裡：減少動態時不套任何動畫（也沒有 delay 造成的空白期）。
+   backwards：延遲期間先停在起點，不會閃一下完整的卡片再消失。 */
+@media (prefers-reduced-motion: no-preference) {
+  .home-entrance > li {
+    animation: home-entrance var(--transition-duration-entrance) var(--ease-enter) backwards;
+    animation-delay: calc(var(--stagger-index) * var(--transition-delay-stagger));
+  }
+}
+@keyframes home-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-entrance-rise));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+</style>
