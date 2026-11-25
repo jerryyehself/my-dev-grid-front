@@ -55,6 +55,11 @@
   --transition-duration-panel-close: 120ms;
   /* 指示塊滑過去 */
   --transition-duration-slide: 240ms;
+  /* 換頁（左右軸）：新頁滑入淡入、舊頁滑出淡出，同時進行，位移 30px、ease-control（11-25 選定）。
+     page-exit 是 page-enter 的 62.5%，在退場 60–80% 的範圍內。用法見 layouts/pageTransitionMotion.ts */
+  --transition-duration-page-enter: 320ms;
+  --transition-duration-page-exit: 200ms;
+  --motion-page-shift: 30px;
 
   /* 強烈層 */
   /* 頁面唯一的進場時刻：上升 24px、320ms、ease-enter */
@@ -112,4 +117,25 @@ html[data-input='keyboard'] {
 .panel-up-leave-to {
   opacity: 0;
   translate: 0 2px;
+}
+
+/* 換頁轉場的版面（MainLayout 的 .page-stack 與 .page-layer；動畫本身在 layouts/pageTransitionMotion.ts）。
+   只在播的那 200–320ms 掛上，平常不改任何定位：
+   - 舊頁改成 absolute 疊在新頁下面，不佔高度：頁面高度只看新頁，捲動位置跟不播時一樣，不會等舊頁拿掉才跳一下
+   - 新頁蓋在舊頁上面、帶頁面底色，淡入時把舊頁一起蓋掉，交接時不會兩頁的字疊在一起
+   - 外框裁掉位移出去的 30px，不會冒出水平捲軸；clip 不是捲動容器，頁面裡的 sticky 照常（舊瀏覽器退回 hidden） */
+.page-stack--swapping {
+  position: relative;
+  overflow: hidden;
+  overflow: clip;
+}
+.page-layer--leaving {
+  position: absolute;
+  inset: 0 0 auto 0;
+  pointer-events: none;
+}
+.page-layer--entering {
+  position: relative;
+  z-index: 1;
+  background-color: var(--bg-page);
 }

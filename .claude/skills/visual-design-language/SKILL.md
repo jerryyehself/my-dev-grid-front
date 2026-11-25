@@ -428,13 +428,14 @@ Durations and distances:
 | panel-open | menu or dropdown opening | 200 ms | v2.5.1 `--m-panel`; demo section (c) |
 | panel-close | menu or dropdown closing | 120 ms | v2.5.1 `--m-close` (60% of panel-open); demo section (c) |
 | slide | an indicator travelling | 240 ms | v2.5.1 `--m-slide` |
+| page-enter / page-exit / page-shift | changing between public pages by clicking an in-site link: the page below the fixed navbar slides along the nav order (Home, Articles, an article, Projects, Graph, About); the new page slides in while the old one slides out, both at once. Not on browser back/forward, keyboard-triggered links, reduced motion, or admin/editor pages. | enter 320 ms, exit 200 ms (62.5% of enter), 30 px shift, `ease-control` | page-transition demo v2, option A4 at the slower tempo, chosen 11-25; 30 px from Material shared axis. Code: `src/layouts/pageTransition*.ts` |
 | entrance (strong) | the page's one moment entering (only as that moment) | 24 px rise, 320 ms, `ease-enter` | demo section (d), strong setting; curve from v2.5.1 `--m-ease-enter` |
 | exit (strong) | the page's one moment leaving | 192-256 ms (60-80% of 320 ms), `ease-enter` | the exit rule above |
 | card hover (strong) | a linked/clickable card lifting under a fine pointer or focus | 6 px up, scale 1.03, 200 ms, `ease-control` | demo section (d), strong setting |
 | stagger (strong) | delay between sibling cards entering, only as the page's one moment; at most 3 siblings stagger, the rest enter with the third | 80 ms | demo section (d), strong setting |
 
-Check of the exit rule against the table: hover-out is 80% of hover-in and
-panel-close is 60% of panel-open.
+Check of the exit rule against the table: hover-out is 80% of hover-in,
+panel-close is 60% of panel-open, and page-exit is 62.5% of page-enter.
 
 ## Operational screens
 
