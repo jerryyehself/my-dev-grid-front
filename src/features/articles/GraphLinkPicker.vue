@@ -164,7 +164,7 @@ function submit() {
           v-for="(label, key) in FAMILY_LABEL"
           :key="key"
           type="button"
-          class="font-mono text-[10px] tracking-[0.1em] rounded-full border px-3 py-1.5 transition-colors duration-100 ease-out"
+          class="font-mono text-[10px] tracking-[0.1em] rounded-full border px-3 py-1.5 transition-colors duration-hover-out hover:duration-hover-in"
           :class="
             family === key
               ? 'border-(--text-accent) bg-(--bg-folder) text-(--text-accent) font-bold'
@@ -190,7 +190,7 @@ function submit() {
           :key="o.id"
           type="button"
           :disabled="isExisting(o)"
-          class="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors duration-100 ease-out disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:bg-(--bg-folder)"
+          class="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors duration-hover-out hover:duration-hover-in disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:bg-(--bg-folder)"
           :class="picked?.id === o.id ? 'bg-(--bg-folder)' : ''"
           @click="picked = o"
         >
@@ -226,7 +226,7 @@ function submit() {
           v-for="r in predicateOptions"
           :key="r.id"
           type="button"
-          class="font-mono text-[10px] tracking-[0.08em] rounded-full border px-2.5 py-1 transition-colors duration-100 ease-out"
+          class="font-mono text-[10px] tracking-[0.08em] rounded-full border px-2.5 py-1 transition-colors duration-hover-out hover:duration-hover-in"
           :class="
             predicate === r.name
               ? 'border-(--text-accent) bg-(--bg-folder) text-(--text-accent) font-bold'
@@ -270,7 +270,7 @@ function submit() {
     <div class="flex items-center justify-end gap-2">
       <button
         type="button"
-        class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--border-shelf) px-4 py-2 text-(--text-ink-body) hover:text-(--text-ink-main) transition-colors duration-100 ease-out"
+        class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--border-shelf) px-4 py-2 text-(--text-ink-body) hover:text-(--text-ink-main) transition-colors duration-hover-out hover:duration-hover-in"
         @click="emit('cancel')"
       >
         取消
@@ -278,7 +278,7 @@ function submit() {
       <button
         type="button"
         :disabled="!canCreate"
-        class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--text-ink-main) bg-(--text-ink-main) px-4 py-2 font-bold text-(--bg-paper-light) transition-opacity duration-100 ease-out disabled:opacity-35 disabled:cursor-not-allowed"
+        class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--text-ink-main) bg-(--text-ink-main) px-4 py-2 font-bold text-(--bg-paper-light) transition-opacity duration-hover-out hover:duration-hover-in disabled:opacity-35 disabled:cursor-not-allowed"
         @click="submit"
       >
         建立關聯

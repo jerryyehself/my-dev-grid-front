@@ -112,7 +112,7 @@ function familyDot(fullCallNumber: string | undefined): string {
         }}</span>
         <router-link
           :to="{ name: 'ontology-scope', params: { id: group.top.id } }"
-          class="text-base font-bold text-(--text-ink-main) transition-colors hover:text-(--text-accent)"
+          class="text-base font-bold text-(--text-ink-main) transition-colors duration-hover-out hover:duration-hover-in hover:text-(--text-accent)"
           >{{ group.top.name }}</router-link
         >
         <BaseHint dim
@@ -137,7 +137,7 @@ function familyDot(fullCallNumber: string | undefined): string {
         >
           <router-link
             :to="{ name: 'ontology-scope', params: { id: child.id } }"
-            class="flex min-w-0 flex-1 items-baseline gap-2.5 text-sm transition-colors hover:text-(--text-accent)"
+            class="flex min-w-0 flex-1 items-baseline gap-2.5 text-sm transition-colors duration-hover-out hover:duration-hover-in hover:text-(--text-accent)"
           >
             <span
               class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"
@@ -183,7 +183,7 @@ function familyDot(fullCallNumber: string | undefined): string {
         >
           <router-link
             :to="{ name: 'ontology-scope', params: { id: row.id } }"
-            class="flex min-w-0 flex-1 items-baseline gap-2.5 text-sm transition-colors hover:text-(--text-accent)"
+            class="flex min-w-0 flex-1 items-baseline gap-2.5 text-sm transition-colors duration-hover-out hover:duration-hover-in hover:text-(--text-accent)"
           >
             <span
               class="w-14 shrink-0 font-mono text-[11px] tabular-nums text-(--text-ink-muted)"

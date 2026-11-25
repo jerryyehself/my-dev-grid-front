@@ -216,7 +216,7 @@ function cancel() {
     >
       <router-link
         :to="{ name: 'ontology-scopes' }"
-        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors hover:border-(--text-accent)"
+        class="border-b border-(--border-shelf) text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)"
         >本體論</router-link
       >
       <span>/</span>

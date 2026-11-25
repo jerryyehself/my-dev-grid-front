@@ -135,16 +135,19 @@ const pathResult = ref<GraphPathDto | null>(null)
     </div>
 
     <!-- 點節點/點連線的詳情面板——GraphPocSelection 是共同格式（見 graphPocData.ts），
-         2D/3D 兩版共用同一個面板,不用各自另外刻一份。 -->
-    <div v-if="selected" ref="detailCard" class="scroll-mb-4">
-      <GraphDetailCard
-        :selected="selected"
-        :index="detailIndex"
-        :show-indirect="mode === '2d' && showIndirect"
-        @select-node="selectNodeFromCard"
-        @close="closeDetail"
-      />
-    </div>
+         2D/3D 兩版共用同一個面板,不用各自另外刻一份。
+         開合用 panel-open／panel-close（main.css 的 .panel-*）；換選別的節點時卡片已經開著，不會重播 -->
+    <Transition name="panel">
+      <div v-if="selected" ref="detailCard" class="scroll-mb-4">
+        <GraphDetailCard
+          :selected="selected"
+          :index="detailIndex"
+          :show-indirect="mode === '2d' && showIndirect"
+          @select-node="selectNodeFromCard"
+          @close="closeDetail"
+        />
+      </div>
+    </Transition>
 
     <!-- 原本這裡有一段給訪客的說明（2026-09-30 起），D-87 第二輪使用者決定拿掉、不放替代文字：
          圖例、操作說明面板、路徑查詢區塊的說明已經講完這頁怎麼用。 -->

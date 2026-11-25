@@ -47,7 +47,7 @@ const stations = computed(() =>
       <button
         v-if="canSwitch"
         type="button"
-        class="shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-label-size) leading-(--type-ui-leading) text-(--text-ink-body) hover:text-(--text-accent) hover:border-(--text-accent) cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
+        class="shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) text-(length:--type-label-size) leading-(--type-ui-leading) text-(--text-ink-body) hover:text-(--text-accent) hover:border-(--text-accent) cursor-pointer transition-colors duration-hover-out hover:duration-hover-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
         @click="$emit('switch')"
       >
         <span aria-hidden="true">↻</span>另一條路線
@@ -76,7 +76,7 @@ const stations = computed(() =>
           :class="[
             i === 0 ? 'max-md:col-span-full' : '',
             s.to
-              ? 'md:hover:border-(--text-accent) transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)'
+              ? 'md:hover:border-(--text-accent) transition-colors duration-hover-out md:hover:duration-hover-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)'
               : '',
           ]"
         >

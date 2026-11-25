@@ -503,7 +503,7 @@ const publish = () => saveWithStatus(true)
         <router-link
           v-if="isEditing"
           :to="{ name: 'article-detail', params: { id: editingId! } }"
-          class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--border-shelf) px-4 py-2 text-(--text-ink-body) hover:text-(--text-ink-main) transition-colors duration-100 ease-out"
+          class="font-mono text-[10px] tracking-[0.3em] uppercase rounded-full border border-(--border-shelf) px-4 py-2 text-(--text-ink-body) hover:text-(--text-ink-main) transition-colors duration-hover-out hover:duration-hover-in"
         >
           預覽
         </router-link>
@@ -662,7 +662,7 @@ const publish = () => saveWithStatus(true)
               v-for="s in docScopes"
               :key="s.id"
               type="button"
-              class="flex items-center gap-2.5 px-2.5 py-2 rounded transition-colors duration-100 ease-out"
+              class="flex items-center gap-2.5 px-2.5 py-2 rounded transition-colors duration-hover-out hover:duration-hover-in"
               :class="
                 scopeCall === s.full_call_number
                   ? 'bg-(--bg-folder) border border-(--text-accent)'
@@ -729,7 +729,7 @@ const publish = () => saveWithStatus(true)
                 <button
                   type="button"
                   :aria-label="`移除跟 ${link.entity.title} 的關聯`"
-                  class="ml-auto shrink-0 text-(--text-accent) opacity-40 hover:opacity-100 transition-opacity duration-100 ease-out"
+                  class="ml-auto shrink-0 text-(--text-accent) opacity-40 hover:opacity-100 transition-opacity duration-hover-out hover:duration-hover-in"
                   @click="removeLink(link)"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -804,7 +804,7 @@ const publish = () => saveWithStatus(true)
             <button
               v-if="matchedTechnique(tag)"
               type="button"
-              class="text-left border border-(--text-accent)/35 rounded-[5px] bg-(--bg-folder) px-2.5 py-2 flex flex-col gap-1 hover:border-(--text-accent) transition-colors duration-100 ease-out"
+              class="text-left border border-(--text-accent)/35 rounded-[5px] bg-(--bg-folder) px-2.5 py-2 flex flex-col gap-1 hover:border-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in"
               @click="openPicker('technique', tag)"
             >
               <span class="font-mono text-[10px] tracking-[0.1em] text-(--text-accent) font-bold">

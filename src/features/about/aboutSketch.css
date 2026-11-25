@@ -12,11 +12,12 @@
   --c-doc: var(--node-doc);
   --c-tech: var(--node-tech);
   --c-impl: var(--node-impl);
-  /* 動態：站上規則 100–400 ms、進場用減速曲線（quint-out） */
+  /* 動態：曲線用共用 token --ease-enter（main.css 的 @theme，進場減速曲線 quint-out）。
+     下面三個時長是草圖專屬、不在共用 token 表裡：描線一筆 360 ms、字淡入 200 ms、每筆間隔 110 ms，
+     是關於頁草圖自己的描線節奏，只用在這裡，共用 token 不收；都在站上規則的 100–400 ms 內 */
   --dur-stroke: 360ms;
   --dur-text: 200ms;
   --stagger: 110ms;
-  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .about-page .sk {
@@ -139,7 +140,7 @@
 .about-page.motion .draw.on :is(.gh, .fl, .bgf, .tt),
 .about-page.motion .draw.on text {
   opacity: 1;
-  transition: opacity var(--dur-text) ease-out calc(var(--i) * var(--stagger));
+  transition: opacity var(--dur-text) var(--ease-enter) calc(var(--i) * var(--stagger));
 }
 
 /* 手機（＜640）草圖置中 */

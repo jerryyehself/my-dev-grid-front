@@ -1,7 +1,8 @@
 <template>
-  <!-- 底色是平色、只留底線：斜紋與陰影不帶任何資訊，界線交給 border-b（線條而不是陰影） -->
+  <!-- 底色是平色、只留底線：斜紋與陰影不帶任何資訊，界線交給 border-b（線條而不是陰影）。
+       換主題時底色的漸變用 slide，跟主題切換鈕的滑塊同時走完 -->
   <nav
-    class="sticky top-0 z-50 w-full bg-(--bg-nav-footer) border-b border-black/30 transition-colors duration-300"
+    class="sticky top-0 z-50 w-full bg-(--bg-nav-footer) border-b border-black/30 transition-colors duration-slide"
     @keydown.esc="closeMenuByEscape"
   >
     <!-- 底色撐滿全寬，內層用跟頁首、內容同一個容器（1120 寬、左右內距 16／24），字標左緣跟頁首 H1 對齊。
@@ -15,7 +16,7 @@
            所以兩半一樣大，手機只縮字級不拿掉 -->
       <router-link
         to="/"
-        class="font-wordmark font-bold text-[16px] min-[360px]:text-[18px] min-[400px]:text-[20px] sm:text-[26px] md:text-[22px] lg:text-[26px] leading-[normal] tracking-[0.05em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors"
+        class="font-wordmark font-bold text-[16px] min-[360px]:text-[18px] min-[400px]:text-[20px] sm:text-[26px] md:text-[22px] lg:text-[26px] leading-[normal] tracking-[0.05em] whitespace-nowrap text-(--text-nav-footer) hover:text-(--text-nav-hover) transition-colors duration-hover-out hover:duration-hover-in"
       >
         IN<span class="text-(--accent-brass) mx-[0.28em]">/</span>ARCHIVE
       </router-link>
@@ -26,12 +27,12 @@
           v-for="item in navItems"
           :key="item.path"
           :to="item.path"
-          class="flex flex-col items-center justify-center gap-1.5 h-full text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,opacity] font-semibold md:tracking-wide lg:tracking-widest"
+          class="flex flex-col items-center justify-center gap-1.5 h-full text-(--text-nav-footer) opacity-70 hover:opacity-100 hover:text-(--text-nav-hover) transition-[color,opacity] duration-hover-out hover:duration-hover-in font-semibold md:tracking-wide lg:tracking-widest"
           active-class="!text-(--text-nav-hover) !opacity-100"
         >
           <span>{{ item.name }}</span>
           <span
-            class="w-[18px] h-[3px] rounded-t-[2px] bg-(--text-nav-hover) scale-x-0 transition-transform duration-200"
+            class="w-[18px] h-[3px] rounded-t-[2px] bg-(--text-nav-hover) scale-x-0 transition-transform duration-slide ease-control"
             :class="{ 'scale-x-100': route.path === item.path }"
           ></span>
         </router-link>
@@ -55,26 +56,26 @@
         >
           <span class="relative w-5 h-3.5 block">
             <span
-              class="absolute left-0 top-0 w-5 h-[1.5px] bg-current transition-transform ease-[cubic-bezier(.2,.8,.2,1)]"
-              :class="isMenuOpen ? 'duration-200 translate-y-[6.25px] rotate-45' : 'duration-[120ms]'"
+              class="absolute left-0 top-0 w-5 h-[1.5px] bg-current transition-transform ease-control"
+              :class="isMenuOpen ? 'duration-panel-open translate-y-[6.25px] rotate-45' : 'duration-panel-close'"
             ></span>
             <span
-              class="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-[1.5px] bg-current transition-opacity ease-[cubic-bezier(.2,.8,.2,1)]"
-              :class="isMenuOpen ? 'duration-200 opacity-0' : 'duration-[120ms] opacity-100'"
+              class="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-[1.5px] bg-current transition-opacity ease-control"
+              :class="isMenuOpen ? 'duration-panel-open opacity-0' : 'duration-panel-close opacity-100'"
             ></span>
             <span
-              class="absolute left-0 bottom-0 w-5 h-[1.5px] bg-current transition-transform ease-[cubic-bezier(.2,.8,.2,1)]"
-              :class="isMenuOpen ? 'duration-200 -translate-y-[6.25px] -rotate-45' : 'duration-[120ms]'"
+              class="absolute left-0 bottom-0 w-5 h-[1.5px] bg-current transition-transform ease-control"
+              :class="isMenuOpen ? 'duration-panel-open -translate-y-[6.25px] -rotate-45' : 'duration-panel-close'"
             ></span>
           </span>
         </button>
       </div>
     </div>
 
-    <!-- 手機選單:只用 opacity／translate(Tailwind v4 的 -translate-y-1 是獨立的 translate 屬性,transition 要列 translate 才會動),開 200ms、收 120ms(panel-open／panel-close),同一條 ease-control 曲線 -->
+    <!-- 手機選單:只用 opacity／translate(Tailwind v4 的 -translate-y-1 是獨立的 translate 屬性,transition 要列 translate 才會動),開合用 panel-open／panel-close 動態 token(main.css),同一條 ease-control 曲線 -->
     <Transition
-      enter-active-class="transition-[opacity,translate] duration-200 ease-[cubic-bezier(.2,.8,.2,1)]"
-      leave-active-class="transition-[opacity,translate] duration-[120ms] ease-[cubic-bezier(.2,.8,.2,1)]"
+      enter-active-class="transition-[opacity,translate] duration-panel-open ease-control"
+      leave-active-class="transition-[opacity,translate] duration-panel-close ease-control"
       enter-from-class="opacity-0 -translate-y-1"
       leave-to-class="opacity-0 -translate-y-1"
     >

@@ -157,42 +157,45 @@ onMounted(async () => {
             @blur="startOpen = false"
           />
         </div>
-        <div
-          v-if="startOpen && (startMatches.length || startGroups.length)"
-          class="absolute left-0 right-0 top-full z-10 mt-1 max-h-72 overflow-y-auto rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
-        >
-          <template v-if="startQuery.trim()">
-            <div
-              v-for="n in startMatches"
-              :key="n.id"
-              class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
-              @mousedown.prevent="selectStart(n)"
-            >
-              <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
-              <span class="text-(length:--type-label-size) text-(--text-ink-main)">{{ n.label }}</span>
-              <span class="ml-auto text-(length:--type-label-size) text-(--text-accent) opacity-70">{{
-                domainLabel[n.domainType]
-              }}</span>
-            </div>
-          </template>
-          <!-- 還沒打字：依型別分組瀏覽，取代原本「不打字就完全空白」的下拉 -->
-          <template v-else>
-            <div v-for="group in startGroups" :key="group.type">
-              <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent) opacity-80">
-                {{ group.label }}
-              </div>
+        <!-- 候選下拉的開合用 panel-open／panel-close（main.css 的 .panel-*），下面終點的也一樣 -->
+        <Transition name="panel">
+          <div
+            v-if="startOpen && (startMatches.length || startGroups.length)"
+            class="absolute left-0 right-0 top-full z-10 mt-1 max-h-72 overflow-y-auto rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
+          >
+            <template v-if="startQuery.trim()">
               <div
-                v-for="n in group.items"
+                v-for="n in startMatches"
                 :key="n.id"
                 class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
                 @mousedown.prevent="selectStart(n)"
               >
                 <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
                 <span class="text-(length:--type-label-size) text-(--text-ink-main)">{{ n.label }}</span>
+                <span class="ml-auto text-(length:--type-label-size) text-(--text-accent) opacity-70">{{
+                  domainLabel[n.domainType]
+                }}</span>
               </div>
-            </div>
-          </template>
-        </div>
+            </template>
+            <!-- 還沒打字：依型別分組瀏覽，取代原本「不打字就完全空白」的下拉 -->
+            <template v-else>
+              <div v-for="group in startGroups" :key="group.type">
+                <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent) opacity-80">
+                  {{ group.label }}
+                </div>
+                <div
+                  v-for="n in group.items"
+                  :key="n.id"
+                  class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
+                  @mousedown.prevent="selectStart(n)"
+                >
+                  <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
+                  <span class="text-(length:--type-label-size) text-(--text-ink-main)">{{ n.label }}</span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </Transition>
       </div>
 
       <!-- 交換起訖點 -->
@@ -249,42 +252,44 @@ onMounted(async () => {
             @blur="endOpen = false"
           />
         </div>
-        <div
-          v-if="endOpen && (endMatches.length || endGroups.length)"
-          class="absolute left-0 right-0 top-full z-10 mt-1 max-h-72 overflow-y-auto rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
-        >
-          <template v-if="endQuery.trim()">
-            <div
-              v-for="n in endMatches"
-              :key="n.id"
-              class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
-              @mousedown.prevent="selectEnd(n)"
-            >
-              <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
-              <span class="text-(length:--type-label-size) text-(--text-ink-main)">{{ n.label }}</span>
-              <span class="ml-auto text-(length:--type-label-size) text-(--text-accent) opacity-70">{{
-                domainLabel[n.domainType]
-              }}</span>
-            </div>
-          </template>
-          <!-- 還沒打字：依型別分組瀏覽，取代原本「不打字就完全空白」的下拉 -->
-          <template v-else>
-            <div v-for="group in endGroups" :key="group.type">
-              <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent) opacity-80">
-                {{ group.label }}
-              </div>
+        <Transition name="panel">
+          <div
+            v-if="endOpen && (endMatches.length || endGroups.length)"
+            class="absolute left-0 right-0 top-full z-10 mt-1 max-h-72 overflow-y-auto rounded-[10px] border border-(--border-shelf) bg-(--bg-paper-light) shadow-lg"
+          >
+            <template v-if="endQuery.trim()">
               <div
-                v-for="n in group.items"
+                v-for="n in endMatches"
                 :key="n.id"
                 class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
                 @mousedown.prevent="selectEnd(n)"
               >
                 <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
                 <span class="text-(length:--type-label-size) text-(--text-ink-main)">{{ n.label }}</span>
+                <span class="ml-auto text-(length:--type-label-size) text-(--text-accent) opacity-70">{{
+                  domainLabel[n.domainType]
+                }}</span>
               </div>
-            </div>
-          </template>
-        </div>
+            </template>
+            <!-- 還沒打字：依型別分組瀏覽，取代原本「不打字就完全空白」的下拉 -->
+            <template v-else>
+              <div v-for="group in endGroups" :key="group.type">
+                <div class="sticky top-0 bg-(--bg-paper-light) px-3 py-1 text-(length:--type-label-size) tracking-[0.05em] text-(--text-accent) opacity-80">
+                  {{ group.label }}
+                </div>
+                <div
+                  v-for="n in group.items"
+                  :key="n.id"
+                  class="flex cursor-pointer items-center gap-2 px-3 py-[9px] hover:bg-(--bg-folder)"
+                  @mousedown.prevent="selectEnd(n)"
+                >
+                  <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: `var(${nodeColorVar(n.domainType)})` }" />
+                  <span class="text-(length:--type-label-size) text-(--text-ink-main)">{{ n.label }}</span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </Transition>
       </div>
     </div>
 

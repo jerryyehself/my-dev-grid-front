@@ -76,7 +76,7 @@ defineExpose({
             v-for="tag in group.tags"
             :key="tag.label"
             type="button"
-            class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-[3px] pr-1 pl-[11px] font-sans text-(length:--type-label-size) transition-colors"
+            class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border py-[3px] pr-1 pl-[11px] font-sans text-(length:--type-label-size) transition-colors duration-hover-out hover:duration-hover-in"
             :class="
               tag.selected
                 ? 'border-(--text-accent) bg-(--bg-folder) text-(--text-accent)'
@@ -123,7 +123,7 @@ defineExpose({
           :key="proj.id"
           type="button"
           :aria-current="selected?.id === proj.id ? 'true' : undefined"
-          class="w-full cursor-pointer border-b border-l-[3px] border-(--border-shelf) px-4.5 py-4 text-left transition-colors last:border-b-0"
+          class="w-full cursor-pointer border-b border-l-[3px] border-(--border-shelf) px-4.5 py-4 text-left transition-colors duration-hover-out hover:duration-hover-in last:border-b-0"
           :class="
             selected?.id === proj.id
               ? 'border-l-(--text-accent) bg-(--bg-active-row)'
