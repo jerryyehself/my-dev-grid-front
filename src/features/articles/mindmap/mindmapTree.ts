@@ -61,7 +61,7 @@ function labelOf(node: MindmapNode, kind: MindmapLabelSpec['kind']): MindmapLabe
   return { id: node.id, label: node.label, kind }
 }
 
-/** 清單懸停最少、最多放幾個概念（站主 2026-11-25 定案：6–8 個） */
+/** 清單懸停最少、最多放幾個概念（6–8 個）：太少看不出這篇談什麼，太多提示框塞不下 */
 export const HOVER_CONCEPT_MIN = 6
 export const HOVER_CONCEPT_MAX = 8
 
@@ -86,8 +86,8 @@ export function hoverConceptsOf(mindmap: ArticleMindmap): MindmapNode[] {
 }
 
 /**
- * 清單懸停：兩階，中心直接接權重最高的幾個主要概念，不放分枝（站主 2026-11-25 定案：
- * 「背景、方法論」這類分枝每篇都差不多，看不出文章的差別）。概念照資料順序從右上順時針分到左右兩邊。
+ * 清單懸停：兩階，中心直接接權重最高的幾個主要概念，不放分枝（分枝名稱各篇相近，
+ * 例如「背景」「方法論」，看不出文章的差別）。概念照資料順序從右上順時針分到左右兩邊。
  * 沒有橫向線。
  */
 export function buildHoverSpec(mindmap: ArticleMindmap): MindmapTreeSpec {

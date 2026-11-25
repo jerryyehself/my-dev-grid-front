@@ -5,7 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import ArticlesView from './ArticlesView.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 import type { ArticleDto } from '@/api/articles'
-import { loadArticleMindmap } from './mindmap/articleMindmapSource'
+import { loadArticleMindmap, MINDMAP_ARTICLE_IDS } from './mindmap/articleMindmapSource'
 import { FINE_POINTER_QUERY } from './mindmap/useFinePointer'
 
 // 文章清單每篇的「編輯」只給登入的人看：訪客看到的清單不能多出任何寫入入口（AuthOnly.vue）。
@@ -205,6 +205,36 @@ describe('ArticlesView 的標題懸停心智圖', () => {
       await flushPromises()
       expect(wrapper.find('[role="tooltip"]').exists()).toBe(true)
     })
+  })
+
+  it('它應該在鍵盤焦點和游標停在不同篇時，顯示最近一次動作的那篇', async () => {
+    // 清單上同時有兩篇有心智圖（正式資料上線後會發生；現在只有 14 有，這裡臨時加上 6）
+    const ids = MINDMAP_ARTICLE_IDS as Set<number>
+    ids.add(6)
+    try {
+      const wrapper = await mountView()
+      const describedBy = () =>
+        ['建置工具問答', '有心智圖的那篇'].filter((t) => titleLink(wrapper, t).attributes('aria-describedby') !== undefined)
+      const focusLink = titleLink(wrapper, '有心智圖的那篇')
+      vi.spyOn(focusLink.element, 'matches').mockReturnValue(true)
+      // 先用鍵盤聚焦 14，再把游標移到 6：以游標為準
+      await focusLink.trigger('focus')
+      await titleText(wrapper, '建置工具問答').trigger('mouseenter')
+      await settle()
+      expect(describedBy()).toEqual(['建置工具問答'])
+      // 游標移開：焦點還在 14，回到 14
+      await titleText(wrapper, '建置工具問答').trigger('mouseleave')
+      await settle()
+      expect(describedBy()).toEqual(['有心智圖的那篇'])
+      // 游標再回到 6，之後又用鍵盤聚焦到 14：以鍵盤為準
+      await titleText(wrapper, '建置工具問答').trigger('mouseenter')
+      await focusLink.trigger('blur')
+      await focusLink.trigger('focus')
+      await settle()
+      expect(describedBy()).toEqual(['有心智圖的那篇'])
+    } finally {
+      ids.delete(6)
+    }
   })
 
   it('它應該在分類夾排列時也有同樣的懸停', async () => {

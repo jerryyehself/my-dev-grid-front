@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import fixture from './articleMindmapFixture.json'
+import type { ArticleMindmap, MindmapNode } from './articleMindmapTypes'
 import ArticleMindmapPanel from './ArticleMindmapPanel.vue'
 import * as source from './articleMindmapSource'
 import { extractHeadings } from '@/components/markdown/headings'
@@ -119,11 +120,11 @@ describe('ArticleMindmapPanel', () => {
     expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('true')
   })
 
-  it('它應該在打開橫向關係後畫出兩端都看得到的線，說明列寫出線的畫法與另有幾條連到收合的節點', async () => {
+  it('它應該在打開橫向關係後畫出兩端都看得到的線，說明列寫出線的畫法與另有幾條連到收合的詞', async () => {
     const wrapper = await mountPanel()
     await switchNamed(wrapper, '橫向關係').trigger('click')
     expect(wrapper.findAll('[data-testid="mindmap-cross-link"]')).toHaveLength(3)
-    expect(wrapper.text()).toContain('另有 4 條連到收合的節點')
+    expect(wrapper.text()).toContain('另有 4 條連到收合的詞')
     // 有類型（實線）與只是常一起出現（虛線）都有
     expect(wrapper.text()).toContain('有類型的橫向關係')
     expect(wrapper.text()).toContain('只是常一起出現')
@@ -211,6 +212,84 @@ describe('ArticleMindmapPanel', () => {
   })
 })
 
+describe('ArticleMindmapPanel 有本身是次要的分枝時', () => {
+  const node = (id: string, parent: string, strength: 'primary' | 'secondary', label: string): MindmapNode => ({
+    id,
+    parent,
+    label,
+    res_id: null,
+    strength,
+    weight: 1,
+    units: [],
+  })
+  /** fixture 加上次要分枝 n30（底下一個主要、一個次要概念）；`withSecondaryChild` 為 false 時 n30 底下只有主要概念 */
+  function withSecondaryBranch(withSecondaryChild: boolean): ArticleMindmap {
+    const data = structuredClone(fixture) as unknown as ArticleMindmap
+    data.nodes.push(node('n30', 'n0', 'secondary', '次要分枝'), node('n31', 'n30', 'primary', '分枝裡的主要詞'))
+    if (withSecondaryChild) data.nodes.push(node('n32', 'n30', 'secondary', '分枝裡的次要詞'))
+    return data
+  }
+  async function mountWith(data: ArticleMindmap) {
+    vi.spyOn(source, 'loadArticleMindmap').mockResolvedValue(data)
+    return mountPanel()
+  }
+  const switchNamed = (wrapper: Awaited<ReturnType<typeof mountPanel>>, name: string) =>
+    wrapper.findAll('[role="switch"]').find((s) => s.text() === name)!
+
+  it('它應該在收合次要分枝自己的次要概念時，分枝仍留在圖上（不跟著中心一起藏起來）', async () => {
+    const wrapper = await mountWith(withSecondaryBranch(true))
+    expect(svgText(wrapper)).not.toContain('次要分枝')
+    await switchNamed(wrapper, '次要概念').trigger('click')
+    expect(svgText(wrapper)).toContain('次要分枝')
+    expect(svgText(wrapper)).toContain('分枝裡的次要詞')
+    await wrapper.get('[data-node-id="chip:n30"]').trigger('click')
+    // 只收合那個分枝的次要概念；分枝本身與其他分枝的次要概念都還在
+    expect(svgText(wrapper)).toContain('次要分枝')
+    expect(svgText(wrapper)).not.toContain('分枝裡的次要詞')
+    expect(svgText(wrapper)).toContain('格狀熱度圖')
+    // 不是每個次要概念都露出來了，開關顯示關
+    expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('false')
+  })
+
+  it('它應該在收合分枝後，焦點所在的收合鈕還在（不會掉到 body）', async () => {
+    const wrapper = await mountWith(withSecondaryBranch(true))
+    await switchNamed(wrapper, '次要概念').trigger('click')
+    await wrapper.get('[data-node-id="chip:n30"]').trigger('click')
+    expect(wrapper.find('[data-node-id="chip:n30"]').exists()).toBe(true)
+  })
+
+  it('它應該在次要分枝還藏著時，即使每個分枝的次要概念都逐一展開了，開關也顯示關', async () => {
+    // n30 在這個 mindmap 裡是只有主要概念的次要分枝：不會有「＋N 次要」，所以只能靠開關露出來
+    const wrapper = await mountWith(withSecondaryBranch(false))
+    for (const id of ['n1', 'n2', 'n3', 'n4', 'n5']) await wrapper.get(`[data-node-id="chip:${id}"]`).trigger('click')
+    expect(svgText(wrapper)).not.toContain('次要分枝')
+    expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('false')
+    // 開關打開之後才露出來，開關顯示開
+    await switchNamed(wrapper, '次要概念').trigger('click')
+    expect(svgText(wrapper)).toContain('次要分枝')
+    expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('true')
+    // 再關：全部收合、次要分枝也藏起來
+    await switchNamed(wrapper, '次要概念').trigger('click')
+    expect(svgText(wrapper)).not.toContain('次要分枝')
+    expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('false')
+  })
+
+  it('它應該在大綱樹（觸控裝置）收合次要分枝自己的次要概念時，分枝仍在', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query }))
+    try {
+      const wrapper = await mountWith(withSecondaryBranch(true))
+      await switchNamed(wrapper, '次要概念').trigger('click')
+      const branchButton = wrapper.findAll('button[aria-expanded]').find((b) => b.text().startsWith('次要分枝'))!
+      await branchButton.trigger('click')
+      await wrapper.findAll('button').find((b) => b.text() === '－ 收合次要' && b.attributes('aria-label')?.endsWith('次要分枝'))!.trigger('click')
+      expect(wrapper.findAll('button[aria-expanded]').some((b) => b.text().startsWith('次要分枝'))).toBe(true)
+      expect(switchNamed(wrapper, '次要概念').attributes('aria-checked')).toBe('false')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+})
+
 describe('ArticleMindmapPanel 依裝置選圖或大綱樹', () => {
   /** 假的 matchMedia：只有「能懸停、指標精準」照給的值，其他查詢（例如寬度）一律不成立 */
   function stubPointer(fine: boolean) {
@@ -255,12 +334,27 @@ describe('ArticleMindmapPanel 依裝置選圖或大綱樹', () => {
     expect(wrapper.find('svg[role="group"]').exists()).toBe(true)
   })
 
-  it('它應該在大綱樹的說明列不寫「另有 N 條連到收合的節點」（文字關係不受收合影響）', async () => {
+  it('它應該在裝置切換時清掉選取的詞，切回來彈出框不會在舊位置重新出現', async () => {
+    const change = stubPointer(true)
+    const wrapper = await mountPanel()
+    await wrapper.get('[data-node-id="n24"][role="button"]').trigger('click')
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
+    change(false)
+    await flushPromises()
+    expect(wrapper.find('svg[role="group"]').exists()).toBe(false)
+    change(true)
+    await flushPromises()
+    expect(wrapper.find('svg[role="group"]').exists()).toBe(true)
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(wrapper.get('[data-node-id="n24"][role="button"]').attributes('aria-expanded')).toBe('false')
+  })
+
+  it('它應該在大綱樹的說明列不寫「另有 N 條連到收合的詞」（文字關係不受收合影響）', async () => {
     stubPointer(false)
     const wrapper = await mountPanel()
     await wrapper.findAll('[role="switch"]').find((s) => s.text() === '橫向關係')!.trigger('click')
     expect(wrapper.text()).toContain('只是常一起出現')
     expect(wrapper.text()).toContain('有類型')
-    expect(wrapper.text()).not.toContain('連到收合的節點')
+    expect(wrapper.text()).not.toContain('連到收合的詞')
   })
 })

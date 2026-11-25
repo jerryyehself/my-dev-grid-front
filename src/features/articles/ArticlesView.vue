@@ -63,7 +63,7 @@ const EDIT_LINK_CLASS =
   'relative z-10 ml-auto font-sans normal-case text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out'
 
 // --- 標題懸停心智圖 ---
-// 只在游標停在標題「文字」上，或鍵盤 Tab 到標題時出現（站主 2026-11-24 定案）。標題連結的 ::after 撐滿整列，
+// 只在游標停在標題「文字」上，或鍵盤 Tab 到標題時出現。標題連結的 ::after 撐滿整列，
 // 所以懸停掛在連結裡包著文字的 <span> 上：游標在整列其他地方（::after 的範圍）時，
 // 事件的目標是 <a> 本身，不是這個 <span>，不會觸發。<span> 要 relative z-[1]：::after 是定位元素，
 // 會疊在沒定位的文字上面，不墊高的話游標停在字上也只碰得到 ::after。<span> 仍在連結裡，點了一樣開文章。
@@ -75,7 +75,14 @@ interface MindmapTipState {
 const hoverTip = ref<MindmapTipState | null>(null)
 const focusTip = ref<MindmapTipState | null>(null)
 const tipDismissed = ref(false)
-const activeTip = computed(() => (tipDismissed.value ? null : (focusTip.value ?? hoverTip.value)))
+// 滑鼠與鍵盤可以同時各停在不同篇；以最近一次動作為準，另一邊只在這邊沒有時才補上
+const lastTipSource = ref<'hover' | 'focus'>('hover')
+const activeTip = computed(() => {
+  if (tipDismissed.value) return null
+  return lastTipSource.value === 'focus'
+    ? (focusTip.value ?? hoverTip.value)
+    : (hoverTip.value ?? focusTip.value)
+})
 
 function mindmapTipId(articleId: number): string {
   return `article-mindmap-tip-${articleId}`
@@ -92,6 +99,7 @@ function onTitleTextEnter(articleId: number, event: MouseEvent) {
   const anchor = titleAnchor(event)
   if (!anchor) return
   tipDismissed.value = false
+  lastTipSource.value = 'hover'
   hoverTip.value = { articleId, anchor }
 }
 
@@ -116,6 +124,7 @@ function onTitleFocus(articleId: number, event: FocusEvent) {
   const anchor = titleAnchor(event)
   if (!anchor) return
   tipDismissed.value = false
+  lastTipSource.value = 'focus'
   focusTip.value = { articleId, anchor }
 }
 

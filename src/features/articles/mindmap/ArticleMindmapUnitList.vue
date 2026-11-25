@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // 一個詞出現在文章哪幾段：段落標題連到內文的錨點（跟「本文結構」目錄同一份 slug），右邊是次數。
-// 桌機的彈出框與手機大綱樹展開的框共用。連結本身就看得出能點，不另外寫「點一下跳過去」（站主 2026-11-25）。
+// 桌機的彈出框與手機大綱樹展開的框共用。連結本身就看得出能點，不另外寫「點一下跳過去」（多餘的說明）。
 import type { MindmapUnitLink } from './mindmapUnits'
 
 defineProps<{ units: MindmapUnitLink[] }>()

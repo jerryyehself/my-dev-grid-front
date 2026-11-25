@@ -10,6 +10,7 @@ import {
   type MindmapTreeSpec,
 } from './mindmapLayout'
 import { buildDetailSpec, buildHoverSpec, linkLineLabel } from './mindmapTree'
+import { estimateLabelWidth } from './measureLabel'
 
 const mindmap = fixture as ArticleMindmap
 // 固定寬度的量法：每個字 10px，結果跟字型無關
@@ -160,5 +161,83 @@ describe('layoutMindmap 的橫向線', () => {
       measure,
     )
     expect(layout.crossLinks).toEqual([])
+  })
+})
+
+describe('layoutMindmap 橫向線上的字不蓋到詞', () => {
+  // 線上的字：12px、字寬照 measure；字高 ±6
+  const FONT = { size: 12, weight: 600, serif: false }
+  const labelBox = (c: { label: string | null; labelX: number; labelY: number }, m: (text: string, font: typeof FONT) => number) => {
+    const half = m(c.label!, FONT) / 2
+    return { x1: c.labelX - half, x2: c.labelX + half, y1: c.labelY - 6, y2: c.labelY + 6 }
+  }
+  const wordBox = (l: { x1: number; x2: number; y: number; fontSize: number }) => ({
+    x1: l.x1,
+    x2: l.x2,
+    y1: l.y - l.fontSize * 1.3,
+    y2: l.y,
+  })
+  const hit = (a: ReturnType<typeof wordBox>, b: ReturnType<typeof wordBox>) =>
+    a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2
+
+  /** 兩邊各一個分枝：中間那個詞（mid）特別長，兩端的詞（a、c）之間的橫向線，字會落在 mid 那一列 */
+  function sideSpec(side: 'left' | 'right', midText: string): MindmapTreeSpec {
+    const b: MindmapBranchSpec = {
+      ...label('b', 'branch'),
+      children: [label('a', 'primary', '甲乙丙'), label('mid', 'primary', midText), label('c', 'primary', '丁戊己')],
+    }
+    return {
+      center: label('c0', 'center', '中心'),
+      right: side === 'right' ? [b] : [],
+      left: side === 'left' ? [b] : [],
+      links: [{ source: 'a', target: 'c', typed: true, label: '依據' }],
+    }
+  }
+
+  it.each(['left', 'right'] as const)('它應該在字落到長詞上時，把字挪到詞的外面（%s 邊）', (side) => {
+    const layout = layoutMindmap(sideSpec(side, '很長很長的一個詞'), DETAIL_METRICS, measure)
+    const link = layout.crossLinks[0]!
+    expect(link.label).toBe('依據')
+    const box = labelBox(link, measure)
+    for (const l of layout.labels) expect(hit(box, wordBox(l)), `字蓋到「${l.label}」`).toBe(false)
+    // 往外挪，不是往中心挪
+    const mid = byId(layout).get('mid')!
+    if (side === 'right') expect(box.x1).toBeGreaterThanOrEqual(mid.x2)
+    else expect(box.x2).toBeLessThanOrEqual(mid.x1)
+    // viewBox 還是包得住挪出去的字
+    const [x, , w] = layout.viewBox
+    expect(box.x1).toBeGreaterThanOrEqual(x)
+    expect(box.x2).toBeLessThanOrEqual(x + w)
+  })
+
+  it('它應該在字沒有蓋到任何詞時不挪（詞比字短，擦邊也不算蓋到）', () => {
+    const layout = layoutMindmap(sideSpec('right', '短'), DETAIL_METRICS, measure)
+    const link = layout.crossLinks[0]!
+    // 沒挪過的位置：曲線 t=0.5 的位置，用同一條線的兩端算回去
+    const a = byId(layout).get('a')!
+    const c = byId(layout).get('c')!
+    const px = Math.max(a.x2, c.x2) + 14
+    expect(link.labelX).toBeCloseTo(0.75 * px + 0.125 * (a.x2 + c.x2))
+    expect(link.label).toBe('依據')
+  })
+
+  it('它應該在真實字寬下，文章 14 的各種展開狀態都沒有線上的字蓋到詞', () => {
+    const real = (text: string, font: { size: number }) => estimateLabelWidth(text, font.size)
+    const everything = new Set(['n0', 'n1', 'n2', 'n3', 'n4', 'n5'])
+    for (const expanded of [new Set<string>(), new Set(['n0']), new Set(['n3', 'n4']), everything]) {
+      const { spec } = buildDetailSpec(mindmap, expanded, linkLineLabel, true)
+      const layout = layoutMindmap(spec, DETAIL_METRICS, real, 638)
+      for (const c of layout.crossLinks.filter((x) => x.label)) {
+        const box = labelBox(c, real)
+        for (const l of layout.labels) expect(hit(box, wordBox(l)), `「${c.label}」蓋到「${l.label}」`).toBe(false)
+      }
+    }
+  })
+
+  it('它應該在全部展開時仍標出「依據」（挪開而不是丟掉）', () => {
+    const real = (text: string, font: { size: number }) => estimateLabelWidth(text, font.size)
+    const { spec } = buildDetailSpec(mindmap, new Set(['n0', 'n1', 'n2', 'n3', 'n4', 'n5']), linkLineLabel, true)
+    const layout = layoutMindmap(spec, DETAIL_METRICS, real, 638)
+    expect(layout.crossLinks.map((c) => c.label)).toContain('依據')
   })
 })

@@ -1,4 +1,4 @@
-// 心智圖的左右對稱版型（站主定案的 C 版型）：中心在正中，分枝分在左右兩邊，
+// 心智圖的左右對稱版型（C 版型）：中心在正中，分枝分在左右兩邊，
 // 每邊用 d3-hierarchy 的 tree() 算上下位置（兩棵樹，左邊鏡像），欄位位置依標籤寬度排。
 // 這裡只算座標，畫成 SVG 由 ArticleMindmapDiagram.vue 負責。
 //
@@ -222,6 +222,7 @@ function layoutCrossLinks(
   links: MindmapCrossLinkSpec[],
   byId: Map<string, PositionedLabel>,
   bounds: { minX: number; maxX: number; minY: number },
+  measure: MeasureLabel,
 ): PositionedCrossLink[] {
   const out: PositionedCrossLink[] = []
   let lane = 0
@@ -263,27 +264,76 @@ function layoutCrossLinks(
       })
     }
   }
-  return avoidLabelOverlap(out)
+  return avoidLabelOverlap(out, [...byId.values()].map(wordBox), measure)
+}
+
+/** 線上的字（12px 半粗體）的字型，跟 ArticleMindmapDiagram 畫的一樣，量寬度用 */
+const LINK_LABEL_FONT: LabelFont = { size: 12, weight: 600, serif: false }
+/** 線上的字外面一圈底色描邊（stroke-4）的一半 */
+const LINK_LABEL_PAD = 2
+/** 線上的字的半高：字級 12，字身約一個字級 */
+const LINK_LABEL_HALF_HEIGHT = 6
+
+interface Box {
+  x1: number
+  x2: number
+  y1: number
+  y2: number
+}
+
+function overlaps(a: Box, b: Box): boolean {
+  return a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2
+}
+
+/** 詞佔的範圍：字的上緣到底線（再多 1px 是底線粗細） */
+function wordBox(label: PositionedLabel): Box {
+  return { x1: label.x1, x2: label.x2, y1: labelTop(label), y2: label.y + 1 }
 }
 
 /**
- * 線上的字彼此疊到時：同一個字（例如兩條「被否決」連到同一個詞）只留第一個，
- * 不同的字往下挪一行。線本身不動。
+ * 線上的字不能蓋到別的東西：
+ * - 蓋到詞：沿水平方向往外（離中心遠的方向）挪到那個詞的外面。
+ * - 彼此疊到：同一個字（例如兩條「被否決」連到同一個詞）只留第一個，不同的字往下挪一行。
+ * 線本身不動。挪了還是蓋到（來回挪不出去）就不標這個字，寧可沒有字也不蓋住詞。
  */
-function avoidLabelOverlap(links: PositionedCrossLink[]): PositionedCrossLink[] {
+function avoidLabelOverlap(
+  links: PositionedCrossLink[],
+  words: Box[],
+  measure: MeasureLabel,
+): PositionedCrossLink[] {
   const placed: PositionedCrossLink[] = []
+  const guardMax = 4 * (links.length + words.length) + 4
   return links.map((link) => {
     if (!link.label) return link
     const next = { ...link }
-    for (let guard = 0; guard < links.length; guard++) {
+    const half = measure(link.label, LINK_LABEL_FONT) / 2 + LINK_LABEL_PAD
+    const boxOf = (l: PositionedCrossLink): Box => ({
+      x1: l.labelX - half,
+      x2: l.labelX + half,
+      y1: l.labelY - LINK_LABEL_HALF_HEIGHT,
+      y2: l.labelY + LINK_LABEL_HALF_HEIGHT,
+    })
+    let settled = false
+    for (let guard = 0; guard < guardMax; guard++) {
+      const box = boxOf(next)
+      const word = words.find((w) => overlaps(box, w))
+      if (word) {
+        next.labelX = next.labelX < 0 ? word.x1 - half : word.x2 + half
+        continue
+      }
       const hit = placed.find((p) => Math.abs(p.labelX - next.labelX) < 40 && Math.abs(p.labelY - next.labelY) < 14)
-      if (!hit) break
+      if (!hit) {
+        settled = true
+        break
+      }
       if (hit.label === next.label) {
         next.label = null
+        settled = true
         break
       }
       next.labelY = hit.labelY + 14
     }
+    if (!settled) next.label = null
     if (next.label) placed.push(next)
     return next
   })
@@ -323,7 +373,7 @@ export function layoutMindmap(
     minY: Math.min(...labels.map(labelTop)),
     maxY: Math.max(...labels.map((l) => l.y)),
   }
-  const crossLinks = layoutCrossLinks(spec.links, byId, treeBounds)
+  const crossLinks = layoutCrossLinks(spec.links, byId, treeBounds, measure)
 
   // 橫向線可能伸出樹的範圍（往外鼓、沿上緣繞），viewBox 要一起包進去
   let { minX, maxX, minY } = treeBounds

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// 文章內頁的心智圖（站主定案：C 左右對稱、最多 2 層、次要節點預設收合、橫向關係開關預設關、
+// 文章內頁的心智圖（C 左右對稱、最多 2 層、次要節點預設收合、橫向關係開關預設關、
 // 點詞看出處並跳到段落、手機改大綱樹、延遲載入）。
 // 有 res_id 的詞連到圖譜原本也定了，但目前不畫（見 mindmapUnits.ts）。
 // 放在前言之後、第一個二級標題之前（由 ArticleDetailView 透過 MarkdownBody 的插槽放進去）。
@@ -48,34 +48,49 @@ watch(
   { immediate: true },
 )
 
-/** 展開了次要節點的分枝；含中心 id 代表「全部展開」（本身是次要的分枝也露出） */
-const expanded = ref<ReadonlySet<string>>(new Set())
+/** 展開了次要概念的分枝（只放分枝 id） */
+const openBranchIds = ref<ReadonlySet<string>>(new Set())
+/** 本身是次要的分枝有沒有露出來。跟上面分開記：收合某個分枝的次要概念，不該把別的次要分枝一起藏起來 */
+const showSecondaryBranches = ref(false)
 const showLinks = ref(false)
 const selectedId = ref<string | null>(null)
+
+/**
+ * 交給排版、圖與大綱樹的展開集合。這三個地方約定「集合裡有中心 id＝本身是次要的分枝也露出」
+ * （buildDetailSpec），所以這裡才把兩個狀態合成一個。
+ */
+const expanded = computed<ReadonlySet<string>>(() =>
+  showSecondaryBranches.value && mindmap.value ? new Set([...openBranchIds.value, mindmap.value.center]) : openBranchIds.value,
+)
 
 const nodeById = computed(() => new Map((mindmap.value?.nodes ?? []).map((n) => [n.id, n])))
 const branchList = computed(() => (mindmap.value ? branchesOf(mindmap.value) : []))
 const expandable = computed(() => branchList.value.filter((b) => b.secondaries.length > 0).map((b) => b.node.id))
 const hasSecondaries = computed(() => (mindmap.value?.nodes ?? []).some((n) => n.strength === 'secondary'))
-const allExpanded = computed(() => expandable.value.every((id) => expanded.value.has(id)) && expanded.value.size > 0)
+const hasSecondaryBranches = computed(() => branchList.value.some((b) => b.node.strength === 'secondary'))
+/** 圖上現在真的看得到所有次要的詞：每個有次要概念的分枝都展開了，而且次要的分枝也露出 */
+const allExpanded = computed(
+  () => expandable.value.every((id) => openBranchIds.value.has(id)) && (!hasSecondaryBranches.value || showSecondaryBranches.value),
+)
 
 /**
- * 工具列的「次要概念」開關：開＝全部分枝的次要都展開（含本身是次要的分枝），關＝全部收合。
- * 圖裡每個分枝的「＋N 次要」可以單獨展開；全部都展開了，開關也就顯示成開。
+ * 工具列的「次要概念」開關：開＝全部展開（含本身是次要的分枝），關＝全部收合。
+ * 開關的狀態照圖上看得到的為準：圖裡每個分枝的「＋N 次要」可以單獨展開，全部都展開了、
+ * 也沒有藏著的次要分枝，開關才顯示成開。
  */
 const showSecondaries = computed({
   get: () => allExpanded.value,
   set: (on: boolean) => {
-    expanded.value = on && mindmap.value ? new Set([...expandable.value, mindmap.value.center]) : new Set()
+    openBranchIds.value = on ? new Set(expandable.value) : new Set()
+    showSecondaryBranches.value = on
   },
 })
 
 function toggleBranch(branchId: string) {
-  const next = new Set(expanded.value)
+  const next = new Set(openBranchIds.value)
   if (next.has(branchId)) next.delete(branchId)
   else next.add(branchId)
-  next.delete(mindmap.value?.center ?? '')
-  expanded.value = next
+  openBranchIds.value = next
 }
 
 const detail = computed(() => {
@@ -161,8 +176,8 @@ function onDocumentPointerDown(event: PointerEvent) {
 onMounted(() => document.addEventListener('pointerdown', onDocumentPointerDown))
 onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointerDown))
 
-// 換了展開狀態或開關，詞的位置會變，彈出框不再指著它
-watch([expanded, showLinks], () => {
+// 換了展開狀態或開關，詞的位置會變；換了裝置，圖會整塊卸載重畫。彈出框都不再指著原來的詞
+watch([expanded, showLinks, finePointer], () => {
   selectedId.value = null
 })
 </script>
@@ -178,7 +193,7 @@ watch([expanded, showLinks], () => {
       文章心智圖
     </h3>
     <div class="relative rounded-[6px] border border-(--border-shelf) bg-(--canvas-bg)">
-      <!-- 兩個開關都只是顯示或隱藏圖的某一部分，所以用同一種控制項（站主 2026-11-25），預設都關 -->
+      <!-- 兩個開關都只是顯示或隱藏圖的某一部分，所以用同一種控制項，預設都關 -->
       <div
         v-if="hasSecondaries || mindmap.links.length > 0"
         :class="[
@@ -243,8 +258,8 @@ watch([expanded, showLinks], () => {
           <svg width="26" height="8" aria-hidden="true"><line x1="0" x2="26" y1="4" y2="4" stroke-width="1.5" stroke-dasharray="5 4" class="stroke-(--accent-secondary)" /></svg>
           只是常一起出現
         </span>
-        <!-- 大綱樹的關係是文字，不受另一端收合影響，只有圖才有「連到收合的節點」 -->
-        <span v-if="finePointer && detail.hiddenLinkCount > 0">另有 {{ detail.hiddenLinkCount }} 條連到收合的節點</span>
+        <!-- 大綱樹的關係是文字，不受另一端收合影響，只有圖才有「連到收合的詞」 -->
+        <span v-if="finePointer && detail.hiddenLinkCount > 0">另有 {{ detail.hiddenLinkCount }} 條連到收合的詞</span>
       </div>
     </div>
   </section>
