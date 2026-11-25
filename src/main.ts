@@ -7,6 +7,7 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/useAuthStore'
 import { initInputModality } from './composables/useInputModality'
+import { installPageTransition } from './layouts/pageTransition'
 
 import '@/assets/css/main.css'
 
@@ -21,5 +22,7 @@ app.use(pinia)
 // 立刻顯示，需要登入的頁面由路由守衛等它做完（見 router/index.ts）。
 useAuthStore(pinia).restore()
 app.use(router)
+// 換頁轉場：記下每次換頁是不是站內點連結，決定要不要播、往哪邊（見 layouts/pageTransition.ts）
+installPageTransition(router)
 
 app.mount('#app')
