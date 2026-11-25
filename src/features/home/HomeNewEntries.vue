@@ -1,27 +1,20 @@
-<script lang="ts">
-// 整個頁面載入（JS 模組存活）期間只播一次：第一次有卡片出現時播，之後站內換頁回首頁、
-// 同頁再點首頁連結都不播。這是首頁唯一的進場時刻（圖譜區塊已不再進場）。
-let entrancePlayed = false
-
-/** 測試用：讓下一次掛載重新算「第一次」 */
-export function resetHomeEntrance() {
-  entrancePlayed = false
-}
-</script>
-
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { fetchArticles } from '@/api/articles'
 import { fetchProjects } from '@/api/projects'
+import { isFirstPageOfLoad } from '@/router/navigationCount'
 import { latestEntries, type NewEntry } from './homeNewEntries'
 
 // 首頁「最新收錄」列：最新的幾筆文章與實作，每筆都是進條目頁的入口。不印日期，只用「新」標記。
 // 這一列是入口不是內容：兩個 API 都沒有資料（或載入失敗）時整列不顯示，不佔第一屏。
 // 這裡刻意不用 fetchXxxOrDemo：載入失敗時退回的示範資料不是真的「新收錄」，不能拿來當入口。
 const entries = ref<NewEntry[]>([])
-// 這次掛載要不要播進場：只有整個頁面載入後第一次有卡片時才是 true。
+// 進場只在「首頁是整頁載入的第一個頁面」時播（直接開首頁、重新整理、外部連結進首頁）；
+// 站內從別頁換到首頁只有換頁轉場，不再播這個，也不會跟換頁疊成兩個動作；已經在首頁再點首頁連結不會重新掛載，也不播。
+// 要在掛載當下判斷：卡片是 API 回來才出現，那時可能已經又換過頁。
 // 動畫只作用在已經渲染好的卡片上（見下面的 style），卡片的內容與位置不等動畫，沒有 JS 或減少動態時也完整
+const firstPageOfLoad = isFirstPageOfLoad()
 const playEntrance = ref(false)
 
 onMounted(async () => {
@@ -30,10 +23,7 @@ onMounted(async () => {
     fetchProjects().catch(() => []),
   ])
   entries.value = latestEntries(articles, projects)
-  if (entries.value.length && !entrancePlayed) {
-    entrancePlayed = true
-    playEntrance.value = true
-  }
+  if (entries.value.length && firstPageOfLoad) playEntrance.value = true
 })
 
 // 最多三張錯開（index 0、1、2），第四張起跟第三張一起出現
