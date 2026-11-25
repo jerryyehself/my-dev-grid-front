@@ -6,7 +6,7 @@ import type { ArticleMindmap, MindmapNode } from './articleMindmapTypes'
 import ArticleMindmapPanel from './ArticleMindmapPanel.vue'
 import * as source from './articleMindmapSource'
 import { extractHeadings } from '@/components/markdown/headings'
-import productionBody from './articleMindmapFixtureBody.md?raw'
+import productionBody from './data/articleMindmap14Body.md?raw'
 import { FINE_POINTER_QUERY } from './useFinePointer'
 
 // 內文標題：正式環境那篇的快照，slug 跟文章頁算出來的一樣

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { extractHeadings } from '@/components/markdown/headings'
 import fixture from './articleMindmapFixture.json'
-import productionBody from './articleMindmapFixtureBody.md?raw'
+import productionBody from './data/articleMindmap14Body.md?raw'
 
-// articleMindmapFixtureBody.md 是正式環境那篇文章（id 14）內文的快照，2026-11-24 從正式 API 取得。
+// data/articleMindmap14Body.md 是正式環境那篇文章（id 14）內文的快照，2026-11-25 從正式 API 取得（跟 11-24 那份相同）。
 // 測試時不去抓，免得測試結果跟著線上內容變。文章改版改到標題時，要重抓快照、重對 fixture 的出處。
 const slugs = new Set(extractHeadings(productionBody).map((h) => h.slug))
 

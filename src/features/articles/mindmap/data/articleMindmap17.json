@@ -1,0 +1,521 @@
+{
+  "article_id": 17,
+  "center": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "parent": null,
+      "label": "文章列表與內頁該放哪些資訊",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 1,
+      "units": []
+    },
+    {
+      "id": "n1",
+      "parent": "n0",
+      "label": "研究怎麼描述讀者找資料",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "ellis模型的行為定義",
+          "count": 1
+        },
+        {
+          "unit_id": "列表上的線索information-scent",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n2",
+      "parent": "n1",
+      "label": "Ellis 的找資料行為",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "ellis模型的行為定義",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "Ellis"
+      ]
+    },
+    {
+      "id": "n3",
+      "parent": "n1",
+      "label": "monitoring 是追蹤新進展",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "ellis模型的行為定義",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "monitoring"
+      ]
+    },
+    {
+      "id": "n4",
+      "parent": "n1",
+      "label": "verifying 是核對內容",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "ellis模型的行為定義",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "verifying"
+      ]
+    },
+    {
+      "id": "n5",
+      "parent": "n1",
+      "label": "引用與收藏屬於 information managing",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "ellis模型的行為定義",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "information managing"
+      ]
+    },
+    {
+      "id": "n6",
+      "parent": "n1",
+      "label": "information scent",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "列表上的線索information-scent",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n7",
+      "parent": "n1",
+      "label": "往下追的線索",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "列表上的線索information-scent",
+          "count": 1
+        },
+        {
+          "unit_id": "速查表",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "chaining",
+        "footnote chasing"
+      ]
+    },
+    {
+      "id": "n8",
+      "parent": "n0",
+      "label": "列表上什麼決定讀者點不點",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "速查表",
+          "count": 1
+        },
+        {
+          "unit_id": "從摘要判斷相關性的研究",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n9",
+      "parent": "n8",
+      "label": "內容是最常用的相關性準則",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "速查表",
+          "count": 1
+        },
+        {
+          "unit_id": "從摘要判斷相關性的研究",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "content",
+        "相關性準則"
+      ]
+    },
+    {
+      "id": "n10",
+      "parent": "n8",
+      "label": "標題不清楚就不會被點",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "從摘要判斷相關性的研究",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "uninformative"
+      ]
+    },
+    {
+      "id": "n11",
+      "parent": "n8",
+      "label": "摘要加長不一定判斷更準",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "從摘要判斷相關性的研究",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "長摘要"
+      ]
+    },
+    {
+      "id": "n12",
+      "parent": "n8",
+      "label": "點之前與點之後的兩種判斷",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "作者署名與可信度",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "預測判斷",
+        "評估判斷"
+      ]
+    },
+    {
+      "id": "n13",
+      "parent": "n0",
+      "label": "日期、作者與圖示怎麼呈現",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "日期與更新標示",
+          "count": 1
+        },
+        {
+          "unit_id": "作者署名與可信度",
+          "count": 1
+        },
+        {
+          "unit_id": "圖示與文字標籤",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n14",
+      "parent": "n13",
+      "label": "時效的重要程度因人而異",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "日期與更新標示",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "currency"
+      ]
+    },
+    {
+      "id": "n15",
+      "parent": "n13",
+      "label": "標出發布日與最後更新",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "日期與更新標示",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "Last updated",
+        "最後更新"
+      ]
+    },
+    {
+      "id": "n16",
+      "parent": "n13",
+      "label": "顯眼的元素才被拿來判斷可信度",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "作者署名與可信度",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "Prominence-Interpretation"
+      ]
+    },
+    {
+      "id": "n17",
+      "parent": "n13",
+      "label": "單一作者時署名沒有區辨作用",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "區辨作用"
+      ]
+    },
+    {
+      "id": "n18",
+      "parent": "n13",
+      "label": "圖示要配文字標籤",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "圖示與文字標籤",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "text label"
+      ]
+    },
+    {
+      "id": "n19",
+      "parent": "n0",
+      "label": "Dublin Core 元素別用錯",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "dublin-core元素的定義",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n20",
+      "parent": "n19",
+      "label": "Coverage 容易被漏掉",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "dublin-core元素的定義",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "Coverage"
+      ]
+    },
+    {
+      "id": "n21",
+      "parent": "n19",
+      "label": "modified 不是核心元素",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "dublin-core元素的定義",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "dcterms:modified"
+      ]
+    },
+    {
+      "id": "n22",
+      "parent": "n19",
+      "label": "Source 不是可信度上的出處",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "dublin-core元素的定義",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "Source"
+      ]
+    },
+    {
+      "id": "n23",
+      "parent": "n0",
+      "label": "列表與內頁的分工",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n24",
+      "parent": "n23",
+      "label": "列表管要不要點、內頁管信不信",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "要不要點"
+      ]
+    },
+    {
+      "id": "n25",
+      "parent": "n23",
+      "label": "專門寫的一兩句摘要",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "速查表",
+          "count": 1
+        },
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "專門寫"
+      ]
+    },
+    {
+      "id": "n26",
+      "parent": "n23",
+      "label": "收藏與引用資訊放內頁頁尾",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "結論",
+          "count": 1
+        }
+      ],
+      "text_forms": [
+        "頁尾"
+      ]
+    }
+  ],
+  "links": [],
+  "status": "draft"
+}

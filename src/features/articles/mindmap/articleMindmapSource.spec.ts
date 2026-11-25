@@ -3,14 +3,15 @@ import fixture from './articleMindmapFixture.json'
 import {
   MINDMAP_ARTICLE_IDS,
   createMindmapLoader,
+  fetchPublishedMindmap,
   hasArticleMindmap,
   loadArticleMindmap,
   mindmapArticleIds,
 } from './articleMindmapSource'
 
 describe('mindmapArticleIds', () => {
-  it('它應該在正式 build 是空的', () => {
-    expect([...mindmapArticleIds(false)]).toEqual([])
+  it('它應該在正式 build 是已發布、有資料的那 6 篇', () => {
+    expect([...mindmapArticleIds(false)]).toEqual([12, 13, 14, 15, 16, 17])
   })
 
   it('它應該在開發與測試時是 fixture 那篇', () => {
@@ -76,5 +77,22 @@ describe('loadArticleMindmap', () => {
   it('它應該載得到 fixture 本身（真的動態 import）', async () => {
     const data = await loadArticleMindmap(fixture.article_id)
     expect(data?.nodes).toHaveLength(28)
+  })
+})
+
+describe('fetchPublishedMindmap（正式 build 的資料來源）', () => {
+  it('它應該載得到有資料那篇的分塊', async () => {
+    const data = (await fetchPublishedMindmap(17)) as { article_id: number }
+    expect(data.article_id).toBe(17)
+  })
+
+  it.each([11, 18, 0, -1, 12.5, Number.NaN])('它應該對沒有資料的文章 %s 回 null', async (id) => {
+    expect(await fetchPublishedMindmap(id)).toBeNull()
+  })
+
+  it('它應該讓正式 build 的載入函式通過格式驗證、對到那篇', async () => {
+    const load = createMindmapLoader(fetchPublishedMindmap)
+    // 測試環境是 DEV，hasArticleMindmap 只認 fixture 那篇（14），所以拿 14 走完整流程
+    expect((await load(14))?.nodes.length).toBeGreaterThan(0)
   })
 })

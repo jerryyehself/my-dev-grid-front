@@ -5,7 +5,7 @@ import fixture from './articleMindmapFixture.json'
 import type { ArticleMindmap } from './articleMindmapTypes'
 import ArticleMindmapOutline from './ArticleMindmapOutline.vue'
 import { extractHeadings } from '@/components/markdown/headings'
-import productionBody from './articleMindmapFixtureBody.md?raw'
+import productionBody from './data/articleMindmap14Body.md?raw'
 
 const mindmap = fixture as ArticleMindmap
 // 內文標題：正式環境那篇的快照
