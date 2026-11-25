@@ -150,25 +150,52 @@ describe('ProjectsYearList 卡住的年份標頭', () => {
 })
 
 describe('ProjectsYearList 篩選過場與底部淡出遮罩', () => {
-  // jsdom 沒有版面：每個專案列 50px 高、依序往下排；容器可見高度 100；
-  // scrollHeight＝內容（列數 × 50）與絕對定位的離開複本下緣兩者取大，跟瀏覽器把絕對定位子元素算進可捲範圍的行為一致
-  const VIEWPORT = 100
-  const many = [{ year: '2026', projects: ['1', '2', '3', '4', '5'].map((id) => project(id, `p${id}`)) }]
-  const one = [{ year: '2026', projects: [project('1', 'p1')] }]
+  // jsdom 沒有版面：每個專案列 50px 高（內容 40）、依序往下排；容器可見高度 viewport 可調。
+  // scrollHeight 的模擬跟瀏覽器一致：內容（列數 × 50）、容器自己的可見高度、容器「直接子層」裡絕對定位元素的下緣三者取大
+  // （絕對定位的後代只要沒被中間的 overflow:hidden 擋住，就會被算進可捲範圍；擋住的不算）。
+  let viewport = 100
+  const rowGroups = (ids: string[]) => [{ year: '2026', projects: ids.map((id) => project(id, `p${id}`)) }]
+  const many = rowGroups(['1', '2', '3', '4', '5'])
   let animate: typeof Element.prototype.animate | undefined
+  // 進行中的動畫：移位的列帶著 transform（translateY），它會算進捲動容器的可捲範圍，直到動畫結束
+  let active: Map<Element, number>
+  let finishers: (() => void)[]
+  const finishAnimations = async () => {
+    for (const f of finishers.splice(0)) f()
+    await flushPromises()
+  }
 
   beforeEach(() => {
+    viewport = 100
+    active = new Map()
+    finishers = []
     animate = Element.prototype.animate
-    Element.prototype.animate = function () {
-      return { cancel() {}, onfinish: null } as unknown as Animation
+    Element.prototype.animate = function (this: Element, keyframes: Keyframe[]) {
+      const dy = parseFloat(/translate\(\S+, (-?[\d.]+)px\)/.exec(String(keyframes[0]?.transform ?? ''))?.[1] ?? '0')
+      if (dy) active.set(this, dy)
+      let done!: () => void
+      const anim = {
+        cancel: () => active.delete(this),
+        onfinish: null as (() => void) | null,
+        finished: new Promise<void>((resolve) => (done = resolve)),
+      }
+      finishers.push(() => {
+        active.delete(this)
+        anim.onfinish?.()
+        done()
+      })
+      return anim as unknown as Animation
     }
-    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(VIEWPORT)
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => viewport)
     vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) {
-      const rows = this.querySelectorAll('[data-flip-key]').length * 50
-      const ghosts = [...this.querySelectorAll<HTMLElement>('[aria-hidden="true"][style*="absolute"]')].map(
-        (g) => parseFloat(g.style.top) + parseFloat(g.style.height),
+      const rows = Math.max(
+        0,
+        ...[...this.querySelectorAll('[data-flip-key]')].map((el, i) => i * 50 + 50 + Math.max(0, active.get(el) ?? 0)),
       )
-      return Math.max(rows, ...ghosts)
+      const absolute = [...this.children]
+        .filter((c): c is HTMLElement => c instanceof HTMLElement && c.style.position === 'absolute')
+        .map((c) => parseFloat(c.style.top) + parseFloat(c.style.height))
+      return Math.max(rows, viewport, ...absolute)
     })
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
       const key = this.getAttribute('data-flip-key')
@@ -187,19 +214,60 @@ describe('ProjectsYearList 篩選過場與底部淡出遮罩', () => {
     document.body.innerHTML = ''
   })
 
-  it('它應該在從很多筆篩成一筆之後，離開複本移除前後底部淡出遮罩都是「已經到底」', async () => {
-    const wrapper = mount(ProjectsYearList, { props: { groups: many, selectedId: '1' }, attachTo: document.body })
-    await flushPromises()
-    expect(wrapper.classes()).toContain('is-fade-bottom') // 5 列 250px 在 100px 的容器裡，下面還有
+  const ghostCount = (wrapper: ReturnType<typeof render>) => wrapper.element.querySelectorAll('[aria-hidden="true"]').length
 
-    await wrapper.setProps({ groups: one })
+  it.each([100, 70])(
+    '它應該在可見高度 %ipx、從很多筆篩成一筆之後（含底邊切到一半的離開列），離開複本移除前後底部淡出遮罩都是「已經到底」',
+    async (height) => {
+      viewport = height // 70：第 2 列（50–90）被容器下緣切到一半，審查重現的情況
+      const wrapper = mount(ProjectsYearList, { props: { groups: many, selectedId: '1' }, attachTo: document.body })
+      await flushPromises()
+      expect(wrapper.classes()).toContain('is-fade-bottom') // 5 列 250px 在容器裡，下面還有
+
+      await wrapper.setProps({ groups: rowGroups(['1']) })
+      await flushPromises()
+
+      expect(ghostCount(wrapper)).toBeGreaterThan(0) // 離開的複本還在淡出（這個斷言確保測的是「複本在的時候」）
+      expect(wrapper.classes()).not.toContain('is-fade-bottom')
+      // 複本移除之後也維持正確（沒有任何事件會再重算，所以要在複本還在的時候就是對的）
+      for (const g of wrapper.element.querySelectorAll('[data-flip-overlay]')) g.remove()
+      await flushPromises()
+      expect(wrapper.classes()).not.toContain('is-fade-bottom')
+    },
+  )
+
+  it('它應該在動畫結束後重算底部淡出遮罩：留下的列從下面滑上來時 transform 會暫時撐大捲動高度', async () => {
+    viewport = 100
+    const wrapper = mount(ProjectsYearList, { props: { groups: many, selectedId: '5' }, attachTo: document.body })
     await flushPromises()
 
-    // 複本還在淡出時：畫面外的那幾列沒有複本，不會把捲動高度撐過容器
-    expect(wrapper.classes()).not.toContain('is-fade-bottom')
-    // 複本移除之後也維持正確（沒有任何事件會再重算，所以要在複本還在的時候就是對的）
-    for (const g of wrapper.element.querySelectorAll('[aria-hidden="true"]')) g.remove()
+    await wrapper.setProps({ groups: rowGroups(['5']) }) // 第 5 列（y=200）滑到 y=0，動畫中帶著 translateY(200px)
     await flushPromises()
-    expect(wrapper.classes()).not.toContain('is-fade-bottom')
+    expect(wrapper.classes()).toContain('is-fade-bottom') // 動畫進行中：transform 撐大了 scrollHeight，這一刻量到的是「下面還有」
+
+    await finishAnimations()
+
+    expect(wrapper.classes()).not.toContain('is-fade-bottom') // 結束後沒有任何事件，只能靠 onFinish 重算
   })
+
+  it.each([30, 70, 120, 160, 400])(
+    '它應該讓可見高度 %ipx 時篩選過程中的 scrollHeight 只由留下的列決定（離開的複本不改變捲動高度）',
+    async (height) => {
+      viewport = height
+      const wrapper = mount(ProjectsYearList, { props: { groups: many, selectedId: '3' }, attachTo: document.body })
+      await flushPromises()
+      const scroller = wrapper.element as HTMLElement
+      expect(scroller.scrollHeight).toBe(Math.max(250, height))
+
+      await wrapper.setProps({ groups: rowGroups(['3']) }) // 篩掉 1、2、4、5，其中哪幾列跨過或超出下緣隨高度而變
+      await flushPromises()
+
+      if (height < 250) expect(ghostCount(wrapper)).toBeGreaterThan(0)
+      // 動畫進行中：只有留下的列（第 3 列從 y=100 滑到 y=0，帶著 100px 的 transform）與容器本身決定，離開的複本不貢獻
+      expect(scroller.scrollHeight).toBe(Math.max(50 + 100, height))
+
+      await finishAnimations()
+      expect(scroller.scrollHeight).toBe(Math.max(50, height))
+    },
+  )
 })

@@ -58,10 +58,19 @@ function measure(root: HTMLElement): Map<string, Spot> {
 /**
  * @param container 捲動容器（要是定位元素，離開的複本以它為座標原點）
  * @param source 清單資料；它一變就量舊位置、更新後播動畫
+ * @param options.onFinish 這一輪的動畫全部結束（或被取消）之後呼叫。動畫進行中留下的項目還帶著 transform，
+ *   transform 也會算進捲動容器的可捲範圍，呼叫端若在這段時間量過 scrollHeight（例如底部淡出遮罩），
+ *   結束後沒有任何事件會再讓它重算，所以結束時給它一次重算的機會。被下一輪取代時不呼叫（下一輪結束時才會）。
  */
-export function useListReflow(container: Ref<HTMLElement | undefined>, source: WatchSource) {
+export function useListReflow(
+  container: Ref<HTMLElement | undefined>,
+  source: WatchSource,
+  options: { onFinish?: () => void } = {},
+) {
   let running: Animation[] = []
   let ghosts: HTMLElement[] = []
+  // 所有離開複本都放進這一層覆蓋層，不直接掛在捲動容器上（見 play）
+  let overlay: HTMLElement | undefined
   let round = 0
 
   // 收掉上一段：取消動畫、拿掉複本，回到真正的版面，才量得到「現在」的位置
@@ -71,6 +80,8 @@ export function useListReflow(container: Ref<HTMLElement | undefined>, source: W
     running = []
     for (const g of ghosts) g.remove()
     ghosts = []
+    overlay?.remove()
+    overlay = undefined
   }
 
   function play(root: HTMLElement, before: Map<string, Spot>, mine: number) {
@@ -103,10 +114,27 @@ export function useListReflow(container: Ref<HTMLElement | undefined>, source: W
     if (closeMs <= 0) return
     for (const [key, old] of before) {
       if (after.has(key)) continue
-      // 原本就在容器可見範圍外的（要捲才看得到）直接消失：複本是絕對定位，放在範圍外會把捲動高度撐大，
-      // 呼叫端依 scrollHeight 算的狀態（例如底部淡出遮罩）會在複本移除後仍停在錯的值，而且看不到的也不用白跑動畫
+      // 原本就在容器可見範圍外的（要捲才看得到）直接消失，看不到的不用白跑動畫
       if (old.top + old.height <= 0 || old.top >= root.clientHeight) continue
       // 離開的：用舊元素的複本釘在原本看到的位置淡出，不佔位
+      // 複本放進覆蓋層：覆蓋層是蓋在容器目前可見範圍上的一塊（大小＝clientWidth × clientHeight、overflow:hidden），
+      // 它自己的下緣最多到 scrollTop + clientHeight，不會超過可捲範圍，裡面的複本再怎麼擺（包括跨過可見範圍下緣的那一列）
+      // 都不會改變 scrollHeight。複本直接掛在容器上的話，絕對定位的複本會被算進可捲範圍，
+      // 呼叫端依 scrollHeight 算的狀態（例如底部淡出遮罩）在複本移除後就會停在錯的值
+      if (!overlay) {
+        overlay = document.createElement('div')
+        overlay.setAttribute('data-flip-overlay', '')
+        Object.assign(overlay.style, {
+          position: 'absolute',
+          left: `${root.scrollLeft}px`,
+          top: `${root.scrollTop}px`,
+          width: `${root.clientWidth}px`,
+          height: `${root.clientHeight}px`,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+        })
+        root.appendChild(overlay)
+      }
       const ghost = old.el.cloneNode(true) as HTMLElement
       ghost.removeAttribute(FLIP_KEY_ATTR)
       ghost.setAttribute('aria-hidden', 'true')
@@ -114,23 +142,36 @@ export function useListReflow(container: Ref<HTMLElement | undefined>, source: W
       ghost.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'))
       Object.assign(ghost.style, {
         position: 'absolute',
-        left: `${old.left + root.scrollLeft - root.clientLeft}px`,
-        top: `${old.top + root.scrollTop - root.clientTop}px`,
+        // old 是相對容器邊框外緣的可見位置，覆蓋層的原點在容器的內緣（邊框內側），扣掉邊框
+        left: `${old.left - root.clientLeft}px`,
+        top: `${old.top - root.clientTop}px`,
         width: `${old.width}px`,
         height: `${old.height}px`,
         margin: '0',
         pointerEvents: 'none',
         listStyle: 'none',
       })
-      root.appendChild(ghost)
+      overlay.appendChild(ghost)
       ghosts.push(ghost)
       const anim = ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: closeMs, easing, fill: 'forwards' })
       anim.onfinish = () => {
         ghost.remove()
         ghosts = ghosts.filter((g) => g !== ghost)
+        if (ghosts.length === 0) {
+          overlay?.remove()
+          overlay = undefined
+        }
       }
       running.push(anim)
     }
+  }
+
+  // 這一輪的動畫都結束之後通知呼叫端；cancel 會讓 finished 被拒絕，allSettled 照樣往下走
+  function notifyWhenDone(mine: number) {
+    if (!options.onFinish || running.length === 0) return
+    void Promise.allSettled(running.map((a) => a.finished)).then(() => {
+      if (mine === round) options.onFinish?.()
+    })
   }
 
   // flush: 'pre'：在這個元件重畫之前跑，此時 DOM 還是舊的
@@ -143,7 +184,10 @@ export function useListReflow(container: Ref<HTMLElement | undefined>, source: W
       const before = measure(root)
       if (before.size === 0) return
       const mine = round
-      void nextTick(() => play(root, before, mine))
+      void nextTick(() => {
+        play(root, before, mine)
+        notifyWhenDone(mine)
+      })
     },
     { flush: 'pre' },
   )

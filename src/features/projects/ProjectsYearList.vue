@@ -24,8 +24,14 @@ const stuck = ref<Set<string>>(new Set())
 // 只淡出底部：頂端有年份標頭在提示「上面還有」，頂端再淡出會把標頭一起淡掉
 const { atBottom, update: updateFade } = useScrollFade(scroller, [() => props.groups])
 
-// 篩選讓清單變動時：留下的專案滑到新位置、離開的淡出、新出現的淡入（見 useListReflow）
-useListReflow(scroller, () => props.groups)
+// 篩選讓清單變動時：留下的專案滑到新位置、離開的淡出、新出現的淡入（見 useListReflow）。
+// 動畫進行中留下的列帶著 transform，會暫時撐大 scrollHeight，結束後要重算底部淡出遮罩與卡住的標頭
+useListReflow(scroller, () => props.groups, {
+  onFinish: () => {
+    updateFade()
+    updateStuck()
+  },
+})
 
 function updateStuck() {
   const root = scroller.value
