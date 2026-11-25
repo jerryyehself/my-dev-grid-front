@@ -13,7 +13,7 @@ const { theme, setTheme } = useTheme()
   <!-- 「明亮模式｜暗黑模式」:兩顆鈕並排,兩個狀態同時看得到,選中的那顆反白。
        明亮模式＝淺色、暗黑模式＝深色。螢幕閱讀器讀成「顯示模式 群組:明亮模式,已按下」這類,
        目前是哪一種由 aria-pressed 告知(不靠顏色)。
-       選中的底色塊用 transform 滑過去(slide 240ms、ease-control),不動 width／left;
+       選中的底色塊用 transform 滑過去(slide、ease-control 動態 token,見 main.css),不動 width／left;
        prefers-reduced-motion 時 base.css 會把時間壓成 0.01ms。
        底色用導覽列文字色(米色),字用導覽列底色(藏青):兩個主題的導覽列都是藏青底,
        不會有藏青實心融進導覽列看不見的問題。 -->
@@ -24,12 +24,12 @@ const { theme, setTheme } = useTheme()
   >
     <span
       aria-hidden="true"
-      class="pointer-events-none absolute inset-y-0 left-0 w-1/2 rounded-full bg-(--text-nav-footer) transition-transform duration-[240ms] ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="pointer-events-none absolute inset-y-0 left-0 w-1/2 rounded-full bg-(--text-nav-footer) transition-transform duration-slide ease-control"
       :class="theme === 'dark' ? 'translate-x-full' : 'translate-x-0'"
     ></span>
     <button
       type="button"
-      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1.5 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1.5 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-hover-out hover:duration-hover-in ease-control"
       :class="
         theme === 'light'
           ? 'text-(--bg-nav-footer)'
@@ -42,7 +42,7 @@ const { theme, setTheme } = useTheme()
     </button>
     <button
       type="button"
-      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1.5 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-[120ms] hover:duration-150 ease-[cubic-bezier(.2,.8,.2,1)]"
+      class="relative z-10 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-1 min-[400px]:px-2 md:px-1.5 lg:px-2 whitespace-nowrap transition-[color,opacity] duration-hover-out hover:duration-hover-in ease-control"
       :class="
         theme === 'dark'
           ? 'text-(--bg-nav-footer)'

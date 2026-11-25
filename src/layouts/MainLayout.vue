@@ -4,13 +4,13 @@
     <TheNavbar />
 
     <!-- 🧭 捲動追蹤列：修正 issue #3 的縮放閃爍。
-         跟下面的大標題是兩個獨立節點，只用 opacity/位移進場，
+         跟下面的大標題是兩個獨立節點，只用 opacity/位移進場（開 panel-open、收 panel-close，同一條 ease-control），
          不對同一個節點同時做字級縮放＋flex-direction 切換（那才是閃爍的根源）。
          v-if（不是純 opacity 切換）是刻意的：sticky 元素即使透明，沒拿掉還是會佔版面高度，
          之前就是這樣在每一頁頁首上方留了一段看不見的空白，怎麼調 header/main 的 padding 都調不掉。 -->
     <Transition
-      enter-active-class="transition-[opacity,translate] duration-200 ease-out"
-      leave-active-class="transition-[opacity,translate] duration-200 ease-out"
+      enter-active-class="transition-[opacity,translate] duration-panel-open ease-control"
+      leave-active-class="transition-[opacity,translate] duration-panel-close ease-control"
       enter-from-class="opacity-0 -translate-y-1"
       leave-to-class="opacity-0 -translate-y-1"
     >

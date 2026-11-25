@@ -22,3 +22,52 @@
   --font-serif: 'Noto Serif TC', Georgia, 'Times New Roman', serif;
   --font-wordmark: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
 }
+
+/* ==========================================================================
+   動態 token（數值照 .claude/skills/visual-design-language 的 Motion tokens 表，改值先改表）
+   兩層：一般層給按鈕、選單、面板這類控制項，用 ease-control；強烈層只給可點卡片的 hover／focus，
+   以及頁面唯一的進場時刻，不能用在按鈕或選單上。時長都在 100–400 ms 內（.claude/rules/ui.md 第 2 條）。
+   進場和退場用同一條減速曲線，退場比較短（hover-out 是 hover-in 的 80%、panel-close 是 panel-open 的 60%）。
+
+   Tailwind 的接法：--ease-* 會產生 ease-control／ease-enter，--transition-duration-* 會產生
+   duration-press、duration-panel-open 這類 class。寫在 CSS 檔裡的動態直接用 var(--…)。
+   static：不管 class 有沒有用到都輸出成 :root 變數，CSS 檔（例如 aboutSketch.css）才拿得到。
+
+   沒有寫成變數的：強烈層的退場（entrance 的 60–80%，192–256 ms）目前沒有地方用，等有用到再定值。
+
+   prefers-reduced-motion 時一律由 base.css 最後一段壓成 0.01ms，這裡不另外處理。
+   ========================================================================== */
+@theme static {
+  /* 曲線 */
+  /* 所有控制項：按下、hover 進出、面板開合、滑動、卡片 hover */
+  --ease-control: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* 進場落定（quint-out）；退場沿用對應進場的曲線，不另設加速曲線 */
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* 一般層的時長 */
+  /* 按鈕按下 */
+  --transition-duration-press: 100ms;
+  /* hover 狀態出現／消失 */
+  --transition-duration-hover-in: 150ms;
+  --transition-duration-hover-out: 120ms;
+  /* 選單、下拉、彈出框打開／收起 */
+  --transition-duration-panel-open: 200ms;
+  --transition-duration-panel-close: 120ms;
+  /* 指示塊滑過去 */
+  --transition-duration-slide: 240ms;
+
+  /* 強烈層 */
+  /* 頁面唯一的進場時刻：上升 24px、320ms、ease-enter */
+  --transition-duration-entrance: 320ms;
+  --motion-entrance-rise: 24px;
+  /* 可點卡片在精確指標 hover 或 focus 時浮起：上移 6px、放大 1.03、200ms、ease-control */
+  --transition-duration-card-hover: 200ms;
+  --motion-card-hover-lift: 6px;
+  --motion-card-hover-scale: 1.03;
+  /* 同一組卡片依序進場的間隔，只用在頁面唯一的進場時刻；最多三張錯開，其餘跟第三張一起 */
+  --transition-delay-stagger: 80ms;
+
+  /* 沒指定時長／曲線的 transition-* class（例如單獨的 transition-colors）預設用 hover-in＋ease-control */
+  --default-transition-duration: var(--transition-duration-hover-in);
+  --default-transition-timing-function: var(--ease-control);
+}

@@ -86,13 +86,13 @@ async function handleSubmit() {
       <div class="flex flex-col gap-2">
         <a
           :href="oauthRedirectUrl('google')"
-          class="flex items-center justify-center rounded-[6px] border border-(--border-shelf) bg-(--bg-paper-light) py-2.5 text-sm text-(--text-ink-main) hover:border-(--text-accent)/40 transition-colors"
+          class="flex items-center justify-center rounded-[6px] border border-(--border-shelf) bg-(--bg-paper-light) py-2.5 text-sm text-(--text-ink-main) hover:border-(--text-accent)/40 transition-colors duration-hover-out hover:duration-hover-in"
         >
           用 Google 登入
         </a>
         <a
           :href="oauthRedirectUrl('line')"
-          class="flex items-center justify-center rounded-[6px] border border-(--border-shelf) bg-(--bg-paper-light) py-2.5 text-sm text-(--text-ink-main) hover:border-(--text-accent)/40 transition-colors"
+          class="flex items-center justify-center rounded-[6px] border border-(--border-shelf) bg-(--bg-paper-light) py-2.5 text-sm text-(--text-ink-main) hover:border-(--text-accent)/40 transition-colors duration-hover-out hover:duration-hover-in"
         >
           用 LINE 登入
         </a>

@@ -53,7 +53,7 @@ function summaryOf(a: ArticleDto): string {
 // 每篇文章右上角的「編輯」。所在那一列是 mono 大寫小字，這顆是中文，照 D-68 的中文標籤下限用 13px、
 // 不套大寫與寬字距
 const EDIT_LINK_CLASS =
-  'relative z-10 ml-auto font-sans normal-case text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out'
+  'relative z-10 ml-auto font-sans normal-case text-(length:--type-label-size) tracking-[0.05em] text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in'
 
 const viewMode = ref<'timeline' | 'folder'>('timeline')
 const VIEW_MODES = [
@@ -104,7 +104,7 @@ const folderArticles = computed(() => {
       <AuthOnly>
         <router-link
           :to="{ name: 'article-manage' }"
-          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
@@ -163,7 +163,7 @@ const folderArticles = computed(() => {
           <!-- 標題是真的連結，::after 撐滿整列，整列都點得到：鍵盤能 Tab 到、能開新分頁、能複製網址。
                以前是 <article @click>，只有滑鼠點得到 -->
           <h3
-            class="text-base font-bold text-(--text-ink-main) mb-1.5 group-hover:text-(--text-accent) transition-colors"
+            class="text-base font-bold text-(--text-ink-main) mb-1.5 group-hover:text-(--text-accent) transition-colors duration-hover-out group-hover:duration-hover-in"
           >
             <RouterLink
               :to="{ name: 'article-detail', params: { id: article.id } }"
@@ -214,7 +214,7 @@ const folderArticles = computed(() => {
         <article
           v-for="article in folderArticles"
           :key="article.id"
-          class="relative p-5 sm:p-6 hover:bg-(--bg-folder) transition-colors"
+          class="relative p-5 sm:p-6 hover:bg-(--bg-folder) transition-colors duration-hover-out hover:duration-hover-in"
         >
           <div class="flex items-center gap-3 mb-2 text-(length:--type-label-size) leading-(--type-label-leading) tracking-[0.05em]">
             <span class="text-(--text-ink-muted)">{{ displayDate(article) }}</span>

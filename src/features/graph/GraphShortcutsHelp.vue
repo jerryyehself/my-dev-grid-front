@@ -151,8 +151,8 @@ const KEYS: { keys: string[]; text: string }[] = [
       </div>
       <div
         aria-hidden="true"
-        class="pointer-events-none absolute inset-x-0 bottom-0 h-10 rounded-b-xl bg-linear-to-t from-(--bg-paper-light) to-transparent transition-opacity duration-150"
-        :class="moreBelow ? 'opacity-100' : 'opacity-0'"
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-10 rounded-b-xl bg-linear-to-t from-(--bg-paper-light) to-transparent transition-opacity"
+        :class="moreBelow ? 'opacity-100 duration-hover-in' : 'opacity-0 duration-hover-out'"
       ></div>
     </div>
   </div>

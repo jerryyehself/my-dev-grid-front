@@ -376,7 +376,7 @@ function render(node: MdNode): VNode[] {
       const link = safeLink(node.url)
       if (!link) return kids(node)
       const cls =
-        'text-(--text-accent) underline underline-offset-2 hover:opacity-80 transition-opacity duration-100 ease-out'
+        'text-(--text-accent) underline underline-offset-2 hover:opacity-80 transition-opacity duration-hover-out hover:duration-hover-in'
       // 站內連結用 RouterLink 而不是 <a>:這是走 AST 而不是 v-html 的主要理由之一。
       // v-html 塞出來的 <a href="/articles/x"> 會整頁重載，SPA 的狀態全部重來
       //
@@ -678,7 +678,7 @@ function renderFootnoteRef(
   // 「開著」的狀態用粗體加底線表示（hover 只加底線，兩者看得出差別）
   const active = side ? pinned : open
   const markerClass = [
-    'relative inline px-[1px] py-0 rounded-[2px] leading-none tabular-nums cursor-pointer scroll-mt-36 transition-colors duration-100 ease-out',
+    'relative inline px-[1px] py-0 rounded-[2px] leading-none tabular-nums cursor-pointer scroll-mt-36 transition-colors duration-hover-out hover:duration-hover-in',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)',
     // 加大點擊範圍到約 44px，手指點得到；上標的數字本身只有十來 px 高。
     // 左右各往外 14px，但緊貼著另一個編號的那一側不加（相鄰編號中間沒有空隙，各加 14px 會蓋住鄰居，
@@ -839,7 +839,7 @@ function backLinks(info: FootnoteInfo): VNode[] {
           href: `#${uid}-fnref-${info.number}-${k}`,
           'aria-label': info.refCount > 1 ? `回到內文第 ${k} 處引用` : '回到內文引用',
           class:
-            'ml-2 inline-block px-1 text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out whitespace-nowrap',
+            'ml-2 inline-block px-1 text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in whitespace-nowrap',
         },
         // U+FE0E 要求文字樣式，不然部分系統把 ↩ 畫成彩色 emoji
         info.refCount > 1 ? `↩︎ ${k}` : '↩︎',

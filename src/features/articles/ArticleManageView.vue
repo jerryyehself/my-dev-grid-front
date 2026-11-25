@@ -160,7 +160,7 @@ async function handleDelete(a: ArticleDto) {
         <div
           v-for="a in visible"
           :key="a.id"
-          class="group grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_86px_72px] gap-x-[18px] gap-y-3 items-center px-4 sm:px-5 py-[18px] border-b border-(--border-shelf) last:border-b-0 transition-colors duration-150 hover:bg-(--bg-folder)"
+          class="group grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_86px_72px] gap-x-[18px] gap-y-3 items-center px-4 sm:px-5 py-[18px] border-b border-(--border-shelf) last:border-b-0 transition-colors duration-hover-out hover:duration-hover-in hover:bg-(--bg-folder)"
         >
           <div class="flex flex-col gap-[5px] min-w-0">
             <div class="flex items-center gap-[11px]">
@@ -168,7 +168,7 @@ async function handleDelete(a: ArticleDto) {
             </div>
             <router-link
               :to="{ name: 'article-detail', params: { id: a.id } }"
-              class="text-[15px] font-bold text-(--text-ink-main) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+              class="text-[15px] font-bold text-(--text-ink-main) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in"
             >
               {{ a.title }}
             </router-link>
@@ -191,12 +191,12 @@ async function handleDelete(a: ArticleDto) {
           <!-- 桌機滑過該列才出現,手機沒有 hover,所以常駐並放大成 44px 觸控目標
                （跟編輯頁段落排序鈕同一條規則，設計稿的 note-touch 註記） -->
           <div
-            class="col-span-2 sm:col-span-1 flex justify-start sm:justify-end gap-1 sm:gap-3 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+            class="col-span-2 sm:col-span-1 flex justify-start sm:justify-end gap-1 sm:gap-3 transition-opacity duration-hover-out group-hover:duration-hover-in group-focus-within:duration-hover-in sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
           >
             <router-link
               :to="{ name: 'article-editor', params: { id: a.id } }"
               :aria-label="`編輯 ${a.title}`"
-              class="w-11 h-11 sm:w-auto sm:h-auto flex items-center justify-center text-(--text-accent) opacity-50 hover:opacity-100 transition-opacity duration-100 ease-out"
+              class="w-11 h-11 sm:w-auto sm:h-auto flex items-center justify-center text-(--text-accent) opacity-50 hover:opacity-100 transition-opacity duration-hover-out hover:duration-hover-in"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />

@@ -91,7 +91,7 @@ defineExpose({ revealSelected })
           <button
             type="button"
             :aria-current="selectedId === project.id ? 'true' : undefined"
-            class="flex w-full scroll-mt-9 cursor-pointer items-start px-4 py-3 text-left transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent)"
+            class="flex w-full scroll-mt-9 cursor-pointer items-start px-4 py-3 text-left transition-colors duration-hover-out hover:duration-hover-in focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--text-accent)"
             :class="
               selectedId === project.id
                 ? 'bg-(--bg-list-selected)'

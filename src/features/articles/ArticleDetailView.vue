@@ -14,7 +14,7 @@
       <AuthOnly>
         <router-link
           :to="{ name: 'article-editor', params: { id: article.id } }"
-          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-100 ease-out"
+          class="inline-flex items-center gap-1.5 font-mono text-(length:--type-mono-size) tracking-[0.24em] uppercase text-(--text-ink-muted) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -67,7 +67,7 @@
             <li v-for="heading in headings" :key="heading.slug">
               <a
                 :href="`#${heading.slug}`"
-                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in leading-snug"
                 :class="heading.depth >= 3 ? 'pl-3 text-(length:--type-label-size) opacity-80' : ''"
               >
                 {{ heading.text }}
@@ -90,7 +90,7 @@
             class="flex items-center justify-between gap-2 min-h-11 px-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-sm font-bold text-(--text-ink-main) rounded-[6px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--text-accent)"
           >
             本文結構（{{ headings.length }} 節）
-            <svg class="transition-transform duration-100 group-open:rotate-90" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg class="transition-transform duration-press group-open:rotate-90" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M4 2l4 4-4 4" />
             </svg>
           </summary>
@@ -98,7 +98,7 @@
             <li v-for="heading in headings" :key="heading.slug">
               <a
                 :href="`#${heading.slug}`"
-                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors leading-snug"
+                class="text-sm text-(--text-ink-body) hover:text-(--text-accent) transition-colors duration-hover-out hover:duration-hover-in leading-snug"
                 :class="heading.depth >= 3 ? 'pl-3 text-(length:--type-label-size) opacity-80' : ''"
               >
                 {{ heading.text }}
@@ -119,7 +119,7 @@
           <router-link
             v-if="previousArticle"
             :to="{ name: 'article-detail', params: { id: previousArticle.id } }"
-            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors hover:border-(--text-accent)/40"
+            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)/40"
           >
             <div class="text-(length:--type-mono-size) font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               &lt;&lt; PREV
@@ -132,7 +132,7 @@
           <router-link
             v-if="nextArticle"
             :to="{ name: 'article-detail', params: { id: nextArticle.id } }"
-            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors hover:border-(--text-accent)/40"
+            class="flex-1 rounded-md border border-(--border-shelf) bg-(--bg-paper-light) px-4 py-3 text-right transition-colors duration-hover-out hover:duration-hover-in hover:border-(--text-accent)/40"
           >
             <div class="text-(length:--type-mono-size) font-mono uppercase tracking-[0.24em] text-(--text-ink-muted)">
               NEXT &gt;&gt;
