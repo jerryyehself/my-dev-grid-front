@@ -1,0 +1,573 @@
+{
+  "article_id": 14,
+  "center": "n0",
+  "nodes": [
+    {
+      "id": "n0",
+      "parent": null,
+      "label": "知識視覺化",
+      "res_id": 44,
+      "strength": "primary",
+      "weight": 1,
+      "units": []
+    },
+    {
+      "id": "n1",
+      "parent": "n0",
+      "label": "背景",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "1-背景與動機",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n2",
+      "parent": "n0",
+      "label": "方法論",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "2-決策方法論",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n3",
+      "parent": "n0",
+      "label": "候選圖形類型",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "3-考慮過的圖形類型比較",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n4",
+      "parent": "n0",
+      "label": "關鍵轉折",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "4-討論過程的關鍵轉折依時間順序",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n5",
+      "parent": "n0",
+      "label": "目前結論",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.9,
+      "units": [
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n6",
+      "parent": "n1",
+      "label": "雙重受眾",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "1-背景與動機",
+          "count": 1
+        },
+        {
+          "unit_id": "41-起點google-maps-地標式-tooltip-互動模式",
+          "count": 1
+        },
+        {
+          "unit_id": "44-受眾模型修正後又降權",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "n7",
+      "parent": "n1",
+      "label": "三種實體型別",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.7,
+      "units": [
+        {
+          "unit_id": "1-背景與動機",
+          "count": 1
+        },
+        {
+          "unit_id": "45-節點身分修正",
+          "count": 2
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "n8",
+      "parent": "n1",
+      "label": "資料缺口",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.29,
+      "units": [
+        {
+          "unit_id": "1-背景與動機",
+          "count": 1
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "n9",
+      "parent": "n2",
+      "label": "先查證再動工",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.58,
+      "units": [
+        {
+          "unit_id": "2-決策方法論",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "n10",
+      "parent": "n2",
+      "label": "隱喻誠實性稽核",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.58,
+      "units": [
+        {
+          "unit_id": "2-決策方法論",
+          "count": 1
+        },
+        {
+          "unit_id": "47-星圖隱喻提出又否決",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n11",
+      "parent": "n2",
+      "label": "滾雪球引用查證",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.26,
+      "units": [
+        {
+          "unit_id": "2-決策方法論",
+          "count": 1
+        },
+        {
+          "unit_id": "43-誠實但不能因此就變保守",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n12",
+      "parent": "n2",
+      "label": "誠實不等於保守",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.32,
+      "units": [
+        {
+          "unit_id": "2-決策方法論",
+          "count": 1
+        },
+        {
+          "unit_id": "43-誠實但不能因此就變保守",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "n13",
+      "parent": "n3",
+      "label": "節點-連結圖",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.62,
+      "units": [
+        {
+          "unit_id": "3-考慮過的圖形類型比較",
+          "count": 1
+        },
+        {
+          "unit_id": "42-地圖群島隱喻整條被推翻",
+          "count": 1
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n14",
+      "parent": "n3",
+      "label": "格狀熱度圖",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.29,
+      "units": [
+        {
+          "unit_id": "3-考慮過的圖形類型比較",
+          "count": 1
+        },
+        {
+          "unit_id": "42-地圖群島隱喻整條被推翻",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "n15",
+      "parent": "n3",
+      "label": "Treemap",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.26,
+      "units": [
+        {
+          "unit_id": "3-考慮過的圖形類型比較",
+          "count": 1
+        },
+        {
+          "unit_id": "42-地圖群島隱喻整條被推翻",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n16",
+      "parent": "n3",
+      "label": "插畫地圖／群島",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.32,
+      "units": [
+        {
+          "unit_id": "3-考慮過的圖形類型比較",
+          "count": 2
+        },
+        {
+          "unit_id": "42-地圖群島隱喻整條被推翻",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "n17",
+      "parent": "n3",
+      "label": "星圖／星座",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.5,
+      "units": [
+        {
+          "unit_id": "2-決策方法論",
+          "count": 1
+        },
+        {
+          "unit_id": "3-考慮過的圖形類型比較",
+          "count": 4
+        },
+        {
+          "unit_id": "47-星圖隱喻提出又否決",
+          "count": 4
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n18",
+      "parent": "n4",
+      "label": "節點身分修正",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.54,
+      "units": [
+        {
+          "unit_id": "45-節點身分修正",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n19",
+      "parent": "n4",
+      "label": "結構洞",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.74,
+      "units": [
+        {
+          "unit_id": "46-引入結構洞社會網絡分析理論",
+          "count": 3
+        },
+        {
+          "unit_id": "5-相關文獻",
+          "count": 1
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "n20",
+      "parent": "n4",
+      "label": "ISOTYPE 點群聚合",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.62,
+      "units": [
+        {
+          "unit_id": "48-isotype-點群聚合收斂",
+          "count": 2
+        },
+        {
+          "unit_id": "5-相關文獻",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n21",
+      "parent": "n4",
+      "label": "地標 tooltip",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.29,
+      "units": [
+        {
+          "unit_id": "41-起點google-maps-地標式-tooltip-互動模式",
+          "count": 2
+        },
+        {
+          "unit_id": "42-地圖群島隱喻整條被推翻",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n22",
+      "parent": "n4",
+      "label": "賣點敘事",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.29,
+      "units": [
+        {
+          "unit_id": "3-考慮過的圖形類型比較",
+          "count": 1
+        },
+        {
+          "unit_id": "49-賣點敘事建議",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "n23",
+      "parent": "n4",
+      "label": "漸進揭露",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.23,
+      "units": [
+        {
+          "unit_id": "44-受眾模型修正後又降權",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n24",
+      "parent": "n5",
+      "label": "force-graph",
+      "res_id": 48,
+      "strength": "primary",
+      "weight": 0.66,
+      "units": [
+        {
+          "unit_id": "410-v1-手刻-svg-v2-改用專案既有套件",
+          "count": 1
+        },
+        {
+          "unit_id": "5-相關文獻",
+          "count": 2
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n25",
+      "parent": "n5",
+      "label": "degree 驅動大小",
+      "res_id": null,
+      "strength": "primary",
+      "weight": 0.74,
+      "units": [
+        {
+          "unit_id": "3-考慮過的圖形類型比較",
+          "count": 1
+        },
+        {
+          "unit_id": "47-星圖隱喻提出又否決",
+          "count": 1
+        },
+        {
+          "unit_id": "410-v1-手刻-svg-v2-改用專案既有套件",
+          "count": 1
+        },
+        {
+          "unit_id": "5-相關文獻",
+          "count": 2
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n26",
+      "parent": "n5",
+      "label": "計數語言文案",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.32,
+      "units": [
+        {
+          "unit_id": "48-isotype-點群聚合收斂",
+          "count": 1
+        },
+        {
+          "unit_id": "49-賣點敘事建議",
+          "count": 1
+        },
+        {
+          "unit_id": "5-相關文獻",
+          "count": 1
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "n27",
+      "parent": "n5",
+      "label": "虛線潛在關聯",
+      "res_id": null,
+      "strength": "secondary",
+      "weight": 0.29,
+      "units": [
+        {
+          "unit_id": "46-引入結構洞社會網絡分析理論",
+          "count": 1
+        },
+        {
+          "unit_id": "410-v1-手刻-svg-v2-改用專案既有套件",
+          "count": 1
+        },
+        {
+          "unit_id": "7-目前結論與待辦",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "source": "n16",
+      "target": "n10",
+      "type": "rejectedBy",
+      "origin": "author",
+      "weight": 0.8
+    },
+    {
+      "source": "n17",
+      "target": "n10",
+      "type": "rejectedBy",
+      "origin": "author",
+      "weight": 0.7
+    },
+    {
+      "source": "n24",
+      "target": "n13",
+      "type": "implements",
+      "origin": "author",
+      "weight": 0.8
+    },
+    {
+      "source": "n27",
+      "target": "n19",
+      "type": "isBasedOn",
+      "origin": "author",
+      "weight": 0.6
+    },
+    {
+      "source": "n25",
+      "target": "n24",
+      "type": null,
+      "origin": "cooccurrence",
+      "weight": 0.5
+    },
+    {
+      "source": "n18",
+      "target": "n7",
+      "type": null,
+      "origin": "cooccurrence",
+      "weight": 0.4
+    },
+    {
+      "source": "n23",
+      "target": "n21",
+      "type": null,
+      "origin": "cooccurrence",
+      "weight": 0.3
+    }
+  ],
+  "status": "draft"
+}
